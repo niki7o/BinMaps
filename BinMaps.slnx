@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+  </Folder>
+  <Project Path="BinMaps.API/BinMaps.API.csproj" />
+  <Project Path="BinMaps.Data/BinMaps.Data.csproj" />
+  <Project Path="BinMaps.Infrastructure/BinMaps.Infrastructure.csproj" />
+  <Project Path="BinMaps.Shared/BinMaps.Shared.csproj" />
+  <Project Path="BinMaps.Tests/BinMaps.Tests.csproj" />
+</Solution>

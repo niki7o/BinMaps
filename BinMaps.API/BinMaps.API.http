@@ -1,0 +1,6 @@
+@BinMaps_HostAddress = http://localhost:5166
+
+GET {{BinMaps_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
