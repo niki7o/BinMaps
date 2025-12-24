@@ -7,8 +7,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Identity.Web;
 
+namespace BinMaps.API
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
 
-   
 
             var builder = WebApplication.CreateBuilder(args);
 
@@ -16,10 +21,10 @@ using Microsoft.Identity.Web;
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
 
-builder.Services.AddDbContext<BinMapsDbContext>(options =>
+            builder.Services.AddDbContext<BinMapsDbContext>(options =>
 
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddControllers();
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -40,3 +45,6 @@ builder.Services.AddControllers();
             app.MapControllers();
 
             app.Run();
+        }
+    }
+}
