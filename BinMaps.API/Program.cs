@@ -1,4 +1,7 @@
 using BinMaps.Data;
+using BinMaps.Infrastructure.Repository;
+using BinMaps.Infrastructure.Services;
+using BinMaps.Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -28,6 +31,8 @@ namespace BinMaps.API
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
+            builder.Services.AddScoped<ITruckRouteService, TruckRouteService>();
 
             var app = builder.Build();
 

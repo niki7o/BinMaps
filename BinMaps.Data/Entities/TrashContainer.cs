@@ -21,7 +21,7 @@ namespace BinMaps.Data.Entities
         [Range(0, double.MaxValue)]
         public double Capacity { get; set; }
         [Required]
-        public TrashType TrashType { get; set; }
+        public TrashType TrashTypе { get; set; }
         [Required]
         [Range(0, 100)]
         public double FillPercentage { get; set; }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BinMaps.Data.Entities.Enums;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -24,6 +25,8 @@ namespace BinMaps.Data.Entities
         [Range(0, double.MaxValue)]
         public double Capacity { get; set; }
 
+        [Required]
+        public TrashType TrashType { get; set; }
 
     }
 }

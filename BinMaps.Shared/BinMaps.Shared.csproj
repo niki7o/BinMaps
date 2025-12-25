@@ -7,8 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="DataModels\" />
     <Folder Include="Areas\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BinMaps.Data\BinMaps.Data.csproj" />
   </ItemGroup>
 
 </Project>

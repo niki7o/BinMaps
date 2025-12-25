@@ -119,7 +119,7 @@ namespace BinMaps.Data.Migrations
                     b.Property<double>("Temperature")
                         .HasColumnType("float");
 
-                    b.Property<int>("TrashType")
+                    b.Property<int>("TrashTypе")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -147,6 +147,9 @@ namespace BinMaps.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("TrashType")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
