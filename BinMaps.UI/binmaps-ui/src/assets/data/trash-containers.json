@@ -1,0 +1,3692 @@
+[
+  {
+    "id": 1,
+    "address": "София – контейнер 1",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.704171338632555,
+    "longitude": 23.30502009430058,
+    "hasSensor": true,
+    "fillLevel": 1,
+    "status": "OK"
+  },
+  {
+    "id": 2,
+    "address": "София – контейнер 2",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.69692221023526,
+    "longitude": 23.326880670317696,
+    "hasSensor": true,
+    "fillLevel": 51,
+    "status": "OK"
+  },
+  {
+    "id": 3,
+    "address": "София – контейнер 3",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.64671730657379,
+    "longitude": 23.3489144476248,
+    "hasSensor": true,
+    "fillLevel": 74,
+    "status": "OK"
+  },
+  {
+    "id": 4,
+    "address": "София – контейнер 4",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6413870499304,
+    "longitude": 23.278873777079824,
+    "hasSensor": true,
+    "fillLevel": 17,
+    "status": "OK"
+  },
+  {
+    "id": 5,
+    "address": "София – контейнер 5",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.67540249980753,
+    "longitude": 23.283684462030568,
+    "hasSensor": true,
+    "fillLevel": 83,
+    "status": "ALERT"
+  },
+  {
+    "id": 6,
+    "address": "София – контейнер 6",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.71177979392916,
+    "longitude": 23.34680099813568,
+    "hasSensor": true,
+    "fillLevel": 87,
+    "status": "ALERT"
+  },
+  {
+    "id": 7,
+    "address": "София – контейнер 7",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.66052903470625,
+    "longitude": 23.355631547641686,
+    "hasSensor": true,
+    "fillLevel": 67,
+    "status": "OK"
+  },
+  {
+    "id": 8,
+    "address": "София – контейнер 8",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.69692619092856,
+    "longitude": 23.287399908483845,
+    "hasSensor": true,
+    "fillLevel": 43,
+    "status": "OK"
+  },
+  {
+    "id": 9,
+    "address": "София – контейнер 9",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.675289237251505,
+    "longitude": 23.28628772007423,
+    "hasSensor": true,
+    "fillLevel": 47,
+    "status": "OK"
+  },
+  {
+    "id": 10,
+    "address": "София – контейнер 10",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.72963273151584,
+    "longitude": 23.329497868668895,
+    "hasSensor": true,
+    "fillLevel": 43,
+    "status": "OK"
+  },
+  {
+    "id": 11,
+    "address": "София – контейнер 11",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.72045342255343,
+    "longitude": 23.276103860412206,
+    "hasSensor": true,
+    "fillLevel": 24,
+    "status": "OK"
+  },
+  {
+    "id": 12,
+    "address": "София – контейнер 12",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.68290852174549,
+    "longitude": 23.32347332706407,
+    "hasSensor": true,
+    "fillLevel": 68,
+    "status": "OK"
+  },
+  {
+    "id": 13,
+    "address": "София – контейнер 13",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.71525439390207,
+    "longitude": 23.280630683072165,
+    "hasSensor": true,
+    "fillLevel": 9,
+    "status": "OK"
+  },
+  {
+    "id": 14,
+    "address": "София – контейнер 14",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.66039268120828,
+    "longitude": 23.305463603718206,
+    "hasSensor": true,
+    "fillLevel": 37,
+    "status": "OK"
+  },
+  {
+    "id": 15,
+    "address": "София – контейнер 15",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.649336971854325,
+    "longitude": 23.2851529651924,
+    "hasSensor": true,
+    "fillLevel": 82,
+    "status": "ALERT"
+  },
+  {
+    "id": 16,
+    "address": "София – контейнер 16",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.680954905727695,
+    "longitude": 23.285271753831683,
+    "hasSensor": true,
+    "fillLevel": 67,
+    "status": "OK"
+  },
+  {
+    "id": 17,
+    "address": "София – контейнер 17",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.65614757424381,
+    "longitude": 23.344222004805108,
+    "hasSensor": true,
+    "fillLevel": 1,
+    "status": "OK"
+  },
+  {
+    "id": 18,
+    "address": "София – контейнер 18",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.708590766609426,
+    "longitude": 23.305287586976398,
+    "hasSensor": true,
+    "fillLevel": 27,
+    "status": "OK"
+  },
+  {
+    "id": 19,
+    "address": "София – контейнер 19",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.722369027506915,
+    "longitude": 23.306404323774412,
+    "hasSensor": true,
+    "fillLevel": 32,
+    "status": "OK"
+  },
+  {
+    "id": 20,
+    "address": "София – контейнер 20",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.728390032171944,
+    "longitude": 23.298955686894402,
+    "hasSensor": true,
+    "fillLevel": 79,
+    "status": "ALERT"
+  },
+  {
+    "id": 21,
+    "address": "София – контейнер 21",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.648442907524334,
+    "longitude": 23.326949391152464,
+    "hasSensor": true,
+    "fillLevel": 80,
+    "status": "ALERT"
+  },
+  {
+    "id": 22,
+    "address": "София – контейнер 22",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.73727094280873,
+    "longitude": 23.347191818026864,
+    "hasSensor": true,
+    "fillLevel": 30,
+    "status": "OK"
+  },
+  {
+    "id": 23,
+    "address": "София – контейнер 23",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.703574950871094,
+    "longitude": 23.346077980016585,
+    "hasSensor": true,
+    "fillLevel": 38,
+    "status": "OK"
+  },
+  {
+    "id": 24,
+    "address": "София – контейнер 24",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.645124456456955,
+    "longitude": 23.367641574823743,
+    "hasSensor": true,
+    "fillLevel": 32,
+    "status": "OK"
+  },
+  {
+    "id": 25,
+    "address": "София – контейнер 25",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.67409968328124,
+    "longitude": 23.34292537561514,
+    "hasSensor": true,
+    "fillLevel": 69,
+    "status": "OK"
+  },
+  {
+    "id": 26,
+    "address": "София – контейнер 26",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.667164713779435,
+    "longitude": 23.345812554290344,
+    "hasSensor": true,
+    "fillLevel": 92,
+    "status": "FULL"
+  },
+  {
+    "id": 27,
+    "address": "София – контейнер 27",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6435192073208,
+    "longitude": 23.307156424202066,
+    "hasSensor": true,
+    "fillLevel": 71,
+    "status": "OK"
+  },
+  {
+    "id": 28,
+    "address": "София – контейнер 28",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.70894541246179,
+    "longitude": 23.288307234364016,
+    "hasSensor": true,
+    "fillLevel": 61,
+    "status": "OK"
+  },
+  {
+    "id": 29,
+    "address": "София – контейнер 29",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.68612380857139,
+    "longitude": 23.33651196375957,
+    "hasSensor": true,
+    "fillLevel": 0,
+    "status": "OK"
+  },
+  {
+    "id": 30,
+    "address": "София – контейнер 30",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.64508966551495,
+    "longitude": 23.28570668457782,
+    "hasSensor": true,
+    "fillLevel": 91,
+    "status": "FULL"
+  },
+  {
+    "id": 31,
+    "address": "София – контейнер 31",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.640630056737315,
+    "longitude": 23.31116996285773,
+    "hasSensor": true,
+    "fillLevel": 3,
+    "status": "OK"
+  },
+  {
+    "id": 32,
+    "address": "София – контейнер 32",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.682194393297614,
+    "longitude": 23.355237750818635,
+    "hasSensor": true,
+    "fillLevel": 16,
+    "status": "OK"
+  },
+  {
+    "id": 33,
+    "address": "София – контейнер 33",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.682119157003825,
+    "longitude": 23.35776335253371,
+    "hasSensor": true,
+    "fillLevel": 26,
+    "status": "OK"
+  },
+  {
+    "id": 34,
+    "address": "София – контейнер 34",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.68436470899153,
+    "longitude": 23.300196324849367,
+    "hasSensor": true,
+    "fillLevel": 20,
+    "status": "OK"
+  },
+  {
+    "id": 35,
+    "address": "София – контейнер 35",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.7335623975412,
+    "longitude": 23.36903731784769,
+    "hasSensor": true,
+    "fillLevel": 9,
+    "status": "OK"
+  },
+  {
+    "id": 36,
+    "address": "София – контейнер 36",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.71133104876195,
+    "longitude": 23.353950494128796,
+    "hasSensor": true,
+    "fillLevel": 21,
+    "status": "OK"
+  },
+  {
+    "id": 37,
+    "address": "София – контейнер 37",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.711941022307265,
+    "longitude": 23.271780748896617,
+    "hasSensor": true,
+    "fillLevel": 14,
+    "status": "OK"
+  },
+  {
+    "id": 38,
+    "address": "София – контейнер 38",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.73246804667271,
+    "longitude": 23.27841285342789,
+    "hasSensor": true,
+    "fillLevel": 36,
+    "status": "OK"
+  },
+  {
+    "id": 39,
+    "address": "София – контейнер 39",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.72019547278927,
+    "longitude": 23.34768753112148,
+    "hasSensor": true,
+    "fillLevel": 13,
+    "status": "OK"
+  },
+  {
+    "id": 40,
+    "address": "София – контейнер 40",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.73080147763472,
+    "longitude": 23.367890356743313,
+    "hasSensor": true,
+    "fillLevel": 60,
+    "status": "OK"
+  },
+  {
+    "id": 41,
+    "address": "София – контейнер 41",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.723375717488686,
+    "longitude": 23.352931379689,
+    "hasSensor": true,
+    "fillLevel": 77,
+    "status": "ALERT"
+  },
+  {
+    "id": 42,
+    "address": "София – контейнер 42",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.737704680172214,
+    "longitude": 23.342886083794742,
+    "hasSensor": true,
+    "fillLevel": 24,
+    "status": "OK"
+  },
+  {
+    "id": 43,
+    "address": "София – контейнер 43",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.68450203267344,
+    "longitude": 23.324246724703997,
+    "hasSensor": true,
+    "fillLevel": 61,
+    "status": "OK"
+  },
+  {
+    "id": 44,
+    "address": "София – контейнер 44",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.66806800678269,
+    "longitude": 23.356755192326816,
+    "hasSensor": true,
+    "fillLevel": 72,
+    "status": "OK"
+  },
+  {
+    "id": 45,
+    "address": "София – контейнер 45",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.65708343849647,
+    "longitude": 23.321938716817627,
+    "hasSensor": true,
+    "fillLevel": 48,
+    "status": "OK"
+  },
+  {
+    "id": 46,
+    "address": "София – контейнер 46",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.683906868497864,
+    "longitude": 23.319702289684244,
+    "hasSensor": true,
+    "fillLevel": 41,
+    "status": "OK"
+  },
+  {
+    "id": 47,
+    "address": "София – контейнер 47",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.67345091621989,
+    "longitude": 23.3384025285363,
+    "hasSensor": true,
+    "fillLevel": 88,
+    "status": "ALERT"
+  },
+  {
+    "id": 48,
+    "address": "София – контейнер 48",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.65318419457027,
+    "longitude": 23.276507108822813,
+    "hasSensor": true,
+    "fillLevel": 71,
+    "status": "OK"
+  },
+  {
+    "id": 49,
+    "address": "София – контейнер 49",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.681476944011315,
+    "longitude": 23.293229389090065,
+    "hasSensor": true,
+    "fillLevel": 90,
+    "status": "ALERT"
+  },
+  {
+    "id": 50,
+    "address": "София – контейнер 50",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.69512771986159,
+    "longitude": 23.30641776908631,
+    "hasSensor": true,
+    "fillLevel": 16,
+    "status": "OK"
+  },
+  {
+    "id": 51,
+    "address": "София – контейнер 51",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.65887094974426,
+    "longitude": 23.35831767905118,
+    "hasSensor": true,
+    "fillLevel": 5,
+    "status": "OK"
+  },
+  {
+    "id": 52,
+    "address": "София – контейнер 52",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6810894701898,
+    "longitude": 23.34572943211795,
+    "hasSensor": true,
+    "fillLevel": 58,
+    "status": "OK"
+  },
+  {
+    "id": 53,
+    "address": "София – контейнер 53",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.64784660940299,
+    "longitude": 23.314197657417992,
+    "hasSensor": true,
+    "fillLevel": 38,
+    "status": "OK"
+  },
+  {
+    "id": 54,
+    "address": "София – контейнер 54",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.692457386473805,
+    "longitude": 23.27614211833049,
+    "hasSensor": true,
+    "fillLevel": 35,
+    "status": "OK"
+  },
+  {
+    "id": 55,
+    "address": "София – контейнер 55",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.652594645426454,
+    "longitude": 23.302847224285784,
+    "hasSensor": true,
+    "fillLevel": 53,
+    "status": "OK"
+  },
+  {
+    "id": 56,
+    "address": "София – контейнер 56",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.718816030625554,
+    "longitude": 23.29046961854451,
+    "hasSensor": true,
+    "fillLevel": 48,
+    "status": "OK"
+  },
+  {
+    "id": 57,
+    "address": "София – контейнер 57",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.68989196562256,
+    "longitude": 23.27320060814625,
+    "hasSensor": true,
+    "fillLevel": 52,
+    "status": "OK"
+  },
+  {
+    "id": 58,
+    "address": "София – контейнер 58",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.73487795398019,
+    "longitude": 23.34418093720497,
+    "hasSensor": true,
+    "fillLevel": 99,
+    "status": "FULL"
+  },
+  {
+    "id": 59,
+    "address": "София – контейнер 59",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.65533324927033,
+    "longitude": 23.327069662283975,
+    "hasSensor": true,
+    "fillLevel": 2,
+    "status": "OK"
+  },
+  {
+    "id": 60,
+    "address": "София – контейнер 60",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.66981862204101,
+    "longitude": 23.31181405844416,
+    "hasSensor": true,
+    "fillLevel": 77,
+    "status": "ALERT"
+  },
+  {
+    "id": 61,
+    "address": "София – контейнер 61",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.704139984803845,
+    "longitude": 23.340387725459365,
+    "hasSensor": true,
+    "fillLevel": 23,
+    "status": "OK"
+  },
+  {
+    "id": 62,
+    "address": "София – контейнер 62",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.70697602585272,
+    "longitude": 23.27885298384076,
+    "hasSensor": true,
+    "fillLevel": 48,
+    "status": "OK"
+  },
+  {
+    "id": 63,
+    "address": "София – контейнер 63",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.72056382372306,
+    "longitude": 23.272859438248812,
+    "hasSensor": true,
+    "fillLevel": 11,
+    "status": "OK"
+  },
+  {
+    "id": 64,
+    "address": "София – контейнер 64",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.69326164144569,
+    "longitude": 23.366858808229946,
+    "hasSensor": true,
+    "fillLevel": 12,
+    "status": "OK"
+  },
+  {
+    "id": 65,
+    "address": "София – контейнер 65",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.70318233570786,
+    "longitude": 23.351100071079333,
+    "hasSensor": true,
+    "fillLevel": 85,
+    "status": "ALERT"
+  },
+  {
+    "id": 66,
+    "address": "София – контейнер 66",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.71785923737137,
+    "longitude": 23.306900140074646,
+    "hasSensor": true,
+    "fillLevel": 92,
+    "status": "FULL"
+  },
+  {
+    "id": 67,
+    "address": "София – контейнер 67",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.66763973955829,
+    "longitude": 23.315679603103998,
+    "hasSensor": true,
+    "fillLevel": 95,
+    "status": "FULL"
+  },
+  {
+    "id": 68,
+    "address": "София – контейнер 68",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.64283657382547,
+    "longitude": 23.303918155761092,
+    "hasSensor": true,
+    "fillLevel": 52,
+    "status": "OK"
+  },
+  {
+    "id": 69,
+    "address": "София – контейнер 69",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.64051544467258,
+    "longitude": 23.29568833910876,
+    "hasSensor": true,
+    "fillLevel": 31,
+    "status": "OK"
+  },
+  {
+    "id": 70,
+    "address": "София – контейнер 70",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.70591939455799,
+    "longitude": 23.33965948566224,
+    "hasSensor": true,
+    "fillLevel": 76,
+    "status": "ALERT"
+  },
+  {
+    "id": 71,
+    "address": "София – контейнер 71",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.68554747937213,
+    "longitude": 23.31248062722332,
+    "hasSensor": true,
+    "fillLevel": 64,
+    "status": "OK"
+  },
+  {
+    "id": 72,
+    "address": "София – контейнер 72",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.70167410899889,
+    "longitude": 23.281081261985243,
+    "hasSensor": true,
+    "fillLevel": 42,
+    "status": "OK"
+  },
+  {
+    "id": 73,
+    "address": "София – контейнер 73",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.73387605641642,
+    "longitude": 23.358809078430337,
+    "hasSensor": true,
+    "fillLevel": 60,
+    "status": "OK"
+  },
+  {
+    "id": 74,
+    "address": "София – контейнер 74",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.65487665364235,
+    "longitude": 23.28881503587098,
+    "hasSensor": true,
+    "fillLevel": 63,
+    "status": "OK"
+  },
+  {
+    "id": 75,
+    "address": "София – контейнер 75",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.69332291477935,
+    "longitude": 23.3619788033219,
+    "hasSensor": true,
+    "fillLevel": 23,
+    "status": "OK"
+  },
+  {
+    "id": 76,
+    "address": "София – контейнер 76",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.67809892671432,
+    "longitude": 23.31216296554503,
+    "hasSensor": true,
+    "fillLevel": 48,
+    "status": "OK"
+  },
+  {
+    "id": 77,
+    "address": "София – контейнер 77",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.65857492664348,
+    "longitude": 23.301627029139837,
+    "hasSensor": true,
+    "fillLevel": 90,
+    "status": "ALERT"
+  },
+  {
+    "id": 78,
+    "address": "София – контейнер 78",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.71849313425213,
+    "longitude": 23.342253329458103,
+    "hasSensor": true,
+    "fillLevel": 52,
+    "status": "OK"
+  },
+  {
+    "id": 79,
+    "address": "София – контейнер 79",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.67292867987181,
+    "longitude": 23.27329257473085,
+    "hasSensor": true,
+    "fillLevel": 61,
+    "status": "OK"
+  },
+  {
+    "id": 80,
+    "address": "София – контейнер 80",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.66230459347983,
+    "longitude": 23.281869178511936,
+    "hasSensor": true,
+    "fillLevel": 91,
+    "status": "FULL"
+  },
+  {
+    "id": 81,
+    "address": "София – контейнер 81",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.646346811845724,
+    "longitude": 23.306689350378797,
+    "hasSensor": true,
+    "fillLevel": 85,
+    "status": "ALERT"
+  },
+  {
+    "id": 82,
+    "address": "София – контейнер 82",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.65875481055219,
+    "longitude": 23.329104599128154,
+    "hasSensor": true,
+    "fillLevel": 41,
+    "status": "OK"
+  },
+  {
+    "id": 83,
+    "address": "София – контейнер 83",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.726482306955624,
+    "longitude": 23.301237712717832,
+    "hasSensor": true,
+    "fillLevel": 84,
+    "status": "ALERT"
+  },
+  {
+    "id": 84,
+    "address": "София – контейнер 84",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.65422680093194,
+    "longitude": 23.32279940289304,
+    "hasSensor": true,
+    "fillLevel": 67,
+    "status": "OK"
+  },
+  {
+    "id": 85,
+    "address": "София – контейнер 85",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.672542279626505,
+    "longitude": 23.302593374390767,
+    "hasSensor": true,
+    "fillLevel": 71,
+    "status": "OK"
+  },
+  {
+    "id": 86,
+    "address": "София – контейнер 86",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.661010423973266,
+    "longitude": 23.36156865558031,
+    "hasSensor": true,
+    "fillLevel": 77,
+    "status": "ALERT"
+  },
+  {
+    "id": 87,
+    "address": "София – контейнер 87",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.658859045481094,
+    "longitude": 23.30327638729522,
+    "hasSensor": true,
+    "fillLevel": 41,
+    "status": "OK"
+  },
+  {
+    "id": 88,
+    "address": "София – контейнер 88",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.67100766856829,
+    "longitude": 23.308323465640985,
+    "hasSensor": true,
+    "fillLevel": 54,
+    "status": "OK"
+  },
+  {
+    "id": 89,
+    "address": "София – контейнер 89",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.683786727858646,
+    "longitude": 23.34462423378635,
+    "hasSensor": true,
+    "fillLevel": 22,
+    "status": "OK"
+  },
+  {
+    "id": 90,
+    "address": "София – контейнер 90",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.7228582674376,
+    "longitude": 23.29858149263447,
+    "hasSensor": true,
+    "fillLevel": 15,
+    "status": "OK"
+  },
+  {
+    "id": 91,
+    "address": "София – контейнер 91",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.71434129333897,
+    "longitude": 23.271888193128344,
+    "hasSensor": true,
+    "fillLevel": 38,
+    "status": "OK"
+  },
+  {
+    "id": 92,
+    "address": "София – контейнер 92",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.71556267885708,
+    "longitude": 23.297151658165717,
+    "hasSensor": true,
+    "fillLevel": 2,
+    "status": "OK"
+  },
+  {
+    "id": 93,
+    "address": "София – контейнер 93",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.651672214304334,
+    "longitude": 23.369959068284423,
+    "hasSensor": true,
+    "fillLevel": 54,
+    "status": "OK"
+  },
+  {
+    "id": 94,
+    "address": "София – контейнер 94",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.665433672088476,
+    "longitude": 23.35754776009155,
+    "hasSensor": true,
+    "fillLevel": 60,
+    "status": "OK"
+  },
+  {
+    "id": 95,
+    "address": "София – контейнер 95",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.72095025606262,
+    "longitude": 23.338164373562808,
+    "hasSensor": true,
+    "fillLevel": 36,
+    "status": "OK"
+  },
+  {
+    "id": 96,
+    "address": "София – контейнер 96",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.687244620203906,
+    "longitude": 23.287305339199378,
+    "hasSensor": true,
+    "fillLevel": 51,
+    "status": "OK"
+  },
+  {
+    "id": 97,
+    "address": "София – контейнер 97",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.69992538386354,
+    "longitude": 23.29924292668767,
+    "hasSensor": true,
+    "fillLevel": 78,
+    "status": "ALERT"
+  },
+  {
+    "id": 98,
+    "address": "София – контейнер 98",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.65098959459739,
+    "longitude": 23.280367444519644,
+    "hasSensor": true,
+    "fillLevel": 54,
+    "status": "OK"
+  },
+  {
+    "id": 99,
+    "address": "София – контейнер 99",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.730067253100465,
+    "longitude": 23.327565173535824,
+    "hasSensor": true,
+    "fillLevel": 13,
+    "status": "OK"
+  },
+  {
+    "id": 100,
+    "address": "София – контейнер 100",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.72365768742434,
+    "longitude": 23.303336827011368,
+    "hasSensor": true,
+    "fillLevel": 39,
+    "status": "OK"
+  },
+  {
+    "id": 101,
+    "address": "София – контейнер 101",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.68039276801429,
+    "longitude": 23.3616248086103,
+    "hasSensor": true,
+    "fillLevel": 78,
+    "status": "ALERT"
+  },
+  {
+    "id": 102,
+    "address": "София – контейнер 102",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.64614720609972,
+    "longitude": 23.353157071127924,
+    "hasSensor": true,
+    "fillLevel": 51,
+    "status": "OK"
+  },
+  {
+    "id": 103,
+    "address": "София – контейнер 103",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.71035193555999,
+    "longitude": 23.303218261872,
+    "hasSensor": true,
+    "fillLevel": 93,
+    "status": "FULL"
+  },
+  {
+    "id": 104,
+    "address": "София – контейнер 104",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.674288196881506,
+    "longitude": 23.27795049301293,
+    "hasSensor": true,
+    "fillLevel": 80,
+    "status": "ALERT"
+  },
+  {
+    "id": 105,
+    "address": "София – контейнер 105",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.73858033120582,
+    "longitude": 23.351739458833734,
+    "hasSensor": true,
+    "fillLevel": 60,
+    "status": "OK"
+  },
+  {
+    "id": 106,
+    "address": "София – контейнер 106",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.65665624265572,
+    "longitude": 23.30413826925258,
+    "hasSensor": true,
+    "fillLevel": 12,
+    "status": "OK"
+  },
+  {
+    "id": 107,
+    "address": "София – контейнер 107",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.68668790769415,
+    "longitude": 23.345338944643483,
+    "hasSensor": true,
+    "fillLevel": 19,
+    "status": "OK"
+  },
+  {
+    "id": 108,
+    "address": "София – контейнер 108",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.66049599721042,
+    "longitude": 23.32793551426183,
+    "hasSensor": true,
+    "fillLevel": 89,
+    "status": "ALERT"
+  },
+  {
+    "id": 109,
+    "address": "София – контейнер 109",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.65120585199595,
+    "longitude": 23.280877300009845,
+    "hasSensor": true,
+    "fillLevel": 70,
+    "status": "OK"
+  },
+  {
+    "id": 110,
+    "address": "София – контейнер 110",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6870389425223,
+    "longitude": 23.368315123972142,
+    "hasSensor": true,
+    "fillLevel": 78,
+    "status": "ALERT"
+  },
+  {
+    "id": 111,
+    "address": "София – контейнер 111",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.71359285755316,
+    "longitude": 23.282654301995404,
+    "hasSensor": true,
+    "fillLevel": 46,
+    "status": "OK"
+  },
+  {
+    "id": 112,
+    "address": "София – контейнер 112",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.650878760420454,
+    "longitude": 23.27317509595971,
+    "hasSensor": true,
+    "fillLevel": 67,
+    "status": "OK"
+  },
+  {
+    "id": 113,
+    "address": "София – контейнер 113",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.731914458236744,
+    "longitude": 23.331388588436393,
+    "hasSensor": true,
+    "fillLevel": 17,
+    "status": "OK"
+  },
+  {
+    "id": 114,
+    "address": "София – контейнер 114",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.71798722191135,
+    "longitude": 23.283972194376986,
+    "hasSensor": true,
+    "fillLevel": 0,
+    "status": "OK"
+  },
+  {
+    "id": 115,
+    "address": "София – контейнер 115",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6597817407411,
+    "longitude": 23.330897272217555,
+    "hasSensor": true,
+    "fillLevel": 91,
+    "status": "FULL"
+  },
+  {
+    "id": 116,
+    "address": "София – контейнер 116",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.715160928561474,
+    "longitude": 23.287130194210853,
+    "hasSensor": true,
+    "fillLevel": 70,
+    "status": "OK"
+  },
+  {
+    "id": 117,
+    "address": "София – контейнер 117",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.72591611420224,
+    "longitude": 23.363608005727368,
+    "hasSensor": true,
+    "fillLevel": 95,
+    "status": "FULL"
+  },
+  {
+    "id": 118,
+    "address": "София – контейнер 118",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.73617358284468,
+    "longitude": 23.342948830671332,
+    "hasSensor": true,
+    "fillLevel": 20,
+    "status": "OK"
+  },
+  {
+    "id": 119,
+    "address": "София – контейнер 119",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6440814344957,
+    "longitude": 23.306581822907578,
+    "hasSensor": true,
+    "fillLevel": 43,
+    "status": "OK"
+  },
+  {
+    "id": 120,
+    "address": "София – контейнер 120",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6433425590853,
+    "longitude": 23.33043885382334,
+    "hasSensor": true,
+    "fillLevel": 26,
+    "status": "OK"
+  },
+  {
+    "id": 121,
+    "address": "София – контейнер 121",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.723325321865,
+    "longitude": 23.272926805475823,
+    "hasSensor": true,
+    "fillLevel": 6,
+    "status": "OK"
+  },
+  {
+    "id": 122,
+    "address": "София – контейнер 122",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6422213018536,
+    "longitude": 23.327043052868536,
+    "hasSensor": true,
+    "fillLevel": 51,
+    "status": "OK"
+  },
+  {
+    "id": 123,
+    "address": "София – контейнер 123",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.70319178376121,
+    "longitude": 23.315932657065172,
+    "hasSensor": true,
+    "fillLevel": 22,
+    "status": "OK"
+  },
+  {
+    "id": 124,
+    "address": "София – контейнер 124",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.72207773241427,
+    "longitude": 23.271328539114023,
+    "hasSensor": true,
+    "fillLevel": 33,
+    "status": "OK"
+  },
+  {
+    "id": 125,
+    "address": "София – контейнер 125",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6659841604438,
+    "longitude": 23.299133265490866,
+    "hasSensor": true,
+    "fillLevel": 93,
+    "status": "FULL"
+  },
+  {
+    "id": 126,
+    "address": "София – контейнер 126",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.684787583618025,
+    "longitude": 23.278930234826806,
+    "hasSensor": true,
+    "fillLevel": 22,
+    "status": "OK"
+  },
+  {
+    "id": 127,
+    "address": "София – контейнер 127",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.70291157713006,
+    "longitude": 23.314507411936443,
+    "hasSensor": true,
+    "fillLevel": 7,
+    "status": "OK"
+  },
+  {
+    "id": 128,
+    "address": "София – контейнер 128",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.670457005483875,
+    "longitude": 23.332433396835512,
+    "hasSensor": true,
+    "fillLevel": 69,
+    "status": "OK"
+  },
+  {
+    "id": 129,
+    "address": "София – контейнер 129",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.645318069646216,
+    "longitude": 23.296998374543282,
+    "hasSensor": true,
+    "fillLevel": 39,
+    "status": "OK"
+  },
+  {
+    "id": 130,
+    "address": "София – контейнер 130",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6901338298697,
+    "longitude": 23.299554333508027,
+    "hasSensor": true,
+    "fillLevel": 43,
+    "status": "OK"
+  },
+  {
+    "id": 131,
+    "address": "София – контейнер 131",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.728344997807696,
+    "longitude": 23.300692040815946,
+    "hasSensor": true,
+    "fillLevel": 51,
+    "status": "OK"
+  },
+  {
+    "id": 132,
+    "address": "София – контейнер 132",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.683981912995414,
+    "longitude": 23.363214464063212,
+    "hasSensor": true,
+    "fillLevel": 67,
+    "status": "OK"
+  },
+  {
+    "id": 133,
+    "address": "София – контейнер 133",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.69357624273942,
+    "longitude": 23.31343882143923,
+    "hasSensor": true,
+    "fillLevel": 99,
+    "status": "FULL"
+  },
+  {
+    "id": 134,
+    "address": "София – контейнер 134",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.72065307958157,
+    "longitude": 23.319951028910165,
+    "hasSensor": true,
+    "fillLevel": 68,
+    "status": "OK"
+  },
+  {
+    "id": 135,
+    "address": "София – контейнер 135",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.662817330556294,
+    "longitude": 23.331554016477636,
+    "hasSensor": true,
+    "fillLevel": 48,
+    "status": "OK"
+  },
+  {
+    "id": 136,
+    "address": "София – контейнер 136",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.688674403186646,
+    "longitude": 23.337574885798293,
+    "hasSensor": true,
+    "fillLevel": 6,
+    "status": "OK"
+  },
+  {
+    "id": 137,
+    "address": "София – контейнер 137",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.73688902791092,
+    "longitude": 23.347470344870775,
+    "hasSensor": true,
+    "fillLevel": 47,
+    "status": "OK"
+  },
+  {
+    "id": 138,
+    "address": "София – контейнер 138",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.65136521416543,
+    "longitude": 23.343705132088807,
+    "hasSensor": true,
+    "fillLevel": 50,
+    "status": "OK"
+  },
+  {
+    "id": 139,
+    "address": "София – контейнер 139",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.73565147729468,
+    "longitude": 23.314935352361744,
+    "hasSensor": true,
+    "fillLevel": 17,
+    "status": "OK"
+  },
+  {
+    "id": 140,
+    "address": "София – контейнер 140",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.686318208198,
+    "longitude": 23.367744953814647,
+    "hasSensor": true,
+    "fillLevel": 15,
+    "status": "OK"
+  },
+  {
+    "id": 141,
+    "address": "София – контейнер 141",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.67559453061407,
+    "longitude": 23.361595360592126,
+    "hasSensor": true,
+    "fillLevel": 34,
+    "status": "OK"
+  },
+  {
+    "id": 142,
+    "address": "София – контейнер 142",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.72275961482936,
+    "longitude": 23.319964049362362,
+    "hasSensor": true,
+    "fillLevel": 6,
+    "status": "OK"
+  },
+  {
+    "id": 143,
+    "address": "София – контейнер 143",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6867770613972,
+    "longitude": 23.289023056889043,
+    "hasSensor": true,
+    "fillLevel": 28,
+    "status": "OK"
+  },
+  {
+    "id": 144,
+    "address": "София – контейнер 144",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.68328823560063,
+    "longitude": 23.359818801624538,
+    "hasSensor": true,
+    "fillLevel": 28,
+    "status": "OK"
+  },
+  {
+    "id": 145,
+    "address": "София – контейнер 145",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.69467200138031,
+    "longitude": 23.344800350667246,
+    "hasSensor": true,
+    "fillLevel": 17,
+    "status": "OK"
+  },
+  {
+    "id": 146,
+    "address": "София – контейнер 146",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.659143008716036,
+    "longitude": 23.363109771773463,
+    "hasSensor": true,
+    "fillLevel": 19,
+    "status": "OK"
+  },
+  {
+    "id": 147,
+    "address": "София – контейнер 147",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.66780453303322,
+    "longitude": 23.303177384760367,
+    "hasSensor": true,
+    "fillLevel": 50,
+    "status": "OK"
+  },
+  {
+    "id": 148,
+    "address": "София – контейнер 148",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.690076768923134,
+    "longitude": 23.288575101251514,
+    "hasSensor": true,
+    "fillLevel": 66,
+    "status": "OK"
+  },
+  {
+    "id": 149,
+    "address": "София – контейнер 149",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6429914032456,
+    "longitude": 23.27321332623476,
+    "hasSensor": true,
+    "fillLevel": 48,
+    "status": "OK"
+  },
+  {
+    "id": 150,
+    "address": "София – контейнер 150",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.67943833553113,
+    "longitude": 23.3147591437684,
+    "hasSensor": true,
+    "fillLevel": 64,
+    "status": "OK"
+  },
+  {
+    "id": 151,
+    "address": "София – контейнер 151",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.69352808962821,
+    "longitude": 23.330517725269015,
+    "hasSensor": true,
+    "fillLevel": 27,
+    "status": "OK"
+  },
+  {
+    "id": 152,
+    "address": "София – контейнер 152",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.663680078406365,
+    "longitude": 23.331685165714948,
+    "hasSensor": true,
+    "fillLevel": 94,
+    "status": "FULL"
+  },
+  {
+    "id": 153,
+    "address": "София – контейнер 153",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.732467887822835,
+    "longitude": 23.329522548251468,
+    "hasSensor": true,
+    "fillLevel": 36,
+    "status": "OK"
+  },
+  {
+    "id": 154,
+    "address": "София – контейнер 154",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.71411840150906,
+    "longitude": 23.334538283106998,
+    "hasSensor": true,
+    "fillLevel": 90,
+    "status": "ALERT"
+  },
+  {
+    "id": 155,
+    "address": "София – контейнер 155",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.717413687900645,
+    "longitude": 23.35536338691131,
+    "hasSensor": true,
+    "fillLevel": 86,
+    "status": "ALERT"
+  },
+  {
+    "id": 156,
+    "address": "София – контейнер 156",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.7149282420967,
+    "longitude": 23.294284357624317,
+    "hasSensor": true,
+    "fillLevel": 42,
+    "status": "OK"
+  },
+  {
+    "id": 157,
+    "address": "София – контейнер 157",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.68286079233427,
+    "longitude": 23.362883885284496,
+    "hasSensor": true,
+    "fillLevel": 74,
+    "status": "OK"
+  },
+  {
+    "id": 158,
+    "address": "София – контейнер 158",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.721381630595864,
+    "longitude": 23.270613041323834,
+    "hasSensor": true,
+    "fillLevel": 33,
+    "status": "OK"
+  },
+  {
+    "id": 159,
+    "address": "София – контейнер 159",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.66722371843267,
+    "longitude": 23.277822298675954,
+    "hasSensor": true,
+    "fillLevel": 25,
+    "status": "OK"
+  },
+  {
+    "id": 160,
+    "address": "София – контейнер 160",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6600607366574,
+    "longitude": 23.32490066375201,
+    "hasSensor": true,
+    "fillLevel": 8,
+    "status": "OK"
+  },
+  {
+    "id": 161,
+    "address": "София – контейнер 161",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.662857122018494,
+    "longitude": 23.29072864233605,
+    "hasSensor": true,
+    "fillLevel": 74,
+    "status": "OK"
+  },
+  {
+    "id": 162,
+    "address": "София – контейнер 162",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.658287892114664,
+    "longitude": 23.322051601952857,
+    "hasSensor": true,
+    "fillLevel": 78,
+    "status": "ALERT"
+  },
+  {
+    "id": 163,
+    "address": "София – контейнер 163",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.710358241358584,
+    "longitude": 23.324736521442734,
+    "hasSensor": true,
+    "fillLevel": 12,
+    "status": "OK"
+  },
+  {
+    "id": 164,
+    "address": "София – контейнер 164",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6915998419151,
+    "longitude": 23.324185704965796,
+    "hasSensor": true,
+    "fillLevel": 55,
+    "status": "OK"
+  },
+  {
+    "id": 165,
+    "address": "София – контейнер 165",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6752667596547,
+    "longitude": 23.362677184053844,
+    "hasSensor": true,
+    "fillLevel": 90,
+    "status": "ALERT"
+  },
+  {
+    "id": 166,
+    "address": "София – контейнер 166",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.726680948437604,
+    "longitude": 23.354785796916627,
+    "hasSensor": true,
+    "fillLevel": 80,
+    "status": "ALERT"
+  },
+  {
+    "id": 167,
+    "address": "София – контейнер 167",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.69100569467155,
+    "longitude": 23.323432202476287,
+    "hasSensor": true,
+    "fillLevel": 24,
+    "status": "OK"
+  },
+  {
+    "id": 168,
+    "address": "София – контейнер 168",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.68665576538725,
+    "longitude": 23.31273476887144,
+    "hasSensor": true,
+    "fillLevel": 5,
+    "status": "OK"
+  },
+  {
+    "id": 169,
+    "address": "София – контейнер 169",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.65684328641033,
+    "longitude": 23.34579451191721,
+    "hasSensor": true,
+    "fillLevel": 10,
+    "status": "OK"
+  },
+  {
+    "id": 170,
+    "address": "София – контейнер 170",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.67806573993508,
+    "longitude": 23.3089547803567,
+    "hasSensor": true,
+    "fillLevel": 74,
+    "status": "OK"
+  },
+  {
+    "id": 171,
+    "address": "София – контейнер 171",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.661303975983536,
+    "longitude": 23.285653068723363,
+    "hasSensor": true,
+    "fillLevel": 10,
+    "status": "OK"
+  },
+  {
+    "id": 172,
+    "address": "София – контейнер 172",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.71952961146681,
+    "longitude": 23.36828207432562,
+    "hasSensor": true,
+    "fillLevel": 54,
+    "status": "OK"
+  },
+  {
+    "id": 173,
+    "address": "София – контейнер 173",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.674647238474115,
+    "longitude": 23.324149773547777,
+    "hasSensor": true,
+    "fillLevel": 68,
+    "status": "OK"
+  },
+  {
+    "id": 174,
+    "address": "София – контейнер 174",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.69132811218811,
+    "longitude": 23.312394190336484,
+    "hasSensor": true,
+    "fillLevel": 93,
+    "status": "FULL"
+  },
+  {
+    "id": 175,
+    "address": "София – контейнер 175",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.67063132278522,
+    "longitude": 23.280132898120353,
+    "hasSensor": true,
+    "fillLevel": 90,
+    "status": "ALERT"
+  },
+  {
+    "id": 176,
+    "address": "София – контейнер 176",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.670823620879546,
+    "longitude": 23.30104180924352,
+    "hasSensor": true,
+    "fillLevel": 29,
+    "status": "OK"
+  },
+  {
+    "id": 177,
+    "address": "София – контейнер 177",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.66704008727835,
+    "longitude": 23.301428023317282,
+    "hasSensor": true,
+    "fillLevel": 82,
+    "status": "ALERT"
+  },
+  {
+    "id": 178,
+    "address": "София – контейнер 178",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.715158281102205,
+    "longitude": 23.36977386219879,
+    "hasSensor": true,
+    "fillLevel": 34,
+    "status": "OK"
+  },
+  {
+    "id": 179,
+    "address": "София – контейнер 179",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.652921324205295,
+    "longitude": 23.32499053650319,
+    "hasSensor": true,
+    "fillLevel": 60,
+    "status": "OK"
+  },
+  {
+    "id": 180,
+    "address": "София – контейнер 180",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.73425063363268,
+    "longitude": 23.3672617039792,
+    "hasSensor": true,
+    "fillLevel": 6,
+    "status": "OK"
+  },
+  {
+    "id": 181,
+    "address": "София – контейнер 181",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.688225215768846,
+    "longitude": 23.305827065639168,
+    "hasSensor": true,
+    "fillLevel": 50,
+    "status": "OK"
+  },
+  {
+    "id": 182,
+    "address": "София – контейнер 182",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.654351515645345,
+    "longitude": 23.33127806906706,
+    "hasSensor": true,
+    "fillLevel": 21,
+    "status": "OK"
+  },
+  {
+    "id": 183,
+    "address": "София – контейнер 183",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.67070044295115,
+    "longitude": 23.306385007755022,
+    "hasSensor": true,
+    "fillLevel": 0,
+    "status": "OK"
+  },
+  {
+    "id": 184,
+    "address": "София – контейнер 184",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.70690685035141,
+    "longitude": 23.309752185057057,
+    "hasSensor": true,
+    "fillLevel": 30,
+    "status": "OK"
+  },
+  {
+    "id": 185,
+    "address": "София – контейнер 185",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.67476336585484,
+    "longitude": 23.34382726175674,
+    "hasSensor": true,
+    "fillLevel": 22,
+    "status": "OK"
+  },
+  {
+    "id": 186,
+    "address": "София – контейнер 186",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.64697514863623,
+    "longitude": 23.271353699044678,
+    "hasSensor": true,
+    "fillLevel": 57,
+    "status": "OK"
+  },
+  {
+    "id": 187,
+    "address": "София – контейнер 187",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.692000075964785,
+    "longitude": 23.337440982705072,
+    "hasSensor": true,
+    "fillLevel": 20,
+    "status": "OK"
+  },
+  {
+    "id": 188,
+    "address": "София – контейнер 188",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.65743152585556,
+    "longitude": 23.27416219820195,
+    "hasSensor": true,
+    "fillLevel": 73,
+    "status": "OK"
+  },
+  {
+    "id": 189,
+    "address": "София – контейнер 189",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.71409800042184,
+    "longitude": 23.304730195776386,
+    "hasSensor": true,
+    "fillLevel": 15,
+    "status": "OK"
+  },
+  {
+    "id": 190,
+    "address": "София – контейнер 190",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.66905642277695,
+    "longitude": 23.31120425277927,
+    "hasSensor": true,
+    "fillLevel": 7,
+    "status": "OK"
+  },
+  {
+    "id": 191,
+    "address": "София – контейнер 191",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.66415072935896,
+    "longitude": 23.341786550371918,
+    "hasSensor": true,
+    "fillLevel": 10,
+    "status": "OK"
+  },
+  {
+    "id": 192,
+    "address": "София – контейнер 192",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.697597664578744,
+    "longitude": 23.335666850152393,
+    "hasSensor": true,
+    "fillLevel": 59,
+    "status": "OK"
+  },
+  {
+    "id": 193,
+    "address": "София – контейнер 193",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.73678298116903,
+    "longitude": 23.31434034261529,
+    "hasSensor": true,
+    "fillLevel": 16,
+    "status": "OK"
+  },
+  {
+    "id": 194,
+    "address": "София – контейнер 194",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.73533104672292,
+    "longitude": 23.270410424530052,
+    "hasSensor": true,
+    "fillLevel": 34,
+    "status": "OK"
+  },
+  {
+    "id": 195,
+    "address": "София – контейнер 195",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.71782501623024,
+    "longitude": 23.366120606359697,
+    "hasSensor": true,
+    "fillLevel": 3,
+    "status": "OK"
+  },
+  {
+    "id": 196,
+    "address": "София – контейнер 196",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.67589231916034,
+    "longitude": 23.27630077397556,
+    "hasSensor": true,
+    "fillLevel": 48,
+    "status": "OK"
+  },
+  {
+    "id": 197,
+    "address": "София – контейнер 197",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.64476638889727,
+    "longitude": 23.36327486510664,
+    "hasSensor": true,
+    "fillLevel": 22,
+    "status": "OK"
+  },
+  {
+    "id": 198,
+    "address": "София – контейнер 198",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.690843251353414,
+    "longitude": 23.335781047329057,
+    "hasSensor": true,
+    "fillLevel": 23,
+    "status": "OK"
+  },
+  {
+    "id": 199,
+    "address": "София – контейнер 199",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.68618866436058,
+    "longitude": 23.29736972259089,
+    "hasSensor": true,
+    "fillLevel": 80,
+    "status": "ALERT"
+  },
+  {
+    "id": 200,
+    "address": "София – контейнер 200",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.681441831641344,
+    "longitude": 23.278959190938046,
+    "hasSensor": true,
+    "fillLevel": 49,
+    "status": "OK"
+  },
+  {
+    "id": 201,
+    "address": "София – контейнер 201",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6788360710839,
+    "longitude": 23.292440451959596,
+    "hasSensor": true,
+    "fillLevel": 70,
+    "status": "OK"
+  },
+  {
+    "id": 202,
+    "address": "София – контейнер 202",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.73712868386309,
+    "longitude": 23.30084741367613,
+    "hasSensor": true,
+    "fillLevel": 81,
+    "status": "ALERT"
+  },
+  {
+    "id": 203,
+    "address": "София – контейнер 203",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.69704390317759,
+    "longitude": 23.294774481629666,
+    "hasSensor": true,
+    "fillLevel": 72,
+    "status": "OK"
+  },
+  {
+    "id": 204,
+    "address": "София – контейнер 204",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.65145715167696,
+    "longitude": 23.270921720936236,
+    "hasSensor": true,
+    "fillLevel": 48,
+    "status": "OK"
+  },
+  {
+    "id": 205,
+    "address": "София – контейнер 205",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6481629559288,
+    "longitude": 23.35135356728644,
+    "hasSensor": true,
+    "fillLevel": 85,
+    "status": "ALERT"
+  },
+  {
+    "id": 206,
+    "address": "София – контейнер 206",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.689754368616526,
+    "longitude": 23.315348450935304,
+    "hasSensor": true,
+    "fillLevel": 70,
+    "status": "OK"
+  },
+  {
+    "id": 207,
+    "address": "София – контейнер 207",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.7252535957186,
+    "longitude": 23.327828066900175,
+    "hasSensor": true,
+    "fillLevel": 70,
+    "status": "OK"
+  },
+  {
+    "id": 208,
+    "address": "София – контейнер 208",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.69617682939155,
+    "longitude": 23.344813310886963,
+    "hasSensor": true,
+    "fillLevel": 42,
+    "status": "OK"
+  },
+  {
+    "id": 209,
+    "address": "София – контейнер 209",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.723937651866834,
+    "longitude": 23.336109883849034,
+    "hasSensor": true,
+    "fillLevel": 81,
+    "status": "ALERT"
+  },
+  {
+    "id": 210,
+    "address": "София – контейнер 210",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.7041168256824,
+    "longitude": 23.294734350259233,
+    "hasSensor": true,
+    "fillLevel": 50,
+    "status": "OK"
+  },
+  {
+    "id": 211,
+    "address": "София – контейнер 211",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.67569991986326,
+    "longitude": 23.338298714669193,
+    "hasSensor": true,
+    "fillLevel": 48,
+    "status": "OK"
+  },
+  {
+    "id": 212,
+    "address": "София – контейнер 212",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.65767248293856,
+    "longitude": 23.33305343915366,
+    "hasSensor": true,
+    "fillLevel": 77,
+    "status": "ALERT"
+  },
+  {
+    "id": 213,
+    "address": "София – контейнер 213",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.66076509276316,
+    "longitude": 23.283252258094805,
+    "hasSensor": true,
+    "fillLevel": 55,
+    "status": "OK"
+  },
+  {
+    "id": 214,
+    "address": "София – контейнер 214",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.71473278850826,
+    "longitude": 23.349214500623063,
+    "hasSensor": true,
+    "fillLevel": 54,
+    "status": "OK"
+  },
+  {
+    "id": 215,
+    "address": "София – контейнер 215",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.689496348423994,
+    "longitude": 23.30285640601993,
+    "hasSensor": true,
+    "fillLevel": 90,
+    "status": "ALERT"
+  },
+  {
+    "id": 216,
+    "address": "София – контейнер 216",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.7106417781246,
+    "longitude": 23.340006325842253,
+    "hasSensor": true,
+    "fillLevel": 22,
+    "status": "OK"
+  },
+  {
+    "id": 217,
+    "address": "София – контейнер 217",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.684516077945105,
+    "longitude": 23.299049737662774,
+    "hasSensor": true,
+    "fillLevel": 48,
+    "status": "OK"
+  },
+  {
+    "id": 218,
+    "address": "София – контейнер 218",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.641701188807644,
+    "longitude": 23.28431534969085,
+    "hasSensor": true,
+    "fillLevel": 81,
+    "status": "ALERT"
+  },
+  {
+    "id": 219,
+    "address": "София – контейнер 219",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.658753864943584,
+    "longitude": 23.284568800780683,
+    "hasSensor": true,
+    "fillLevel": 62,
+    "status": "OK"
+  },
+  {
+    "id": 220,
+    "address": "София – контейнер 220",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.69581867857781,
+    "longitude": 23.341537798976745,
+    "hasSensor": true,
+    "fillLevel": 71,
+    "status": "OK"
+  },
+  {
+    "id": 221,
+    "address": "София – контейнер 221",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.66899685520306,
+    "longitude": 23.277988288258896,
+    "hasSensor": true,
+    "fillLevel": 22,
+    "status": "OK"
+  },
+  {
+    "id": 222,
+    "address": "София – контейнер 222",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6899745298101,
+    "longitude": 23.354594290771765,
+    "hasSensor": true,
+    "fillLevel": 83,
+    "status": "ALERT"
+  },
+  {
+    "id": 223,
+    "address": "София – контейнер 223",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.67333602979036,
+    "longitude": 23.298267211635718,
+    "hasSensor": true,
+    "fillLevel": 34,
+    "status": "OK"
+  },
+  {
+    "id": 224,
+    "address": "София – контейнер 224",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.658435163274376,
+    "longitude": 23.364054948092928,
+    "hasSensor": true,
+    "fillLevel": 100,
+    "status": "FULL"
+  },
+  {
+    "id": 225,
+    "address": "София – контейнер 225",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.737036463338384,
+    "longitude": 23.30326607581047,
+    "hasSensor": true,
+    "fillLevel": 92,
+    "status": "FULL"
+  },
+  {
+    "id": 226,
+    "address": "София – контейнер 226",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.64346548741643,
+    "longitude": 23.297359842965164,
+    "hasSensor": true,
+    "fillLevel": 22,
+    "status": "OK"
+  },
+  {
+    "id": 227,
+    "address": "София – контейнер 227",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.68428265758942,
+    "longitude": 23.333381889430015,
+    "hasSensor": true,
+    "fillLevel": 84,
+    "status": "ALERT"
+  },
+  {
+    "id": 228,
+    "address": "София – контейнер 228",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.64481766294211,
+    "longitude": 23.27761039238227,
+    "hasSensor": true,
+    "fillLevel": 82,
+    "status": "ALERT"
+  },
+  {
+    "id": 229,
+    "address": "София – контейнер 229",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.66273910523971,
+    "longitude": 23.351408067684584,
+    "hasSensor": true,
+    "fillLevel": 50,
+    "status": "OK"
+  },
+  {
+    "id": 230,
+    "address": "София – контейнер 230",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.69830438605517,
+    "longitude": 23.27948485967165,
+    "hasSensor": true,
+    "fillLevel": 88,
+    "status": "ALERT"
+  },
+  {
+    "id": 231,
+    "address": "София – контейнер 231",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.691865655986,
+    "longitude": 23.35260754506819,
+    "hasSensor": true,
+    "fillLevel": 36,
+    "status": "OK"
+  },
+  {
+    "id": 232,
+    "address": "София – контейнер 232",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.68035511693149,
+    "longitude": 23.278059502730184,
+    "hasSensor": true,
+    "fillLevel": 51,
+    "status": "OK"
+  },
+  {
+    "id": 233,
+    "address": "София – контейнер 233",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.69548778946105,
+    "longitude": 23.321498124609708,
+    "hasSensor": true,
+    "fillLevel": 98,
+    "status": "FULL"
+  },
+  {
+    "id": 234,
+    "address": "София – контейнер 234",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.680675574580484,
+    "longitude": 23.28735815032516,
+    "hasSensor": true,
+    "fillLevel": 94,
+    "status": "FULL"
+  },
+  {
+    "id": 235,
+    "address": "София – контейнер 235",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.677142755134874,
+    "longitude": 23.35373399027156,
+    "hasSensor": true,
+    "fillLevel": 43,
+    "status": "OK"
+  },
+  {
+    "id": 236,
+    "address": "София – контейнер 236",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.730044053054925,
+    "longitude": 23.329577189094582,
+    "hasSensor": true,
+    "fillLevel": 18,
+    "status": "OK"
+  },
+  {
+    "id": 237,
+    "address": "София – контейнер 237",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.67354391510223,
+    "longitude": 23.30492717637939,
+    "hasSensor": true,
+    "fillLevel": 94,
+    "status": "FULL"
+  },
+  {
+    "id": 238,
+    "address": "София – контейнер 238",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.69495156576716,
+    "longitude": 23.338454924403106,
+    "hasSensor": true,
+    "fillLevel": 86,
+    "status": "ALERT"
+  },
+  {
+    "id": 239,
+    "address": "София – контейнер 239",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.66629728372034,
+    "longitude": 23.345430162217724,
+    "hasSensor": true,
+    "fillLevel": 31,
+    "status": "OK"
+  },
+  {
+    "id": 240,
+    "address": "София – контейнер 240",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.68794260763434,
+    "longitude": 23.32949688588459,
+    "hasSensor": true,
+    "fillLevel": 41,
+    "status": "OK"
+  },
+  {
+    "id": 241,
+    "address": "София – контейнер 241",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.71496648208407,
+    "longitude": 23.29315258037819,
+    "hasSensor": true,
+    "fillLevel": 14,
+    "status": "OK"
+  },
+  {
+    "id": 242,
+    "address": "София – контейнер 242",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.6789130296299,
+    "longitude": 23.303443545205482,
+    "hasSensor": true,
+    "fillLevel": 98,
+    "status": "FULL"
+  },
+  {
+    "id": 243,
+    "address": "София – контейнер 243",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.71836551073663,
+    "longitude": 23.357717211846097,
+    "hasSensor": true,
+    "fillLevel": 93,
+    "status": "FULL"
+  },
+  {
+    "id": 244,
+    "address": "София – контейнер 244",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.70849205736031,
+    "longitude": 23.325477475846885,
+    "hasSensor": true,
+    "fillLevel": 86,
+    "status": "ALERT"
+  },
+  {
+    "id": 245,
+    "address": "София – контейнер 245",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.708029220403255,
+    "longitude": 23.315803618377608,
+    "hasSensor": true,
+    "fillLevel": 11,
+    "status": "OK"
+  },
+  {
+    "id": 246,
+    "address": "София – контейнер 246",
+    "area": "София",
+    "types": [
+      "plastic",
+      "paper",
+      "glass"
+    ],
+    "latitude": 42.66415082911058,
+    "longitude": 23.363885659588245,
+    "hasSensor": true,
+    "fillLevel": 92,
+    "status": "FULL"
+  }
+]
