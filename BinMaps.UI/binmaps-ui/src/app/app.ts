@@ -4,7 +4,7 @@ import { MapComponent } from './map/map';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet,MapComponent],
+  imports: [RouterOutlet, MapComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

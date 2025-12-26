@@ -11,7 +11,7 @@ export class MapComponent implements AfterViewInit {
     const map = L.map('map').setView([42.6977, 23.3219], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
+      attribution: 'BinMaps'
     }).addTo(map);
   }
 }
