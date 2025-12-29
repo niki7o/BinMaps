@@ -5,58 +5,122 @@ import 'leaflet.markercluster';
 @Component({
   selector: 'app-map',
   standalone: true,
-  template: '<div id="map" style="height: 100vh;"></div>',
+  template: '<div id="map"></div>',
+  styleUrls: ['./map.css']
 })
 export class MapComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
-  
-    const iconDefault = L.icon({
-     iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      tooltipAnchor: [16, -28],
-      shadowSize: [41, 41]
-    });
-    L.Marker.prototype.options.icon = iconDefault;
-
     const map = L.map('map').setView([42.6977, 23.3219], 11);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: 'BinMaps'
     }).addTo(map);
 
+    this.loadAreas(map);
     this.loadBins(map);
   }
 
-  loadBins(map: L.Map) {
+  loadAreas(map: L.Map) {
+  fetch('/assets/data/areas.geojson')
+    .then(r => r.json())
+    .then(data => {
+      L.geoJSON(data, {
+  style: {
+    color: '#000',
+    weight: 4,
+    fillOpacity: 0
+  },
+  onEachFeature: (feature, layer: any) => {
+  layer.on({
+    mouseover: (e: any) => {
+      e.target.setStyle({ weight: 4 });
+    },
+    mouseout: (e: any) => {
+      e.target.setStyle({ weight: 2 });
+    },
+    click: (e: any) => {
+      map.fitBounds(e.target.getBounds(), { padding: [40, 40] });
+    }
+  });
 
-    fetch('assets/data/trash-containers.json')
-      .then(res => res.json())
-      .then(data => this.renderClusters(map, data))
-      .catch(err => console.error('Data load error:', err));
+  layer.bindPopup(`<b>${feature.properties.name}</b>`);
+}
+   }).addTo(map);
+});
+}
+
+
+  loadBins(map: L.Map) {
+    fetch('/assets/data/trash-containers.json')
+      .then(r => r.json())
+      .then(bins => this.renderBins(map, bins));
   }
 
-  renderClusters(map: L.Map, bins: any[]) {
-    // 2. FIX: Cast L to any so TypeScript allows .markerClusterGroup()
-    const clusterGroup = (L as any).markerClusterGroup();
+  renderBins(map: L.Map, bins: any[]) {
+    const cluster = L.markerClusterGroup();
 
     bins.forEach(bin => {
-      const marker = L.marker([bin.latitude, bin.longitude]);
+      const marker = L.marker(
+        [bin.latitude, bin.longitude],
+        { icon: this.getBinIcon(bin) }
+      );
 
       marker.bindPopup(`
         <b>${bin.address}</b><br/>
-        Район: ${bin.area}<br/>
-        Запълване: ${bin.fillLevel}%<br/>
-        Статус: ${bin.status}
+        Area: ${bin.area}<br/>
+        Type: ${bin.trashType}<br/>
+        Fill: ${bin.fillLevel}%<br/>
+        Sensor: ${bin.hasSensor ? 'Има' : 'Няма'}
       `);
 
-      clusterGroup.addLayer(marker);
+      cluster.addLayer(marker);
     });
 
-    map.addLayer(clusterGroup);
+    map.addLayer(cluster);
   }
+
+  getBinIcon(bin: any): L.Icon {
+  let fillClass = 'fill-low';
+  if (bin.fillLevel > 70) fillClass = 'fill-high';
+  else if (bin.fillLevel > 40) fillClass = 'fill-medium';
+
+  if (bin.status === 'fire') {
+    return L.icon({
+      iconUrl: '/assets/icons/bin-fire.svg',
+      iconSize: [32, 32]
+    });
+  }
+
+  return L.icon({
+    iconUrl: `/assets/icons/bin-${bin.trashType}.svg`,
+    iconSize: [28, 28],
+    className: `bin-icon ${fillClass} ${bin.hasSensor ? 'has-sensor' : ''}`
+  });
+}
+addLegend(map: L.Map) {
+  const legend = new L.Control({ position: 'bottomright' });
+
+  legend.onAdd = () => {
+    const div = L.DomUtil.create('div', 'legend');
+    div.innerHTML = `
+      <h4>Legend</h4>
+      <div><img src="/assets/icons/bin-plastic.svg"> Plastic</div>
+      <div><img src="/assets/icons/bin-paper.svg"> Paper</div>
+      <div><img src="/assets/icons/bin-glass.svg"> Glass</div>
+      <div><img src="/assets/icons/bin-mixed.svg"> Mixed</div>
+      <hr/>
+      <div><span class="box green"></span> Low fill</div>
+      <div><span class="box orange"></span> Medium fill</div>
+      <div><span class="box red"></span> High fill</div>
+      <hr/>
+      <div><span class="dot"></span> Sensor</div>
+      <div><img src="/assets/icons/bin-fire.svg"> Fire</div>
+    `;
+    return div;
+  };
+
+  legend.addTo(map);
+}
+
 }

@@ -1,3692 +1,1973 @@
 [
   {
     "id": 1,
-    "address": "София – контейнер 1",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 1",
     "latitude": 42.704171338632555,
     "longitude": 23.30502009430058,
-    "hasSensor": true,
-    "fillLevel": 1,
-    "status": "OK"
+    "area": "София-Център",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 45,
+    "status": "active"
   },
   {
     "id": 2,
-    "address": "София – контейнер 2",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 2",
     "latitude": 42.69692221023526,
     "longitude": 23.326880670317696,
+    "area": "София-Център",
+    "trashType": "plastic",
     "hasSensor": true,
-    "fillLevel": 51,
-    "status": "OK"
+    "sensorBattery": 82,
+    "fillLevel": 12,
+    "status": "active"
   },
   {
     "id": 3,
-    "address": "София – контейнер 3",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 3",
     "latitude": 42.64671730657379,
     "longitude": 23.3489144476248,
+    "area": "Студентски-град",
+    "trashType": "paper",
     "hasSensor": true,
-    "fillLevel": 74,
-    "status": "OK"
+    "sensorBattery": 94,
+    "fillLevel": 67,
+    "status": "active"
   },
   {
     "id": 4,
-    "address": "София – контейнер 4",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 4",
     "latitude": 42.6413870499304,
     "longitude": 23.278873777079824,
-    "hasSensor": true,
-    "fillLevel": 17,
-    "status": "OK"
+    "area": "Овча-Купел",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 89,
+    "status": "active"
   },
   {
     "id": 5,
-    "address": "София – контейнер 5",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 5",
     "latitude": 42.67540249980753,
     "longitude": 23.283684462030568,
+    "area": "Красно-Село",
+    "trashType": "glass",
     "hasSensor": true,
-    "fillLevel": 83,
-    "status": "ALERT"
+    "sensorBattery": 45,
+    "fillLevel": 10,
+    "status": "active"
   },
   {
     "id": 6,
-    "address": "София – контейнер 6",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 6",
     "latitude": 42.71177979392916,
     "longitude": 23.34680099813568,
-    "hasSensor": true,
-    "fillLevel": 87,
-    "status": "ALERT"
+    "area": "Надежда",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 23,
+    "status": "active"
   },
   {
     "id": 7,
-    "address": "София – контейнер 7",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 7",
     "latitude": 42.66052903470625,
     "longitude": 23.355631547641686,
+    "area": "Младост",
+    "trashType": "plastic",
     "hasSensor": true,
-    "fillLevel": 67,
-    "status": "OK"
+    "sensorBattery": 77,
+    "fillLevel": 54,
+    "status": "active"
   },
   {
     "id": 8,
-    "address": "София – контейнер 8",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 8",
     "latitude": 42.69692619092856,
     "longitude": 23.287399908483845,
-    "hasSensor": true,
-    "fillLevel": 43,
-    "status": "OK"
+    "area": "Люлин",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 91,
+    "status": "active"
   },
   {
     "id": 9,
-    "address": "София – контейнер 9",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 9",
     "latitude": 42.675289237251505,
     "longitude": 23.28628772007423,
+    "area": "Красно-Село",
+    "trashType": "paper",
     "hasSensor": true,
-    "fillLevel": 47,
-    "status": "OK"
+    "sensorBattery": 31,
+    "fillLevel": 42,
+    "status": "active"
   },
   {
     "id": 10,
-    "address": "София – контейнер 10",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 10",
     "latitude": 42.72963273151584,
     "longitude": 23.329497868668895,
+    "area": "Надежда",
+    "trashType": "glass",
     "hasSensor": true,
-    "fillLevel": 43,
-    "status": "OK"
+    "sensorBattery": 88,
+    "fillLevel": 5,
+    "status": "active"
   },
   {
     "id": 11,
-    "address": "София – контейнер 11",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 11",
     "latitude": 42.72045342255343,
     "longitude": 23.276103860412206,
-    "hasSensor": true,
-    "fillLevel": 24,
-    "status": "OK"
+    "area": "Люлин",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 55,
+    "status": "active"
   },
   {
     "id": 12,
-    "address": "София – контейнер 12",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 12",
     "latitude": 42.68290852174549,
     "longitude": 23.32347332706407,
+    "area": "София-Център",
+    "trashType": "plastic",
     "hasSensor": true,
-    "fillLevel": 68,
-    "status": "OK"
+    "sensorBattery": 15,
+    "fillLevel": 98,
+    "status": "active"
   },
   {
     "id": 13,
-    "address": "София – контейнер 13",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 13",
     "latitude": 42.71525439390207,
     "longitude": 23.280630683072165,
+    "area": "Люлин",
+    "trashType": "paper",
     "hasSensor": true,
-    "fillLevel": 9,
-    "status": "OK"
+    "sensorBattery": 62,
+    "fillLevel": 20,
+    "status": "active"
   },
   {
     "id": 14,
-    "address": "София – контейнер 14",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 14",
     "latitude": 42.66039268120828,
     "longitude": 23.305463603718206,
-    "hasSensor": true,
-    "fillLevel": 37,
-    "status": "OK"
+    "area": "Лозенец",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 34,
+    "status": "active"
   },
   {
     "id": 15,
-    "address": "София – контейнер 15",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 15",
     "latitude": 42.649336971854325,
     "longitude": 23.2851529651924,
+    "area": "Овча-Купел",
+    "trashType": "glass",
     "hasSensor": true,
-    "fillLevel": 82,
-    "status": "ALERT"
+    "sensorBattery": 54,
+    "fillLevel": 71,
+    "status": "active"
   },
   {
     "id": 16,
-    "address": "София – контейнер 16",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 16",
     "latitude": 42.680954905727695,
     "longitude": 23.285271753831683,
-    "hasSensor": true,
-    "fillLevel": 67,
-    "status": "OK"
+    "area": "Красно-Село",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 12,
+    "status": "active"
   },
   {
     "id": 17,
-    "address": "София – контейнер 17",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 17",
     "latitude": 42.65614757424381,
     "longitude": 23.344222004805108,
+    "area": "Младост",
+    "trashType": "plastic",
     "hasSensor": true,
-    "fillLevel": 1,
-    "status": "OK"
+    "sensorBattery": 91,
+    "fillLevel": 38,
+    "status": "active"
   },
   {
     "id": 18,
-    "address": "София – контейнер 18",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 18",
     "latitude": 42.708590766609426,
     "longitude": 23.305287586976398,
+    "area": "София-Център",
+    "trashType": "paper",
     "hasSensor": true,
-    "fillLevel": 27,
-    "status": "OK"
+    "sensorBattery": 47,
+    "fillLevel": 84,
+    "status": "active"
   },
   {
     "id": 19,
-    "address": "София – контейнер 19",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 19",
     "latitude": 42.722369027506915,
     "longitude": 23.306404323774412,
-    "hasSensor": true,
-    "fillLevel": 32,
-    "status": "OK"
+    "area": "Надежда",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 60,
+    "status": "active"
   },
   {
     "id": 20,
-    "address": "София – контейнер 20",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 20",
     "latitude": 42.728390032171944,
     "longitude": 23.298955686894402,
+    "area": "Люлин",
+    "trashType": "glass",
     "hasSensor": true,
-    "fillLevel": 79,
-    "status": "ALERT"
+    "sensorBattery": 12,
+    "fillLevel": 95,
+    "status": "active"
   },
   {
     "id": 21,
-    "address": "София – контейнер 21",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 21",
     "latitude": 42.648442907524334,
     "longitude": 23.326949391152464,
+    "area": "Студентски-град",
+    "trashType": "plastic",
     "hasSensor": true,
+    "sensorBattery": 88,
     "fillLevel": 80,
-    "status": "ALERT"
+    "status": "active"
   },
   {
     "id": 22,
-    "address": "София – контейнер 22",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 22",
     "latitude": 42.73727094280873,
     "longitude": 23.347191818026864,
-    "hasSensor": true,
+    "area": "Надежда",
+    "trashType": "mixed",
+    "hasSensor": false,
     "fillLevel": 30,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 23,
-    "address": "София – контейнер 23",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 23",
     "latitude": 42.703574950871094,
     "longitude": 23.346077980016585,
+    "area": "Надежда",
+    "trashType": "paper",
     "hasSensor": true,
+    "sensorBattery": 42,
     "fillLevel": 38,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 24,
-    "address": "София – контейнер 24",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 24",
     "latitude": 42.645124456456955,
     "longitude": 23.367641574823743,
+    "area": "Младост",
+    "trashType": "glass",
     "hasSensor": true,
+    "sensorBattery": 95,
     "fillLevel": 32,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 25,
-    "address": "София – контейнер 25",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 25",
     "latitude": 42.67409968328124,
     "longitude": 23.34292537561514,
-    "hasSensor": true,
+    "area": "Лозенец",
+    "trashType": "mixed",
+    "hasSensor": false,
     "fillLevel": 69,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 26,
-    "address": "София – контейнер 26",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 26",
     "latitude": 42.667164713779435,
     "longitude": 23.345812554290344,
+    "area": "Лозенец",
+    "trashType": "plastic",
     "hasSensor": true,
+    "sensorBattery": 15,
     "fillLevel": 92,
-    "status": "FULL"
+    "status": "active"
   },
   {
     "id": 27,
-    "address": "София – контейнер 27",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 27",
     "latitude": 42.6435192073208,
     "longitude": 23.307156424202066,
+    "area": "Иван-Вазов",
+    "trashType": "paper",
     "hasSensor": true,
+    "sensorBattery": 73,
     "fillLevel": 71,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 28,
-    "address": "София – контейнер 28",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 28",
     "latitude": 42.70894541246179,
     "longitude": 23.288307234364016,
-    "hasSensor": true,
+    "area": "Люлин",
+    "trashType": "mixed",
+    "hasSensor": false,
     "fillLevel": 61,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 29,
-    "address": "София – контейнер 29",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 29",
     "latitude": 42.68612380857139,
     "longitude": 23.33651196375957,
+    "area": "София-Център",
+    "trashType": "glass",
     "hasSensor": true,
+    "sensorBattery": 54,
     "fillLevel": 0,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 30,
-    "address": "София – контейнер 30",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 30",
     "latitude": 42.64508966551495,
     "longitude": 23.28570668457782,
+    "area": "Овча-Купел",
+    "trashType": "plastic",
     "hasSensor": true,
+    "sensorBattery": 36,
     "fillLevel": 91,
-    "status": "FULL"
+    "status": "active"
   },
   {
     "id": 31,
-    "address": "София – контейнер 31",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 31",
     "latitude": 42.640630056737315,
     "longitude": 23.31116996285773,
-    "hasSensor": true,
+    "area": "Иван-Вазов",
+    "trashType": "mixed",
+    "hasSensor": false,
     "fillLevel": 3,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 32,
-    "address": "София – контейнер 32",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 32",
     "latitude": 42.682194393297614,
     "longitude": 23.355237750818635,
+    "area": "Дружба",
+    "trashType": "paper",
     "hasSensor": true,
+    "sensorBattery": 82,
     "fillLevel": 16,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 33,
-    "address": "София – контейнер 33",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 33",
     "latitude": 42.682119157003825,
     "longitude": 23.35776335253371,
+    "area": "Дружба",
+    "trashType": "glass",
     "hasSensor": true,
+    "sensorBattery": 100,
     "fillLevel": 26,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 34,
-    "address": "София – контейнер 34",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 34",
     "latitude": 42.68436470899153,
     "longitude": 23.300196324849367,
-    "hasSensor": true,
+    "area": "Красно-Село",
+    "trashType": "mixed",
+    "hasSensor": false,
     "fillLevel": 20,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 35,
-    "address": "София – контейнер 35",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 35",
     "latitude": 42.7335623975412,
     "longitude": 23.36903731784769,
+    "area": "Надежда",
+    "trashType": "plastic",
     "hasSensor": true,
+    "sensorBattery": 65,
     "fillLevel": 9,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 36,
-    "address": "София – контейнер 36",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 36",
     "latitude": 42.71133104876195,
     "longitude": 23.353950494128796,
+    "area": "Надежда",
+    "trashType": "paper",
     "hasSensor": true,
+    "sensorBattery": 12,
     "fillLevel": 21,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 37,
-    "address": "София – контейнер 37",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 37",
     "latitude": 42.711941022307265,
     "longitude": 23.271780748896617,
-    "hasSensor": true,
+    "area": "Люлин",
+    "trashType": "mixed",
+    "hasSensor": false,
     "fillLevel": 14,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 38,
-    "address": "София – контейнер 38",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 38",
     "latitude": 42.73246804667271,
     "longitude": 23.27841285342789,
+    "area": "Люлин",
+    "trashType": "glass",
     "hasSensor": true,
+    "sensorBattery": 58,
     "fillLevel": 36,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 39,
-    "address": "София – контейнер 39",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 39",
     "latitude": 42.72019547278927,
     "longitude": 23.34768753112148,
+    "area": "Надежда",
+    "trashType": "plastic",
     "hasSensor": true,
+    "sensorBattery": 77,
     "fillLevel": 13,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 40,
-    "address": "София – контейнер 40",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 40",
     "latitude": 42.73080147763472,
     "longitude": 23.367890356743313,
-    "hasSensor": true,
+    "area": "Надежда",
+    "trashType": "mixed",
+    "hasSensor": false,
     "fillLevel": 60,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 41,
-    "address": "София – контейнер 41",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 41",
     "latitude": 42.723375717488686,
     "longitude": 23.352931379689,
+    "area": "Надежда",
+    "trashType": "paper",
     "hasSensor": true,
+    "sensorBattery": 82,
     "fillLevel": 77,
-    "status": "ALERT"
+    "status": "active"
   },
   {
     "id": 42,
-    "address": "София – контейнер 42",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 42",
     "latitude": 42.737704680172214,
     "longitude": 23.342886083794742,
+    "area": "Надежда",
+    "trashType": "glass",
     "hasSensor": true,
+    "sensorBattery": 15,
     "fillLevel": 24,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 43,
-    "address": "София – контейнер 43",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 43",
     "latitude": 42.68450203267344,
     "longitude": 23.324246724703997,
-    "hasSensor": true,
+    "area": "София-Център",
+    "trashType": "mixed",
+    "hasSensor": false,
     "fillLevel": 61,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 44,
-    "address": "София – контейнер 44",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 44",
     "latitude": 42.66806800678269,
     "longitude": 23.356755192326816,
+    "area": "Младост",
+    "trashType": "plastic",
     "hasSensor": true,
+    "sensorBattery": 90,
     "fillLevel": 72,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 45,
-    "address": "София – контейнер 45",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 45",
     "latitude": 42.65708343849647,
     "longitude": 23.321938716817627,
+    "area": "Лозенец",
+    "trashType": "paper",
     "hasSensor": true,
+    "sensorBattery": 64,
     "fillLevel": 48,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 46,
-    "address": "София – контейнер 46",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 46",
     "latitude": 42.683906868497864,
     "longitude": 23.319702289684244,
-    "hasSensor": true,
+    "area": "София-Център",
+    "trashType": "mixed",
+    "hasSensor": false,
     "fillLevel": 41,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 47,
-    "address": "София – контейнер 47",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 47",
     "latitude": 42.67345091621989,
     "longitude": 23.3384025285363,
+    "area": "Лозенец",
+    "trashType": "glass",
     "hasSensor": true,
+    "sensorBattery": 22,
     "fillLevel": 88,
-    "status": "ALERT"
+    "status": "active"
   },
   {
     "id": 48,
-    "address": "София – контейнер 48",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 48",
     "latitude": 42.65318419457027,
     "longitude": 23.276507108822813,
+    "area": "Овча-Купел",
+    "trashType": "plastic",
     "hasSensor": true,
+    "sensorBattery": 51,
     "fillLevel": 71,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 49,
-    "address": "София – контейнер 49",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 49",
     "latitude": 42.681476944011315,
     "longitude": 23.293229389090065,
-    "hasSensor": true,
+    "area": "Красно-Село",
+    "trashType": "mixed",
+    "hasSensor": false,
     "fillLevel": 90,
-    "status": "ALERT"
+    "status": "active"
   },
   {
     "id": 50,
-    "address": "София – контейнер 50",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 50",
     "latitude": 42.69512771986159,
     "longitude": 23.30641776908631,
+    "area": "София-Център",
+    "trashType": "paper",
     "hasSensor": true,
+    "sensorBattery": 89,
     "fillLevel": 16,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 51,
-    "address": "София – контейнер 51",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 51",
     "latitude": 42.65887094974426,
     "longitude": 23.35831767905118,
+    "area": "Младост",
+    "trashType": "glass",
     "hasSensor": true,
+    "sensorBattery": 34,
     "fillLevel": 5,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 52,
-    "address": "София – контейнер 52",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 52",
     "latitude": 42.6810894701898,
     "longitude": 23.34572943211795,
-    "hasSensor": true,
+    "area": "Лозенец",
+    "trashType": "mixed",
+    "hasSensor": false,
     "fillLevel": 58,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 53,
-    "address": "София – контейнер 53",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 53",
     "latitude": 42.64784660940299,
     "longitude": 23.314197657417992,
+    "area": "Студентски-град",
+    "trashType": "plastic",
     "hasSensor": true,
+    "sensorBattery": 91,
     "fillLevel": 38,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 54,
-    "address": "София – контейнер 54",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 54",
     "latitude": 42.692457386473805,
     "longitude": 23.27614211833049,
+    "area": "Люлин",
+    "trashType": "paper",
     "hasSensor": true,
+    "sensorBattery": 48,
     "fillLevel": 35,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 55,
-    "address": "София – контейнер 55",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 55",
     "latitude": 42.652594645426454,
     "longitude": 23.302847224285784,
-    "hasSensor": true,
+    "area": "Лозенец",
+    "trashType": "mixed",
+    "hasSensor": false,
     "fillLevel": 53,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 56,
-    "address": "София – контейнер 56",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 56",
     "latitude": 42.718816030625554,
     "longitude": 23.29046961854451,
+    "area": "Люлин",
+    "trashType": "glass",
     "hasSensor": true,
+    "sensorBattery": 67,
     "fillLevel": 48,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 57,
-    "address": "София – контейнер 57",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 57",
     "latitude": 42.68989196562256,
     "longitude": 23.27320060814625,
+    "area": "Люлин",
+    "trashType": "plastic",
     "hasSensor": true,
+    "sensorBattery": 25,
     "fillLevel": 52,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 58,
-    "address": "София – контейнер 58",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 58",
     "latitude": 42.73487795398019,
     "longitude": 23.34418093720497,
-    "hasSensor": true,
+    "area": "Надежда",
+    "trashType": "mixed",
+    "hasSensor": false,
     "fillLevel": 99,
-    "status": "FULL"
+    "status": "active"
   },
   {
     "id": 59,
-    "address": "София – контейнер 59",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 59",
     "latitude": 42.65533324927033,
     "longitude": 23.327069662283975,
+    "area": "Студентски-град",
+    "trashType": "paper",
     "hasSensor": true,
+    "sensorBattery": 81,
     "fillLevel": 2,
-    "status": "OK"
+    "status": "active"
   },
   {
     "id": 60,
-    "address": "София – контейнер 60",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
+    "address": "Контейнер 60",
     "latitude": 42.66981862204101,
     "longitude": 23.31181405844416,
-    "hasSensor": true,
+    "area": "Лозенец",
+    "trashType": "mixed",
+    "hasSensor": false,
     "fillLevel": 77,
-    "status": "ALERT"
+    "status": "active"
   },
   {
     "id": 61,
-    "address": "София – контейнер 61",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.704139984803845,
-    "longitude": 23.340387725459365,
+    "address": "Контейнер 61",
+    "latitude": 42.64805367618059,
+    "longitude": 23.33644917904008,
+    "area": "Студентски-град",
+    "trashType": "glass",
     "hasSensor": true,
-    "fillLevel": 23,
-    "status": "OK"
+    "sensorBattery": 44,
+    "fillLevel": 45,
+    "status": "active"
   },
   {
     "id": 62,
-    "address": "София – контейнер 62",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.70697602585272,
-    "longitude": 23.27885298384076,
+    "address": "Контейнер 62",
+    "latitude": 42.711181711283625,
+    "longitude": 23.277054941916327,
+    "area": "Люлин",
+    "trashType": "plastic",
     "hasSensor": true,
-    "fillLevel": 48,
-    "status": "OK"
+    "sensorBattery": 96,
+    "fillLevel": 90,
+    "status": "active"
   },
   {
     "id": 63,
-    "address": "София – контейнер 63",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.72056382372306,
-    "longitude": 23.272859438248812,
-    "hasSensor": true,
-    "fillLevel": 11,
-    "status": "OK"
+    "address": "Контейнер 63",
+    "latitude": 42.68413697960686,
+    "longitude": 23.32831518206122,
+    "area": "София-Център",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 18,
+    "status": "active"
   },
   {
     "id": 64,
-    "address": "София – контейнер 64",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.69326164144569,
-    "longitude": 23.366858808229946,
+    "address": "Контейнер 64",
+    "latitude": 42.66107872688756,
+    "longitude": 23.351658428172915,
+    "area": "Младост",
+    "trashType": "paper",
     "hasSensor": true,
-    "fillLevel": 12,
-    "status": "OK"
+    "sensorBattery": 33,
+    "fillLevel": 74,
+    "status": "active"
   },
   {
     "id": 65,
-    "address": "София – контейнер 65",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.70318233570786,
-    "longitude": 23.351100071079333,
+    "address": "Контейнер 65",
+    "latitude": 42.6694676572709,
+    "longitude": 23.28479532551508,
+    "area": "Красно-Село",
+    "trashType": "glass",
     "hasSensor": true,
-    "fillLevel": 85,
-    "status": "ALERT"
+    "sensorBattery": 61,
+    "fillLevel": 22,
+    "status": "active"
   },
   {
     "id": 66,
-    "address": "София – контейнер 66",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.71785923737137,
-    "longitude": 23.306900140074646,
-    "hasSensor": true,
-    "fillLevel": 92,
-    "status": "FULL"
+    "address": "Контейнер 66",
+    "latitude": 42.66885662707769,
+    "longitude": 23.338271701980845,
+    "area": "Лозенец",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 6,
+    "status": "active"
   },
   {
     "id": 67,
-    "address": "София – контейнер 67",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.66763973955829,
-    "longitude": 23.315679603103998,
+    "address": "Контейнер 67",
+    "latitude": 42.71765103433602,
+    "longitude": 23.339668388657697,
+    "area": "Надежда",
+    "trashType": "plastic",
     "hasSensor": true,
-    "fillLevel": 95,
-    "status": "FULL"
+    "sensorBattery": 12,
+    "fillLevel": 49,
+    "status": "active"
   },
   {
     "id": 68,
-    "address": "София – контейнер 68",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.64283657382547,
-    "longitude": 23.303918155761092,
+    "address": "Контейнер 68",
+    "latitude": 42.65651817666277,
+    "longitude": 23.357117180424574,
+    "area": "Младост",
+    "trashType": "paper",
     "hasSensor": true,
-    "fillLevel": 52,
-    "status": "OK"
+    "sensorBattery": 85,
+    "fillLevel": 88,
+    "status": "active"
   },
   {
     "id": 69,
-    "address": "София – контейнер 69",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.64051544467258,
-    "longitude": 23.29568833910876,
-    "hasSensor": true,
-    "fillLevel": 31,
-    "status": "OK"
+    "address": "Контейнер 69",
+    "latitude": 42.68449171720641,
+    "longitude": 23.292520379964593,
+    "area": "Красно-Село",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 35,
+    "status": "active"
   },
   {
     "id": 70,
-    "address": "София – контейнер 70",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.70591939455799,
-    "longitude": 23.33965948566224,
+    "address": "Контейнер 70",
+    "latitude": 42.72124503797967,
+    "longitude": 23.36001099195392,
+    "area": "Надежда",
+    "trashType": "glass",
     "hasSensor": true,
-    "fillLevel": 76,
-    "status": "ALERT"
+    "sensorBattery": 49,
+    "fillLevel": 11,
+    "status": "active"
   },
   {
     "id": 71,
-    "address": "София – контейнер 71",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.68554747937213,
-    "longitude": 23.31248062722332,
+    "address": "Контейнер 71",
+    "latitude": 42.73030218731118,
+    "longitude": 23.313462529241946,
+    "area": "Надежда",
+    "trashType": "plastic",
     "hasSensor": true,
-    "fillLevel": 64,
-    "status": "OK"
+    "sensorBattery": 92,
+    "fillLevel": 62,
+    "status": "active"
   },
   {
     "id": 72,
-    "address": "София – контейнер 72",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.70167410899889,
-    "longitude": 23.281081261985243,
-    "hasSensor": true,
-    "fillLevel": 42,
-    "status": "OK"
+    "address": "Контейнер 72",
+    "latitude": 42.6397330510617,
+    "longitude": 23.284214693992225,
+    "area": "Овча-Купел",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 27,
+    "status": "active"
   },
   {
     "id": 73,
-    "address": "София – контейнер 73",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.73387605641642,
-    "longitude": 23.358809078430337,
+    "address": "Контейнер 73",
+    "latitude": 42.673891461413865,
+    "longitude": 23.36537754388657,
+    "area": "Дружба",
+    "trashType": "paper",
     "hasSensor": true,
-    "fillLevel": 60,
-    "status": "OK"
+    "sensorBattery": 10,
+    "fillLevel": 93,
+    "status": "active"
   },
   {
     "id": 74,
-    "address": "София – контейнер 74",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.65487665364235,
-    "longitude": 23.28881503587098,
+    "address": "Контейнер 74",
+    "latitude": 42.709973212624414,
+    "longitude": 23.29056157018318,
+    "area": "Люлин",
+    "trashType": "glass",
     "hasSensor": true,
-    "fillLevel": 63,
-    "status": "OK"
+    "sensorBattery": 66,
+    "fillLevel": 56,
+    "status": "active"
   },
   {
     "id": 75,
-    "address": "София – контейнер 75",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.69332291477935,
-    "longitude": 23.3619788033219,
-    "hasSensor": true,
-    "fillLevel": 23,
-    "status": "OK"
+    "address": "Контейнер 75",
+    "latitude": 42.66205886365022,
+    "longitude": 23.31422791443657,
+    "area": "Иван-Вазов",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 81,
+    "status": "active"
   },
   {
     "id": 76,
-    "address": "София – контейнер 76",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.67809892671432,
-    "longitude": 23.31216296554503,
+    "address": "Контейнер 76",
+    "latitude": 42.70002167448206,
+    "longitude": 23.324838634816912,
+    "area": "София-Център",
+    "trashType": "plastic",
     "hasSensor": true,
-    "fillLevel": 48,
-    "status": "OK"
+    "sensorBattery": 84,
+    "fillLevel": 40,
+    "status": "active"
   },
   {
     "id": 77,
-    "address": "София – контейнер 77",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.65857492664348,
-    "longitude": 23.301627029139837,
+    "address": "Контейнер 77",
+    "latitude": 42.66854580251999,
+    "longitude": 23.359263435889617,
+    "area": "Младост",
+    "trashType": "paper",
     "hasSensor": true,
-    "fillLevel": 90,
-    "status": "ALERT"
+    "sensorBattery": 27,
+    "fillLevel": 19,
+    "status": "active"
   },
   {
     "id": 78,
-    "address": "София – контейнер 78",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.71849313425213,
-    "longitude": 23.342253329458103,
-    "hasSensor": true,
-    "fillLevel": 52,
-    "status": "OK"
+    "address": "Контейнер 78",
+    "latitude": 42.64726590393043,
+    "longitude": 23.275005881472535,
+    "area": "Овча-Купел",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 75,
+    "status": "active"
   },
   {
     "id": 79,
-    "address": "София – контейнер 79",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.67292867987181,
-    "longitude": 23.27329257473085,
+    "address": "Контейнер 79",
+    "latitude": 42.64551723145115,
+    "longitude": 23.332028604725656,
+    "area": "Студентски-град",
+    "trashType": "glass",
     "hasSensor": true,
-    "fillLevel": 61,
-    "status": "OK"
+    "sensorBattery": 59,
+    "fillLevel": 28,
+    "status": "active"
   },
   {
     "id": 80,
-    "address": "София – контейнер 80",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.66230459347983,
-    "longitude": 23.281869178511936,
+    "address": "Контейнер 80",
+    "latitude": 42.701123456789,
+    "longitude": 23.28123456789,
+    "area": "Люлин",
+    "trashType": "plastic",
     "hasSensor": true,
-    "fillLevel": 91,
-    "status": "FULL"
+    "sensorBattery": 100,
+    "fillLevel": 50,
+    "status": "active"
   },
   {
     "id": 81,
-    "address": "София – контейнер 81",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.646346811845724,
-    "longitude": 23.306689350378797,
-    "hasSensor": true,
-    "fillLevel": 85,
-    "status": "ALERT"
+    "address": "Контейнер 81",
+    "latitude": 42.68987654321,
+    "longitude": 23.3187654321,
+    "area": "София-Център",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 92,
+    "status": "active"
   },
   {
     "id": 82,
-    "address": "София – контейнер 82",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.65875481055219,
-    "longitude": 23.329104599128154,
+    "address": "Контейнер 82",
+    "latitude": 42.7123456789,
+    "longitude": 23.303456789,
+    "area": "Надежда",
+    "trashType": "paper",
     "hasSensor": true,
-    "fillLevel": 41,
-    "status": "OK"
+    "sensorBattery": 15,
+    "fillLevel": 11,
+    "status": "active"
   },
   {
     "id": 83,
-    "address": "София – контейнер 83",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.726482306955624,
-    "longitude": 23.301237712717832,
+    "address": "Контейнер 83",
+    "latitude": 42.723456789,
+    "longitude": 23.27456789,
+    "area": "Люлин",
+    "trashType": "glass",
     "hasSensor": true,
-    "fillLevel": 84,
-    "status": "ALERT"
+    "sensorBattery": 68,
+    "fillLevel": 43,
+    "status": "active"
   },
   {
     "id": 84,
-    "address": "София – контейнер 84",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.65422680093194,
-    "longitude": 23.32279940289304,
-    "hasSensor": true,
-    "fillLevel": 67,
-    "status": "OK"
+    "address": "Контейнер 84",
+    "latitude": 42.66456789,
+    "longitude": 23.3656789,
+    "area": "Младост",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 66,
+    "status": "active"
   },
   {
     "id": 85,
-    "address": "София – контейнер 85",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.672542279626505,
-    "longitude": 23.302593374390767,
+    "address": "Контейнер 85",
+    "latitude": 42.65123456,
+    "longitude": 23.33123456,
+    "area": "Студентски-град",
+    "trashType": "plastic",
     "hasSensor": true,
-    "fillLevel": 71,
-    "status": "OK"
+    "sensorBattery": 94,
+    "fillLevel": 24,
+    "status": "active"
   },
   {
     "id": 86,
-    "address": "София – контейнер 86",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.661010423973266,
-    "longitude": 23.36156865558031,
+    "address": "Контейнер 86",
+    "latitude": 42.68123456,
+    "longitude": 23.30123456,
+    "area": "Красно-Село",
+    "trashType": "paper",
     "hasSensor": true,
-    "fillLevel": 77,
-    "status": "ALERT"
+    "sensorBattery": 38,
+    "fillLevel": 78,
+    "status": "active"
   },
   {
     "id": 87,
-    "address": "София – контейнер 87",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.658859045481094,
-    "longitude": 23.30327638729522,
-    "hasSensor": true,
-    "fillLevel": 41,
-    "status": "OK"
+    "address": "Контейнер 87",
+    "latitude": 42.69456789,
+    "longitude": 23.32456789,
+    "area": "София-Център",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 5,
+    "status": "active"
   },
   {
     "id": 88,
-    "address": "София – контейнер 88",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.67100766856829,
-    "longitude": 23.308323465640985,
+    "address": "Контейнер 88",
+    "latitude": 42.63456789,
+    "longitude": 23.34456789,
+    "area": "Студентски-град",
+    "trashType": "glass",
     "hasSensor": true,
-    "fillLevel": 54,
-    "status": "OK"
+    "sensorBattery": 71,
+    "fillLevel": 88,
+    "status": "active"
   },
   {
     "id": 89,
-    "address": "София – контейнер 89",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.683786727858646,
-    "longitude": 23.34462423378635,
+    "address": "Контейнер 89",
+    "latitude": 42.66123456,
+    "longitude": 23.30123456,
+    "area": "Иван-Вазов",
+    "trashType": "plastic",
     "hasSensor": true,
-    "fillLevel": 22,
-    "status": "OK"
+    "sensorBattery": 42,
+    "fillLevel": 94,
+    "status": "active"
   },
   {
     "id": 90,
-    "address": "София – контейнер 90",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.7228582674376,
-    "longitude": 23.29858149263447,
-    "hasSensor": true,
-    "fillLevel": 15,
-    "status": "OK"
+    "address": "Контейнер 90",
+    "latitude": 42.67123456,
+    "longitude": 23.37123456,
+    "area": "Дружба",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 37,
+    "status": "active"
   },
   {
     "id": 91,
-    "address": "София – контейнер 91",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.71434129333897,
-    "longitude": 23.271888193128344,
+    "address": "Контейнер 91",
+    "latitude": 42.72123456,
+    "longitude": 23.29123456,
+    "area": "Люлин",
+    "trashType": "paper",
     "hasSensor": true,
-    "fillLevel": 38,
-    "status": "OK"
+    "sensorBattery": 55,
+    "fillLevel": 52,
+    "status": "active"
   },
   {
     "id": 92,
-    "address": "София – контейнер 92",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.71556267885708,
-    "longitude": 23.297151658165717,
+    "address": "Контейнер 92",
+    "latitude": 42.68456789,
+    "longitude": 23.34456789,
+    "area": "Лозенец",
+    "trashType": "glass",
     "hasSensor": true,
-    "fillLevel": 2,
-    "status": "OK"
+    "sensorBattery": 12,
+    "fillLevel": 60,
+    "status": "active"
   },
   {
     "id": 93,
-    "address": "София – контейнер 93",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.651672214304334,
-    "longitude": 23.369959068284423,
-    "hasSensor": true,
-    "fillLevel": 54,
-    "status": "OK"
+    "address": "Контейнер 93",
+    "latitude": 42.64456789,
+    "longitude": 23.29456789,
+    "area": "Овча-Купел",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 15,
+    "status": "active"
   },
   {
     "id": 94,
-    "address": "София – контейнер 94",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.665433672088476,
-    "longitude": 23.35754776009155,
+    "address": "Контейнер 94",
+    "latitude": 42.70456789,
+    "longitude": 23.32456789,
+    "area": "Надежда",
+    "trashType": "plastic",
     "hasSensor": true,
-    "fillLevel": 60,
-    "status": "OK"
+    "sensorBattery": 89,
+    "fillLevel": 42,
+    "status": "active"
   },
   {
     "id": 95,
-    "address": "София – контейнер 95",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.72095025606262,
-    "longitude": 23.338164373562808,
+    "address": "Контейнер 95",
+    "latitude": 42.69456789,
+    "longitude": 23.35456789,
+    "area": "Дружба",
+    "trashType": "paper",
     "hasSensor": true,
-    "fillLevel": 36,
-    "status": "OK"
+    "sensorBattery": 63,
+    "fillLevel": 81,
+    "status": "active"
   },
   {
     "id": 96,
-    "address": "София – контейнер 96",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.687244620203906,
-    "longitude": 23.287305339199378,
-    "hasSensor": true,
-    "fillLevel": 51,
-    "status": "OK"
+    "address": "Контейнер 96",
+    "latitude": 42.67456789,
+    "longitude": 23.31456789,
+    "area": "Лозенец",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 56,
+    "status": "active"
   },
   {
     "id": 97,
-    "address": "София – контейнер 97",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.69992538386354,
-    "longitude": 23.29924292668767,
+    "address": "Контейнер 97",
+    "latitude": 42.68456789,
+    "longitude": 23.28456789,
+    "area": "Красно-Село",
+    "trashType": "glass",
     "hasSensor": true,
-    "fillLevel": 78,
-    "status": "ALERT"
+    "sensorBattery": 47,
+    "fillLevel": 20,
+    "status": "active"
   },
   {
     "id": 98,
-    "address": "София – контейнер 98",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.65098959459739,
-    "longitude": 23.280367444519644,
+    "address": "Контейнер 98",
+    "latitude": 42.69456789,
+    "longitude": 23.33456789,
+    "area": "София-Център",
+    "trashType": "plastic",
     "hasSensor": true,
-    "fillLevel": 54,
-    "status": "OK"
+    "sensorBattery": 98,
+    "fillLevel": 97,
+    "status": "active"
   },
   {
     "id": 99,
-    "address": "София – контейнер 99",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.730067253100465,
-    "longitude": 23.327565173535824,
-    "hasSensor": true,
-    "fillLevel": 13,
-    "status": "OK"
+    "address": "Контейнер 99",
+    "latitude": 42.64456789,
+    "longitude": 23.36456789,
+    "area": "Младост",
+    "trashType": "mixed",
+    "hasSensor": false,
+    "fillLevel": 35,
+    "status": "active"
   },
   {
     "id": 100,
-    "address": "София – контейнер 100",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.72365768742434,
-    "longitude": 23.303336827011368,
+    "address": "Контейнер 100",
+    "latitude": 42.71456789,
+    "longitude": 23.25456789,
+    "area": "Люлин",
+    "trashType": "paper",
     "hasSensor": true,
-    "fillLevel": 39,
-    "status": "OK"
-  },
-  {
+    "sensorBattery": 30,
+    "fillLevel": 2,
+    "status": "active"
+  }
+,
+{
     "id": 101,
-    "address": "София – контейнер 101",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.68039276801429,
-    "longitude": 23.3616248086103,
-    "hasSensor": true,
-    "fillLevel": 78,
-    "status": "ALERT"
+    "address": "Контейнер 101",
+    "latitude": 42.6689, "longitude": 23.3210,
+    "area": "Лозенец", "trashType": "plastic", "hasSensor": true, "sensorBattery": 88, "fillLevel": 14, "status": "active"
   },
   {
     "id": 102,
-    "address": "София – контейнер 102",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.64614720609972,
-    "longitude": 23.353157071127924,
-    "hasSensor": true,
-    "fillLevel": 51,
-    "status": "OK"
+    "address": "Контейнер 102",
+    "latitude": 42.6912, "longitude": 23.3345,
+    "area": "София-Център", "trashType": "mixed", "hasSensor": false, "fillLevel": 92, "status": "active"
   },
   {
     "id": 103,
-    "address": "София – контейнер 103",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.71035193555999,
-    "longitude": 23.303218261872,
-    "hasSensor": true,
-    "fillLevel": 93,
-    "status": "FULL"
+    "address": "Контейнер 103",
+    "latitude": 42.6450, "longitude": 23.3480,
+    "area": "Студентски-град", "trashType": "paper", "hasSensor": true, "sensorBattery": 42, "fillLevel": 55, "status": "active"
   },
   {
     "id": 104,
-    "address": "София – контейнер 104",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.674288196881506,
-    "longitude": 23.27795049301293,
-    "hasSensor": true,
-    "fillLevel": 80,
-    "status": "ALERT"
+    "address": "Контейнер 104",
+    "latitude": 42.7120, "longitude": 23.2730,
+    "area": "Люлин", "trashType": "glass", "hasSensor": true, "sensorBattery": 15, "fillLevel": 8, "status": "active"
   },
   {
     "id": 105,
-    "address": "София – контейнер 105",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.73858033120582,
-    "longitude": 23.351739458833734,
-    "hasSensor": true,
-    "fillLevel": 60,
-    "status": "OK"
+    "address": "Контейнер 105",
+    "latitude": 42.6840, "longitude": 23.2910,
+    "area": "Красно-Село", "trashType": "mixed", "hasSensor": false, "fillLevel": 41, "status": "active"
   },
   {
     "id": 106,
-    "address": "София – контейнер 106",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.65665624265572,
-    "longitude": 23.30413826925258,
-    "hasSensor": true,
-    "fillLevel": 12,
-    "status": "OK"
+    "address": "Контейнер 106",
+    "latitude": 42.7215, "longitude": 23.3140,
+    "area": "Надежда", "trashType": "plastic", "hasSensor": true, "sensorBattery": 76, "fillLevel": 63, "status": "active"
   },
   {
     "id": 107,
-    "address": "София – контейнер 107",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.68668790769415,
-    "longitude": 23.345338944643483,
-    "hasSensor": true,
-    "fillLevel": 19,
-    "status": "OK"
+    "address": "Контейнер 107",
+    "latitude": 42.6580, "longitude": 23.3720,
+    "area": "Младост", "trashType": "mixed", "hasSensor": false, "fillLevel": 29, "status": "active"
   },
   {
     "id": 108,
-    "address": "София – контейнер 108",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.66049599721042,
-    "longitude": 23.32793551426183,
-    "hasSensor": true,
-    "fillLevel": 89,
-    "status": "ALERT"
+    "address": "Контейнер 108",
+    "latitude": 42.6650, "longitude": 23.3080,
+    "area": "Иван-Вазов", "trashType": "paper", "hasSensor": true, "sensorBattery": 91, "fillLevel": 74, "status": "active"
   },
   {
     "id": 109,
-    "address": "София – контейнер 109",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.65120585199595,
-    "longitude": 23.280877300009845,
-    "hasSensor": true,
-    "fillLevel": 70,
-    "status": "OK"
+    "address": "Контейнер 109",
+    "latitude": 42.6730, "longitude": 23.3610,
+    "area": "Дружба", "trashType": "glass", "hasSensor": true, "sensorBattery": 33, "fillLevel": 12, "status": "active"
   },
   {
     "id": 110,
-    "address": "София – контейнер 110",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.6870389425223,
-    "longitude": 23.368315123972142,
-    "hasSensor": true,
-    "fillLevel": 78,
-    "status": "ALERT"
+    "address": "Контейнер 110",
+    "latitude": 42.6410, "longitude": 23.2850,
+    "area": "Овча-Купел", "trashType": "mixed", "hasSensor": false, "fillLevel": 88, "status": "active"
   },
   {
     "id": 111,
-    "address": "София – контейнер 111",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.71359285755316,
-    "longitude": 23.282654301995404,
-    "hasSensor": true,
-    "fillLevel": 46,
-    "status": "OK"
+    "address": "Контейнер 111",
+    "latitude": 42.6980, "longitude": 23.3210,
+    "area": "София-Център", "trashType": "plastic", "hasSensor": true, "sensorBattery": 54, "fillLevel": 31, "status": "active"
   },
   {
     "id": 112,
-    "address": "София – контейнер 112",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.650878760420454,
-    "longitude": 23.27317509595971,
-    "hasSensor": true,
-    "fillLevel": 67,
-    "status": "OK"
+    "address": "Контейнер 112",
+    "latitude": 42.6620, "longitude": 23.3440,
+    "area": "Лозенец", "trashType": "mixed", "hasSensor": false, "fillLevel": 6, "status": "active"
   },
   {
     "id": 113,
-    "address": "София – контейнер 113",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.731914458236744,
-    "longitude": 23.331388588436393,
-    "hasSensor": true,
-    "fillLevel": 17,
-    "status": "OK"
+    "address": "Контейнер 113",
+    "latitude": 42.7300, "longitude": 23.3420,
+    "area": "Надежда", "trashType": "paper", "hasSensor": true, "sensorBattery": 67, "fillLevel": 45, "status": "active"
   },
   {
     "id": 114,
-    "address": "София – контейнер 114",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.71798722191135,
-    "longitude": 23.283972194376986,
-    "hasSensor": true,
-    "fillLevel": 0,
-    "status": "OK"
+    "address": "Контейнер 114",
+    "latitude": 42.7050, "longitude": 23.2680,
+    "area": "Люлин", "trashType": "glass", "hasSensor": true, "sensorBattery": 10, "fillLevel": 97, "status": "active"
   },
   {
     "id": 115,
-    "address": "София – контейнер 115",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.6597817407411,
-    "longitude": 23.330897272217555,
-    "hasSensor": true,
-    "fillLevel": 91,
-    "status": "FULL"
+    "address": "Контейнер 115",
+    "latitude": 42.6770, "longitude": 23.2840,
+    "area": "Красно-Село", "trashType": "mixed", "hasSensor": false, "fillLevel": 50, "status": "active"
   },
   {
     "id": 116,
-    "address": "София – контейнер 116",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.715160928561474,
-    "longitude": 23.287130194210853,
-    "hasSensor": true,
-    "fillLevel": 70,
-    "status": "OK"
+    "address": "Контейнер 116",
+    "latitude": 42.6480, "longitude": 23.3310,
+    "area": "Студентски-град", "trashType": "plastic", "hasSensor": true, "sensorBattery": 82, "fillLevel": 22, "status": "active"
   },
   {
     "id": 117,
-    "address": "София – контейнер 117",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.72591611420224,
-    "longitude": 23.363608005727368,
-    "hasSensor": true,
-    "fillLevel": 95,
-    "status": "FULL"
+    "address": "Контейнер 117",
+    "latitude": 42.6615, "longitude": 23.3590,
+    "area": "Младост", "trashType": "mixed", "hasSensor": false, "fillLevel": 15, "status": "active"
   },
   {
     "id": 118,
-    "address": "София – контейнер 118",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.73617358284468,
-    "longitude": 23.342948830671332,
-    "hasSensor": true,
-    "fillLevel": 20,
-    "status": "OK"
+    "address": "Контейнер 118",
+    "latitude": 42.6820, "longitude": 23.3150,
+    "area": "Иван-Вазов", "trashType": "paper", "hasSensor": true, "sensorBattery": 49, "fillLevel": 61, "status": "active"
   },
   {
     "id": 119,
-    "address": "София – контейнер 119",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.6440814344957,
-    "longitude": 23.306581822907578,
-    "hasSensor": true,
-    "fillLevel": 43,
-    "status": "OK"
+    "address": "Контейнер 119",
+    "latitude": 42.6950, "longitude": 23.3680,
+    "area": "Дружба", "trashType": "mixed", "hasSensor": false, "fillLevel": 80, "status": "active"
   },
   {
     "id": 120,
-    "address": "София – контейнер 120",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.6433425590853,
-    "longitude": 23.33043885382334,
-    "hasSensor": true,
-    "fillLevel": 26,
-    "status": "OK"
+    "address": "Контейнер 120",
+    "latitude": 42.6450, "longitude": 23.2790,
+    "area": "Овча-Купел", "trashType": "glass", "hasSensor": true, "sensorBattery": 95, "fillLevel": 3, "status": "active"
   },
   {
     "id": 121,
-    "address": "София – контейнер 121",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.723325321865,
-    "longitude": 23.272926805475823,
-    "hasSensor": true,
-    "fillLevel": 6,
-    "status": "OK"
+    "address": "Контейнер 121",
+    "latitude": 42.6910, "longitude": 23.3280, "area": "София-Център", "trashType": "plastic", "hasSensor": true, "sensorBattery": 77, "fillLevel": 48, "status": "active"
   },
   {
     "id": 122,
-    "address": "София – контейнер 122",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.6422213018536,
-    "longitude": 23.327043052868536,
-    "hasSensor": true,
-    "fillLevel": 51,
-    "status": "OK"
+    "address": "Контейнер 122",
+    "latitude": 42.7150, "longitude": 23.3020, "area": "Надежда", "trashType": "mixed", "hasSensor": false, "fillLevel": 91, "status": "active"
   },
   {
     "id": 123,
-    "address": "София – контейнер 123",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.70319178376121,
-    "longitude": 23.315932657065172,
-    "hasSensor": true,
-    "fillLevel": 22,
-    "status": "OK"
+    "address": "Контейнер 123",
+    "latitude": 42.6680, "longitude": 23.3420, "area": "Лозенец", "trashType": "paper", "hasSensor": true, "sensorBattery": 12, "fillLevel": 19, "status": "active"
   },
   {
     "id": 124,
-    "address": "София – контейнер 124",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.72207773241427,
-    "longitude": 23.271328539114023,
-    "hasSensor": true,
-    "fillLevel": 33,
-    "status": "OK"
+    "address": "Контейнер 124",
+    "latitude": 42.6510, "longitude": 23.3750, "area": "Младост", "trashType": "glass", "hasSensor": true, "sensorBattery": 56, "fillLevel": 64, "status": "active"
   },
   {
     "id": 125,
-    "address": "София – контейнер 125",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.6659841604438,
-    "longitude": 23.299133265490866,
-    "hasSensor": true,
-    "fillLevel": 93,
-    "status": "FULL"
+    "address": "Контейнер 125",
+    "latitude": 42.7080, "longitude": 23.2810, "area": "Люлин", "trashType": "mixed", "hasSensor": false, "fillLevel": 37, "status": "active"
   },
   {
     "id": 126,
-    "address": "София – контейнер 126",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.684787583618025,
-    "longitude": 23.278930234826806,
-    "hasSensor": true,
-    "fillLevel": 22,
-    "status": "OK"
+    "address": "Контейнер 126",
+    "latitude": 42.6710, "longitude": 23.2880, "area": "Красно-Село", "trashType": "plastic", "hasSensor": true, "sensorBattery": 89, "fillLevel": 5, "status": "active"
   },
   {
     "id": 127,
-    "address": "София – контейнер 127",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.70291157713006,
-    "longitude": 23.314507411936443,
-    "hasSensor": true,
-    "fillLevel": 7,
-    "status": "OK"
+    "address": "Контейнер 127",
+    "latitude": 42.6460, "longitude": 23.3410, "area": "Студентски-град", "trashType": "mixed", "hasSensor": false, "fillLevel": 72, "status": "active"
   },
   {
     "id": 128,
-    "address": "София – контейнер 128",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.670457005483875,
-    "longitude": 23.332433396835512,
-    "hasSensor": true,
-    "fillLevel": 69,
-    "status": "OK"
+    "address": "Контейнер 128",
+    "latitude": 42.6920, "longitude": 23.3140, "area": "София-Център", "trashType": "paper", "hasSensor": true, "sensorBattery": 43, "fillLevel": 26, "status": "active"
   },
   {
     "id": 129,
-    "address": "София – контейнер 129",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.645318069646216,
-    "longitude": 23.296998374543282,
-    "hasSensor": true,
-    "fillLevel": 39,
-    "status": "OK"
+    "address": "Контейнер 129",
+    "latitude": 42.6610, "longitude": 23.3110, "area": "Иван-Вазов", "trashType": "glass", "hasSensor": true, "sensorBattery": 61, "fillLevel": 83, "status": "active"
   },
   {
     "id": 130,
-    "address": "София – контейнер 130",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.6901338298697,
-    "longitude": 23.299554333508027,
-    "hasSensor": true,
-    "fillLevel": 43,
-    "status": "OK"
+    "address": "Контейнер 130",
+    "latitude": 42.6880, "longitude": 23.3620, "area": "Дружба", "trashType": "mixed", "hasSensor": false, "fillLevel": 59, "status": "active"
   },
   {
     "id": 131,
-    "address": "София – контейнер 131",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.728344997807696,
-    "longitude": 23.300692040815946,
-    "hasSensor": true,
-    "fillLevel": 51,
-    "status": "OK"
+    "address": "Контейнер 131",
+    "latitude": 42.7230, "longitude": 23.3310, "area": "Надежда", "trashType": "plastic", "hasSensor": true, "sensorBattery": 25, "fillLevel": 11, "status": "active"
   },
   {
     "id": 132,
-    "address": "София – контейнер 132",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.683981912995414,
-    "longitude": 23.363214464063212,
-    "hasSensor": true,
-    "fillLevel": 67,
-    "status": "OK"
+    "address": "Контейнер 132",
+    "latitude": 42.6540, "longitude": 23.2810, "area": "Овча-Купел", "trashType": "paper", "hasSensor": true, "sensorBattery": 78, "fillLevel": 94, "status": "active"
   },
   {
     "id": 133,
-    "address": "София – контейнер 133",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.69357624273942,
-    "longitude": 23.31343882143923,
-    "hasSensor": true,
-    "fillLevel": 99,
-    "status": "FULL"
+    "address": "Контейнер 133",
+    "latitude": 42.7110, "longitude": 23.2620, "area": "Люлин", "trashType": "mixed", "hasSensor": false, "fillLevel": 46, "status": "active"
   },
   {
     "id": 134,
-    "address": "София – контейнер 134",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.72065307958157,
-    "longitude": 23.319951028910165,
-    "hasSensor": true,
-    "fillLevel": 68,
-    "status": "OK"
+    "address": "Контейнер 134",
+    "latitude": 42.6840, "longitude": 23.3380, "area": "Лозенец", "trashType": "glass", "hasSensor": true, "sensorBattery": 90, "fillLevel": 38, "status": "active"
   },
   {
     "id": 135,
-    "address": "София – контейнер 135",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.662817330556294,
-    "longitude": 23.331554016477636,
-    "hasSensor": true,
-    "fillLevel": 48,
-    "status": "OK"
+    "address": "Контейнер 135",
+    "latitude": 42.6650, "longitude": 23.3550, "area": "Младост", "trashType": "mixed", "hasSensor": false, "fillLevel": 17, "status": "active"
   },
   {
     "id": 136,
-    "address": "София – контейнер 136",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.688674403186646,
-    "longitude": 23.337574885798293,
-    "hasSensor": true,
-    "fillLevel": 6,
-    "status": "OK"
+    "address": "Контейнер 136",
+    "latitude": 42.7350, "longitude": 23.3510, "area": "Надежда", "trashType": "plastic", "hasSensor": true, "sensorBattery": 14, "fillLevel": 70, "status": "active"
   },
   {
     "id": 137,
-    "address": "София – контейнер 137",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.73688902791092,
-    "longitude": 23.347470344870775,
-    "hasSensor": true,
-    "fillLevel": 47,
-    "status": "OK"
+    "address": "Контейнер 137",
+    "latitude": 42.6980, "longitude": 23.3050, "area": "София-Център", "trashType": "paper", "hasSensor": true, "sensorBattery": 55, "fillLevel": 85, "status": "active"
   },
   {
     "id": 138,
-    "address": "София – контейнер 138",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.65136521416543,
-    "longitude": 23.343705132088807,
-    "hasSensor": true,
-    "fillLevel": 50,
-    "status": "OK"
+    "address": "Контейнер 138",
+    "latitude": 42.6740, "longitude": 23.2790, "area": "Красно-Село", "trashType": "mixed", "hasSensor": false, "fillLevel": 62, "status": "active"
   },
   {
     "id": 139,
-    "address": "София – контейнер 139",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.73565147729468,
-    "longitude": 23.314935352361744,
-    "hasSensor": true,
-    "fillLevel": 17,
-    "status": "OK"
+    "address": "Контейнер 139",
+    "latitude": 42.6410, "longitude": 23.3480, "area": "Студентски-град", "trashType": "glass", "hasSensor": true, "sensorBattery": 83, "fillLevel": 41, "status": "active"
   },
   {
     "id": 140,
-    "address": "София – контейнер 140",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.686318208198,
-    "longitude": 23.367744953814647,
-    "hasSensor": true,
-    "fillLevel": 15,
-    "status": "OK"
+    "address": "Контейнер 140",
+    "latitude": 42.6610, "longitude": 23.3050, "area": "Иван-Вазов", "trashType": "mixed", "hasSensor": false, "fillLevel": 9, "status": "active"
   },
   {
     "id": 141,
-    "address": "София – контейнер 141",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.67559453061407,
-    "longitude": 23.361595360592126,
-    "hasSensor": true,
-    "fillLevel": 34,
-    "status": "OK"
+    "address": "Контейнер 141",
+    "latitude": 42.6712, "longitude": 23.3745, "area": "Дружба", "trashType": "plastic", "hasSensor": true, "sensorBattery": 44, "fillLevel": 56, "status": "active"
   },
   {
     "id": 142,
-    "address": "София – контейнер 142",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.72275961482936,
-    "longitude": 23.319964049362362,
-    "hasSensor": true,
-    "fillLevel": 6,
-    "status": "OK"
+    "address": "Контейнер 142",
+    "latitude": 42.6435, "longitude": 23.2882, "area": "Овча-Купел", "trashType": "paper", "hasSensor": true, "sensorBattery": 71, "fillLevel": 20, "status": "active"
   },
   {
     "id": 143,
-    "address": "София – контейнер 143",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.6867770613972,
-    "longitude": 23.289023056889043,
-    "hasSensor": true,
-    "fillLevel": 28,
-    "status": "OK"
+    "address": "Контейнер 143",
+    "latitude": 42.7056, "longitude": 23.3321, "area": "Надежда", "trashType": "mixed", "hasSensor": false, "fillLevel": 88, "status": "active"
   },
   {
     "id": 144,
-    "address": "София – контейнер 144",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.68328823560063,
-    "longitude": 23.359818801624538,
-    "hasSensor": true,
-    "fillLevel": 28,
-    "status": "OK"
+    "address": "Контейнер 144",
+    "latitude": 42.7214, "longitude": 23.2654, "area": "Люлин", "trashType": "glass", "hasSensor": true, "sensorBattery": 96, "fillLevel": 35, "status": "active"
   },
   {
     "id": 145,
-    "address": "София – контейнер 145",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.69467200138031,
-    "longitude": 23.344800350667246,
-    "hasSensor": true,
-    "fillLevel": 17,
-    "status": "OK"
+    "address": "Контейнер 145",
+    "latitude": 42.6789, "longitude": 23.3156, "area": "Лозенец", "trashType": "mixed", "hasSensor": false, "fillLevel": 12, "status": "active"
   },
   {
     "id": 146,
-    "address": "София – контейнер 146",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.659143008716036,
-    "longitude": 23.363109771773463,
-    "hasSensor": true,
-    "fillLevel": 19,
-    "status": "OK"
+    "address": "Контейнер 146",
+    "latitude": 42.6952, "longitude": 23.3289, "area": "София-Център", "trashType": "plastic", "hasSensor": true, "sensorBattery": 15, "fillLevel": 99, "status": "active"
   },
   {
     "id": 147,
-    "address": "София – контейнер 147",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.66780453303322,
-    "longitude": 23.303177384760367,
-    "hasSensor": true,
-    "fillLevel": 50,
-    "status": "OK"
+    "address": "Контейнер 147",
+    "latitude": 42.6587, "longitude": 23.3642, "area": "Младост", "trashType": "paper", "hasSensor": true, "sensorBattery": 82, "fillLevel": 47, "status": "active"
   },
   {
     "id": 148,
-    "address": "София – контейнер 148",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.690076768923134,
-    "longitude": 23.288575101251514,
-    "hasSensor": true,
-    "fillLevel": 66,
-    "status": "OK"
+    "address": "Контейнер 148",
+    "latitude": 42.6721, "longitude": 23.2954, "area": "Красно-Село", "trashType": "mixed", "hasSensor": false, "fillLevel": 61, "status": "active"
   },
   {
     "id": 149,
-    "address": "София – контейнер 149",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.6429914032456,
-    "longitude": 23.27321332623476,
-    "hasSensor": true,
-    "fillLevel": 48,
-    "status": "OK"
+    "address": "Контейнер 149",
+    "latitude": 42.6472, "longitude": 23.3389, "area": "Студентски-град", "trashType": "glass", "hasSensor": true, "sensorBattery": 39, "fillLevel": 8, "status": "active"
   },
   {
     "id": 150,
-    "address": "София – контейнер 150",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.67943833553113,
-    "longitude": 23.3147591437684,
-    "hasSensor": true,
-    "fillLevel": 64,
-    "status": "OK"
+    "address": "Контейнер 150",
+    "latitude": 42.6631, "longitude": 23.3105, "area": "Иван-Вазов", "trashType": "mixed", "hasSensor": false, "fillLevel": 75, "status": "active"
   },
   {
     "id": 151,
-    "address": "София – контейнер 151",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.69352808962821,
-    "longitude": 23.330517725269015,
-    "hasSensor": true,
-    "fillLevel": 27,
-    "status": "OK"
+    "address": "Контейнер 151",
+    "latitude": 42.7156, "longitude": 23.3421, "area": "Надежда", "trashType": "plastic", "hasSensor": true, "sensorBattery": 64, "fillLevel": 29, "status": "active"
   },
   {
     "id": 152,
-    "address": "София – контейнер 152",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.663680078406365,
-    "longitude": 23.331685165714948,
-    "hasSensor": true,
-    "fillLevel": 94,
-    "status": "FULL"
+    "address": "Контейнер 152",
+    "latitude": 42.6912, "longitude": 23.3654, "area": "Дружба", "trashType": "paper", "hasSensor": true, "sensorBattery": 10, "fillLevel": 93, "status": "active"
   },
   {
     "id": 153,
-    "address": "София – контейнер 153",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.732467887822835,
-    "longitude": 23.329522548251468,
-    "hasSensor": true,
-    "fillLevel": 36,
-    "status": "OK"
+    "address": "Контейнер 153",
+    "latitude": 42.7014, "longitude": 23.2754, "area": "Люлин", "trashType": "mixed", "hasSensor": false, "fillLevel": 56, "status": "active"
   },
   {
     "id": 154,
-    "address": "София – контейнер 154",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.71411840150906,
-    "longitude": 23.334538283106998,
-    "hasSensor": true,
-    "fillLevel": 90,
-    "status": "ALERT"
+    "address": "Контейнер 154",
+    "latitude": 42.6687, "longitude": 23.3354, "area": "Лозенец", "trashType": "glass", "hasSensor": true, "sensorBattery": 87, "fillLevel": 41, "status": "active"
   },
   {
     "id": 155,
-    "address": "София – контейнер 155",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.717413687900645,
-    "longitude": 23.35536338691131,
-    "hasSensor": true,
-    "fillLevel": 86,
-    "status": "ALERT"
+    "address": "Контейнер 155",
+    "latitude": 42.6512, "longitude": 23.2842, "area": "Овча-Купел", "trashType": "mixed", "hasSensor": false, "fillLevel": 19, "status": "active"
   },
   {
     "id": 156,
-    "address": "София – контейнер 156",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.7149282420967,
-    "longitude": 23.294284357624317,
-    "hasSensor": true,
-    "fillLevel": 42,
-    "status": "OK"
+    "address": "Контейнер 156",
+    "latitude": 42.6842, "longitude": 23.3102, "area": "Иван-Вазов", "trashType": "plastic", "hasSensor": true, "sensorBattery": 52, "fillLevel": 68, "status": "active"
   },
   {
     "id": 157,
-    "address": "София – контейнер 157",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.68286079233427,
-    "longitude": 23.362883885284496,
-    "hasSensor": true,
-    "fillLevel": 74,
-    "status": "OK"
+    "address": "Контейнер 157",
+    "latitude": 42.6987, "longitude": 23.3154, "area": "София-Център", "trashType": "paper", "hasSensor": true, "sensorBattery": 31, "fillLevel": 14, "status": "active"
   },
   {
     "id": 158,
-    "address": "София – контейнер 158",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.721381630595864,
-    "longitude": 23.270613041323834,
-    "hasSensor": true,
-    "fillLevel": 33,
-    "status": "OK"
+    "address": "Контейнер 158",
+    "latitude": 42.6621, "longitude": 23.3754, "area": "Младост", "trashType": "mixed", "hasSensor": false, "fillLevel": 82, "status": "active"
   },
   {
     "id": 159,
-    "address": "София – контейнер 159",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.66722371843267,
-    "longitude": 23.277822298675954,
-    "hasSensor": true,
-    "fillLevel": 25,
-    "status": "OK"
+    "address": "Контейнер 159",
+    "latitude": 42.6456, "longitude": 23.3452, "area": "Студентски-град", "trashType": "glass", "hasSensor": true, "sensorBattery": 94, "fillLevel": 37, "status": "active"
   },
   {
     "id": 160,
-    "address": "София – контейнер 160",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.6600607366574,
-    "longitude": 23.32490066375201,
-    "hasSensor": true,
-    "fillLevel": 8,
-    "status": "OK"
+    "address": "Контейнер 160",
+    "latitude": 42.6712, "longitude": 23.2842, "area": "Красно-Село", "trashType": "mixed", "hasSensor": false, "fillLevel": 50, "status": "active"
   },
   {
     "id": 161,
-    "address": "София – контейнер 161",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.662857122018494,
-    "longitude": 23.29072864233605,
-    "hasSensor": true,
-    "fillLevel": 74,
-    "status": "OK"
+    "address": "Контейнер 161",
+    "latitude": 42.7214, "longitude": 23.3254, "area": "Надежда", "trashType": "plastic", "hasSensor": true, "sensorBattery": 77, "fillLevel": 11, "status": "active"
   },
   {
     "id": 162,
-    "address": "София – контейнер 162",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.658287892114664,
-    "longitude": 23.322051601952857,
-    "hasSensor": true,
-    "fillLevel": 78,
-    "status": "ALERT"
+    "address": "Контейнер 162",
+    "latitude": 42.7121, "longitude": 23.2564, "area": "Люлин", "trashType": "paper", "hasSensor": true, "sensorBattery": 23, "fillLevel": 89, "status": "active"
   },
   {
     "id": 163,
-    "address": "София – контейнер 163",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.710358241358584,
-    "longitude": 23.324736521442734,
-    "hasSensor": true,
-    "fillLevel": 12,
-    "status": "OK"
+    "address": "Контейнер 163",
+    "latitude": 42.6842, "longitude": 23.3452, "area": "Лозенец", "trashType": "mixed", "hasSensor": false, "fillLevel": 64, "status": "active"
   },
   {
     "id": 164,
-    "address": "София – контейнер 164",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.6915998419151,
-    "longitude": 23.324185704965796,
-    "hasSensor": true,
-    "fillLevel": 55,
-    "status": "OK"
+    "address": "Контейнер 164",
+    "latitude": 42.6954, "longitude": 23.3214, "area": "София-Център", "trashType": "glass", "hasSensor": true, "sensorBattery": 68, "fillLevel": 27, "status": "active"
   },
   {
     "id": 165,
-    "address": "София – контейнер 165",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.6752667596547,
-    "longitude": 23.362677184053844,
-    "hasSensor": true,
-    "fillLevel": 90,
-    "status": "ALERT"
+    "address": "Контейнер 165",
+    "latitude": 42.6587, "longitude": 23.3542, "area": "Младост", "trashType": "mixed", "hasSensor": false, "fillLevel": 43, "status": "active"
   },
   {
     "id": 166,
-    "address": "София – контейнер 166",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.726680948437604,
-    "longitude": 23.354785796916627,
-    "hasSensor": true,
-    "fillLevel": 80,
-    "status": "ALERT"
+    "address": "Контейнер 166",
+    "latitude": 42.6712, "longitude": 23.3854, "area": "Дружба", "trashType": "plastic", "hasSensor": true, "sensorBattery": 89, "fillLevel": 76, "status": "active"
   },
   {
     "id": 167,
-    "address": "София – контейнер 167",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.69100569467155,
-    "longitude": 23.323432202476287,
-    "hasSensor": true,
-    "fillLevel": 24,
-    "status": "OK"
+    "address": "Контейнер 167",
+    "latitude": 42.6412, "longitude": 23.2754, "area": "Овча-Купел", "trashType": "paper", "hasSensor": true, "sensorBattery": 42, "fillLevel": 5, "status": "active"
   },
   {
     "id": 168,
-    "address": "София – контейнер 168",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.68665576538725,
-    "longitude": 23.31273476887144,
-    "hasSensor": true,
-    "fillLevel": 5,
-    "status": "OK"
+    "address": "Контейнер 168",
+    "latitude": 42.6634, "longitude": 23.3087, "area": "Иван-Вазов", "trashType": "mixed", "hasSensor": false, "fillLevel": 97, "status": "active"
   },
   {
     "id": 169,
-    "address": "София – контейнер 169",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.65684328641033,
-    "longitude": 23.34579451191721,
-    "hasSensor": true,
-    "fillLevel": 10,
-    "status": "OK"
+    "address": "Контейнер 169",
+    "latitude": 42.6456, "longitude": 23.3354, "area": "Студентски-град", "trashType": "glass", "hasSensor": true, "sensorBattery": 15, "fillLevel": 52, "status": "active"
   },
   {
     "id": 170,
-    "address": "София – контейнер 170",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.67806573993508,
-    "longitude": 23.3089547803567,
-    "hasSensor": true,
-    "fillLevel": 74,
-    "status": "OK"
+    "address": "Контейнер 170",
+    "latitude": 42.7154, "longitude": 23.3124, "area": "Надежда", "trashType": "mixed", "hasSensor": false, "fillLevel": 31, "status": "active"
   },
   {
     "id": 171,
-    "address": "София – контейнер 171",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.661303975983536,
-    "longitude": 23.285653068723363,
-    "hasSensor": true,
-    "fillLevel": 10,
-    "status": "OK"
+    "address": "Контейнер 171",
+    "latitude": 42.7231, "longitude": 23.2842, "area": "Люлин", "trashType": "plastic", "hasSensor": true, "sensorBattery": 81, "fillLevel": 14, "status": "active"
   },
   {
     "id": 172,
-    "address": "София – контейнер 172",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.71952961146681,
-    "longitude": 23.36828207432562,
-    "hasSensor": true,
-    "fillLevel": 54,
-    "status": "OK"
+    "address": "Контейнер 172",
+    "latitude": 42.6842, "longitude": 23.2954, "area": "Красно-Село", "trashType": "paper", "hasSensor": true, "sensorBattery": 36, "fillLevel": 69, "status": "active"
   },
   {
     "id": 173,
-    "address": "София – контейнер 173",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.674647238474115,
-    "longitude": 23.324149773547777,
-    "hasSensor": true,
-    "fillLevel": 68,
-    "status": "OK"
+    "address": "Контейнер 173",
+    "latitude": 42.6954, "longitude": 23.3321, "area": "София-Център", "trashType": "mixed", "hasSensor": false, "fillLevel": 88, "status": "active"
   },
   {
     "id": 174,
-    "address": "София – контейнер 174",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.69132811218811,
-    "longitude": 23.312394190336484,
-    "hasSensor": true,
-    "fillLevel": 93,
-    "status": "FULL"
+    "address": "Контейнер 174",
+    "latitude": 42.6687, "longitude": 23.3254, "area": "Лозенец", "trashType": "glass", "hasSensor": true, "sensorBattery": 54, "fillLevel": 20, "status": "active"
   },
   {
     "id": 175,
-    "address": "София – контейнер 175",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.67063132278522,
-    "longitude": 23.280132898120353,
-    "hasSensor": true,
-    "fillLevel": 90,
-    "status": "ALERT"
+    "address": "Контейнер 175",
+    "latitude": 42.6512, "longitude": 23.3642, "area": "Младост", "trashType": "mixed", "hasSensor": false, "fillLevel": 47, "status": "active"
   },
   {
     "id": 176,
-    "address": "София – контейнер 176",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.670823620879546,
-    "longitude": 23.30104180924352,
-    "hasSensor": true,
-    "fillLevel": 29,
-    "status": "OK"
+    "address": "Контейнер 176",
+    "latitude": 42.7014, "longitude": 23.3421, "area": "Надежда", "trashType": "plastic", "hasSensor": true, "sensorBattery": 90, "fillLevel": 92, "status": "active"
   },
   {
     "id": 177,
-    "address": "София – контейнер 177",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.66704008727835,
-    "longitude": 23.301428023317282,
-    "hasSensor": true,
-    "fillLevel": 82,
-    "status": "ALERT"
+    "address": "Контейнер 177",
+    "latitude": 42.6435, "longitude": 23.3452, "area": "Студентски-град", "trashType": "paper", "hasSensor": true, "sensorBattery": 12, "fillLevel": 33, "status": "active"
   },
   {
     "id": 178,
-    "address": "София – контейнер 178",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.715158281102205,
-    "longitude": 23.36977386219879,
-    "hasSensor": true,
-    "fillLevel": 34,
-    "status": "OK"
+    "address": "Контейнер 178",
+    "latitude": 42.6612, "longitude": 23.3087, "area": "Иван-Вазов", "trashType": "mixed", "hasSensor": false, "fillLevel": 58, "status": "active"
   },
   {
     "id": 179,
-    "address": "София – контейнер 179",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.652921324205295,
-    "longitude": 23.32499053650319,
-    "hasSensor": true,
-    "fillLevel": 60,
-    "status": "OK"
+    "address": "Контейнер 179",
+    "latitude": 42.6712, "longitude": 23.3754, "area": "Дружба", "trashType": "glass", "hasSensor": true, "sensorBattery": 67, "fillLevel": 11, "status": "active"
   },
   {
     "id": 180,
-    "address": "София – контейнер 180",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.73425063363268,
-    "longitude": 23.3672617039792,
-    "hasSensor": true,
-    "fillLevel": 6,
-    "status": "OK"
+    "address": "Контейнер 180",
+    "latitude": 42.6412, "longitude": 23.2842, "area": "Овча-Купел", "trashType": "mixed", "hasSensor": false, "fillLevel": 95, "status": "active"
   },
   {
     "id": 181,
-    "address": "София – контейнер 181",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.688225215768846,
-    "longitude": 23.305827065639168,
-    "hasSensor": true,
-    "fillLevel": 50,
-    "status": "OK"
+    "address": "Контейнер 181",
+    "latitude": 42.6954, "longitude": 23.3154, "area": "София-Център", "trashType": "plastic", "hasSensor": true, "sensorBattery": 34, "fillLevel": 22, "status": "active"
   },
   {
     "id": 182,
-    "address": "София – контейнер 182",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.654351515645345,
-    "longitude": 23.33127806906706,
-    "hasSensor": true,
-    "fillLevel": 21,
-    "status": "OK"
+    "address": "Контейнер 182",
+    "latitude": 42.7121, "longitude": 23.3254, "area": "Надежда", "trashType": "paper", "hasSensor": true, "sensorBattery": 82, "fillLevel": 49, "status": "active"
   },
   {
     "id": 183,
-    "address": "София – контейнер 183",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.67070044295115,
-    "longitude": 23.306385007755022,
-    "hasSensor": true,
-    "fillLevel": 0,
-    "status": "OK"
+    "address": "Контейнер 183",
+    "latitude": 42.7014, "longitude": 23.2654, "area": "Люлин", "trashType": "mixed", "hasSensor": false, "fillLevel": 76, "status": "active"
   },
   {
     "id": 184,
-    "address": "София – контейнер 184",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.70690685035141,
-    "longitude": 23.309752185057057,
-    "hasSensor": true,
-    "fillLevel": 30,
-    "status": "OK"
+    "address": "Контейнер 184",
+    "latitude": 42.6789, "longitude": 23.3354, "area": "Лозенец", "trashType": "glass", "hasSensor": true, "sensorBattery": 15, "fillLevel": 8, "status": "active"
   },
   {
     "id": 185,
-    "address": "София – контейнер 185",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.67476336585484,
-    "longitude": 23.34382726175674,
-    "hasSensor": true,
-    "fillLevel": 22,
-    "status": "OK"
+    "address": "Контейнер 185",
+    "latitude": 42.6587, "longitude": 23.3754, "area": "Младост", "trashType": "mixed", "hasSensor": false, "fillLevel": 93, "status": "active"
   },
   {
     "id": 186,
-    "address": "София – контейнер 186",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.64697514863623,
-    "longitude": 23.271353699044678,
-    "hasSensor": true,
-    "fillLevel": 57,
-    "status": "OK"
+    "address": "Контейнер 186",
+    "latitude": 42.6721, "longitude": 23.2842, "area": "Красно-Село", "trashType": "plastic", "hasSensor": true, "sensorBattery": 58, "fillLevel": 41, "status": "active"
   },
   {
     "id": 187,
-    "address": "София – контейнер 187",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.692000075964785,
-    "longitude": 23.337440982705072,
-    "hasSensor": true,
-    "fillLevel": 20,
-    "status": "OK"
+    "address": "Контейнер 187",
+    "latitude": 42.6456, "longitude": 23.3412, "area": "Студентски-град", "trashType": "paper", "hasSensor": true, "sensorBattery": 91, "fillLevel": 67, "status": "active"
   },
   {
     "id": 188,
-    "address": "София – контейнер 188",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.65743152585556,
-    "longitude": 23.27416219820195,
-    "hasSensor": true,
-    "fillLevel": 73,
-    "status": "OK"
+    "address": "Контейнер 188",
+    "latitude": 42.6634, "longitude": 23.3124, "area": "Иван-Вазов", "trashType": "mixed", "hasSensor": false, "fillLevel": 14, "status": "active"
   },
   {
     "id": 189,
-    "address": "София – контейнер 189",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.71409800042184,
-    "longitude": 23.304730195776386,
-    "hasSensor": true,
-    "fillLevel": 15,
-    "status": "OK"
+    "address": "Контейнер 189",
+    "latitude": 42.6954, "longitude": 23.3654, "area": "Дружба", "trashType": "glass", "hasSensor": true, "sensorBattery": 47, "fillLevel": 56, "status": "active"
   },
   {
     "id": 190,
-    "address": "София – контейнер 190",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.66905642277695,
-    "longitude": 23.31120425277927,
-    "hasSensor": true,
-    "fillLevel": 7,
-    "status": "OK"
+    "address": "Контейнер 190",
+    "latitude": 42.7154, "longitude": 23.2754, "area": "Люлин", "trashType": "mixed", "hasSensor": false, "fillLevel": 20, "status": "active"
   },
   {
     "id": 191,
-    "address": "София – контейнер 191",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.66415072935896,
-    "longitude": 23.341786550371918,
-    "hasSensor": true,
-    "fillLevel": 10,
-    "status": "OK"
+    "address": "Контейнер 191",
+    "latitude": 42.7231, "longitude": 23.3421, "area": "Надежда", "trashType": "plastic", "hasSensor": true, "sensorBattery": 22, "fillLevel": 88, "status": "active"
   },
   {
     "id": 192,
-    "address": "София – контейнер 192",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.697597664578744,
-    "longitude": 23.335666850152393,
-    "hasSensor": true,
-    "fillLevel": 59,
-    "status": "OK"
+    "address": "Контейнер 192",
+    "latitude": 42.6842, "longitude": 23.3254, "area": "София-Център", "trashType": "paper", "hasSensor": true, "sensorBattery": 76, "fillLevel": 12, "status": "active"
   },
   {
     "id": 193,
-    "address": "София – контейнер 193",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.73678298116903,
-    "longitude": 23.31434034261529,
-    "hasSensor": true,
-    "fillLevel": 16,
-    "status": "OK"
+    "address": "Контейнер 193",
+    "latitude": 42.6687, "longitude": 23.3154, "area": "Иван-Вазов", "trashType": "mixed", "hasSensor": false, "fillLevel": 99, "status": "active"
   },
   {
     "id": 194,
-    "address": "София – контейнер 194",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.73533104672292,
-    "longitude": 23.270410424530052,
-    "hasSensor": true,
-    "fillLevel": 34,
-    "status": "OK"
+    "address": "Контейнер 194",
+    "latitude": 42.6512, "longitude": 23.3354, "area": "Лозенец", "trashType": "glass", "hasSensor": true, "sensorBattery": 39, "fillLevel": 45, "status": "active"
   },
   {
     "id": 195,
-    "address": "София – контейнер 195",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.71782501623024,
-    "longitude": 23.366120606359697,
-    "hasSensor": true,
-    "fillLevel": 3,
-    "status": "OK"
+    "address": "Контейнер 195",
+    "latitude": 42.6435, "longitude": 23.2754, "area": "Овча-Купел", "trashType": "mixed", "hasSensor": false, "fillLevel": 61, "status": "active"
   },
   {
     "id": 196,
-    "address": "София – контейнер 196",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.67589231916034,
-    "longitude": 23.27630077397556,
-    "hasSensor": true,
-    "fillLevel": 48,
-    "status": "OK"
+    "address": "Контейнер 196",
+    "latitude": 42.7014, "longitude": 23.3124, "area": "Надежда", "trashType": "plastic", "hasSensor": true, "sensorBattery": 84, "fillLevel": 8, "status": "active"
   },
   {
     "id": 197,
-    "address": "София – контейнер 197",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.64476638889727,
-    "longitude": 23.36327486510664,
-    "hasSensor": true,
-    "fillLevel": 22,
-    "status": "OK"
+    "address": "Контейнер 197",
+    "latitude": 42.6612, "longitude": 23.3642, "area": "Младост", "trashType": "paper", "hasSensor": true, "sensorBattery": 15, "fillLevel": 75, "status": "active"
   },
   {
     "id": 198,
-    "address": "София – контейнер 198",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.690843251353414,
-    "longitude": 23.335781047329057,
-    "hasSensor": true,
-    "fillLevel": 23,
-    "status": "OK"
+    "address": "Контейнер 198",
+    "latitude": 42.6456, "longitude": 23.3452, "area": "Студентски-град", "trashType": "mixed", "hasSensor": false, "fillLevel": 33, "status": "active"
   },
   {
     "id": 199,
-    "address": "София – контейнер 199",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.68618866436058,
-    "longitude": 23.29736972259089,
-    "hasSensor": true,
-    "fillLevel": 80,
-    "status": "ALERT"
+    "address": "Контейнер 199",
+    "latitude": 42.6712, "longitude": 23.2954, "area": "Красно-Село", "trashType": "glass", "hasSensor": true, "sensorBattery": 62, "fillLevel": 14, "status": "active"
   },
   {
     "id": 200,
-    "address": "София – контейнер 200",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.681441831641344,
-    "longitude": 23.278959190938046,
-    "hasSensor": true,
-    "fillLevel": 49,
-    "status": "OK"
+    "address": "Контейнер 200",
+    "latitude": 42.6954, "longitude": 23.3754, "area": "Дружба", "trashType": "mixed", "hasSensor": false, "fillLevel": 56, "status": "active"
   },
   {
     "id": 201,
-    "address": "София – контейнер 201",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.6788360710839,
-    "longitude": 23.292440451959596,
-    "hasSensor": true,
-    "fillLevel": 70,
-    "status": "OK"
+    "address": "Контейнер 201",
+    "latitude": 42.6689, "longitude": 23.3210,
+    "area": "Лозенец", "trashType": "plastic", "hasSensor": true, "sensorBattery": 45, "fillLevel": 12, "status": "active"
   },
   {
     "id": 202,
-    "address": "София – контейнер 202",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.73712868386309,
-    "longitude": 23.30084741367613,
-    "hasSensor": true,
-    "fillLevel": 81,
-    "status": "ALERT"
+    "address": "Контейнер 202",
+    "latitude": 42.6450, "longitude": 23.3480,
+    "area": "Студентски-град", "trashType": "mixed", "hasSensor": false, "fillLevel": 88, "status": "active"
   },
   {
     "id": 203,
-    "address": "София – контейнер 203",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.69704390317759,
-    "longitude": 23.294774481629666,
-    "hasSensor": true,
-    "fillLevel": 72,
-    "status": "OK"
+    "address": "Контейнер 203",
+    "latitude": 42.7120, "longitude": 23.2730,
+    "area": "Люлин", "trashType": "paper", "hasSensor": true, "sensorBattery": 92, "fillLevel": 34, "status": "active"
   },
   {
     "id": 204,
-    "address": "София – контейнер 204",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.65145715167696,
-    "longitude": 23.270921720936236,
-    "hasSensor": true,
-    "fillLevel": 48,
-    "status": "OK"
+    "address": "Контейнер 204",
+    "latitude": 42.6840, "longitude": 23.2910,
+    "area": "Красно-Село", "trashType": "glass", "hasSensor": true, "sensorBattery": 15, "fillLevel": 67, "status": "active"
   },
   {
-    "id": 205,
-    "address": "София – контейнер 205",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.6481629559288,
-    "longitude": 23.35135356728644,
-    "hasSensor": true,
-    "fillLevel": 85,
-    "status": "ALERT"
+    "id": 205, 
+    "address": "Контейнер 205",
+    "latitude": 42.7215, "longitude": 23.3140,
+    "area": "Надежда", "trashType": "mixed", "hasSensor": false, "fillLevel": 41, "status": "active"
   },
   {
     "id": 206,
-    "address": "София – контейнер 206",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.689754368616526,
-    "longitude": 23.315348450935304,
-    "hasSensor": true,
-    "fillLevel": 70,
-    "status": "OK"
+    "address": "Контейнер 206",
+    "latitude": 42.6580, "longitude": 23.3720,
+    "area": "Младост", "trashType": "plastic", "hasSensor": true, "sensorBattery": 78, "fillLevel": 5, "status": "active"
   },
   {
     "id": 207,
-    "address": "София – контейнер 207",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.7252535957186,
-    "longitude": 23.327828066900175,
-    "hasSensor": true,
-    "fillLevel": 70,
-    "status": "OK"
+    "address": "Контейнер 207",
+    "latitude": 42.6650, "longitude": 23.3080,
+    "area": "Иван-Вазов", "trashType": "mixed", "hasSensor": false, "fillLevel": 95, "status": "active"
   },
   {
     "id": 208,
-    "address": "София – контейнер 208",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.69617682939155,
-    "longitude": 23.344813310886963,
-    "hasSensor": true,
-    "fillLevel": 42,
-    "status": "OK"
+    "address": "Контейнер 208",
+    "latitude": 42.6730, "longitude": 23.3610,
+    "area": "Дружба", "trashType": "paper", "hasSensor": true, "sensorBattery": 33, "fillLevel": 22, "status": "active"
   },
   {
     "id": 209,
-    "address": "София – контейнер 209",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.723937651866834,
-    "longitude": 23.336109883849034,
-    "hasSensor": true,
-    "fillLevel": 81,
-    "status": "ALERT"
+    "address": "Контейнер 209",
+    "latitude": 42.6410, "longitude": 23.2850,
+    "area": "Овча-Купел", "trashType": "glass", "hasSensor": true, "sensorBattery": 56, "fillLevel": 81, "status": "active"
   },
   {
     "id": 210,
-    "address": "София – контейнер 210",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.7041168256824,
-    "longitude": 23.294734350259233,
-    "hasSensor": true,
-    "fillLevel": 50,
-    "status": "OK"
+    "address": "Контейнер 210",
+    "latitude": 42.6980, "longitude": 23.3210,
+    "area": "София-Център", "trashType": "mixed", "hasSensor": false, "fillLevel": 14, "status": "active"
   },
   {
     "id": 211,
-    "address": "София – контейнер 211",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.67569991986326,
-    "longitude": 23.338298714669193,
-    "hasSensor": true,
-    "fillLevel": 48,
-    "status": "OK"
+    "address": "Контейнер 211",
+    "latitude": 42.7300, "longitude": 23.3420,
+    "area": "Надежда", "trashType": "plastic", "hasSensor": true, "sensorBattery": 90, "fillLevel": 55, "status": "active"
   },
   {
     "id": 212,
-    "address": "София – контейнер 212",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.65767248293856,
-    "longitude": 23.33305343915366,
-    "hasSensor": true,
-    "fillLevel": 77,
-    "status": "ALERT"
+    "address": "Контейнер 212",
+    "latitude": 42.7050, "longitude": 23.2680,
+    "area": "Люлин", "trashType": "paper", "hasSensor": true, "sensorBattery": 12, "fillLevel": 99, "status": "active"
   },
   {
     "id": 213,
-    "address": "София – контейнер 213",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.66076509276316,
-    "longitude": 23.283252258094805,
-    "hasSensor": true,
-    "fillLevel": 55,
-    "status": "OK"
+    "address": "Контейнер 213",
+    "latitude": 42.6770, "longitude": 23.2840,
+    "area": "Красно-Село", "trashType": "mixed", "hasSensor": false, "fillLevel": 30, "status": "active"
   },
   {
     "id": 214,
-    "address": "София – контейнер 214",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.71473278850826,
-    "longitude": 23.349214500623063,
-    "hasSensor": true,
-    "fillLevel": 54,
-    "status": "OK"
+    "address": "Контейнер 214",
+    "latitude": 42.6480, "longitude": 23.3310,
+    "area": "Студентски-град", "trashType": "glass", "hasSensor": true, "sensorBattery": 64, "fillLevel": 42, "status": "active"
   },
   {
     "id": 215,
-    "address": "София – контейнер 215",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.689496348423994,
-    "longitude": 23.30285640601993,
-    "hasSensor": true,
-    "fillLevel": 90,
-    "status": "ALERT"
+    "address": "Контейнер 215",
+    "latitude": 42.6615, "longitude": 23.3590,
+    "area": "Младост", "trashType": "mixed", "hasSensor": false, "fillLevel": 76, "status": "active"
   },
   {
     "id": 216,
-    "address": "София – контейнер 216",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.7106417781246,
-    "longitude": 23.340006325842253,
-    "hasSensor": true,
-    "fillLevel": 22,
-    "status": "OK"
+    "address": "Контейнер 216",
+    "latitude": 42.6820, "longitude": 23.3150,
+    "area": "Иван-Вазов", "trashType": "plastic", "hasSensor": true, "sensorBattery": 81, "fillLevel": 19, "status": "active"
   },
   {
     "id": 217,
-    "address": "София – контейнер 217",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.684516077945105,
-    "longitude": 23.299049737662774,
-    "hasSensor": true,
-    "fillLevel": 48,
-    "status": "OK"
+    "address": "Контейнер 217",
+    "latitude": 42.6950, "longitude": 23.3680,
+    "area": "Дружба", "trashType": "paper", "hasSensor": true, "sensorBattery": 27, "fillLevel": 51, "status": "active"
   },
   {
     "id": 218,
-    "address": "София – контейнер 218",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.641701188807644,
-    "longitude": 23.28431534969085,
-    "hasSensor": true,
-    "fillLevel": 81,
-    "status": "ALERT"
+    "address": "Контейнер 218",
+    "latitude": 42.6450, "longitude": 23.2790,
+    "area": "Овча-Купел", "trashType": "mixed", "hasSensor": false, "fillLevel": 60, "status": "active"
   },
   {
     "id": 219,
-    "address": "София – контейнер 219",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.658753864943584,
-    "longitude": 23.284568800780683,
-    "hasSensor": true,
-    "fillLevel": 62,
-    "status": "OK"
+    "address": "Контейнер 219",
+    "latitude": 42.7150, "longitude": 23.3020,
+    "area": "Надежда", "trashType": "glass", "hasSensor": true, "sensorBattery": 54, "fillLevel": 8, "status": "active"
   },
   {
     "id": 220,
-    "address": "София – контейнер 220",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.69581867857781,
-    "longitude": 23.341537798976745,
-    "hasSensor": true,
-    "fillLevel": 71,
-    "status": "OK"
+    "address": "Контейнер 220",
+    "latitude": 42.6680, "longitude": 23.3420,
+    "area": "Лозенец", "trashType": "mixed", "hasSensor": false, "fillLevel": 37, "status": "active"
   },
   {
     "id": 221,
-    "address": "София – контейнер 221",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.66899685520306,
-    "longitude": 23.277988288258896,
-    "hasSensor": true,
-    "fillLevel": 22,
-    "status": "OK"
+    "address": "Контейнер 221",
+    "latitude": 42.6510, "longitude": 23.3750,
+    "area": "Младост", "trashType": "plastic", "hasSensor": true, "sensorBattery": 93, "fillLevel": 72, "status": "active"
   },
   {
     "id": 222,
-    "address": "София – контейнер 222",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.6899745298101,
-    "longitude": 23.354594290771765,
-    "hasSensor": true,
-    "fillLevel": 83,
-    "status": "ALERT"
+    "address": "Контейнер 222",
+    "latitude": 42.7080, "longitude": 23.2810,
+    "area": "Люлин", "trashType": "paper", "hasSensor": true, "sensorBattery": 40, "fillLevel": 11, "status": "active"
   },
   {
     "id": 223,
-    "address": "София – контейнер 223",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.67333602979036,
-    "longitude": 23.298267211635718,
-    "hasSensor": true,
-    "fillLevel": 34,
-    "status": "OK"
+    "address": "Контейнер 223",
+    "latitude": 42.6710, "longitude": 23.2880,
+    "area": "Красно-Село", "trashType": "mixed", "hasSensor": false, "fillLevel": 89, "status": "active"
   },
   {
     "id": 224,
-    "address": "София – контейнер 224",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.658435163274376,
-    "longitude": 23.364054948092928,
-    "hasSensor": true,
-    "fillLevel": 100,
-    "status": "FULL"
+    "address": "Контейнер 224",
+    "latitude": 42.6460, "longitude": 23.3410,
+    "area": "Студентски-град", "trashType": "glass", "hasSensor": true, "sensorBattery": 18, "fillLevel": 56, "status": "active"
   },
   {
     "id": 225,
-    "address": "София – контейнер 225",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.737036463338384,
-    "longitude": 23.30326607581047,
-    "hasSensor": true,
-    "fillLevel": 92,
-    "status": "FULL"
+    "address": "Контейнер 225",
+    "latitude": 42.6920, "longitude": 23.3140,
+    "area": "София-Център", "trashType": "mixed", "hasSensor": false, "fillLevel": 24, "status": "active"
   },
   {
     "id": 226,
-    "address": "София – контейнер 226",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.64346548741643,
-    "longitude": 23.297359842965164,
-    "hasSensor": true,
-    "fillLevel": 22,
-    "status": "OK"
+    "address": "Контейнер 226",
+    "latitude": 42.6610, "longitude": 23.3110,
+    "area": "Иван-Вазов", "trashType": "plastic", "hasSensor": true, "sensorBattery": 71, "fillLevel": 48, "status": "active"
   },
   {
     "id": 227,
-    "address": "София – контейнер 227",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.68428265758942,
-    "longitude": 23.333381889430015,
-    "hasSensor": true,
-    "fillLevel": 84,
-    "status": "ALERT"
+    "address": "Контейнер 227",
+    "latitude": 42.6880, "longitude": 23.3620,
+    "area": "Дружба", "trashType": "paper", "hasSensor": true, "sensorBattery": 55, "fillLevel": 93, "status": "active"
   },
   {
     "id": 228,
-    "address": "София – контейнер 228",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.64481766294211,
-    "longitude": 23.27761039238227,
-    "hasSensor": true,
-    "fillLevel": 82,
-    "status": "ALERT"
+    "address": "Контейнер 228",
+    "latitude": 42.7230, "longitude": 23.3310,
+    "area": "Надежда", "trashType": "mixed", "hasSensor": false, "fillLevel": 62, "status": "active"
   },
   {
     "id": 229,
-    "address": "София – контейнер 229",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.66273910523971,
-    "longitude": 23.351408067684584,
-    "hasSensor": true,
-    "fillLevel": 50,
-    "status": "OK"
+    "address": "Контейнер 229",
+    "latitude": 42.6540, "longitude": 23.2810,
+    "area": "Овча-Купел", "trashType": "glass", "hasSensor": true, "sensorBattery": 29, "fillLevel": 5, "status": "active"
   },
   {
     "id": 230,
-    "address": "София – контейнер 230",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.69830438605517,
-    "longitude": 23.27948485967165,
-    "hasSensor": true,
-    "fillLevel": 88,
-    "status": "ALERT"
+    "address": "Контейнер 230",
+    "latitude": 42.7110, "longitude": 23.2620,
+    "area": "Люлин", "trashType": "mixed", "hasSensor": false, "fillLevel": 45, "status": "active"
   },
   {
     "id": 231,
-    "address": "София – контейнер 231",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.691865655986,
-    "longitude": 23.35260754506819,
-    "hasSensor": true,
-    "fillLevel": 36,
-    "status": "OK"
+    "address": "Контейнер 231",
+    "latitude": 42.6840, "longitude": 23.3380,
+    "area": "Лозенец", "trashType": "plastic", "hasSensor": true, "sensorBattery": 88, "fillLevel": 12, "status": "active"
   },
   {
     "id": 232,
-    "address": "София – контейнер 232",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.68035511693149,
-    "longitude": 23.278059502730184,
-    "hasSensor": true,
-    "fillLevel": 51,
-    "status": "OK"
+    "address": "Контейнер 232",
+    "latitude": 42.6650, "longitude": 23.3550,
+    "area": "Младост", "trashType": "paper", "hasSensor": true, "sensorBattery": 42, "fillLevel": 78, "status": "active"
   },
   {
     "id": 233,
-    "address": "София – контейнер 233",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.69548778946105,
-    "longitude": 23.321498124609708,
-    "hasSensor": true,
-    "fillLevel": 98,
-    "status": "FULL"
+    "address": "Контейнер 233",
+    "latitude": 42.7350, "longitude": 23.3510,
+    "area": "Надежда", "trashType": "mixed", "hasSensor": false, "fillLevel": 19, "status": "active"
   },
   {
     "id": 234,
-    "address": "София – контейнер 234",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.680675574580484,
-    "longitude": 23.28735815032516,
-    "hasSensor": true,
-    "fillLevel": 94,
-    "status": "FULL"
+    "address": "Контейнер 234",
+    "latitude": 42.6980, "longitude": 23.3050,
+    "area": "София-Център", "trashType": "glass", "hasSensor": true, "sensorBattery": 63, "fillLevel": 4, "status": "active"
   },
   {
     "id": 235,
-    "address": "София – контейнер 235",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.677142755134874,
-    "longitude": 23.35373399027156,
-    "hasSensor": true,
-    "fillLevel": 43,
-    "status": "OK"
+    "address": "Контейнер 235",
+    "latitude": 42.6740, "longitude": 23.2790,
+    "area": "Красно-Село", "trashType": "mixed", "hasSensor": false, "fillLevel": 91, "status": "active"
   },
   {
     "id": 236,
-    "address": "София – контейнер 236",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.730044053054925,
-    "longitude": 23.329577189094582,
-    "hasSensor": true,
-    "fillLevel": 18,
-    "status": "OK"
+    "address": "Контейнер 236",
+    "latitude": 42.6410, "longitude": 23.3480,
+    "area": "Студентски-град", "trashType": "plastic", "hasSensor": true, "sensorBattery": 15, "fillLevel": 64, "status": "active"
   },
   {
     "id": 237,
-    "address": "София – контейнер 237",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.67354391510223,
-    "longitude": 23.30492717637939,
-    "hasSensor": true,
-    "fillLevel": 94,
-    "status": "FULL"
+    "address": "Контейнер 237",
+    "latitude": 42.6610, "longitude": 23.3050,
+    "area": "Иван-Вазов", "trashType": "mixed", "hasSensor": false, "fillLevel": 28, "status": "active"
   },
   {
     "id": 238,
-    "address": "София – контейнер 238",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.69495156576716,
-    "longitude": 23.338454924403106,
-    "hasSensor": true,
-    "fillLevel": 86,
-    "status": "ALERT"
+    "address": "Контейнер 238",
+    "latitude": 42.6712, "longitude": 23.3745,
+    "area": "Дружба", "trashType": "paper", "hasSensor": true, "sensorBattery": 82, "fillLevel": 50, "status": "active"
   },
   {
     "id": 239,
-    "address": "София – контейнер 239",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.66629728372034,
-    "longitude": 23.345430162217724,
-    "hasSensor": true,
-    "fillLevel": 31,
-    "status": "OK"
+    "address": "Контейнер 239",
+    "latitude": 42.6435, "longitude": 23.2882,
+    "area": "Овча-Купел", "trashType": "glass", "hasSensor": true, "sensorBattery": 37, "fillLevel": 98, "status": "active"
   },
   {
     "id": 240,
-    "address": "София – контейнер 240",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.68794260763434,
-    "longitude": 23.32949688588459,
-    "hasSensor": true,
-    "fillLevel": 41,
-    "status": "OK"
+    "address": "Контейнер 240",
+    "latitude": 42.7056, "longitude": 23.3321,
+    "area": "Надежда", "trashType": "mixed", "hasSensor": false, "fillLevel": 11, "status": "active"
   },
   {
     "id": 241,
-    "address": "София – контейнер 241",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.71496648208407,
-    "longitude": 23.29315258037819,
-    "hasSensor": true,
-    "fillLevel": 14,
-    "status": "OK"
+    "address": "Контейнер 241",
+    "latitude": 42.7214, "longitude": 23.2654,
+    "area": "Люлин", "trashType": "plastic", "hasSensor": true, "sensorBattery": 54, "fillLevel": 44, "status": "active"
   },
   {
     "id": 242,
-    "address": "София – контейнер 242",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.6789130296299,
-    "longitude": 23.303443545205482,
-    "hasSensor": true,
-    "fillLevel": 98,
-    "status": "FULL"
+    "address": "Контейнер 242",
+    "latitude": 42.6789, "longitude": 23.3034,
+    "area": "Лозенец", "trashType": "paper", "hasSensor": true, "sensorBattery": 96, "fillLevel": 8, "status": "active"
   },
   {
     "id": 243,
-    "address": "София – контейнер 243",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.71836551073663,
-    "longitude": 23.357717211846097,
-    "hasSensor": true,
-    "fillLevel": 93,
-    "status": "FULL"
+    "address": "Контейнер 243",
+    "latitude": 42.7183, "longitude": 23.3577,
+    "area": "Надежда", "trashType": "mixed", "hasSensor": false, "fillLevel": 67, "status": "active"
   },
   {
     "id": 244,
-    "address": "София – контейнер 244",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.70849205736031,
-    "longitude": 23.325477475846885,
-    "hasSensor": true,
-    "fillLevel": 86,
-    "status": "ALERT"
+    "address": "Контейнер 244",
+    "latitude": 42.7084, "longitude": 23.3245,
+    "area": "София-Център", "trashType": "glass", "hasSensor": true, "sensorBattery": 21, "fillLevel": 52, "status": "active"
   },
   {
     "id": 245,
-    "address": "София – контейнер 245",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.708029220403255,
-    "longitude": 23.315803618377608,
-    "hasSensor": true,
-    "fillLevel": 11,
-    "status": "OK"
+    "address": "Контейнер 245",
+    "latitude": 42.6632, "longitude": 23.3456,
+    "area": "Лозенец",
+     "trashType": "mixed",
+      "hasSensor": false,
+       "fillLevel": 83, 
+       "status": "active"
   },
   {
     "id": 246,
-    "address": "София – контейнер 246",
-    "area": "София",
-    "types": [
-      "plastic",
-      "paper",
-      "glass"
-    ],
-    "latitude": 42.66415082911058,
-    "longitude": 23.363885659588245,
+    "address": "Контейнер 246",
+    "latitude": 42.6451, "longitude": 23.3123,
+    "area": "Студентски-град", 
+    "trashType": "plastic",
     "hasSensor": true,
-    "fillLevel": 92,
-    "status": "FULL"
+    "sensorBattery": 89,
+    "fillLevel": 20, 
+    "status": "active"
   }
 ]

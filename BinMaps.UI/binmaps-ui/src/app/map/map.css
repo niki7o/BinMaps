@@ -1,0 +1,58 @@
+.bin-icon {
+  position: relative;
+}
+
+.fill-low {
+  outline: 2px solid #2ecc71;
+}
+
+.fill-medium {
+  outline: 2px solid #f39c12;
+}
+
+.fill-high {
+  outline: 2px solid #e74c3c;
+}
+
+.has-sensor::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  background: #3498db;
+  border-radius: 50%;
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+}
+.legend {
+  background: white;
+  padding: 10px;
+  font-size: 13px;
+  border-radius: 6px;
+  box-shadow: 0 0 10px rgba(0,0,0,.2);
+}
+
+.legend img {
+  width: 18px;
+  vertical-align: middle;
+}
+
+.legend .box {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+}
+
+.green { background: #2ecc71; }
+.orange { background: #f39c12; }
+.red { background: #e74c3c; }
+
+.legend .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #3498db;
+  border-radius: 50%;
+  margin-right: 6px;
+}
