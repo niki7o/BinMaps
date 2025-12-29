@@ -1,4 +1,4 @@
-import { Component, AfterViewInit } from '@angular/core';
+import { Component, AfterViewInit, ViewEncapsulation } from '@angular/core';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
 
@@ -6,7 +6,8 @@ import 'leaflet.markercluster';
   selector: 'app-map',
   standalone: true,
   template: '<div id="map"></div>',
-  styleUrls: ['./map.css']
+  styleUrls: ['./map.css'],
+  encapsulation: ViewEncapsulation.None
 })
 export class MapComponent implements AfterViewInit {
 
@@ -16,9 +17,55 @@ export class MapComponent implements AfterViewInit {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: 'BinMaps'
     }).addTo(map);
+    const legend = (L as any).control({ position: 'bottomleft' });
+
+legend.onAdd = () => {
+  const div = L.DomUtil.create('div', 'map-legend');
+
+  div.innerHTML = `
+    <b>Legend</b>
+
+    <div class="row">
+      <img src="assets/icons/bin-plastic.svg"> Plastic
+    </div>
+    <div class="row">
+      <img src="assets/icons/bin-paper.svg"> Paper
+    </div>
+    <div class="row">
+      <img src="assets/icons/bin-glass.svg"> Glass
+    </div>
+    <div class="row">
+      <img src="assets/icons/bin-mixed.svg"> Mixed
+    </div>
+
+    <hr>
+
+    <div class="row">
+      <span class="fill low"></span> Low fill
+    </div>
+    <div class="row">
+      <span class="fill medium"></span> Medium fill
+    </div>
+    <div class="row">
+      <span class="fill high"></span> High fill
+    </div>
+
+    <hr>
+
+    <div class="row">
+      <span class="sensor-dot"></span> Sensor active
+    </div>
+  `;
+
+  return div;
+};
+
+legend.addTo(map);
+
 
     this.loadAreas(map);
     this.loadBins(map);
+    
   }
 
   loadAreas(map: L.Map) {
@@ -80,47 +127,23 @@ export class MapComponent implements AfterViewInit {
     map.addLayer(cluster);
   }
 
-  getBinIcon(bin: any): L.Icon {
-  let fillClass = 'fill-low';
-  if (bin.fillLevel > 70) fillClass = 'fill-high';
-  else if (bin.fillLevel > 40) fillClass = 'fill-medium';
+  getBinIcon(bin: any): L.DivIcon {
+  const fill =
+    bin.fillLevel > 70 ? 'high' :
+    bin.fillLevel > 40 ? 'medium' : 'low';
 
-  if (bin.status === 'fire') {
-    return L.icon({
-      iconUrl: '/assets/icons/bin-fire.svg',
-      iconSize: [32, 32]
-    });
-  }
-
-  return L.icon({
-    iconUrl: `/assets/icons/bin-${bin.trashType}.svg`,
-    iconSize: [28, 28],
-    className: `bin-icon ${fillClass} ${bin.hasSensor ? 'has-sensor' : ''}`
+  return L.divIcon({
+    className: 'bin-wrapper',
+    html: `
+      <div class="bin ${fill}">
+        <img src="assets/icons/bin-${bin.trashType}.svg" />
+        ${bin.hasSensor ? '<span class="sensor-dot"></span>' : ''}
+      </div>
+    `,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32]
   });
 }
-addLegend(map: L.Map) {
-  const legend = new L.Control({ position: 'bottomright' });
 
-  legend.onAdd = () => {
-    const div = L.DomUtil.create('div', 'legend');
-    div.innerHTML = `
-      <h4>Legend</h4>
-      <div><img src="/assets/icons/bin-plastic.svg"> Plastic</div>
-      <div><img src="/assets/icons/bin-paper.svg"> Paper</div>
-      <div><img src="/assets/icons/bin-glass.svg"> Glass</div>
-      <div><img src="/assets/icons/bin-mixed.svg"> Mixed</div>
-      <hr/>
-      <div><span class="box green"></span> Low fill</div>
-      <div><span class="box orange"></span> Medium fill</div>
-      <div><span class="box red"></span> High fill</div>
-      <hr/>
-      <div><span class="dot"></span> Sensor</div>
-      <div><img src="/assets/icons/bin-fire.svg"> Fire</div>
-    `;
-    return div;
-  };
-
-  legend.addTo(map);
-}
 
 }
