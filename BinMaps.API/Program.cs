@@ -9,12 +9,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Identity.Web;
+using System;
 
 namespace BinMaps.API
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
 
 
@@ -25,8 +26,7 @@ namespace BinMaps.API
                 .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
 
             builder.Services.AddDbContext<BinMapsDbContext>(options =>
-
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+               options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -36,12 +36,25 @@ namespace BinMaps.API
 
             var app = builder.Build();
 
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                var context = services.GetRequiredService<BinMapsDbContext>();
+
+               
+                await context.Database.MigrateAsync();
+
+               
+                await BinMapsDbContext.SeedAsync(context);
+            }
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            
+       
 
             app.UseHttpsRedirection();
 
@@ -49,7 +62,7 @@ namespace BinMaps.API
 
             app.MapControllers();
 
-            app.Run();
+           await app.RunAsync();
         }
     }
 }

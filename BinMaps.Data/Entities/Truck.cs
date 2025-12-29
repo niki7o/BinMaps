@@ -14,7 +14,7 @@ namespace BinMaps.Data.Entities
 
         [Required]
         [ForeignKey(nameof(Area))]
-        public int AreaId { get; set; }
+        public string AreaId { get; set; }
         public Area Area { get; set; }
 
         [Required]

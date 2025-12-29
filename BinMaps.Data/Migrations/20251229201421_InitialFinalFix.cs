@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace BinMaps.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigration : Migration
+    public partial class InitialFinalFix : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,8 +15,7 @@ namespace BinMaps.Data.Migrations
                 name: "Areas",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false)
                 },
@@ -29,14 +28,15 @@ namespace BinMaps.Data.Migrations
                 name: "TrashContainers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AreaId = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false),
+                    AreaId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Capacity = table.Column<double>(type: "float", nullable: false),
+                    TrashType = table.Column<int>(type: "int", nullable: false),
                     FillPercentage = table.Column<double>(type: "float", nullable: false),
-                    Temperature = table.Column<double>(type: "float", nullable: false),
-                    BatteryPercentage = table.Column<double>(type: "float", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Temperature = table.Column<double>(type: "float", nullable: true),
+                    BatteryPercentage = table.Column<double>(type: "float", nullable: true),
+                    HasSensor = table.Column<bool>(type: "bit", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     LocationX = table.Column<double>(type: "float", nullable: false),
                     LocationY = table.Column<double>(type: "float", nullable: false)
                 },
@@ -57,9 +57,10 @@ namespace BinMaps.Data.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    AreaId = table.Column<int>(type: "int", nullable: false),
+                    AreaId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     DriverName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Capacity = table.Column<double>(type: "float", nullable: false)
+                    Capacity = table.Column<double>(type: "float", nullable: false),
+                    TrashType = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {

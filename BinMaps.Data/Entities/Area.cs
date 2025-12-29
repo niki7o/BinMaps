@@ -8,7 +8,7 @@ namespace BinMaps.Data.Entities
     public class Area
     {
         [Key]
-        public int Id { get; set; }
+        public string Id { get; set; }
 
         [Required]
         [MaxLength(100)]

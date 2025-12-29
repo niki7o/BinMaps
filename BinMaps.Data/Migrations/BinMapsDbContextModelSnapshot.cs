@@ -24,11 +24,8 @@ namespace BinMaps.Data.Migrations
 
             modelBuilder.Entity("BinMaps.Data.Entities.Area", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -89,15 +86,13 @@ namespace BinMaps.Data.Migrations
             modelBuilder.Entity("BinMaps.Data.Entities.TrashContainer", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<string>("AreaId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("AreaId")
-                        .HasColumnType("int");
-
-                    b.Property<double>("BatteryPercentage")
+                    b.Property<double?>("BatteryPercentage")
                         .HasColumnType("float");
 
                     b.Property<double>("Capacity")
@@ -106,6 +101,9 @@ namespace BinMaps.Data.Migrations
                     b.Property<double>("FillPercentage")
                         .HasColumnType("float");
 
+                    b.Property<bool>("HasSensor")
+                        .HasColumnType("bit");
+
                     b.Property<double>("LocationX")
                         .HasColumnType("float");
 
@@ -113,13 +111,12 @@ namespace BinMaps.Data.Migrations
                         .HasColumnType("float");
 
                     b.Property<string>("Status")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("Temperature")
+                    b.Property<double?>("Temperature")
                         .HasColumnType("float");
 
-                    b.Property<int>("TrashTypе")
+                    b.Property<int>("TrashType")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -137,8 +134,9 @@ namespace BinMaps.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AreaId")
-                        .HasColumnType("int");
+                    b.Property<string>("AreaId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<double>("Capacity")
                         .HasColumnType("float");

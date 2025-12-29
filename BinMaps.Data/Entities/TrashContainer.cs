@@ -14,27 +14,31 @@ namespace BinMaps.Data.Entities
 
         [Required]
         [ForeignKey(nameof(Area))]
-        public int AreaId { get; set; }
+        public string AreaId { get; set; }
         public Area Area { get; set; }
 
-        [Required]
+        [Required] 
         [Range(0, double.MaxValue)]
         public double Capacity { get; set; }
+
         [Required]
-        public TrashType TrashTypе { get; set; }
+        public TrashType TrashType { get; set; }
+
         [Required]
         [Range(0, 100)]
         public double FillPercentage { get; set; }
 
-        [Required]
-        public double Temperature { get; set; }
+      
+        public double? Temperature { get; set; }
+
+        
+        public double? BatteryPercentage { get; set; }
 
         [Required]
-        [Range(0, 100)]
-        public double BatteryPercentage { get; set; }
+        public bool HasSensor { get; set; }
 
-        [Required]
-        public TrashContainerStatus Status { get; set; }
+      
+        public TrashContainerStatus? Status { get; set; }
 
         [Required]
         public double LocationX { get; set; }
