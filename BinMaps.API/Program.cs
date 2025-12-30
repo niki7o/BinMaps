@@ -33,7 +33,13 @@ namespace BinMaps.API
             builder.Services.AddSwaggerGen();
             builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
             builder.Services.AddScoped<ITruckRouteService, TruckRouteService>();
-
+            builder.Services.AddCors(options => {
+                options.AddPolicy("AllowAngular", policy => {
+                    policy.WithOrigins("http://localhost:4200")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
             var app = builder.Build();
 
             using (var scope = app.Services.CreateScope())
@@ -53,9 +59,9 @@ namespace BinMaps.API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-            
-       
 
+
+            app.UseCors("AllowAngular");
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
