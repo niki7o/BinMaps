@@ -6,7 +6,6 @@
     "longitude": 23.30502009430058,
     "area": "София-Център",
     "trashType": "смесен",
-    
     "hasSensor": false,
     "fillLevel": 45,
     "status": "active"
@@ -1703,25 +1702,26 @@
     "id": 203,
     "address": "Контейнер 203",
     "latitude": 42.7120, "longitude": 23.2730,
-    "area": "Люлин", "trashType": "хартия", "hasSensor": true, "sensorBattery": 92, "fillLevel": 34, "status": "active"
+    "area": "Люлин",
+     "trashType": "хартия", "hasSensor": true, "sensorBattery": 92, "fillLevel": 34, "status": "active"
   },
   {
     "id": 204,
     "address": "Контейнер 204",
     "latitude": 42.6840, "longitude": 23.2910,
-    "area": "Красно-Село", "trashType": "стъкло", "hasSensor": true, "sensorBattery": 15, "fillLevel": 67, "status": "active"
+    "area": "Красно-Село","temperature":20, "trashType": "стъкло", "hasSensor": true, "sensorBattery": 15, "fillLevel": 67, "status": "active"
   },
   {
     "id": 205, 
     "address": "Контейнер 205",
     "latitude": 42.7215, "longitude": 23.3140,
-    "area": "Надежда", "trashType": "смесен", "hasSensor": false, "fillLevel": 41, "status": "active"
+    "area": "Надежда",    "trashType": "смесен", "hasSensor": false, "fillLevel": 41, "status": "active"
   },
   {
     "id": 206,
     "address": "Контейнер 206",
     "latitude": 42.6580, "longitude": 23.3720,
-    "area": "Младост", "trashType": "пластмаса", "hasSensor": true, "sensorBattery": 78, "fillLevel": 5, "status": "active"
+    "area": "Младост","temperature":25, "trashType": "пластмаса", "hasSensor": true, "sensorBattery": 78, "fillLevel": 5, "status": "active"
   },
   {
     "id": 207,
@@ -1733,13 +1733,13 @@
     "id": 208,
     "address": "Контейнер 208",
     "latitude": 42.6730, "longitude": 23.3610,
-    "area": "Дружба", "trashType": "хартия", "hasSensor": true, "sensorBattery": 33, "fillLevel": 22, "status": "active"
+    "area": "Дружба",   "temperature":24, "trashType": "хартия", "hasSensor": true, "sensorBattery": 33, "fillLevel": 22, "status": "active"
   },
   {
     "id": 209,
     "address": "Контейнер 209",
     "latitude": 42.6410, "longitude": 23.2850,
-    "area": "Овча-Купел", "trashType": "стъкло", "hasSensor": true, "sensorBattery": 56, "fillLevel": 81, "status": "active"
+    "area": "Овча-Купел",   "temperature":40, "trashType": "стъкло", "hasSensor": true, "sensorBattery": 56, "fillLevel": 81, "status": "active"
   },
   {
     "id": 210,
@@ -1751,13 +1751,13 @@
     "id": 211,
     "address": "Контейнер 211",
     "latitude": 42.7300, "longitude": 23.3420,
-    "area": "Надежда", "trashType": "пластмаса", "hasSensor": true, "sensorBattery": 90, "fillLevel": 55, "status": "active"
+    "area": "Надежда",   "temperature":25, "trashType": "пластмаса", "hasSensor": true, "sensorBattery": 90, "fillLevel": 55, "status": "active"
   },
   {
     "id": 212,
     "address": "Контейнер 212",
     "latitude": 42.7050, "longitude": 23.2680,
-    "area": "Люлин", "trashType": "хартия", "hasSensor": true, "sensorBattery": 12, "fillLevel": 99, "status": "active"
+    "area": "Люлин",   "temperature":50, "trashType": "хартия", "hasSensor": true, "sensorBattery": 12, "fillLevel": 99, "status": "active"
   },
   {
     "id": 213,
@@ -1769,7 +1769,8 @@
     "id": 214,
     "address": "Контейнер 214",
     "latitude": 42.6480, "longitude": 23.3310,
-    "area": "Студентски-град", "trashType": "стъкло", "hasSensor": true, "sensorBattery": 64, "fillLevel": 42, "status": "active"
+    "area": "Студентски-град",
+       "temperature":25, "trashType": "стъкло", "hasSensor": true, "sensorBattery": 64, "fillLevel": 42, "status": "active"
   },
   {
     "id": 215,
@@ -1781,13 +1782,13 @@
     "id": 216,
     "address": "Контейнер 216",
     "latitude": 42.6820, "longitude": 23.3150,
-    "area": "Иван-Вазов", "trashType": "пластмаса", "hasSensor": true, "sensorBattery": 81, "fillLevel": 19, "status": "active"
+    "area": "Иван-Вазов",   "temperature":24, "trashType": "пластмаса", "hasSensor": true, "sensorBattery": 81, "fillLevel": 19, "status": "active"
   },
   {
     "id": 217,
     "address": "Контейнер 217",
     "latitude": 42.6950, "longitude": 23.3680,
-    "area": "Дружба", "trashType": "хартия", "hasSensor": true, "sensorBattery": 27, "fillLevel": 51, "status": "active"
+    "area": "Дружба",   "temperature":29, "trashType": "хартия", "hasSensor": true, "sensorBattery": 27, "fillLevel": 51, "status": "active"
   },
   {
     "id": 218,
@@ -1799,7 +1800,7 @@
     "id": 219,
     "address": "Контейнер 219",
     "latitude": 42.7150, "longitude": 23.3020,
-    "area": "Надежда", "trashType": "стъкло", "hasSensor": true, "sensorBattery": 54, "fillLevel": 8, "status": "active"
+    "area": "Надежда",   "temperature":21, "trashType": "стъкло", "hasSensor": true, "sensorBattery": 54, "fillLevel": 8, "status": "active"
   },
   {
     "id": 220,
@@ -1811,13 +1812,15 @@
     "id": 221,
     "address": "Контейнер 221",
     "latitude": 42.6510, "longitude": 23.3750,
-    "area": "Младост", "trashType": "пластмаса", "hasSensor": true, "sensorBattery": 93, "fillLevel": 72, "status": "active"
+    "area": "Младост",
+       "temperature":55, "trashType": "пластмаса", "hasSensor": true, "sensorBattery": 93, "fillLevel": 72, "status": "active"
   },
   {
     "id": 222,
     "address": "Контейнер 222",
     "latitude": 42.7080, "longitude": 23.2810,
-    "area": "Люлин", "trashType": "хартия", "hasSensor": true, "sensorBattery": 40, "fillLevel": 11, "status": "active"
+    "area": "Люлин",
+       "temperature":25, "trashType": "хартия", "hasSensor": true, "sensorBattery": 40, "fillLevel": 11, "status": "active"
   },
   {
     "id": 223,
@@ -1829,7 +1832,7 @@
     "id": 224,
     "address": "Контейнер 224",
     "latitude": 42.6460, "longitude": 23.3410,
-    "area": "Студентски-град", "trashType": "стъкло", "hasSensor": true, "sensorBattery": 18, "fillLevel": 56, "status": "active"
+    "area": "Студентски-град",   "temperature":76, "trashType": "стъкло", "hasSensor": true, "sensorBattery": 18, "fillLevel": 56, "status": "active"
   },
   {
     "id": 225,
@@ -1841,13 +1844,15 @@
     "id": 226,
     "address": "Контейнер 226",
     "latitude": 42.6610, "longitude": 23.3110,
-    "area": "Иван-Вазов", "trashType": "пластмаса", "hasSensor": true, "sensorBattery": 71, "fillLevel": 48, "status": "active"
+    "area": "Иван-Вазов",
+       "temperature":30, "trashType": "пластмаса", "hasSensor": true, "sensorBattery": 71, "fillLevel": 48, "status": "active"
   },
   {
     "id": 227,
     "address": "Контейнер 227",
     "latitude": 42.6880, "longitude": 23.3620,
-    "area": "Дружба", "trashType": "хартия", "hasSensor": true, "sensorBattery": 55, "fillLevel": 93, "status": "active"
+    "area": "Дружба", "trashType": "хартия",   "temperature":50,
+     "hasSensor": true, "sensorBattery": 55, "fillLevel": 93, "status": "active"
   },
   {
     "id": 228,
@@ -1859,7 +1864,8 @@
     "id": 229,
     "address": "Контейнер 229",
     "latitude": 42.6540, "longitude": 23.2810,
-    "area": "Овча-Купел", "trashType": "стъкло", "hasSensor": true, "sensorBattery": 29, "fillLevel": 5, "status": "active"
+    "area": "Овча-Купел",   "temperature":75, 
+    "trashType": "стъкло", "hasSensor": true, "sensorBattery": 29, "fillLevel": 5, "status": "active"
   },
   {
     "id": 230,
@@ -1871,12 +1877,13 @@
     "id": 231,
     "address": "Контейнер 231",
     "latitude": 42.6840, "longitude": 23.3380,
-    "area": "Лозенец", "trashType": "пластмаса", "hasSensor": true, "sensorBattery": 88, "fillLevel": 12, "status": "active"
+    "area": "Лозенец",   "temperature":25, "trashType": "пластмаса", "hasSensor": true, "sensorBattery": 88, "fillLevel": 12, "status": "active"
   },
   {
     "id": 232,
     "address": "Контейнер 232",
     "latitude": 42.6650, "longitude": 23.3550,
+    "temperature":40,
     "area": "Младост", "trashType": "хартия", "hasSensor": true, "sensorBattery": 42, "fillLevel": 78, "status": "active"
   },
   {
@@ -1889,7 +1896,8 @@
     "id": 234,
     "address": "Контейнер 234",
     "latitude": 42.6980, "longitude": 23.3050,
-    "area": "София-Център", "trashType": "стъкло", "hasSensor": true, "sensorBattery": 63, "fillLevel": 4, "status": "active"
+    "area": "София-Център",
+    "temperature":24, "trashType": "стъкло", "hasSensor": true, "sensorBattery": 63, "fillLevel": 4, "status": "active"
   },
   {
     "id": 235,
@@ -1901,6 +1909,7 @@
     "id": 236,
     "address": "Контейнер 236",
     "latitude": 42.6410, "longitude": 23.3480,
+    "temperature":29,
     "area": "Студентски-град", "trashType": "пластмаса", "hasSensor": true, "sensorBattery": 15, "fillLevel": 64, "status": "active"
   },
   {
@@ -1913,13 +1922,16 @@
     "id": 238,
     "address": "Контейнер 238",
     "latitude": 42.6712, "longitude": 23.3745,
-    "area": "Дружба", "trashType": "хартия", "hasSensor": true, "sensorBattery": 82, "fillLevel": 50, "status": "active"
+    "area": "Дружба", "trashType": "хартия",
+    "temperature":30, "hasSensor": true, "sensorBattery": 82, "fillLevel": 50, "status": "active"
   },
   {
     "id": 239,
     "address": "Контейнер 239",
     "latitude": 42.6435, "longitude": 23.2882,
-    "area": "Овча-Купел", "trashType": "стъкло", "hasSensor": true, "sensorBattery": 37, "fillLevel": 98, "status": "active"
+    "area": "Овча-Купел", "trashType": "стъкло",
+     "hasSensor": true,"temperature":61,
+      "sensorBattery": 37, "fillLevel": 98, "status": "active"
   },
   {
     "id": 240,
@@ -1931,13 +1943,15 @@
     "id": 241,
     "address": "Контейнер 241",
     "latitude": 42.7214, "longitude": 23.2654,
+    "temperature":31,
     "area": "Люлин", "trashType": "пластмаса", "hasSensor": true, "sensorBattery": 54, "fillLevel": 44, "status": "active"
   },
   {
     "id": 242,
     "address": "Контейнер 242",
     "latitude": 42.6789, "longitude": 23.3034,
-    "area": "Лозенец", "trashType": "хартия", "hasSensor": true, "sensorBattery": 96, "fillLevel": 8, "status": "active"
+    "area": "Лозенец","temperature":25,
+     "trashType": "хартия", "hasSensor": true, "sensorBattery": 96, "fillLevel": 8, "status": "active"
   },
   {
     "id": 243,
@@ -1949,17 +1963,20 @@
     "id": 244,
     "address": "Контейнер 244",
     "latitude": 42.7084, "longitude": 23.3245,
-    "area": "София-Център", "trashType": "стъкло", "hasSensor": true, "sensorBattery": 21, "fillLevel": 52, "status": "active"
+    "area": "София-Център",
+    "temperature":30,
+     "trashType": "стъкло", "hasSensor": true, "sensorBattery": 21, "fillLevel": 52, "status": "active"
   },
   {
     "id": 245,
     "address": "Контейнер 245",
     "latitude": 42.6632, "longitude": 23.3456,
     "area": "Лозенец",
-     "trashType": "смесен",
-      "hasSensor": false,
-       "fillLevel": 83, 
-       "status": "active"
+    "trashType": "смесен",
+    "hasSensor": false,
+    
+    "fillLevel": 83, 
+    "status": "active"
   },
   {
     "id": 246,
@@ -1969,7 +1986,8 @@
     "trashType": "пластмаса",
     "hasSensor": true,
     "sensorBattery": 89,
-    "fillLevel": 20, 
+    "fillLevel": 20,
+    "temperature":25,
     "status": "active"
   }
 ]

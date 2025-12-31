@@ -1,10 +1,12 @@
-import { Component, AfterViewInit, ViewEncapsulation } from '@angular/core';
+import { Component, AfterViewInit, ViewEncapsulation, inject } from '@angular/core';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
 
 @Component({
   selector: 'app-map',
   standalone: true,
+  imports: [HttpClientModule],
   template: '<div id="map"></div>',
   styleUrls: ['./map.css'],
   encapsulation: ViewEncapsulation.None
@@ -12,7 +14,11 @@ import 'leaflet.markercluster';
 export class MapComponent implements AfterViewInit {
   private map!: L.Map;
   private cluster = L.markerClusterGroup();
-  private allBins: any[] = []; 
+  private allBins: any[] = [];
+  private routeLine?: L.Polyline;
+  private truckMarker?: L.Marker;
+  
+  private http = inject(HttpClient);
 
   ngAfterViewInit(): void {
     this.map = L.map('map').setView([42.6977, 23.3219], 12);
@@ -29,7 +35,6 @@ export class MapComponent implements AfterViewInit {
       const div = L.DomUtil.create('div', 'map-legend');
       div.innerHTML = `
         <div class="legend-header">ФИЛТРИРАНЕ</div>
-        
         <div class="legend-section">
           <div class="legend-row" id="f-type-1"><img src="assets/icons/bin-plastic.svg"> Пластмаса</div>
           <div class="legend-row" id="f-type-2"><img src="assets/icons/bin-paper.svg"> Хартия</div>
@@ -44,24 +49,23 @@ export class MapComponent implements AfterViewInit {
         </div>
         <hr>
         <div class="legend-row" id="f-sensor">
-          <div class="sensor-active-dot" style="position:static; margin-right:10px;"></div> 
-          СЪС СЕНЗОР
+          <div class="sensor-active-dot" style="position:static; margin-right:10px;"></div> СЪС СЕНЗОР
         </div>
         <hr>
         <div class="legend-row reset-btn" id="f-reset">ПОКАЖИ ВСИЧКИ</div>
       `;
 
       setTimeout(() => {
-        // Филтър по тип
         [0, 1, 2, 3].forEach(t => document.getElementById(`f-type-${t}`)?.addEventListener('click', () => this.filterBy('type', t)));
-        // Филтър по запълване
         document.getElementById('f-fill-low')?.addEventListener('click', () => this.filterBy('fill', 'low'));
         document.getElementById('f-fill-med')?.addEventListener('click', () => this.filterBy('fill', 'med'));
         document.getElementById('f-fill-high')?.addEventListener('click', () => this.filterBy('fill', 'high'));
-        // Филтър сензор
         document.getElementById('f-sensor')?.addEventListener('click', () => this.filterBy('sensor', true));
-        // Ресет
-        document.getElementById('f-reset')?.addEventListener('click', () => this.renderBins(this.allBins));
+        document.getElementById('f-reset')?.addEventListener('click', () => {
+          this.renderBins(this.allBins);
+          if (this.routeLine) this.map.removeLayer(this.routeLine);
+          if (this.truckMarker) this.map.removeLayer(this.truckMarker);
+        });
       }, 100);
 
       return div;
@@ -70,14 +74,17 @@ export class MapComponent implements AfterViewInit {
   }
 
   loadAreas() {
-    fetch('/assets/data/areas.geojson').then(r => r.json()).then(data => {
+    this.http.get('/assets/data/areas.geojson').subscribe((data: any) => {
       L.geoJSON(data, {
         style: (f: any) => ({ color: f.properties.fill, weight: 2, fillOpacity: 0.15, className: 'area-polygon' }),
         onEachFeature: (feature, layer: L.Polygon) => {
           layer.on({
             click: (e) => {
               if (e.originalEvent) (e.originalEvent.target as HTMLElement).blur();
-              this.filterBinsByArea(feature.properties.name);
+              const areaName = feature.properties.name;
+              
+              this.filterBinsByArea(areaName);
+              this.getAndDrawRoute(areaName, 3); 
               this.map.fitBounds(e.target.getBounds());
             }
           });
@@ -88,8 +95,8 @@ export class MapComponent implements AfterViewInit {
   }
 
   loadBins() {
-    fetch('https://localhost:7277/api/containers').then(r => r.json()).then(bins => {
-      this.allBins = bins.map((b: any) => ({
+    this.http.get<any[]>('https://localhost:7277/api/containers').subscribe(bins => {
+      this.allBins = bins.map(b => ({
         ...b, latitude: b.locationY, longitude: b.locationX, fillLevel: b.fillPercentage
       }));
       this.renderBins(this.allBins);
@@ -101,7 +108,7 @@ export class MapComponent implements AfterViewInit {
     this.cluster.clearLayers();
     bins.forEach(bin => {
       const marker = L.marker([bin.latitude, bin.longitude], { icon: this.getBinIcon(bin) });
-      marker.bindPopup(`<b>ID: ${bin.id}</b><br>${bin.address || 'Контейнер'}<br>Запълване: ${bin.fillLevel}%`);
+      marker.bindPopup(`<b>ID: ${bin.id}</b><br>Запълване: ${bin.fillLevel}%`);
       this.cluster.addLayer(marker);
     });
   }
@@ -120,8 +127,38 @@ export class MapComponent implements AfterViewInit {
 
   filterBinsByArea(areaName: string) {
     const target = areaName.toLowerCase().trim();
-    const filtered = this.allBins.filter(b => (b.areaId || "").toLowerCase().includes(target));
+    const filtered = this.allBins.filter(b => (b.areaId || "").toLowerCase().trim().includes(target));
     this.renderBins(filtered);
+  }
+
+  getAndDrawRoute(areaName: string, trashType: number) {
+    // Тук използваме новия ендпоинт, който създадохме по-рано
+    this.http.get<any[]>(`https://localhost:7277/api/Trucks/route-by-area/${areaName}/${trashType}`)
+      .subscribe({
+        next: (points) => {
+          if (this.routeLine) this.map.removeLayer(this.routeLine);
+          if (this.truckMarker) this.map.removeLayer(this.truckMarker);
+
+          if (!points || points.length === 0) return;
+
+          const latLngs = points.map(p => [p.locationY, p.locationX] as L.LatLngExpression);
+
+          this.routeLine = L.polyline(latLngs, {
+            color: '#ffcc00',
+            weight: 5,
+            opacity: 0.8,
+            dashArray: '10, 10'
+          }).addTo(this.map);
+
+          // Слагаме камион на първата точка
+          const truckIcon = L.icon({
+            iconUrl: 'assets/icons/truck.svg', // Увери се, че имаш този файл
+            iconSize: [32, 32]
+          });
+          this.truckMarker = L.marker(latLngs[0], { icon: truckIcon }).addTo(this.map);
+        },
+        error: (err) => console.warn("Няма камион за тази зона или грешка:", err)
+      });
   }
 
   getBinIcon(bin: any): L.DivIcon {
