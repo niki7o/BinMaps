@@ -57,49 +57,53 @@ namespace BinMaps.Infrastructure.Services
 
             while (remaining.Any())
             {
-                var scored = remaining.Select(c => new
-                {
-                    Container = c,
-                    Score = CalculateScore(c, currentX, currentY)
-                })
-                .OrderByDescending(x => x.Score)
-                .ToList();
+                var next = remaining
+                    .OrderByDescending(c => CalculateScore(c, currentX, currentY))
+                    .First();
 
-                var next = scored.First().Container;
+                double load = next.FillPercentage / 100 * next.Capacity;
+                if (currentLoad + load > truckCapacity)
+                    break;
 
-                double projectedLoad = currentLoad + next.FillPercentage / 100 * next.Capacity;
-                if (projectedLoad > truckCapacity)
-                {
-                    currentX = depotX;
-                    currentY = depotY;
-                    currentLoad = 0;
-                    continue;
-                }
+                route.Add(Map(next, currentX, currentY));
+
+                currentLoad += load;
+                currentX = next.LocationX;
+                currentY = next.LocationY;
+
+                remaining.Remove(next);
 
                 var nearbyMixed = mixedContainers
-                   .Where(m =>
-                    Distance(next.LocationX, next.LocationY, m.LocationX, m.LocationY) < 0.2 )
-                   .ToList();
+                    .Where(m => Distance(next.LocationX, next.LocationY, m.LocationX, m.LocationY) < 0.2)
+                    .ToList();
 
                 foreach (var mixed in nearbyMixed)
                 {
-                    route.Add(new TrashContainerRouteDto
-                    {
-                        Id = mixed.Id,
-                        Capacity = mixed.Capacity,
-                        FillPercentage = 0, 
-                        LocationX = mixed.LocationX,
-                        LocationY = mixed.LocationY,
-                        Score = 0 
-                    });
-
+                    route.Add(Map(mixed, currentX, currentY));
                     mixedContainers.Remove(mixed);
                 }
             }
+           
+
 
             return route;
         }
-
+        private TrashContainerRouteDto Map(TrashContainer c, double x, double y)
+        {
+            return new TrashContainerRouteDto
+            {
+                Id = c.Id,
+                AreaId = c.AreaId,
+                Capacity = c.Capacity,
+                FillPercentage = c.FillPercentage,
+                HasSensor = c.HasSensor,
+                LocationX = c.LocationX,
+                LocationY = c.LocationY,
+                TrashType = c.TrashType,
+                Status = c.Status ?? TrashContainerStatus.Active,
+                Score = CalculateScore(c, x, y)
+            };
+        }
         private double CalculateScore(TrashContainer c, double currentX, double currentY)
         {
             if (!c.HasSensor)

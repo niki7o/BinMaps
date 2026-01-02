@@ -3,7 +3,7 @@
   "features": [
     {
       "type": "Feature",
-      "properties": { "name": "Зона 2 - Център", "fill": "#264653" },
+      "properties": { "id": "Зона 2 - Център", "fill": "#264653" },
       "geometry": {
         "type": "Polygon",
         "coordinates": [[
@@ -15,7 +15,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Зона 1 - Надежда/Север", "fill": "#2A9D8F" },
+      "properties": { "id": "Зона 1 - Надежда/Север", "fill": "#2A9D8F" },
       "geometry": {
         "type": "Polygon",
         "coordinates": [[
@@ -27,7 +27,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Зона 6 - Изток", "fill": "#E9C46A" },
+      "properties": { "id": "Зона 6 - Изток", "fill": "#E9C46A" },
       "geometry": {
         "type": "Polygon",
         "coordinates": [[
@@ -39,7 +39,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Зона 5 - Юг и Витоша", "fill": "#27ae60" },
+      "properties": { "id": "Зона 5 - Юг и Витоша", "fill": "#27ae60" },
       "geometry": {
         "type": "Polygon",
         "coordinates": [[
@@ -53,7 +53,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Зона 3 - Люлин", "fill": "#E76F51" },
+      "properties": { "id": "Зона 3 - Люлин", "fill": "#E76F51" },
       "geometry": {
         "type": "Polygon",
         "coordinates": [[
@@ -65,7 +65,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "name": "Зона 7 - Овча Купел", "fill": "#457B9D" },
+      "properties": { "id": "Зона 4 - Овча Купел", "fill": "#457B9D" },
       "geometry": {
         "type": "Polygon",
         "coordinates": [[

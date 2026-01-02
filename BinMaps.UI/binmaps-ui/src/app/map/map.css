@@ -2,7 +2,36 @@
 
 .area-polygon { outline: none !important; }
 
-/* НОМЕРАЦИЯ ВЪРХУ КОФАТА */
+path.leaflet-interactive {
+    outline: none !important;
+}
+
+.smooth-polygon {
+    transition: fill-opacity 0.3s ease, stroke-width 0.3s ease, stroke 0.3s ease;
+    pointer-events: auto;
+}
+
+
+.custom-tooltip {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-weight: bold;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    transition: opacity 0.3s ease;
+}
+
+.bin-marker-container {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+
 .bin-id-badge {
     position: absolute;
     top: -12px;
@@ -19,7 +48,6 @@
     white-space: nowrap;
 }
 
-/* ЛЕГЕНДА */
 .map-legend {
     background: rgba(15, 23, 42, 0.95);
     color: #fff;
@@ -55,7 +83,6 @@
     color: #00f2ff;
 }
 
-/* СИСТЕМНИ ЕЛЕМЕНТИ */
 .sensor-dot-active {
     position: absolute; bottom: -2px; right: -2px;
     width: 10px; height: 10px; background: #00f2ff;
