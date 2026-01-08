@@ -1,98 +1,13 @@
 #map { height: 100vh; width: 100%; background: #0f172a; }
 
-.area-polygon { outline: none !important; }
-
-path.leaflet-interactive {
-    outline: none !important;
-}
-
-.smooth-polygon {
-    transition: fill-opacity 0.3s ease, stroke-width 0.3s ease, stroke 0.3s ease;
-    pointer-events: auto;
-}
-
-
-.custom-tooltip {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 5px 10px;
-    font-weight: bold;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    transition: opacity 0.3s ease;
-}
-
-.bin-marker-container {
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.8); }
-    to { opacity: 1; transform: scale(1); }
-}
-
+/* Твоят оригинален CSS за иконите */
+.bin-marker-container { animation: fadeIn 0.5s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 
 .bin-id-badge {
-    position: absolute;
-    top: -12px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #00f2ff;
-    color: #000;
-    font-size: 10px;
-    font-weight: bold;
-    padding: 2px 6px;
-    border-radius: 8px;
-    z-index: 10;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-    white-space: nowrap;
-}
-
-.map-legend {
-    background: rgba(15, 23, 42, 0.95);
-    color: #fff;
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid rgba(0, 242, 255, 0.3);
-    pointer-events: auto !important;
-    min-width: 170px;
-    font-family: sans-serif;
-}
-
-.legend-header { font-weight: bold; color: #00f2ff; margin-bottom: 10px; text-align: center; font-size: 13px; }
-
-.legend-row {
-    display: flex;
-    align-items: center;
-    padding: 6px 10px;
-    margin: 3px 0;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: 0.2s;
-    font-size: 12px;
-}
-
-.legend-row:hover { background: rgba(0, 242, 255, 0.2); }
-.legend-row img { width: 18px; margin-right: 10px; }
-
-.reset-btn {
-    background: rgba(255, 255, 255, 0.05);
-    justify-content: center;
-    margin-top: 8px;
-    font-weight: bold;
-    color: #00f2ff;
-}
-
-.sensor-dot-active {
-    position: absolute; bottom: -2px; right: -2px;
-    width: 10px; height: 10px; background: #00f2ff;
-    border-radius: 50%; border: 2px solid #1e293b;
-    box-shadow: 0 0 8px #00f2ff; animation: pulse-blue 2s infinite;
-}
-
-@keyframes pulse-blue { 
-    0%, 100% { transform: scale(1); opacity: 1; } 
-    50% { transform: scale(1.2); opacity: 0.6; } 
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: #00f2ff; color: #000; font-size: 10px; font-weight: bold;
+    padding: 2px 6px; border-radius: 8px; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .bin-circle {
@@ -103,10 +18,38 @@ path.leaflet-interactive {
 
 .bin-img { width: 22px; height: 22px; }
 
-.fill { width: 12px; height: 12px; border-radius: 2px; margin-right: 10px; display: inline-block; }
-.low { background: #00ff88; }
-.medium { background: #ffcc00; }
-.high { background: #ff3300; }
+.sensor-dot-active {
+    position: absolute; bottom: -2px; right: -2px;
+    width: 10px; height: 10px; background: #00f2ff;
+    border-radius: 50%; border: 2px solid #1e293b;
+    box-shadow: 0 0 8px #00f2ff; animation: pulse-blue 2s infinite;
+}
+@keyframes pulse-blue { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.6; } }
 
-.is-burning .bin-circle { border: 2px solid #ff3300 !important; animation: shake 0.2s infinite; }
-@keyframes shake { 0% {transform: translate(0,0)} 50% {transform: translate(1px, 1px)} 100% {transform: translate(0,0)} }
+/* Легенда */
+.map-legend {
+    background: rgba(15, 23, 42, 0.95); color: #fff; padding: 12px;
+    border-radius: 10px; border: 1px solid rgba(0, 242, 255, 0.3);
+    pointer-events: auto !important; min-width: 170px;
+}
+.legend-header { font-weight: bold; color: #00f2ff; margin-bottom: 10px; text-align: center; }
+.legend-row { display: flex; align-items: center; padding: 6px 10px; cursor: pointer; font-size: 12px; }
+.legend-row img { width: 18px; margin-right: 10px; }
+.fill { width: 12px; height: 12px; border-radius: 2px; margin-right: 10px; display: inline-block; }
+.low { background: #00ff88; } .medium { background: #ffcc00; } .high { background: #ff3300; }
+
+/* СИМУЛАЦИЯ МЕНЮ (НОВО) */
+.sim-container { pointer-events: auto !important; }
+.sim-main-btn {
+    background: #00f2ff; color: #000; border: none; padding: 10px 15px;
+    font-weight: bold; border-radius: 5px; cursor: pointer;
+}
+.sim-menu-panel {
+    background: #1e293b; color: white; padding: 15px; margin-top: 10px;
+    border-radius: 8px; border: 1px solid #00f2ff; display: flex; flex-direction: column; gap: 8px;
+}
+.sim-start-btn {
+    background: #00ff88; color: #000; border: none; padding: 8px;
+    font-weight: bold; cursor: pointer; border-radius: 4px; margin-top: 5px;
+}
+.hidden { display: none; }

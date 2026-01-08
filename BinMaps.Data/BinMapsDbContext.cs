@@ -25,6 +25,7 @@ namespace BinMaps.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.UseCollation("Cyrillic_General_CI_AS");
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<TrashContainer>()
@@ -38,11 +39,21 @@ namespace BinMaps.Data
             modelBuilder.Entity<Report>()
                 .Property(r => r.ReportType)
                 .HasConversion<string>();
+
+            
         }
 
 
         public static async Task SeedAsync(BinMapsDbContext context)
         {
+
+
+
+
+
+
+
+
             if (!context.Areas.Any())
             {
                 var areaNames = new[] { "Зона 1 - Надежда/Север", "Зона 2 - Център", "Зона 6 - Изток", "Зона 5 - Юг и Витоша", "Зона 3 - Люлин", "Зона 4 - Овча Купел" };
@@ -63,6 +74,7 @@ namespace BinMaps.Data
                 Console.WriteLine($"Database already has {context.TrashContainers.Count()} containers. Skipping seed.");
                 return;
             }
+
             var containers = new List<TrashContainer>
 
 {
@@ -316,6 +328,96 @@ new TrashContainer { Id = 246, LocationX = 23.3123, LocationY = 42.6451, AreaId 
         };
 
 
+            if (!context.Trucks.Any())
+            {
+                var trucks = new List<Truck> {
+
+                   
+            new Truck
+            {
+                Id = 1,
+
+                AreaId = "Зона 2 - Център",
+
+                Capacity = 12000,
+                LocationX = 23.3219,
+                LocationY = 42.6977
+            },
+            new Truck
+            {
+                Id = 2,
+
+                AreaId = "Зона 1 - Надежда/Север",
+
+                Capacity = 12000,
+                LocationX = 23.3400,
+                LocationY = 42.7350
+            },
+            new Truck
+            {
+                Id = 3,
+
+                AreaId = "Зона 3 - Люлин",
+
+                Capacity = 12000,
+                LocationX = 23.2750,
+                LocationY = 42.7400
+            },
+            new Truck
+            {
+                Id = 4,
+
+                AreaId = "Зона 4 - Овча Купел",
+
+                Capacity = 12000,
+                LocationX = 23.2600,
+                LocationY = 42.6700
+            },
+            new Truck
+            {
+                Id = 5,
+
+                AreaId = "Зона 6 - Изток",
+
+                Capacity = 12000,
+                LocationX = 23.3700,
+                LocationY = 42.6900
+            },
+            new Truck
+            {
+                Id = 6,
+
+                AreaId = "Зона 5 - Юг и Витоша",
+
+                Capacity = 12000,
+                LocationX = 23.3300,
+                LocationY = 42.6500
+            }
+        
+        };
+
+                await context.Database.OpenConnectionAsync();
+                try
+                {
+               
+                    await context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT [Trucks] ON");
+
+                  
+                    await context.Trucks.AddRangeAsync(trucks);
+                    await context.SaveChangesAsync();
+
+                    await context.Database.ExecuteSqlRawAsync("SET IDENTITY_INSERT [Trucks] OFF");
+                }
+                finally
+                {
+                    await context.Database.CloseConnectionAsync();
+                }
+              
+
+
+            }
+
+
 
             try
             {
@@ -326,7 +428,7 @@ new TrashContainer { Id = 246, LocationX = 23.3123, LocationY = 42.6451, AreaId 
             }
             catch (Exception ex)
             {
-                Console.WriteLine("CRITICAL ERROR DURING SEEDING:");
+               
                 Console.WriteLine(ex.Message);
                 if (ex.InnerException != null)
                     Console.WriteLine($"Inner Error: {ex.InnerException.Message}");

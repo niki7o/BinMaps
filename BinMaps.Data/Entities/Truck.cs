@@ -17,9 +17,6 @@ namespace BinMaps.Data.Entities
         public string AreaId { get; set; }
         public Area Area { get; set; }
 
-        [Required]
-        [MaxLength(100)]
-        public string DriverName { get; set; } 
 
         [Required]
         [Range(0, double.MaxValue)]
@@ -28,5 +25,7 @@ namespace BinMaps.Data.Entities
         [Required]
         public TrashType TrashType { get; set; }
 
+        public double LocationX { get; set; }
+        public double LocationY { get; set; }
     }
 }

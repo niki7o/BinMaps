@@ -17,6 +17,7 @@ namespace BinMaps.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .UseCollation("Cyrillic_General_CI_AS")
                 .HasAnnotation("ProductVersion", "10.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
@@ -141,10 +142,11 @@ namespace BinMaps.Data.Migrations
                     b.Property<double>("Capacity")
                         .HasColumnType("float");
 
-                    b.Property<string>("DriverName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<double>("LocationX")
+                        .HasColumnType("float");
+
+                    b.Property<double>("LocationY")
+                        .HasColumnType("float");
 
                     b.Property<int>("TrashType")
                         .HasColumnType("int");

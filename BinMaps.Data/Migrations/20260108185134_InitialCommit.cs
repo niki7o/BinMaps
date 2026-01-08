@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace BinMaps.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialFinalFix : Migration
+    public partial class InitialCommit : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -58,9 +58,10 @@ namespace BinMaps.Data.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     AreaId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    DriverName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Capacity = table.Column<double>(type: "float", nullable: false),
-                    TrashType = table.Column<int>(type: "int", nullable: false)
+                    TrashType = table.Column<int>(type: "int", nullable: false),
+                    LocationX = table.Column<double>(type: "float", nullable: false),
+                    LocationY = table.Column<double>(type: "float", nullable: false)
                 },
                 constraints: table =>
                 {

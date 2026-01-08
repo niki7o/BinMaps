@@ -2,9 +2,6 @@ import { Component, AfterViewInit, ViewEncapsulation, inject } from '@angular/co
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
-import { RouterUpgradeInitializer } from '@angular/router/upgrade';
-import { UrlCodec } from '@angular/common/upgrade';
-
 
 @Component({
   selector: 'app-map',
@@ -30,6 +27,86 @@ export class MapComponent implements AfterViewInit {
 
     this.loadAreas();
     this.loadBins();
+    this.initSimulationMenu();
+  }
+
+  private initSimulationMenu() {
+    const simControl = (L as any).control({ position: 'topright' });
+    simControl.onAdd = () => {
+      const div = L.DomUtil.create('div', 'sim-container');
+      div.innerHTML = `
+        <button id="sim-toggle-btn" class="sim-main-btn">🚛 СИМУЛАЦИЯ</button>
+        <div id="sim-menu" class="sim-menu-panel hidden">
+          <label>Зона:</label>
+          <select id="sim-area-select"><option value="">-- Избери --</option></select>
+          <label>Тип боклук:</label>
+          <select id="sim-type-select">
+            <option value="0">Смесен</option>
+            <option value="1">Пластмаса</option>
+            <option value="2">Хартия</option>
+            <option value="3">Стъкло</option>
+          </select>
+          <button id="sim-start-btn" class="sim-start-btn">СТАРТ</button>
+        </div>
+      `;
+
+      setTimeout(() => {
+        const areaSelect = document.getElementById('sim-area-select') as HTMLSelectElement;
+        this.http.get('/assets/data/areas.geojson').subscribe((data: any) => {
+          data.features.forEach((f: any) => {
+            const opt = document.createElement('option');
+            opt.value = f.properties.id;
+            opt.innerText = f.properties.id;
+            areaSelect.appendChild(opt);
+          });
+        });
+
+        document.getElementById('sim-toggle-btn')?.addEventListener('click', () => 
+          document.getElementById('sim-menu')?.classList.toggle('hidden'));
+
+        document.getElementById('sim-start-btn')?.addEventListener('click', () => {
+          const area = areaSelect.value;
+          const type = (document.getElementById('sim-type-select') as HTMLSelectElement).value;
+          if (area) this.startTruckSimulation(area, Number(type));
+        });
+      }, 100);
+      return div;
+    };
+    simControl.addTo(this.map);
+  }
+
+  private startTruckSimulation(areaId: string, type: number) {
+    this.http.get<any[]>(`https://localhost:7277/api/Trucks/route-by-area/${areaId}/${type}`)
+      .subscribe(points => {
+        if (!points?.length) return;
+        
+        const coords = points.map(p => `${p.locationX},${p.locationY}`).join(';');
+        const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+
+        this.http.get(url).subscribe((res: any) => {
+          if (res.code === 'Ok') {
+            const road = res.routes[0].geometry.coordinates.map((c: any) => [c[1], c[0]]);
+            this.animateRoute(road);
+          }
+        });
+      });
+  }
+
+  private animateRoute(path: L.LatLngTuple[]) {
+    if (this.routeLine) this.map.removeLayer(this.routeLine);
+    if (this.truckMarker) this.map.removeLayer(this.truckMarker);
+
+    this.routeLine = L.polyline(path, { color: '#00f2ff', weight: 5, opacity: 0.8 }).addTo(this.map);
+    this.truckMarker = L.marker(path[0], {
+      icon: L.icon({ iconUrl: 'assets/icons/truck.svg', iconSize: [40, 40] })
+    }).addTo(this.map);
+
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i >= path.length) { clearInterval(interval); return; }
+      this.truckMarker?.setLatLng(path[i]);
+      i++;
+    }, 40);
   }
 
   private initLegend() {
@@ -57,78 +134,34 @@ export class MapComponent implements AfterViewInit {
         <hr>
         <div class="legend-row reset-btn" id="f-reset">ПОКАЖИ ВСИЧКИ</div>
       `;
-
       setTimeout(() => {
-        [0, 1, 2, 3].forEach(t => document.getElementById(`f-type-${t}`)?.addEventListener('click', () => this.filterBy('type', t)));
-        document.getElementById('f-fill-low')?.addEventListener('click', () => this.filterBy('fill', 'low'));
-        document.getElementById('f-fill-med')?.addEventListener('click', () => this.filterBy('fill', 'med'));
-        document.getElementById('f-fill-high')?.addEventListener('click', () => this.filterBy('fill', 'high'));
+        [0,1,2,3].forEach(t => document.getElementById(`f-type-${t}`)?.addEventListener('click', () => this.filterBy('type', t)));
         document.getElementById('f-sensor')?.addEventListener('click', () => this.filterBy('sensor', true));
-        document.getElementById('f-reset')?.addEventListener('click', () => {
-          this.renderBins(this.allBins);
-          if (this.routeLine)
-             this.map.removeLayer(this.routeLine);
-          if (this.truckMarker)
-             this.map.removeLayer(this.truckMarker);
-        });
+        document.getElementById('f-reset')?.addEventListener('click', () => this.renderBins(this.allBins));
       }, 100);
-
       return div;
     };
     legend.addTo(this.map);
   }
 
   loadAreas() {
-  this.http.get('/assets/data/areas.geojson').subscribe((data: any) => {
-    L.geoJSON(data, {
-      style: (feature: any) => ({
-        color: feature?.properties?.fill || '#3388ff',
-        weight: 2,
-        fillOpacity: 0.1,
-        fillColor: feature?.properties?.fill || '#3388ff',
-        className: 'smooth-polygon' 
-      }),
-      onEachFeature: (feature: any, layer: L.Polygon) => {
-        const areaName = feature?.properties?.id;
-
-        layer.on({
-          mouseover: (e) => {
-            const l = e.target;
-            l.setStyle({ fillOpacity: 0.4, weight: 3 }); 
-          },
-          mouseout: (e) => {
-            const l = e.target;
-            l.setStyle({ fillOpacity: 0.1, weight: 2 }); 
-          },
-          click: (e) => {
+    this.http.get('/assets/data/areas.geojson').subscribe((data: any) => {
+      L.geoJSON(data, {
+        style: (f: any) => ({ color: f?.properties?.fill || '#3388ff', weight: 2, fillOpacity: 0.1, className: 'smooth-polygon' }),
+        onEachFeature: (f: any, layer: any) => {
+          layer.on('click', (e: any) => {
             L.DomEvent.stopPropagation(e);
-           
-            this.map.getContainer().focus(); 
-            
-            if (areaName) {
-              this.filterBinsByArea(areaName);
-              this.getAndDrawRoute(areaName);
-              this.map.fitBounds(layer.getBounds(), { animate: true, duration: 1.0 });
-            }
-          }
-        });
-
-        if (areaName) {
-          layer.bindTooltip(areaName, { 
-            sticky: true, 
-            className: 'custom-tooltip' 
+            this.filterBinsByArea(f.properties.id);
+            this.map.fitBounds(layer.getBounds());
           });
         }
-      }
-    }).addTo(this.map);
-  });
-}
+      }).addTo(this.map);
+    });
+  }
 
   loadBins() {
     this.http.get<any[]>('https://localhost:7277/api/containers').subscribe(bins => {
-      this.allBins = bins.map(b => ({
-        ...b, latitude: b.locationY, longitude: b.locationX, fillLevel: b.fillPercentage
-      }));
+      this.allBins = bins.map(b => ({ ...b, latitude: b.locationY, longitude: b.locationX, fillLevel: b.fillPercentage }));
       this.renderBins(this.allBins);
       this.initLegend();
     });
@@ -146,75 +179,19 @@ export class MapComponent implements AfterViewInit {
   filterBy(criteria: string, value: any) {
     let filtered = this.allBins;
     if (criteria === 'type') filtered = this.allBins.filter(b => b.trashType === value);
-    if (criteria === 'sensor') filtered = this.allBins.filter(b => b.hasSensor === true);
-    if (criteria === 'fill') {
-      if (value === 'low') filtered = this.allBins.filter(b => b.fillLevel <= 40);
-      if (value === 'med') filtered = this.allBins.filter(b => b.fillLevel > 40 && b.fillLevel <= 70);
-      if (value === 'high') filtered = this.allBins.filter(b => b.fillLevel > 70);
-    }
+    if (criteria === 'sensor') filtered = this.allBins.filter(b => b.hasSensor);
     this.renderBins(filtered);
   }
 
-filterBinsByArea(areaName: string) {
-  if (!areaName) return;
-  const target = areaName.toLowerCase().trim();
-  const filtered = this.allBins.filter(bin => {
-  const binAreaValue = (bin.areaId || bin.area || bin.AreaId || "").toString().toLowerCase().trim();
-    return binAreaValue.includes(target) || target.includes(binAreaValue);
-  });
-
-  console.log(`Кликнато върху: ${areaName} | Намерени кофи: ${filtered.length}`);
-  this.renderBins(filtered);
-}
-
-  getAndDrawRoute(areaName: string) {
-  const binsInArea = this.allBins.filter(
-    b => b.areaId?.toLowerCase() === areaName.toLowerCase()
-  );
-
-  if (!binsInArea.length) return;
-
-  // взимаме типа с най-много сензори
-  const typeCount: any = {};
-  binsInArea
-    .filter(b => b.hasSensor)
-    .forEach(b => typeCount[b.trashType] = (typeCount[b.trashType] || 0) + 1);
-
-  const trashType = Number(
-    Object.keys(typeCount).sort((a, b) => typeCount[b] - typeCount[a])[0]
-  );
-
-  this.http
-    .get<any[]>(`https://localhost:7277/api/Trucks/route-by-area/${areaName}/${trashType}`)
-    .subscribe(points => this.drawRoute(points));
+  filterBinsByArea(areaName: string) {
+    const filtered = this.allBins.filter(b => (b.areaId || "").toLowerCase().includes(areaName.toLowerCase()));
+    this.renderBins(filtered);
   }
-drawRoute(points: any[]) {
-  if (this.routeLine) this.map.removeLayer(this.routeLine);
-  if (this.truckMarker) this.map.removeLayer(this.truckMarker);
-
-  if (!points?.length) return;
-
-  const latLngs: L.LatLngTuple[]=  points.map(p => [p.locationY, p.locationX]);
-
-  this.routeLine = L.polyline(latLngs, {
-    color: '#ffcc00',
-    weight: 4,
-    opacity: 0.9
-  }).addTo(this.map);
-
-  this.truckMarker = L.marker(latLngs[0], {
-    icon: L.icon({
-      iconUrl: 'assets/icons/truck.svg',
-      iconSize: [32, 32]
-    })
-  }).addTo(this.map);
-}
 
   getBinIcon(bin: any): L.DivIcon {
     const iconMap: any = { 0: 'mixed', 1: 'plastic', 2: 'paper', 3: 'glass' };
     const statusColor = bin.fillLevel > 70 ? '#ff3300' : bin.fillLevel > 40 ? '#ffcc00' : '#00ff88';
     const isBurning = bin.temperature > 55;
-
     return L.divIcon({
       className: 'bin-marker-container',
       html: `
@@ -225,8 +202,7 @@ drawRoute(points: any[]) {
             ${bin.hasSensor ? '<div class="sensor-dot-active"></div>' : ''}
           </div>
           ${isBurning ? '<div class="fire-emoji">🔥</div>' : ''}
-        </div>
-      `,
+        </div>`,
       iconSize: [44, 44],
       iconAnchor: [22, 22]
     });
