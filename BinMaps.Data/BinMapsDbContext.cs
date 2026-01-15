@@ -1,23 +1,22 @@
 ﻿
 using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
+
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
+
 namespace BinMaps.Data
 {
-    public class BinMapsDbContext : DbContext
+    public class BinMapsDbContext : IdentityDbContext<User>
     {
         public BinMapsDbContext(DbContextOptions<BinMapsDbContext> options)
          : base(options)
         {
         }
-
+        public DbSet<User> Users { get; set; }
+        public DbSet<IdentityRole> Roles { get; set; }
+        public DbSet<IdentityUserRole<string>> UserRoles { get; set; }
         public DbSet<Area> Areas { get; set; }
         public DbSet<TrashContainer> TrashContainers { get; set; }
         public DbSet<Truck> Trucks { get; set; }
@@ -26,6 +25,9 @@ namespace BinMaps.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.UseCollation("Cyrillic_General_CI_AS");
+            modelBuilder.Entity<User>().HasKey(u => u.Id);
+            modelBuilder.Entity<IdentityRole>().HasKey(r => r.Id);
+            modelBuilder.Entity<IdentityUserRole<string>>().HasKey(r => new { r.UserId, r.RoleId });
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<TrashContainer>()
@@ -43,6 +45,32 @@ namespace BinMaps.Data
             
         }
 
+        
+            public static async Task SeedRoles(RoleManager<IdentityRole> roleManager)
+            {
+                string[] roles = { "Admin", "Driver", "User" };
+                foreach (var r in roles)
+                    if (!await roleManager.RoleExistsAsync(r))
+                        await roleManager.CreateAsync(new IdentityRole(r));
+            }
+
+            public static async Task SeedUsers(UserManager<User> userManager)
+            {
+                if (await userManager.FindByNameAsync("admin") == null)
+                {
+                    var admin = new User { UserName = "admin", Email = "admin@binmaps.com" };
+                    await userManager.CreateAsync(admin, "Admin123!");
+                    await userManager.AddToRoleAsync(admin, "Admin");
+                }
+
+                if (await userManager.FindByNameAsync("driver") == null)
+                {
+                    var driver = new User { UserName = "driver", Email = "driver@binmaps.com" };
+                    await userManager.CreateAsync(driver, "Driver123!");
+                    await userManager.AddToRoleAsync(driver, "Driver");
+                }
+            }
+        
 
         public static async Task SeedAsync(BinMapsDbContext context)
         {

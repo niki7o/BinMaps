@@ -1,6 +1,8 @@
 ﻿using BinMaps.Data.Entities.Enums;
+
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace BinMaps.Shared.DTOs
@@ -8,6 +10,8 @@ namespace BinMaps.Shared.DTOs
     public class TrashContainerRouteDto
     {
         public int Id { get; set; }
+
+      
         public string AreaId { get; set; }
         public double Capacity { get; set; }
         public double FillPercentage { get; set; }

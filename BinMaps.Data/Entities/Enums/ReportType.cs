@@ -6,10 +6,21 @@ namespace BinMaps.Data.Entities.Enums
 {
     public enum ReportType
     {
-
+        //for all
         Full,
         Fire,
         SensorBroken,
-        DriverIssue
+
+
+        //for the driver 
+        TruckProblem,
+        ContainerDamage,
+       
+
+
+
+
+
+
     }
 }

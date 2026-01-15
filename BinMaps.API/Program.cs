@@ -1,15 +1,13 @@
 using BinMaps.Data;
+using BinMaps.Data.Entities;
 using BinMaps.Infrastructure.Repository;
 using BinMaps.Infrastructure.Services;
 using BinMaps.Infrastructure.Services.Interfaces;
-using Microsoft.AspNetCore.Authentication;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Identity.Web;
-using System;
 
 namespace BinMaps.API
 {
@@ -27,12 +25,19 @@ namespace BinMaps.API
 
             builder.Services.AddDbContext<BinMapsDbContext>(options =>
                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+           
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+           
+            builder.Services.AddIdentity<User, IdentityRole>()
+                .AddEntityFrameworkStores<BinMapsDbContext>()
+   .AddDefaultTokenProviders();
             builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
             builder.Services.AddScoped<ITruckRouteService, TruckRouteService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddCors(options => {
                 options.AddPolicy("AllowAngular", policy => {
                     policy.WithOrigins("http://localhost:4200")
@@ -42,12 +47,21 @@ namespace BinMaps.API
             });
             var app = builder.Build();
 
+           
+
+           
+
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
                 var context = services.GetRequiredService<BinMapsDbContext>();
+                var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+                var userManager = services.GetRequiredService<UserManager<User>>();
 
-               
+             
+                await BinMapsDbContext.SeedRoles(roleManager);
+                await BinMapsDbContext.SeedUsers(userManager);
+
                 await context.Database.MigrateAsync();
 
                
@@ -64,7 +78,9 @@ namespace BinMaps.API
             app.UseCors("AllowAngular");
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
+           
 
             app.MapControllers();
 
