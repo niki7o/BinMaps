@@ -1,0 +1,142 @@
+<div class="login-container">
+ 
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+        </svg>
+        <span class="logo-text">BinMaps</span>
+      </div>
+      <div class="user-role">
+        <span class="role-badge guest">Гост</span>
+      </div>
+    </div>
+  </header>
+
+ 
+  <main class="main-content">
+    <div class="login-card">
+      <div class="card-header">
+        <h1 class="title">Добре дошли</h1>
+        <p class="subtitle">Влезте в профила си за достъп до BinMaps</p>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+        
+        <div class="form-group">
+          <label for="email" class="form-label">
+            Имейл адрес
+            <span class="required">*</span>
+          </label>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              class="form-input"
+              [class.error]="email?.invalid && email?.touched"
+              placeholder="example@mail.com"
+              autocomplete="email"
+            />
+          </div>
+          <div class="error-message" *ngIf="email?.invalid && email?.touched">
+            <span *ngIf="email?.errors?.['required']">Имейлът е задължителен</span>
+            <span *ngIf="email?.errors?.['email']">Невалиден имейл адрес</span>
+          </div>
+        </div>
+
+      
+        <div class="form-group">
+          <label for="password" class="form-label">
+            Парола
+            <span class="required">*</span>
+          </label>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+            <input
+              id="password"
+              [type]="showPassword ? 'text' : 'password'"
+              formControlName="password"
+              class="form-input"
+              [class.error]="password?.invalid && password?.touched"
+              placeholder="••••••••"
+              autocomplete="current-password"
+            />
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="togglePasswordVisibility()"
+              tabindex="-1"
+            >
+              <svg *ngIf="!showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg *ngIf="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+          <div class="error-message" *ngIf="password?.invalid && password?.touched">
+            <span *ngIf="password?.errors?.['required']">Паролата е задължителна</span>
+            <span *ngIf="password?.errors?.['minlength']">Паролата трябва да е поне 6 символа</span>
+          </div>
+        </div>
+
+      
+        <div class="alert alert-error" *ngIf="errorMessage">
+          <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="isLoading"
+        >
+          <span *ngIf="!isLoading">Вход</span>
+          <span *ngIf="isLoading" class="loading-spinner">
+            <svg class="spinner" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+            </svg>
+            Влизане...
+          </span>
+        </button>
+
+      
+        <div class="form-footer">
+          <p class="register-text">
+            Нямате акаунт?
+            <button
+              type="button"
+              class="link-button"
+              (click)="navigateToRegister()"
+            >
+              Регистрирайте се тук
+            </button>
+          </p>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  
+  <footer class="footer">
+    <p>&copy; 2025 BinMaps. Интелигентно управление на отпадъци.</p>
+  </footer>
+</div>

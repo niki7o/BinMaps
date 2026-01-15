@@ -134,10 +134,32 @@ export class MapComponent implements AfterViewInit {
         <hr>
         <div class="legend-row reset-btn" id="f-reset">ПОКАЖИ ВСИЧКИ</div>
       `;
-      setTimeout(() => {
-        [0,1,2,3].forEach(t => document.getElementById(`f-type-${t}`)?.addEventListener('click', () => this.filterBy('type', t)));
+          setTimeout(() => {
+
+        [0, 1, 2, 3].forEach(t => document.getElementById(`f-type-${t}`)?.addEventListener('click', () => this.filterBy('type', t)));
+
+        document.getElementById('f-fill-low')?.addEventListener('click', () => this.filterBy('fill', 'low'));
+
+        document.getElementById('f-fill-med')?.addEventListener('click', () => this.filterBy('fill', 'med'));
+
+        document.getElementById('f-fill-high')?.addEventListener('click', () => this.filterBy('fill', 'high'));
+
         document.getElementById('f-sensor')?.addEventListener('click', () => this.filterBy('sensor', true));
-        document.getElementById('f-reset')?.addEventListener('click', () => this.renderBins(this.allBins));
+
+        document.getElementById('f-reset')?.addEventListener('click', () => {
+
+          this.renderBins(this.allBins);
+
+          if (this.routeLine)
+
+             this.map.removeLayer(this.routeLine);
+
+          if (this.truckMarker)
+
+             this.map.removeLayer(this.truckMarker);
+
+        });
+
       }, 100);
       return div;
     };
