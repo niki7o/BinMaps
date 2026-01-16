@@ -47,7 +47,7 @@ namespace BinMaps.Infrastructure.Services
 
         public async Task<(bool success, string role)> LoginAsync(LoginDTO dto)
         {
-            var user = await _userManager.FindByNameAsync(dto.UserName);
+            var user = await _userManager.FindByEmailAsync(dto.Email);
             if (user == null)
             {
                 return (false, null);

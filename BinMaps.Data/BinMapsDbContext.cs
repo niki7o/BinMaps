@@ -25,8 +25,7 @@ namespace BinMaps.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.UseCollation("Cyrillic_General_CI_AS");
-            modelBuilder.Entity<User>().HasKey(u => u.Id);
-            modelBuilder.Entity<IdentityRole>().HasKey(r => r.Id);
+        
             modelBuilder.Entity<IdentityUserRole<string>>().HasKey(r => new { r.UserId, r.RoleId });
             base.OnModelCreating(modelBuilder);
 

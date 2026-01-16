@@ -17,7 +17,7 @@ namespace BinMaps.API.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterDTO dto)
+        public async Task<IActionResult> Register([FromBody] RegisterDTO dto)
         {
             var success = await _authService.RegisterAsync(dto);
 
@@ -40,7 +40,7 @@ namespace BinMaps.API.Controllers
             }
             return Ok(new
             {
-                UserName = dto.UserName,
+                dto.Email,
                 Role = role
             });
         }

@@ -10,8 +10,8 @@ namespace BinMaps.Shared.DTOs
     {
        
             [Required]
-            [Range(0, 20)]
-            public string UserName { get; set; }
+        [StringLength(50, MinimumLength = 3)]
+        public string UserName { get; set; }
 
             [Required]
             [EmailAddress]
@@ -19,7 +19,7 @@ namespace BinMaps.Shared.DTOs
             public string Email { get; set; }
 
             [Length(12, 13)]
-            public int? PhoneNumber { get; set; }
+            public string? PhoneNumber { get; set; }
             [Required]
             public string Password { get; set; }
 

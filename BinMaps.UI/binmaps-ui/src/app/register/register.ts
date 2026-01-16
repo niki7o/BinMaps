@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-register',
@@ -21,10 +22,7 @@ export class RegisterComponent {
   errorMessage: string | null = null;
   successMessage: string | null = null;
 
-  constructor(
-    private fb: FormBuilder,
-    private router: Router
-  ) {
+ constructor(private fb: FormBuilder, private router: Router, private http: HttpClient)  {
     this.registerForm = this.fb.group(
       {
         firstName: ['', [Validators.required, Validators.minLength(2)]],
@@ -58,21 +56,38 @@ export class RegisterComponent {
   }
 
   onSubmit() {
-    if (this.registerForm.invalid) {
-      this.registerForm.markAllAsTouched();
-      return;
-    }
-
-    this.isLoading = true;
-    this.errorMessage = null;
-
-   
-    setTimeout(() => {
-      this.isLoading = false;
-      this.successMessage = 'Регистрацията е успешна!';
-      this.registerForm.reset();
-    }, 1200);
+  if (this.registerForm.invalid) {
+    this.registerForm.markAllAsTouched();
+    return;
   }
+
+  this.isLoading = true;
+
+
+  const body = {
+    userName: this.registerForm.value.email, 
+    email: this.registerForm.value.email,
+    password: this.registerForm.value.password,
+    phoneNumber: this.registerForm.value.phoneNumber?.toString(),
+    acceptTerms: this.registerForm.value.acceptTerms
+  };
+
+  this.http.post('https://localhost:7277/api/auth/register', body)
+    .subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.successMessage = 'Регистрацията е успешна!';
+        setTimeout(() => this.router.navigate(['/login']), 2000);
+      },
+      error: (err) => {
+        this.isLoading = false;
+      
+        this.errorMessage = err.error?.errors 
+          ? Object.values(err.error.errors).flat().join(' ') 
+          : 'Грешка при регистрация.';
+      }
+    });
+}
 
   navigateToLogin() {
     this.router.navigate(['/login']);

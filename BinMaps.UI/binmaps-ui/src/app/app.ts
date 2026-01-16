@@ -8,7 +8,7 @@ import { registerAppScopedDispatcher } from '@angular/core/primitives/event-disp
 
 @Component({
   selector: 'app-root',
-  imports: [MapComponent, RegisterComponent,LoginComponent],
+  imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
