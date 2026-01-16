@@ -73,22 +73,20 @@ export class RegisterComponent {
   };
 
   this.http.post('https://localhost:7277/api/auth/register', body)
-    .subscribe({
-      next: () => {
-        this.isLoading = false;
-        this.successMessage = 'Регистрацията е успешна!';
-        setTimeout(() => this.router.navigate(['/login']), 2000);
-      },
-      error: (err) => {
-        this.isLoading = false;
+  .subscribe({
+    next: () => {
+      this.isLoading = false;
+      this.successMessage = 'Регистрацията е успешна! Пренасочване към картата...';
       
-        this.errorMessage = err.error?.errors 
-          ? Object.values(err.error.errors).flat().join(' ') 
-          : 'Грешка при регистрация.';
-      }
-    });
-}
-
+     
+      setTimeout(() => this.router.navigate(['/']), 2000); 
+    },
+    error: (err) => {
+      this.isLoading = false;
+      this.errorMessage = "Грешка: " + (err.error?.errors?.Password || "Проверете данните");
+    }
+  });
+  }
   navigateToLogin() {
     this.router.navigate(['/login']);
   }

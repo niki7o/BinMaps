@@ -2,11 +2,12 @@ import { Component, AfterViewInit, ViewEncapsulation, inject } from '@angular/co
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [HttpClientModule],
+  imports: [CommonModule],
   template: '<div id="map"></div>',
   styleUrls: ['./map.css'],
   encapsulation: ViewEncapsulation.None
