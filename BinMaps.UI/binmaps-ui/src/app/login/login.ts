@@ -2,15 +2,14 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient} from '@angular/common/http';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   templateUrl: './login.html',
   styleUrls: ['./login.css'],
-
-  imports: [CommonModule, ReactiveFormsModule, HttpClientModule]
+  imports: [CommonModule, ReactiveFormsModule]
 })
 export class LoginComponent {
   loginForm: FormGroup;
@@ -18,7 +17,6 @@ export class LoginComponent {
   isLoading = false;
   errorMessage = '';
 
-  
   constructor(
     private fb: FormBuilder, 
     private router: Router, 
@@ -41,16 +39,21 @@ export class LoginComponent {
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
   }
-navigateToRegister() {
+
+  navigateToRegister() {
     this.router.navigate(['/register']);
   }
+
+  navigateToHome() {
+    this.router.navigate(['/']);
+  }
+
   onSubmit() {
     if (this.loginForm.invalid) return;
 
     this.isLoading = true;
     this.errorMessage = '';
 
-   
     this.http.post<any>('https://localhost:7277/api/auth/login', this.loginForm.value)
       .subscribe({
         next: (res) => {

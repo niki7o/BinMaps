@@ -2,15 +2,15 @@
  
   <header class="header">
     <div class="header-content">
-      <div class="logo">
+      <div class="logo" (click)="navigateToHome()">
         <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
-          <polyline points="17 21 17 13 7 13 7 21"/>
+          <path d="M3 6h18"/>
+          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+          <line x1="10" y1="11" x2="10" y2="17"/>
+          <line x1="14" y1="11" x2="14" y2="17"/>
         </svg>
         <span class="logo-text">BinMaps</span>
-      </div>
-      <div class="user-role">
-        <span class="role-badge guest">Гост</span>
       </div>
     </div>
   </header>
@@ -24,6 +24,7 @@
 
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
        
+        <!-- First Name & Last Name Row -->
         <div class="form-row">
           <div class="form-group">
             <label for="firstName" class="form-label">
@@ -78,7 +79,7 @@
           </div>
         </div>
 
-      
+        <!-- Email -->
         <div class="form-group">
           <label for="email" class="form-label">
             Имейл адрес
@@ -105,7 +106,7 @@
           </div>
         </div>
 
-       
+        <!-- Phone Number -->
         <div class="form-group">
           <label for="phoneNumber" class="form-label">
             Телефонен номер
@@ -130,7 +131,7 @@
           </div>
         </div>
 
-        
+        <!-- Password & Confirm Password Row -->
         <div class="form-row">
           <div class="form-group">
             <label for="password" class="form-label">
@@ -216,7 +217,7 @@
           </div>
         </div>
 
-       
+        <!-- Terms & Conditions -->
         <div class="form-group checkbox-group">
           <label class="checkbox-label">
             <input
@@ -235,7 +236,7 @@
           </div>
         </div>
 
-     
+        <!-- Alerts -->
         <div class="alert alert-error" *ngIf="errorMessage">
           <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <circle cx="12" cy="12" r="10"/>
@@ -253,7 +254,7 @@
           <span>{{ successMessage }}</span>
         </div>
 
-       
+        <!-- Submit Button -->
         <button
           type="submit"
           class="btn btn-primary"
@@ -268,7 +269,7 @@
           </span>
         </button>
 
-       
+        <!-- Form Footer -->
         <div class="form-footer">
           <p class="login-text">
             Вече имате акаунт?
@@ -285,7 +286,7 @@
     </div>
   </main>
 
-  
+  <!-- Footer -->
   <footer class="footer">
     <p>&copy; 2025 BinMaps. Интелигентно управление на отпадъци.</p>
   </footer>

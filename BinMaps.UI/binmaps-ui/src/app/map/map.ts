@@ -8,7 +8,7 @@ import { CommonModule } from '@angular/common';
   selector: 'app-map',
   standalone: true,
   imports: [CommonModule],
-  template: '<div id="map"></div>',
+  templateUrl: './map.html',
   styleUrls: ['./map.css'],
   encapsulation: ViewEncapsulation.None
 })
