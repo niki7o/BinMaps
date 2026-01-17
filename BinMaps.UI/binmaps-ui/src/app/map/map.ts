@@ -27,89 +27,11 @@ export class MapComponent implements AfterViewInit {
     this.map.addLayer(this.cluster);
 
     this.loadAreas();
+    
     this.loadBins();
     this.initSimulationMenu();
+    
   }
-
-  private initSimulationMenu() {
-    const simControl = (L as any).control({ position: 'topright' });
-    simControl.onAdd = () => {
-      const div = L.DomUtil.create('div', 'sim-container');
-      div.innerHTML = `
-        <button id="sim-toggle-btn" class="sim-main-btn">🚛 СИМУЛАЦИЯ</button>
-        <div id="sim-menu" class="sim-menu-panel hidden">
-          <label>Зона:</label>
-          <select id="sim-area-select"><option value="">-- Избери --</option></select>
-          <label>Тип боклук:</label>
-          <select id="sim-type-select">
-            <option value="0">Смесен</option>
-            <option value="1">Пластмаса</option>
-            <option value="2">Хартия</option>
-            <option value="3">Стъкло</option>
-          </select>
-          <button id="sim-start-btn" class="sim-start-btn">СТАРТ</button>
-        </div>
-      `;
-
-      setTimeout(() => {
-        const areaSelect = document.getElementById('sim-area-select') as HTMLSelectElement;
-        this.http.get('/assets/data/areas.geojson').subscribe((data: any) => {
-          data.features.forEach((f: any) => {
-            const opt = document.createElement('option');
-            opt.value = f.properties.id;
-            opt.innerText = f.properties.id;
-            areaSelect.appendChild(opt);
-          });
-        });
-
-        document.getElementById('sim-toggle-btn')?.addEventListener('click', () => 
-          document.getElementById('sim-menu')?.classList.toggle('hidden'));
-
-        document.getElementById('sim-start-btn')?.addEventListener('click', () => {
-          const area = areaSelect.value;
-          const type = (document.getElementById('sim-type-select') as HTMLSelectElement).value;
-          if (area) this.startTruckSimulation(area, Number(type));
-        });
-      }, 100);
-      return div;
-    };
-    simControl.addTo(this.map);
-  }
-
-  private startTruckSimulation(areaId: string, type: number) {
-    this.http.get<any[]>(`https://localhost:7277/api/Trucks/route-by-area/${areaId}/${type}`)
-      .subscribe(points => {
-        if (!points?.length) return;
-        
-        const coords = points.map(p => `${p.locationX},${p.locationY}`).join(';');
-        const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
-
-        this.http.get(url).subscribe((res: any) => {
-          if (res.code === 'Ok') {
-            const road = res.routes[0].geometry.coordinates.map((c: any) => [c[1], c[0]]);
-            this.animateRoute(road);
-          }
-        });
-      });
-  }
-
-  private animateRoute(path: L.LatLngTuple[]) {
-    if (this.routeLine) this.map.removeLayer(this.routeLine);
-    if (this.truckMarker) this.map.removeLayer(this.truckMarker);
-
-    this.routeLine = L.polyline(path, { color: '#00f2ff', weight: 5, opacity: 0.8 }).addTo(this.map);
-    this.truckMarker = L.marker(path[0], {
-      icon: L.icon({ iconUrl: 'assets/icons/truck.svg', iconSize: [40, 40] })
-    }).addTo(this.map);
-
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i >= path.length) { clearInterval(interval); return; }
-      this.truckMarker?.setLatLng(path[i]);
-      i++;
-    }, 40);
-  }
-
   private initLegend() {
     const legend = (L as any).control({ position: 'bottomleft' });
     legend.onAdd = () => {
@@ -166,6 +88,88 @@ export class MapComponent implements AfterViewInit {
     };
     legend.addTo(this.map);
   }
+
+  private initSimulationMenu() {
+    const simControl = (L as any).control({ position: 'topright' });
+    simControl.onAdd = () => {
+      const div = L.DomUtil.create('div', 'sim-container');
+      div.innerHTML = `
+        <button id="sim-toggle-btn" class="sim-main-btn">🚛 СИМУЛАЦИЯ</button>
+        <div id="sim-menu" class="sim-menu-panel hidden">
+          <label>Зона:</label>
+          <select id="sim-area-select"><option value="">-- Избери --</option></select>
+          <label>Тип боклук:</label>
+          <select id="sim-type-select">
+            <option value="0">Смесен</option>
+            <option value="1">Пластмаса</option>
+            <option value="2">Хартия</option>
+            <option value="3">Стъкло</option>
+          </select>
+          <button id="sim-start-btn" class="sim-start-btn">СТАРТ</button>
+        </div>
+      `;
+
+      setTimeout(() => {
+        const areaSelect = document.getElementById('sim-area-select') as HTMLSelectElement;
+        this.http.get('/assets/data/areas.geojson').subscribe((data: any) => {
+          data.features.forEach((f: any) => {
+            const opt = document.createElement('option');
+            opt.value = f.properties.id;
+            opt.innerText = f.properties.id;
+            areaSelect.appendChild(opt);
+          });
+        });
+
+        document.getElementById('sim-toggle-btn')?.addEventListener('click', () => 
+          document.getElementById('sim-menu')?.classList.toggle('hidden'));
+
+        document.getElementById('sim-start-btn')?.addEventListener('click', () => {
+          const area = areaSelect.value;
+          const type = (document.getElementById('sim-type-select') as HTMLSelectElement).value;
+          if (area) this.startTruckSimulation(area, Number(type));
+        });
+      }, 100);
+      return div;
+    };
+    simControl.addTo(this.map);
+  }
+
+  private startTruckSimulation(areaId: string, type: number) {
+    const encodedArea = encodeURIComponent(areaId);
+  this.http.get<any[]>(`https://localhost:7277/api/Trucks/route-by-area/${encodedArea}/${type}`)
+      .subscribe(points => {
+        if (!points?.length) return;
+        
+        const coords = points.map(p => `${p.locationX},${p.locationY}`).join(';');
+        const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+
+        this.http.get(url).subscribe((res: any) => {
+          if (res.code === 'Ok') {
+            const road = res.routes[0].geometry.coordinates.map((c: any) => [c[1], c[0]]);
+            this.animateRoute(road);
+          }
+        });
+      });
+  }
+
+  private animateRoute(path: L.LatLngTuple[]) {
+    if (this.routeLine) this.map.removeLayer(this.routeLine);
+    if (this.truckMarker) this.map.removeLayer(this.truckMarker);
+
+    this.routeLine = L.polyline(path, { color: '#00f2ff', weight: 5, opacity: 0.8 }).addTo(this.map);
+    this.truckMarker = L.marker(path[0], {
+      icon: L.icon({ iconUrl: 'assets/icons/truck.svg', iconSize: [40, 40] })
+    }).addTo(this.map);
+
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i >= path.length) { clearInterval(interval); return; }
+      this.truckMarker?.setLatLng(path[i]);
+      i++;
+    }, 40);
+  }
+
+  
 
   loadAreas() {
     this.http.get('/assets/data/areas.geojson').subscribe((data: any) => {

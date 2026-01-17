@@ -14,10 +14,10 @@ export class HomeComponent {
   currentYear = new Date().getFullYear();
 
   stats = [
-    { number: '10,000+', label: 'Контейнери' },
-    { number: '50+', label: 'Камиона' },
+    { number: '250+', label: 'Контейнери' },
+    { number: '5+', label: 'Камиона' },
     { number: '24/7', label: 'Мониторинг' },
-    { number: '95%', label: 'Ефективност' }
+    { number: '100%', label: 'Ефективност' }
   ];
 
   features = [

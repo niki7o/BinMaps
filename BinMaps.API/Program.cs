@@ -34,7 +34,7 @@ namespace BinMaps.API
            
             builder.Services.AddIdentity<User, IdentityRole>()
                 .AddEntityFrameworkStores<BinMapsDbContext>()
-   .AddDefaultTokenProviders();
+                 .AddDefaultTokenProviders();
             builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
             builder.Services.AddScoped<ITruckRouteService, TruckRouteService>();
             builder.Services.AddScoped<IAuthService, AuthService>();

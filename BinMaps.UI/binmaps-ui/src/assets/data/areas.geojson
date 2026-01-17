@@ -15,7 +15,7 @@
     },
     {
       "type": "Feature",
-      "properties": { "id": "Зона 1 - Надежда/Север", "fill": "#2A9D8F" },
+      "properties": { "id": "Зона 1 - Надежда север", "fill": "#2A9D8F" },
       "geometry": {
         "type": "Polygon",
         "coordinates": [[
