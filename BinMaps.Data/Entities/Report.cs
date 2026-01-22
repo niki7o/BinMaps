@@ -20,6 +20,7 @@ namespace BinMaps.Data.Entities
 
         [Required]
         public string UserId { get; set; }
+
         [Required]
         [MaxLength(100)]
         public string UserName { get; set; }
@@ -40,6 +41,6 @@ namespace BinMaps.Data.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [MaxLength(250)]
-        public string PhotoURL { get; set; }
+        public string? PhotoURL { get; set; }
     }
 }
