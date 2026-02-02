@@ -1,22 +1,29 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using BinMaps.Data.Entities;
+using BinMaps.Infrastructure.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BinMaps.API.Controllers
 {
-    
-        [ApiController]
-        [Route("api/admin")]
-        [Authorize(Roles = "Admin")]
-        public class AdminControllerBase : ControllerBase
+
+    [Authorize(Roles = "Admin")]
+    [ApiController]
+    [Route("api/admin")]
+    public class AdminController : ControllerBase
+    {
+        private readonly IRepository<Report, int> _reportRepo;
+
+        public AdminController(IRepository<Report, int> reportRepo)
         {
-
-            [HttpGet("dashboard")]
-            public IActionResult GetDashboard()
-            {
-                return Ok("Welcome to the Admin Dashboard");
-            }
-
-
+            _reportRepo = reportRepo;
         }
-    
+
+        [HttpGet("reports")]
+        public async Task<IActionResult> GetReports()
+        {
+            var reports = await _reportRepo.GetAllAsync();
+            return Ok(reports.OrderByDescending(r => r.FinalConfidence));
+        }
+    }
+
 }

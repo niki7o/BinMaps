@@ -6,7 +6,7 @@ namespace BinMaps.Shared.DTOs
 {
     public class AIResultDto
     {
-        public int FillPercentage { get; set; }
+        public double FillPercentage { get; set; }
         public bool FireDetected { get; set; }
         public int Confidence { get; set; }
     }

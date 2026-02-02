@@ -38,6 +38,8 @@ namespace BinMaps.API
             builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
             builder.Services.AddScoped<ITruckRouteService, TruckRouteService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IReportService, ReportService>();
+            builder.Services.AddScoped<IAIService, AIService>();
             builder.Services.AddCors(options => {
                 options.AddPolicy("AllowAngular", policy => {
                     policy.WithOrigins("http://localhost:4200")

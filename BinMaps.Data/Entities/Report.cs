@@ -34,7 +34,7 @@ namespace BinMaps.Data.Entities
         public int AI_Score { get; set; }
         public int UserReputationOnSubmit { get; set; }
         public bool IsApproved { get; set; } = false;
-         public double FinalConficende { get; set; } 
+         public double FinalConfidence { get; set; } 
 
 
         [Required]

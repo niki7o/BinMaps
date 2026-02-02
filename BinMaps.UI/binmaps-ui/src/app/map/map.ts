@@ -1,5 +1,5 @@
 import { Component, AfterViewInit, ViewEncapsulation, inject } from '@angular/core';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
 import { CommonModule } from '@angular/common';
@@ -18,8 +18,25 @@ export class MapComponent implements AfterViewInit {
   private allBins: any[] = [];
   private routeLine?: L.Polyline;
   private truckMarker?: L.Marker;
-  
+
   private http = inject(HttpClient);
+
+  ngOnInit() {
+    // Примерна логика
+    const userRole: string = 'User'; // От твоя AuthService
+    
+    if (userRole === 'User') {
+      // Покажи user-only елементи
+    } else if (userRole === 'Driver') {
+      document.querySelectorAll('.driver-only').forEach(el => 
+        (el as HTMLElement).style.display = 'block'
+      );
+    } else if (userRole === 'Admin') {
+      document.querySelectorAll('.admin-only').forEach(el => 
+        (el as HTMLElement).style.display = 'block'
+      );
+    }
+  }
 
   ngAfterViewInit(): void {
     this.map = L.map('map').setView([42.6977, 23.3219], 12);
@@ -32,6 +49,7 @@ export class MapComponent implements AfterViewInit {
     this.initSimulationMenu();
     
   }
+
   private initLegend() {
     const legend = (L as any).control({ position: 'bottomleft' });
     legend.onAdd = () => {

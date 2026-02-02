@@ -1,1 +1,116 @@
-<div id="map" style="height: 100vh;"></div>
+<header class="dashboard-header">
+  <div class="header-left">
+    <div class="logo">
+      <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M3 6h18"/>
+        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+      </svg>
+      <span class="logo-text">BinMaps</span>
+    </div>
+
+    <div class="role-badge user-role">
+      <svg class="role-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      <span>Потребител</span>
+    </div>
+
+    <div class="role-badge driver-role" style="display: none;">
+      <svg class="role-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <rect x="1" y="3" width="15" height="13"/>
+        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+        <circle cx="5.5" cy="18.5" r="2.5"/>
+        <circle cx="18.5" cy="18.5" r="2.5"/>
+      </svg>
+      <span>Шофьор</span>
+    </div>
+
+    <div class="role-badge admin-role" style="display: none;">
+      <svg class="role-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M12 2l9 4.5v6C21 17.5 16.5 21 12 22c-4.5-1-9-4.5-9-9.5v-6L12 2z"/>
+        <polyline points="9 11 12 14 16 10"/>
+      </svg>
+      <span>Администратор</span>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <button class="header-btn notification-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 01-3.46 0"/>
+      </svg>
+      <span class="notification-badge">3</span>
+    </button>
+
+    <div class="user-menu">
+      <img src="https://ui-avatars.com/api/?name=User&background=059669&color=fff" class="user-avatar" alt="User" />
+      <span class="user-name">Иван Иванов</span>
+      <button class="logout-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="dashboard-container">
+  <aside class="left-sidebar">
+    <div class="sidebar-section">
+      <h3 class="sidebar-title">Бърз репорт</h3>
+
+      <div class="report-form user-only">
+        <label class="form-label">Кофа</label>
+        <input type="text" class="form-input" id="selected-bin-id" placeholder="Избери от картата" readonly />
+
+        <label class="form-label">Тип проблем</label>
+        <select class="form-select" id="report-type">
+          <option value="Full">Препълнена</option>
+          <option value="Fire">Пожар</option>
+          <option value="SensorBroken">Повреден сензор</option>
+        </select>
+
+        <label class="form-label">Снимка (опционално)</label>
+        <input type="file" class="form-file" id="report-image" accept="image/*" />
+
+        <button class="btn-submit-report">Изпрати репорт</button>
+      </div>
+
+      <div class="user-stats user-only">
+        <div class="stat-card">
+          <div class="stat-number">12</div>
+          <div class="stat-label">Мои репорти</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">850</div>
+          <div class="stat-label">Репутация</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="map-container">
+    <div id="map"></div>
+  </main>
+
+  <aside class="right-sidebar">
+    <div class="sidebar-section">
+      <h3 class="sidebar-title">Важни известия</h3>
+      <div class="alerts-list">
+      
+        <div class="alert-item critical">
+          <div class="alert-icon">🔥</div>
+          <div class="alert-content">
+            <div class="alert-title">ПОЖАР</div>
+            <div class="alert-description">Кофа #4521 – Люлин</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>

@@ -57,14 +57,13 @@ namespace BinMaps.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<double>("FinalConficende")
+                    b.Property<double>("FinalConfidence")
                         .HasColumnType("float");
 
                     b.Property<bool>("IsApproved")
                         .HasColumnType("bit");
 
                     b.Property<string>("PhotoURL")
-                        .IsRequired()
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
 
@@ -210,7 +209,7 @@ namespace BinMaps.Data.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<int>("Points")
+                    b.Property<int>("Reputation")
                         .HasColumnType("int");
 
                     b.Property<string>("SecurityStamp")
