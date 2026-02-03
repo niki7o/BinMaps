@@ -7,7 +7,7 @@ namespace BinMaps.Infrastructure.Services.Interfaces
 {
     public interface IAuthService
     {
-        Task<bool> RegisterAsync(RegisterDTO dto);
+        Task<(bool success, IEnumerable<string> errors)> RegisterAsync(RegisterDTO dto);
 
         Task<(bool success,string role )> LoginAsync(LoginDTO dto);
 

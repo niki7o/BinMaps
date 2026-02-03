@@ -6,6 +6,7 @@ import { LoginComponent } from './login/login';
 import { registerAppScopedDispatcher } from '@angular/core/primitives/event-dispatch';
 
 
+
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet],

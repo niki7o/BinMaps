@@ -6,7 +6,7 @@
         <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
         <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
       </svg>
-      <span class="logo-text">BinMaps</span>
+      <span class="logo-text" routerLink="/">BinMaps</span>
     </div>
 
     <div class="role-badge user-role">
@@ -37,13 +37,7 @@
   </div>
 
   <div class="header-right">
-    <button class="header-btn notification-btn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-        <path d="M13.73 21a2 2 0 01-3.46 0"/>
-      </svg>
-      <span class="notification-badge">3</span>
-    </button>
+    <!-- Премахната камбанка -->
 
     <div class="user-menu">
       <img src="https://ui-avatars.com/api/?name=User&background=059669&color=fff" class="user-avatar" alt="User" />
@@ -80,17 +74,6 @@
 
         <button class="btn-submit-report">Изпрати репорт</button>
       </div>
-
-      <div class="user-stats user-only">
-        <div class="stat-card">
-          <div class="stat-number">12</div>
-          <div class="stat-label">Мои репорти</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number">850</div>
-          <div class="stat-label">Репутация</div>
-        </div>
-      </div>
     </div>
   </aside>
 
@@ -100,15 +83,50 @@
 
   <aside class="right-sidebar">
     <div class="sidebar-section">
-      <h3 class="sidebar-title">Важни известия</h3>
-      <div class="alerts-list">
-      
-        <div class="alert-item critical">
-          <div class="alert-icon">🔥</div>
-          <div class="alert-content">
-            <div class="alert-title">ПОЖАР</div>
-            <div class="alert-description">Кофа #4521 – Люлин</div>
-          </div>
+      <h3 class="sidebar-title">Разпределение на запълване</h3>
+      <div style="height: 300px; width: 100%;">
+        <canvas baseChart
+                [data]="pieChartData"
+                [options]="pieChartOptions"
+                type="pie">
+        </canvas>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3 class="sidebar-title">Топ 5 най-запълнени кофи</h3>
+      <div style="height: 300px; width: 100%;">
+        <canvas baseChart
+                [data]="barChartData"
+                [options]="barChartOptions"
+                type="bar">
+        </canvas>
+      </div>
+    </div>
+
+    <!-- Можеш да добавяш още секции/диаграми надолу -->
+    <div class="sidebar-section">
+      <h3 class="sidebar-title">Общи данни</h3>
+      <div class="system-stats">
+        <div class="system-stat-row">
+          <span class="stat-label">Общ брой кофи:</span>
+          <span class="stat-value">{{ stats.totalBins }}</span>
+        </div>
+        <div class="system-stat-row">
+          <span class="stat-label">Средно запълване:</span>
+          <span class="stat-value">{{ stats.averageFill }}%</span>
+        </div>
+        <div class="system-stat-row">
+          <span class="stat-label">Средна температура:</span>
+          <span class="stat-value">{{ stats.averageTemp }}°C</span>
+        </div>
+        <div class="system-stat-row">
+          <span class="stat-label">Репорти днес:</span>
+          <span class="stat-value">{{ stats.dailyReports }}</span>
+        </div>
+        <div class="system-stat-row">
+          <span class="stat-label">Ефективност:</span>
+          <span class="stat-value success">{{ stats.efficiency }}%</span>
         </div>
       </div>
     </div>

@@ -3,11 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
 import { CommonModule } from '@angular/common';
-
+import { BaseChartDirective } from 'ng2-charts';
+import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
+import { Chart, registerables } from 'chart.js'
+Chart.register(...registerables);
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, BaseChartDirective],
   templateUrl: './map.html',
   styleUrls: ['./map.css'],
   encapsulation: ViewEncapsulation.None
@@ -21,13 +24,61 @@ export class MapComponent implements AfterViewInit {
 
   private http = inject(HttpClient);
 
+  // Реални статистики (placeholder – замени с API данни по-късно)
+  stats = {
+    totalBins: 142,
+    averageFill: 47,
+    averageTemp: 25,
+    dailyReports: 100,
+    efficiency: 92
+  };
+
+  // Пай диаграма: разпределение на запълване
+  public pieChartData: ChartData<'pie', number[], string | string[]> = {
+    labels: ['Ниско (<40%)', 'Средно (40–70%)', 'Високо (>70%)'],
+    datasets: [{
+      data: [0, 0, 0],
+      backgroundColor: ['#00ff88', '#ffcc00', '#ff3300'],
+      hoverOffset: 4
+    }]
+  };
+
+  public pieChartOptions: ChartConfiguration['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top' },
+      title: { display: true, text: 'Разпределение на запълване' }
+    }
+  };
+
+  // Бар диаграма: топ 5 най-запълнени кофи
+  public barChartData: ChartData<'bar', number[], string | string[]> = {
+    labels: [],
+    datasets: [{
+      data: [],
+      backgroundColor: '#ff3300',
+      label: 'Запълване %'
+    }]
+  };
+
+  public barChartOptions: ChartConfiguration['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      title: { display: true, text: 'Топ 5 най-запълнени кофи' }
+    },
+    scales: {
+      y: { beginAtZero: true, max: 100 }
+    }
+  };
+
   ngOnInit() {
-    // Примерна логика
-    const userRole: string = 'User'; // От твоя AuthService
-    
-    if (userRole === 'User') {
-      // Покажи user-only елементи
-    } else if (userRole === 'Driver') {
+    // Примерна роля – замени с AuthService
+    const userRole: string = 'User';
+
+    if (userRole === 'Driver') {
       document.querySelectorAll('.driver-only').forEach(el => 
         (el as HTMLElement).style.display = 'block'
       );
@@ -40,14 +91,16 @@ export class MapComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.map = L.map('map').setView([42.6977, 23.3219], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(this.map);
+
     this.map.addLayer(this.cluster);
 
     this.loadAreas();
-    
-    this.loadBins();
+    this.loadBins(); // тук се попълват диаграмите
+    this.initLegend();
     this.initSimulationMenu();
-    
   }
 
   private initLegend() {
@@ -75,33 +128,21 @@ export class MapComponent implements AfterViewInit {
         <hr>
         <div class="legend-row reset-btn" id="f-reset">ПОКАЖИ ВСИЧКИ</div>
       `;
-          setTimeout(() => {
 
+      setTimeout(() => {
         [0, 1, 2, 3].forEach(t => document.getElementById(`f-type-${t}`)?.addEventListener('click', () => this.filterBy('type', t)));
 
         document.getElementById('f-fill-low')?.addEventListener('click', () => this.filterBy('fill', 'low'));
-
         document.getElementById('f-fill-med')?.addEventListener('click', () => this.filterBy('fill', 'med'));
-
         document.getElementById('f-fill-high')?.addEventListener('click', () => this.filterBy('fill', 'high'));
-
         document.getElementById('f-sensor')?.addEventListener('click', () => this.filterBy('sensor', true));
-
         document.getElementById('f-reset')?.addEventListener('click', () => {
-
           this.renderBins(this.allBins);
-
-          if (this.routeLine)
-
-             this.map.removeLayer(this.routeLine);
-
-          if (this.truckMarker)
-
-             this.map.removeLayer(this.truckMarker);
-
+          if (this.routeLine) this.map.removeLayer(this.routeLine);
+          if (this.truckMarker) this.map.removeLayer(this.truckMarker);
         });
-
       }, 100);
+
       return div;
     };
     legend.addTo(this.map);
@@ -154,14 +195,14 @@ export class MapComponent implements AfterViewInit {
 
   private startTruckSimulation(areaId: string, type: number) {
     const encodedArea = encodeURIComponent(areaId);
-  this.http.get<any[]>(`https://localhost:7277/api/Trucks/route-by-area/${encodedArea}/${type}`)
+    this.http.get<any[]>(`https://localhost:7277/api/Trucks/route-by-area/${encodedArea}/${type}`)
       .subscribe(points => {
         if (!points?.length) return;
-        
+
         const coords = points.map(p => `${p.locationX},${p.locationY}`).join(';');
         const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
 
-        this.http.get(url).subscribe((res: any) => {
+        this.http.get<any>(url).subscribe(res => {
           if (res.code === 'Ok') {
             const road = res.routes[0].geometry.coordinates.map((c: any) => [c[1], c[0]]);
             this.animateRoute(road);
@@ -187,8 +228,6 @@ export class MapComponent implements AfterViewInit {
     }, 40);
   }
 
-  
-
   loadAreas() {
     this.http.get('/assets/data/areas.geojson').subscribe((data: any) => {
       L.geoJSON(data, {
@@ -205,12 +244,51 @@ export class MapComponent implements AfterViewInit {
   }
 
   loadBins() {
-    this.http.get<any[]>('https://localhost:7277/api/containers').subscribe(bins => {
-      this.allBins = bins.map(b => ({ ...b, latitude: b.locationY, longitude: b.locationX, fillLevel: b.fillPercentage }));
-      this.renderBins(this.allBins);
-      this.initLegend();
-    });
-  }
+  this.http.get<any[]>('https://localhost:7277/api/containers').subscribe(bins => {
+    this.allBins = bins.map(b => ({ ...b, latitude: b.locationY, longitude: b.locationX, fillLevel: b.fillPercentage }));
+    this.renderBins(this.allBins);
+
+    // Изчисляване на статистики в реално време
+    const total = this.allBins.length;
+    const sumFill = this.allBins.reduce((acc, curr) => acc + curr.fillLevel, 0);
+    const sumTemp = this.allBins.reduce((acc, curr) => acc + (curr.temperature || 0), 0);
+
+    this.stats = {
+      totalBins: total,
+      averageFill: total > 0 ? Math.round(sumFill / total) : 0,
+      averageTemp: total > 0 ? Math.round(sumTemp / total) : 0,
+      dailyReports: 12, // Можеш да добавиш API заявка и за това
+      efficiency: 95
+    };
+
+    // Обновяване на Пай диаграмата
+    const low = this.allBins.filter(b => b.fillLevel < 40).length;
+    const med = this.allBins.filter(b => b.fillLevel >= 40 && b.fillLevel <= 70).length;
+    const high = this.allBins.filter(b => b.fillLevel > 70).length;
+
+    this.pieChartData = {
+      labels: ['Ниско (<40%)', 'Средно (40–70%)', 'Високо (>70%)'],
+      datasets: [{
+        data: [low, med, high],
+        backgroundColor: ['#00ff88', '#ffcc00', '#ff3300']
+      }]
+    };
+
+    // Обновяване на Бар диаграмата (Top 5)
+    const top5 = [...this.allBins]
+      .sort((a, b) => b.fillLevel - a.fillLevel)
+      .slice(0, 5);
+
+    this.barChartData = {
+      labels: top5.map(b => `BIN-${b.id}`),
+      datasets: [{
+        data: top5.map(b => b.fillLevel),
+        backgroundColor: '#ff3300',
+        label: 'Запълване %'
+      }]
+    };
+  });
+}
 
   renderBins(bins: any[]) {
     this.cluster.clearLayers();

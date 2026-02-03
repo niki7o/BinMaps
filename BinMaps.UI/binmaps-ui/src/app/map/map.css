@@ -163,13 +163,16 @@ body {
   background: rgba(239, 68, 68, 0.3);
 }
 
-/* MAIN DASHBOARD CONTAINER */
 .dashboard-container {
   display: grid;
   grid-template-columns: 320px 1fr 320px;
-  height: calc(100vh - 64px);
+  /* Изчисляваме височината: 100% от екрана минус височината на хедъра */
+  height: calc(100vh - 64px); 
   background: #0f172a;
+  overflow: hidden; /* Важно: самият контейнер не се скролва */
 }
+
+
 
 /* SIDEBARS */
 .left-sidebar,
@@ -180,8 +183,7 @@ body {
 }
 
 .right-sidebar {
-  border-right: none;
-  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  overflow-y: auto; 
 }
 
 .sidebar-section {
@@ -198,7 +200,41 @@ body {
   font-weight: 700;
   margin-bottom: 1.25rem;
 }
+/* Промени основния контейнер */
+.dashboard-container {
+  display: grid;
+  grid-template-columns: 320px 1fr 320px;
+  /* Изчисляваме височината: 100% от екрана минус височината на хедъра */
+  height: calc(100vh - 64px); 
+  background: #0f172a;
+  overflow: hidden; /* Важно: самият контейнер не се скролва */
+}
 
+/* Направи сайдбаровете да се скролват сами за себе си */
+.left-sidebar,
+.right-sidebar {
+  background: #1e293b;
+  height: 100%;
+  overflow-y: auto; /* Скрол само тук */
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Картата също трябва да заема останалото място */
+.map-container {
+  height: 100%;
+  position: relative;
+}
+
+#map {
+  height: 100%;
+  width: 100%;
+}
+
+/* Премахни overflow: hidden от body, за да няма бъгове */
+body {
+  margin: 0;
+  height: 100vh;
+}
 .sidebar-title svg {
   width: 20px;
   height: 20px;

@@ -1,5 +1,4 @@
 <div class="register-container">
- 
   <header class="header">
     <div class="header-content">
       <div class="logo" (click)="navigateToHome()">
@@ -23,67 +22,35 @@
       </div>
 
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
-       
-        <!-- First Name & Last Name Row -->
-        <div class="form-row">
-          <div class="form-group">
-            <label for="firstName" class="form-label">
-              Име
-              <span class="required">*</span>
-            </label>
-            <div class="input-wrapper">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-              <input
-                id="firstName"
-                type="text"
-                formControlName="firstName"
-                class="form-input"
-                [class.error]="firstName?.invalid && firstName?.touched"
-                placeholder="Иван"
-                autocomplete="given-name"
-              />
-            </div>
-            <div class="error-message" *ngIf="firstName?.invalid && firstName?.touched">
-              <span *ngIf="firstName?.errors?.['required']">Името е задължително</span>
-              <span *ngIf="firstName?.errors?.['minlength']">Името трябва да е поне 2 символа</span>
-            </div>
+        
+        <div class="form-group">
+          <label for="userName" class="form-label">
+            Потребителско име <span class="required">*</span>
+          </label>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <input
+              id="userName"
+              type="text"
+              formControlName="userName"
+              class="form-input"
+              [class.error]="userNameControl?.invalid && userNameControl?.touched"
+              placeholder="Потребителско име"
+            />
           </div>
-
-          <div class="form-group">
-            <label for="lastName" class="form-label">
-              Фамилия
-              <span class="required">*</span>
-            </label>
-            <div class="input-wrapper">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-              <input
-                id="lastName"
-                type="text"
-                formControlName="lastName"
-                class="form-input"
-                [class.error]="lastName?.invalid && lastName?.touched"
-                placeholder="Иванов"
-                autocomplete="family-name"
-              />
-            </div>
-            <div class="error-message" *ngIf="lastName?.invalid && lastName?.touched">
-              <span *ngIf="lastName?.errors?.['required']">Фамилията е задължителна</span>
-              <span *ngIf="lastName?.errors?.['minlength']">Фамилията трябва да е поне 2 символа</span>
-            </div>
+          <div class="error-message" *ngIf="userNameControl?.invalid && userNameControl?.touched">
+            <span *ngIf="userNameControl?.errors?.['required']">Потребителското име е задължително</span>
+            <span *ngIf="userNameControl?.errors?.['minlength']">Минимум 3 символа</span>
+            <span *ngIf="userNameControl?.errors?.['serverError']" class="server-error-text">{{ userNameControl?.errors?.['serverError'] }}</span>
           </div>
         </div>
 
-        <!-- Email -->
         <div class="form-group">
           <label for="email" class="form-label">
-            Имейл адрес
-            <span class="required">*</span>
+            Имейл адрес <span class="required">*</span>
           </label>
           <div class="input-wrapper">
             <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -95,22 +62,20 @@
               type="email"
               formControlName="email"
               class="form-input"
-              [class.error]="email?.invalid && email?.touched"
+              [class.error]="emailControl?.invalid && emailControl?.touched"
               placeholder="example@mail.com"
-              autocomplete="email"
             />
           </div>
-          <div class="error-message" *ngIf="email?.invalid && email?.touched">
-            <span *ngIf="email?.errors?.['required']">Имейлът е задължителен</span>
-            <span *ngIf="email?.errors?.['email']">Невалиден имейл адрес</span>
+          <div class="error-message" *ngIf="emailControl?.invalid && emailControl?.touched">
+            <span *ngIf="emailControl?.errors?.['required']">Имейлът е задължителен</span>
+            <span *ngIf="emailControl?.errors?.['email']">Невалиден имейл адрес</span>
+            <span *ngIf="emailControl?.errors?.['serverError']" class="server-error-text">{{ emailControl?.errors?.['serverError'] }}</span>
           </div>
         </div>
 
-        <!-- Phone Number -->
         <div class="form-group">
           <label for="phoneNumber" class="form-label">
-            Телефонен номер
-            <span class="optional">(незадължително)</span>
+            Телефонен номер <span class="optional">(незадължително)</span>
           </label>
           <div class="input-wrapper">
             <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -121,173 +86,106 @@
               type="tel"
               formControlName="phoneNumber"
               class="form-input"
-              [class.error]="phoneNumber?.invalid && phoneNumber?.touched"
+              [class.error]="phoneNumberControl?.invalid && phoneNumberControl?.touched"
               placeholder="+359 888 123 456"
-              autocomplete="tel"
             />
           </div>
-          <div class="error-message" *ngIf="phoneNumber?.invalid && phoneNumber?.touched">
-            <span *ngIf="phoneNumber?.errors?.['pattern']">Невалиден телефонен номер (напр. +359888123456)</span>
+          <div class="error-message" *ngIf="phoneNumberControl?.invalid && phoneNumberControl?.touched">
+            <span *ngIf="phoneNumberControl?.errors?.['pattern']">Невалиден формат на номера</span>
           </div>
         </div>
 
-        <!-- Password & Confirm Password Row -->
         <div class="form-row">
           <div class="form-group">
-            <label for="password" class="form-label">
-              Парола
-              <span class="required">*</span>
-            </label>
+            <label for="password" class="form-label">Парола <span class="required">*</span></label>
             <div class="input-wrapper">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0110 0v4"/>
-              </svg>
               <input
                 id="password"
                 [type]="showPassword ? 'text' : 'password'"
                 formControlName="password"
                 class="form-input"
-                [class.error]="password?.invalid && password?.touched"
+                [class.error]="passwordControl?.invalid && passwordControl?.touched"
                 placeholder="••••••••"
-                autocomplete="new-password"
               />
-              <button
-                type="button"
-                class="toggle-password"
-                (click)="togglePasswordVisibility()"
-                tabindex="-1"
-              >
-                <svg *ngIf="!showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
+              <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
+                <svg *ngIf="!showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                 </svg>
-                <svg *ngIf="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
-                  <line x1="1" y1="1" x2="23" y2="23"/>
+                <svg *ngIf="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20">
+                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>
                 </svg>
               </button>
             </div>
-            <div class="error-message" *ngIf="password?.invalid && password?.touched">
-              <span *ngIf="password?.errors?.['required']">Паролата е задължителна</span>
-              <span *ngIf="password?.errors?.['minlength']">Минимум 6 символа</span>
-              <span *ngIf="password?.errors?.['passwordStrength']">Трябва да съдържа главна и малка буква и цифра</span>
+            <div class="error-message" *ngIf="passwordControl?.invalid && passwordControl?.touched">
+              <span *ngIf="passwordControl?.errors?.['required']">Паролата е задължителна</span>
+              <span *ngIf="passwordControl?.errors?.['minlength']">Минимум 6 символа</span>
             </div>
           </div>
 
           <div class="form-group">
-            <label for="confirmPassword" class="form-label">
-              Потвърди парола
-              <span class="required">*</span>
-            </label>
+            <label for="confirmPassword" class="form-label">Потвърди <span class="required">*</span></label>
             <div class="input-wrapper">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0110 0v4"/>
-              </svg>
               <input
                 id="confirmPassword"
-                [type]="showConfirmPassword ? 'text' : 'password'"
+                [type]="showPassword ? 'text' : 'password'"
                 formControlName="confirmPassword"
                 class="form-input"
-                [class.error]="(confirmPassword?.invalid && confirmPassword?.touched) || (registerForm.errors?.['passwordMismatch'] && confirmPassword?.touched)"
+                [class.error]="(confirmPasswordControl?.invalid && confirmPasswordControl?.touched) || (registerForm.errors?.['passwordMismatch'] && confirmPasswordControl?.touched)"
                 placeholder="••••••••"
-                autocomplete="new-password"
               />
-              <button
-                type="button"
-                class="toggle-password"
-                (click)="toggleConfirmPasswordVisibility()"
-                tabindex="-1"
-              >
-                <svg *ngIf="!showConfirmPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-                <svg *ngIf="showConfirmPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
-                  <line x1="1" y1="1" x2="23" y2="23"/>
-                </svg>
-              </button>
             </div>
-            <div class="error-message" *ngIf="confirmPassword?.touched">
-              <span *ngIf="confirmPassword?.errors?.['required']">Полето е задължително</span>
-              <span *ngIf="registerForm.errors?.['passwordMismatch'] && !confirmPassword?.errors?.['required']">Паролите не съвпадат</span>
+            <div class="error-message" *ngIf="confirmPasswordControl?.touched">
+              <span *ngIf="confirmPasswordControl?.errors?.['required']">Полето е задължително</span>
+              <span *ngIf="registerForm.errors?.['passwordMismatch'] && !confirmPasswordControl?.errors?.['required']">Паролите не съвпадат</span>
             </div>
           </div>
         </div>
 
-        <!-- Terms & Conditions -->
         <div class="form-group checkbox-group">
           <label class="checkbox-label">
-            <input
-              type="checkbox"
-              formControlName="acceptTerms"
-              class="checkbox-input"
-            />
+            <input type="checkbox" formControlName="acceptTerms" class="checkbox-input" />
             <span class="checkbox-custom"></span>
             <span class="checkbox-text">
-              Приемам <a href="#" class="link">условията за ползване</a> и <a href="#" class="link">политиката за поверителност</a>
-              <span class="required">*</span>
+              Приемам <a href="#" class="link">условията</a> и <a href="#" class="link">поверителността</a> <span class="required">*</span>
             </span>
           </label>
-          <div class="error-message" *ngIf="acceptTerms?.invalid && acceptTerms?.touched">
-            <span>Трябва да приемете условията</span>
-          </div>
         </div>
 
-        <!-- Alerts -->
-        <div class="alert alert-error" *ngIf="errorMessage">
+        <div class="alert alert-error" *ngIf="generalError">
           <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
-          <span>{{ errorMessage }}</span>
+          <span>{{ generalError }}</span>
         </div>
 
         <div class="alert alert-success" *ngIf="successMessage">
           <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
-            <polyline points="22 4 12 14.01 9 11.01"/>
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
           </svg>
           <span>{{ successMessage }}</span>
         </div>
 
-        <!-- Submit Button -->
-        <button
-          type="submit"
-          class="btn btn-primary"
-          [disabled]="isLoading"
-        >
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading || registerForm.invalid">
           <span *ngIf="!isLoading">Регистрация</span>
           <span *ngIf="isLoading" class="loading-spinner">
             <svg class="spinner" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
             </svg>
-            Регистриране...
+            Зареждане...
           </span>
         </button>
 
-        <!-- Form Footer -->
         <div class="form-footer">
           <p class="login-text">
             Вече имате акаунт?
-            <button
-              type="button"
-              class="link-button"
-              (click)="navigateToLogin()"
-            >
-              Влезте тук
-            </button>
+            <button type="button" class="link-button" (click)="navigateToLogin()">Влезте тук</button>
           </p>
         </div>
       </form>
     </div>
   </main>
 
-  <!-- Footer -->
   <footer class="footer">
-    <p>&copy; 2025 BinMaps. Интелигентно управление на отпадъци.</p>
+    <p>&copy; 2026 BinMaps. Интелигентно управление на отпадъци.</p>
   </footer>
 </div>

@@ -12,7 +12,7 @@ namespace BinMaps.API.Controllers
         [HttpGet("map")]
         public IActionResult GetMap()
         {
-                       return Ok("Welcome to the User Map");
+            return Ok("Welcome to the User Map");
 
         }
 

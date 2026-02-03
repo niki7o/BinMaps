@@ -31,10 +31,21 @@ namespace BinMaps.API
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-           
-            builder.Services.AddIdentity<User, IdentityRole>()
-                .AddEntityFrameworkStores<BinMapsDbContext>()
-                 .AddDefaultTokenProviders();
+
+            builder.Services.AddIdentity<User, IdentityRole>(options =>
+            {
+               
+                options.Password.RequireDigit = true;           
+                options.Password.RequireLowercase = true;       
+                options.Password.RequireUppercase = true;       
+                options.Password.RequireNonAlphanumeric = false; 
+                options.Password.RequiredLength = 6;          
+
+                options.User.RequireUniqueEmail = true;         
+                options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+ "; 
+            })
+ .AddEntityFrameworkStores<BinMapsDbContext>()
+ .AddDefaultTokenProviders();
             builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
             builder.Services.AddScoped<ITruckRouteService, TruckRouteService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
@@ -60,13 +71,10 @@ namespace BinMaps.API
                 var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
                 var userManager = services.GetRequiredService<UserManager<User>>();
 
-             
-                await BinMapsDbContext.SeedRoles(roleManager);
-                await BinMapsDbContext.SeedUsers(userManager);
 
                 await context.Database.MigrateAsync();
-
-               
+                await BinMapsDbContext.SeedRoles(roleManager);
+                await BinMapsDbContext.SeedUsers(userManager);
                 await BinMapsDbContext.SeedAsync(context);
             }
             // Configure the HTTP request pipeline.

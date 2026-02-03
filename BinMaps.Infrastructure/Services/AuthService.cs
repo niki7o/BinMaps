@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 
 namespace BinMaps.Infrastructure.Services
 {
@@ -20,30 +21,48 @@ namespace BinMaps.Infrastructure.Services
             _userManager = userManager;
             _signInManager = signInManager;
         }
-
-        public async Task<bool> RegisterAsync(RegisterDTO dto)
+public async Task<(bool success, IEnumerable<string> errors)> RegisterAsync(RegisterDTO dto)
         {
-            if (!dto.AcceptTerms)
+
+            var userExists = await _userManager.Users.AnyAsync(u => u.Email == dto.Email);
+            if (userExists)
             {
-                return false;
+
+                return (false, new List<string> { "Този имейл вече е зает." });
+            }
+            if (await _userManager.FindByNameAsync(dto.UserName) != null)
+            {
+                return (false, new List<string> { "DuplicateUserName" }); // Key word
             }
 
-            var user = new User
+            if (await _userManager.FindByEmailAsync(dto.Email) != null)
             {
-                UserName = dto.UserName,
-                Email = dto.Email,
-                PhoneNumber = dto.PhoneNumber?.ToString()
-            };
+                return (false, new List<string> { "DuplicateEmail" }); // Key word
+            }
+            if (!dto.AcceptTerms)
+    {
+        return (false, new List<string> { "Трябва да приемете условията за ползване." });
+    }
+
+    var user = new User
+    {
+        UserName = dto.UserName,
+        Email = dto.Email,
+        PhoneNumber = dto.PhoneNumber?.ToString()
+    };
+          
 
             var result = await _userManager.CreateAsync(user, dto.Password);
 
-            if (!result.Succeeded)
-            {
-                return false;
-            }
-            await _userManager.AddToRoleAsync(user, "User");
-            return true;
-        }
+    if (!result.Succeeded)
+    {
+      
+        return (false, result.Errors.Select(e => e.Description));
+    }
+
+    await _userManager.AddToRoleAsync(user, "User");
+    return (true, null);
+}
 
         public async Task<(bool success, string role)> LoginAsync(LoginDTO dto)
         {

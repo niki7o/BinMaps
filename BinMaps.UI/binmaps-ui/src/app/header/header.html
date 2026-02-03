@@ -1,0 +1,25 @@
+<header class="dashboard-header">
+  <div class="header-left">
+    <div class="logo" routerLink="/">
+      <span class="logo-text">BinMaps</span>
+    </div>
+
+    <ng-container *ngIf="currentUser">
+      <div class="role-badge" [ngClass]="currentUser.role.toLowerCase() + '-role'">
+        <span>{{ currentUser.role }}</span>
+      </div>
+    </ng-container>
+  </div>
+
+  <div class="header-right">
+    <div class="user-menu" *ngIf="currentUser">
+      <span class="user-name">{{ currentUser.email }}</span>
+      <button class="logout-btn" (click)="logout()">Изход</button>
+    </div>
+
+    <div class="auth-btns" *ngIf="!currentUser">
+      <button class="header-btn" routerLink="/login">Вход</button>
+      <button class="header-btn" routerLink="/register">Регистрация</button>
+    </div>
+  </div>
+</header>

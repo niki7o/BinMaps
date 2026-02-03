@@ -1,8 +1,9 @@
+
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { HttpClient} from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-login',
@@ -49,7 +50,10 @@ export class LoginComponent {
   }
 
   onSubmit() {
-    if (this.loginForm.invalid) return;
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
+      return;
+    }
 
     this.isLoading = true;
     this.errorMessage = '';
@@ -57,14 +61,26 @@ export class LoginComponent {
     this.http.post<any>('https://localhost:7277/api/auth/login', this.loginForm.value)
       .subscribe({
         next: (res) => {
-          localStorage.setItem('token', res.token);
+          localStorage.setItem('user', JSON.stringify(res));
           this.isLoading = false;
-          this.router.navigate(['/']);
+          
+          if (res.role === 'Admin' || res.role === 'Driver') {
+            this.router.navigate(['/map']);
+          } else {
+            this.router.navigate(['/']);
+          }
         },
         error: (err) => {
           this.isLoading = false;
-          this.errorMessage = 'Login failed. Please check your credentials.';
-          console.error('Login error:', err);
+
+          if (err.status === 400 && err.error?.errors?.email) {
+            this.errorMessage = err.error.errors.email[0];
+            this.email?.setErrors({ serverError: true });
+          } else if (err.status === 0) {
+            this.errorMessage = 'Не може да се свърже със сървъра. Моля, проверете връзката.';
+          } else {
+            this.errorMessage = 'Грешка при влизане. Моля, опитайте отново.';
+          }
         }
       });
   }

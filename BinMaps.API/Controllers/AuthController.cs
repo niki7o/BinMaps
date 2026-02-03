@@ -17,16 +17,30 @@ namespace BinMaps.API.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDTO dto)
+        public async Task<IActionResult> Register(RegisterDTO dto)
         {
-            var success = await _authService.RegisterAsync(dto);
+            var (success, errors) = await _authService.RegisterAsync(dto);
 
             if (!success)
             {
-                return BadRequest("Registration failed");
+                var modelState = new Dictionary<string, string[]>();
+
+                foreach (var error in errors)
+                {
+                    if (error.Contains("UserName"))
+                        modelState["userName"] = new[] { "Това име е заето." };
+
+                    else if (error.Contains("Email"))
+                        modelState["email"] = new[] { "Имейлът вече съществува." };
+
+                    else
+                        modelState["general"] = new[] { error };
+                }
+
+                return BadRequest(new { errors = modelState });
             }
 
-            return Ok("Registered");
+            return Ok();
         }
 
         [HttpPost("login")]
