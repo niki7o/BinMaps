@@ -1,0 +1,405 @@
+<div class="admin-dashboard">
+  <!-- Хедър с статистики -->
+  <div class="admin-stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ stats.TotalReports || 0 }}</div>
+        <div class="stat-label">Общо репорти</div>
+      </div>
+    </div>
+    
+    <div class="stat-card warning">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ stats.PendingReports || 0 }}</div>
+        <div class="stat-label">Чакащи одобрение</div>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon">🗑️</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ stats.TotalContainers || 0 }}</div>
+        <div class="stat-label">Общо кофи</div>
+      </div>
+    </div>
+    
+    <div class="stat-card danger">
+      <div class="stat-icon">🔥</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ stats.FireReports || 0 }}</div>
+        <div class="stat-label">Пожарни сигнали</div>
+      </div>
+    </div>
+    
+    <div class="stat-card success">
+      <div class="stat-icon">👥</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ userCount || 0 }}</div>
+        <div class="stat-label">Регистрирани</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Табове за навигация -->
+  <div class="admin-tabs">
+    <button class="tab-btn" [class.active]="activeTab === 'reports'" (click)="setActiveTab('reports')">
+      📝 Репорти
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'containers'" (click)="setActiveTab('containers')">
+      🗑️ Кофи
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'trucks'" (click)="setActiveTab('trucks')">
+      🚛 Камиони
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'users'" (click)="setActiveTab('users')">
+      👥 Потребители
+    </button>
+  </div>
+
+  <!-- Съдържание на табовете -->
+  <div class="tab-content">
+    <!-- Таб за репорти -->
+    <div *ngIf="activeTab === 'reports'" class="tab-panel">
+      <div class="filters">
+        <select [(ngModel)]="reportFilter.status" (change)="filterReports()">
+          <option value="">Всички статуси</option>
+          <option value="pending">Чакащи</option>
+          <option value="approved">Одобрени</option>
+        </select>
+        
+        <select [(ngModel)]="reportFilter.reportType" (change)="filterReports()">
+          <option value="">Всички типове</option>
+          <option value="Full">Препълнена</option>
+          <option value="Fire">Пожар</option>
+          <option value="SensorBroken">Сензор</option>
+        </select>
+        
+        <input type="date" [(ngModel)]="reportFilter.fromDate" (change)="filterReports()" placeholder="От дата">
+        <input type="date" [(ngModel)]="reportFilter.toDate" (change)="filterReports()" placeholder="До дата">
+      </div>
+
+      <div class="table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Кофа</th>
+              <th>Потребител</th>
+              <th>Тип</th>
+              <th>Дата</th>
+              <th>AI Score</th>
+              <th>Репутация</th>
+              <th>Финална увереност</th>
+              <th>Статус</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let report of filteredReports">
+              <td>{{ report.id }}</td>
+              <td>
+                <span *ngIf="report.trashContainerId">#{{ report.trashContainerId }}</span>
+                <span *ngIf="!report.trashContainerId">-</span>
+              </td>
+              <td>{{ report.userName }}</td>
+              <td>
+                <span class="report-type" [class]="getReportTypeClass(report.reportType)">
+                  {{ getReportTypeText(report.reportType) }}
+                </span>
+              </td>
+              <td>{{ formatDate(report.createdAt) }}</td>
+              <td>
+                <div class="score-bar">
+                  <div class="score-fill" [style.width.%]="report.ai_Score"></div>
+                  <span>{{ report.ai_Score }}%</span>
+                </div>
+              </td>
+              <td>{{ report.userReputationOnSubmit }}</td>
+              <td>
+                <div class="confidence-badge" [class.high]="report.finalConfidence >= 80"
+                     [class.medium]="report.finalConfidence >= 50 && report.finalConfidence < 80"
+                     [class.low]="report.finalConfidence < 50">
+                  {{ report.finalConfidence.toFixed(1) }}%
+                </div>
+              </td>
+              <td>
+                <span class="status-badge" [class.approved]="report.isApproved"
+                      [class.pending]="!report.isApproved">
+                  {{ report.isApproved ? '✓ Одобрен' : '⏳ Чака' }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button *ngIf="!report.isApproved" class="btn-approve" 
+                          (click)="approveReport(report.id)" title="Одобри">
+                    ✓
+                  </button>
+                  <button *ngIf="!report.isApproved" class="btn-reject" 
+                          (click)="rejectReport(report.id)" title="Отхвърли">
+                    ✗
+                  </button>
+                  <button class="btn-view" (click)="viewReportDetails(report)" title="Детайли">
+                    👁️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Таб за кофи -->
+    <div *ngIf="activeTab === 'containers'" class="tab-panel">
+      <div class="table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Зона</th>
+              <th>Тип</th>
+              <th>Запълване</th>
+              <th>Статус</th>
+              <th>Сензор</th>
+              <th>Температура</th>
+              <th>Батерия</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let container of containers">
+              <td>{{ container.id }}</td>
+              <td>{{ container.areaId }}</td>
+              <td>
+                <span class="trash-type" [class]="getTrashTypeClass(container.trashType)">
+                  {{ getTrashTypeText(container.trashType) }}
+                </span>
+              </td>
+              <td>
+                <div class="fill-bar">
+                  <div class="fill-fill" [style.width.%]="container.fillPercentage"></div>
+                  <span>{{ container.fillPercentage }}%</span>
+                </div>
+              </td>
+              <td>
+                <span class="status-badge" [class]="getStatusClass(container.status)">
+                  {{ getStatusText(container.status) }}
+                </span>
+              </td>
+              <td>
+                <span class="sensor-badge" [class.has-sensor]="container.hasSensor">
+                  {{ container.hasSensor ? '✓' : '✗' }}
+                </span>
+              </td>
+              <td>
+                <span [class.hot]="container.temperature > 50">
+                  {{ container.temperature || '-' }}°C
+                </span>
+              </td>
+              <td>
+                <span *ngIf="container.batteryPercentage" 
+                      [class.low-battery]="container.batteryPercentage < 20">
+                  {{ container.batteryPercentage }}%
+                </span>
+                <span *ngIf="!container.batteryPercentage">-</span>
+              </td>
+              <td>
+                <button class="btn-edit" (click)="editContainer(container)">✏️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Таб за камиони -->
+    <div *ngIf="activeTab === 'trucks'" class="tab-panel">
+      <div class="table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Зона</th>
+              <th>Тип</th>
+              <th>Капацитет</th>
+              <th>Локация</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let truck of trucks">
+              <td>{{ truck.id }}</td>
+              <td>{{ truck.areaId }}</td>
+              <td>
+                <span class="trash-type" [class]="getTrashTypeClass(truck.trashType)">
+                  {{ getTrashTypeText(truck.trashType) }}
+                </span>
+              </td>
+              <td>{{ truck.capacity }}л</td>
+              <td>
+                <span *ngIf="truck.locationX && truck.locationY">
+                  {{ truck.locationX.toFixed(4) }}, {{ truck.locationY.toFixed(4) }}
+                </span>
+                <span *ngIf="!truck.locationX || !truck.locationY">-</span>
+              </td>
+              <td>
+                <button class="btn-view" (click)="viewTruckRoute(truck.id)">🗺️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Таб за потребители -->
+    <div *ngIf="activeTab === 'users'" class="tab-panel">
+      <div class="table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Потребителско име</th>
+              <th>Имейл</th>
+              <th>Роля</th>
+              <th>Репутация</th>
+              <th>Репорти</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of users">
+              <td>{{ user.id }}</td>
+              <td>{{ user.userName }}</td>
+              <td>{{ user.email }}</td>
+              <td>
+                <span class="role-badge" [class]="user.roles[0]">
+                  {{ user.roles[0] === 'Driver' ? 'Шофьор' : 'Потребител' }}
+                </span>
+              </td>
+              <td>
+                <div class="reputation-bar">
+                  <div class="reputation-fill" [style.width.%]="user.reputation"></div>
+                  <span>{{ user.reputation }}</span>
+                </div>
+              </td>
+              <td>
+                <span *ngIf="userReportCounts[user.id]">
+                  {{ userReportCounts[user.id] }}
+                </span>
+                <span *ngIf="!userReportCounts[user.id]">0</span>
+              </td>
+              <td>
+                <button class="btn-view" (click)="viewUserReports(user.id)">📋</button>
+                <button class="btn-edit" (click)="adjustUserReputation(user)">⚖️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модал за детайли на репорт -->
+  <div *ngIf="selectedReport" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Детайли за репорт #{{ selectedReport.id }}</h3>
+        <button class="modal-close" (click)="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="report-details">
+          <div class="detail-row">
+            <span class="detail-label">Потребител:</span>
+            <span class="detail-value">{{ selectedReport.userName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Кофа:</span>
+            <span class="detail-value">#{{ selectedReport.trashContainerId || 'Няма' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Тип:</span>
+            <span class="detail-value">{{ getReportTypeText(selectedReport.reportType) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Дата:</span>
+            <span class="detail-value">{{ formatDate(selectedReport.createdAt) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">AI Score:</span>
+            <span class="detail-value">{{ selectedReport.ai_Score }}%</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Репутация на потребителя:</span>
+            <span class="detail-value">{{ selectedReport.userReputationOnSubmit }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Финална увереност:</span>
+            <span class="detail-value">{{ selectedReport.finalConfidence.toFixed(1) }}%</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Статус:</span>
+            <span class="detail-value">
+              {{ selectedReport.isApproved ? 'Одобрен' : 'Чакащ одобрение' }}
+            </span>
+          </div>
+        </div>
+        
+        <div *ngIf="selectedReportPhoto" class="report-photo">
+          <h4>Снимка</h4>
+          <img [src]="selectedReportPhoto" alt="Report Photo" class="photo-preview">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button *ngIf="!selectedReport.isApproved" class="btn-approve" 
+                (click)="approveReport(selectedReport.id)">
+          ✓ Одобри репорт
+        </button>
+        <button *ngIf="!selectedReport.isApproved" class="btn-reject" 
+                (click)="rejectReport(selectedReport.id)">
+          ✗ Отхвърли репорт
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модал за редактиране на кофа -->
+  <div *ngIf="editingContainer" class="modal-overlay" (click)="closeContainerModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Редактиране на кофа #{{ editingContainer.id }}</h3>
+        <button class="modal-close" (click)="closeContainerModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Запълване (%)</label>
+          <input type="range" min="0" max="100" [(ngModel)]="editingContainer.fillPercentage">
+          <span>{{ editingContainer.fillPercentage }}%</span>
+        </div>
+        
+        <div class="form-group">
+          <label>Статус</label>
+          <select [(ngModel)]="editingContainer.status">
+            <option [value]="undefined">Нормален</option>
+            <option value="0">Активен</option>
+            <option value="1">Пожар</option>
+            <option value="2">Повреден</option>
+            <option value="3">Извън линия</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>
+            <input type="checkbox" [(ngModel)]="editingContainer.hasSensor">
+            Има сензор
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-save" (click)="saveContainer()">💾 Запази</button>
+        <button class="btn-cancel" (click)="closeContainerModal()">Отказ</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -9,6 +9,16 @@
       </svg>
       <span class="logo-text">BinMaps</span>
     </div>
+    
+    <div *ngIf="currentUser?.role === 'Admin'" class="admin-link">
+  <button class="header-btn" routerLink="/admin">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path d="M12 2l9 4.5v6C21 17.5 16.5 21 12 22c-4.5-1-9-4.5-9-9.5v-6L12 2z"/>
+      <polyline points="9 11 12 14 16 10"/>
+    </svg>
+    Админ
+  </button>
+</div>
 
     <!-- Показване на ролята на потребителя -->
     <ng-container *ngIf="currentUser">
