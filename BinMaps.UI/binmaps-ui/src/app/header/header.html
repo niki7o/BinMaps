@@ -1,22 +1,37 @@
+
 <header class="dashboard-header">
   <div class="header-left">
     <div class="logo" routerLink="/">
+      <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M3 6h18"/>
+        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+      </svg>
       <span class="logo-text">BinMaps</span>
     </div>
 
+    <!-- Показване на ролята на потребителя -->
     <ng-container *ngIf="currentUser">
-      <div class="role-badge" [ngClass]="currentUser.role.toLowerCase() + '-role'">
-        <span>{{ currentUser.role }}</span>
+      <div class="role-badge" [ngClass]="currentUser.role?.toLowerCase() + '-role'">
+        <span>{{ currentUser.role || 'Потребител' }}</span>
       </div>
     </ng-container>
   </div>
 
   <div class="header-right">
+    <!-- Показване на информация за потребителя ако е логнат -->
     <div class="user-menu" *ngIf="currentUser">
-      <span class="user-name">{{ currentUser.email }}</span>
-      <button class="logout-btn" (click)="logout()">Изход</button>
+      <span class="user-name">{{ currentUser.userName || currentUser.email || 'Потребител' }}</span>
+      <button class="logout-btn" (click)="logout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
     </div>
 
+    <!-- Бутони за вход/регистрация ако не е логнат -->
     <div class="auth-btns" *ngIf="!currentUser">
       <button class="header-btn" routerLink="/login">Вход</button>
       <button class="header-btn" routerLink="/register">Регистрация</button>

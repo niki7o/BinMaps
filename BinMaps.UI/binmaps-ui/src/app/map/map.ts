@@ -1,5 +1,6 @@
-import { Component, AfterViewInit, ViewEncapsulation, inject } from '@angular/core';
+import { Component, AfterViewInit, ViewEncapsulation, inject, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
 import { CommonModule } from '@angular/common';
@@ -7,6 +8,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { Chart, registerables } from 'chart.js'
 Chart.register(...registerables);
+
 @Component({
   selector: 'app-map',
   standalone: true,
@@ -15,16 +17,19 @@ Chart.register(...registerables);
   styleUrls: ['./map.css'],
   encapsulation: ViewEncapsulation.None
 })
-export class MapComponent implements AfterViewInit {
+export class MapComponent implements AfterViewInit, OnInit {
   private map!: L.Map;
   private cluster = L.markerClusterGroup();
   private allBins: any[] = [];
   private routeLine?: L.Polyline;
   private truckMarker?: L.Marker;
+  private selectedBinForReport: any = null;
 
   private http = inject(HttpClient);
+  private router = inject(Router);
 
-  // Реални статистики (placeholder – замени с API данни по-късно)
+  currentUser: any = null;
+
   stats = {
     totalBins: 142,
     averageFill: 47,
@@ -33,7 +38,6 @@ export class MapComponent implements AfterViewInit {
     efficiency: 92
   };
 
-  // Пай диаграма: разпределение на запълване
   public pieChartData: ChartData<'pie', number[], string | string[]> = {
     labels: ['Ниско (<40%)', 'Средно (40–70%)', 'Високо (>70%)'],
     datasets: [{
@@ -52,7 +56,6 @@ export class MapComponent implements AfterViewInit {
     }
   };
 
-  // Бар диаграма: топ 5 най-запълнени кофи
   public barChartData: ChartData<'bar', number[], string | string[]> = {
     labels: [],
     datasets: [{
@@ -75,18 +78,26 @@ export class MapComponent implements AfterViewInit {
   };
 
   ngOnInit() {
-    // Примерна роля – замени с AuthService
-    const userRole: string = 'User';
+    this.checkUser();
+  }
 
-    if (userRole === 'Driver') {
-      document.querySelectorAll('.driver-only').forEach(el => 
-        (el as HTMLElement).style.display = 'block'
-      );
-    } else if (userRole === 'Admin') {
-      document.querySelectorAll('.admin-only').forEach(el => 
-        (el as HTMLElement).style.display = 'block'
-      );
+  private checkUser() {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        this.currentUser = JSON.parse(userData);
+      } catch {
+        this.currentUser = null;
+      }
     }
+  }
+
+  logout() {
+    localStorage.removeItem('user');
+    this.currentUser = null;
+    this.router.navigate(['/']).then(() => {
+      window.location.reload();
+    });
   }
 
   ngAfterViewInit(): void {
@@ -98,9 +109,65 @@ export class MapComponent implements AfterViewInit {
     this.map.addLayer(this.cluster);
 
     this.loadAreas();
-    this.loadBins(); // тук се попълват диаграмите
+    this.loadBins();
     this.initLegend();
     this.initSimulationMenu();
+    this.setupReportButton();
+  }
+
+  private setupReportButton() {
+    setTimeout(() => {
+      const reportBtn = document.querySelector('.btn-submit-report');
+      if (reportBtn) {
+        reportBtn.addEventListener('click', () => this.submitReport());
+      }
+    }, 500);
+  }
+
+  private async submitReport() {
+    if (!this.currentUser) {
+      alert('Трябва да сте влезли в системата за да изпратите репорт!');
+      return;
+    }
+
+    const binIdInput = document.getElementById('selected-bin-id') as HTMLInputElement;
+    const reportTypeSelect = document.getElementById('report-type') as HTMLSelectElement;
+    const imageInput = document.getElementById('report-image') as HTMLInputElement;
+    
+    if (!this.selectedBinForReport) {
+      alert('Моля изберете кофа от картата като кликнете върху нея!');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('TrashContainerId', this.selectedBinForReport.id.toString());
+    formData.append('ReportType', reportTypeSelect.value);
+    
+    if (imageInput.files && imageInput.files[0]) {
+      formData.append('Photo', imageInput.files[0]);
+    }
+
+    try {
+      const response = await fetch('https://localhost:7277/api/reports', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`Репортът е изпратен успешно! ${result.message}`);
+        
+        this.selectedBinForReport = null;
+        binIdInput.value = '';
+        reportTypeSelect.value = 'Full';
+        imageInput.value = '';
+      } else {
+        alert('Грешка при изпращане на репорт!');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Възникна грешка!');
+    }
   }
 
   private initLegend() {
@@ -244,57 +311,64 @@ export class MapComponent implements AfterViewInit {
   }
 
   loadBins() {
-  this.http.get<any[]>('https://localhost:7277/api/containers').subscribe(bins => {
-    this.allBins = bins.map(b => ({ ...b, latitude: b.locationY, longitude: b.locationX, fillLevel: b.fillPercentage }));
-    this.renderBins(this.allBins);
+    this.http.get<any[]>('https://localhost:7277/api/containers').subscribe(bins => {
+      this.allBins = bins.map(b => ({ ...b, latitude: b.locationY, longitude: b.locationX, fillLevel: b.fillPercentage }));
+      this.renderBins(this.allBins);
 
-    // Изчисляване на статистики в реално време
-    const total = this.allBins.length;
-    const sumFill = this.allBins.reduce((acc, curr) => acc + curr.fillLevel, 0);
-    const sumTemp = this.allBins.reduce((acc, curr) => acc + (curr.temperature || 0), 0);
+      const total = this.allBins.length;
+      const sumFill = this.allBins.reduce((acc, curr) => acc + curr.fillLevel, 0);
+      const sumTemp = this.allBins.reduce((acc, curr) => acc + (curr.temperature || 0), 0);
 
-    this.stats = {
-      totalBins: total,
-      averageFill: total > 0 ? Math.round(sumFill / total) : 0,
-      averageTemp: total > 0 ? Math.round(sumTemp / total) : 0,
-      dailyReports: 12, // Можеш да добавиш API заявка и за това
-      efficiency: 95
-    };
+      this.stats = {
+        totalBins: total,
+        averageFill: total > 0 ? Math.round(sumFill / total) : 0,
+        averageTemp: total > 0 ? Math.round(sumTemp / total) : 0,
+        dailyReports: 12,
+        efficiency: 95
+      };
 
-    // Обновяване на Пай диаграмата
-    const low = this.allBins.filter(b => b.fillLevel < 40).length;
-    const med = this.allBins.filter(b => b.fillLevel >= 40 && b.fillLevel <= 70).length;
-    const high = this.allBins.filter(b => b.fillLevel > 70).length;
+      const low = this.allBins.filter(b => b.fillLevel < 40).length;
+      const med = this.allBins.filter(b => b.fillLevel >= 40 && b.fillLevel <= 70).length;
+      const high = this.allBins.filter(b => b.fillLevel > 70).length;
 
-    this.pieChartData = {
-      labels: ['Ниско (<40%)', 'Средно (40–70%)', 'Високо (>70%)'],
-      datasets: [{
-        data: [low, med, high],
-        backgroundColor: ['#00ff88', '#ffcc00', '#ff3300']
-      }]
-    };
+      this.pieChartData = {
+        labels: ['Ниско (<40%)', 'Средно (40–70%)', 'Високо (>70%)'],
+        datasets: [{
+          data: [low, med, high],
+          backgroundColor: ['#00ff88', '#ffcc00', '#ff3300']
+        }]
+      };
 
-    // Обновяване на Бар диаграмата (Top 5)
-    const top5 = [...this.allBins]
-      .sort((a, b) => b.fillLevel - a.fillLevel)
-      .slice(0, 5);
+      const top5 = [...this.allBins]
+        .sort((a, b) => b.fillLevel - a.fillLevel)
+        .slice(0, 5);
 
-    this.barChartData = {
-      labels: top5.map(b => `BIN-${b.id}`),
-      datasets: [{
-        data: top5.map(b => b.fillLevel),
-        backgroundColor: '#ff3300',
-        label: 'Запълване %'
-      }]
-    };
-  });
-}
+      this.barChartData = {
+        labels: top5.map(b => `BIN-${b.id}`),
+        datasets: [{
+          data: top5.map(b => b.fillLevel),
+          backgroundColor: '#ff3300',
+          label: 'Запълване %'
+        }]
+      };
+    });
+  }
 
   renderBins(bins: any[]) {
     this.cluster.clearLayers();
     bins.forEach(bin => {
       const marker = L.marker([bin.latitude, bin.longitude], { icon: this.getBinIcon(bin) });
-      marker.bindPopup(`<b>ID: ${bin.id}</b><br>Запълване: ${bin.fillLevel}%`);
+      
+      marker.on('click', () => {
+        this.selectedBinForReport = bin;
+        const binIdInput = document.getElementById('selected-bin-id') as HTMLInputElement;
+        if (binIdInput) {
+          binIdInput.value = `Кофа #${bin.id}`;
+        }
+        
+        marker.bindPopup(`<b>ID: ${bin.id}</b><br>Запълване: ${bin.fillLevel}%<br><small>Избрана за репорт</small>`).openPopup();
+      });
+      
       this.cluster.addLayer(marker);
     });
   }

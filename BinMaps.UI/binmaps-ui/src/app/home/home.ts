@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -9,9 +10,9 @@ import { Router } from '@angular/router';
   styleUrls: ['./home.css'],
   imports: [CommonModule]
 })
-export class HomeComponent {
-
+export class HomeComponent implements OnInit {
   currentYear = new Date().getFullYear();
+  isLoggedIn = false;
 
   stats = [
     { number: '250+', label: 'Контейнери' },
@@ -78,12 +79,25 @@ export class HomeComponent {
 
   constructor(private router: Router) {}
 
+  ngOnInit() {
+    this.checkLoginStatus();
+  }
+
+  checkLoginStatus() {
+    const userData = localStorage.getItem('user');
+    this.isLoggedIn = !!userData;
+  }
+
   navigateToRegister() {
     this.router.navigate(['/register']);
   }
 
   navigateToLogin() {
     this.router.navigate(['/login']);
+  }
+
+  navigateToMap() {
+    this.router.navigate(['/map']);
   }
 
   scrollToSection(sectionId: string) {

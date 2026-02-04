@@ -1,63 +1,99 @@
 ﻿using BinMaps.Infrastructure.Services.Interfaces;
 using BinMaps.Shared.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
-namespace BinMaps.API.Controllers
-{
-    [ApiController]
-    [Route("api/auth")]
-    public class AuthController : ControllerBase
+
+    namespace BinMaps.API.Controllers
     {
-        private readonly IAuthService _authService;
-
-        public AuthController(IAuthService authService)
+        [Route("api/[controller]")]
+        [ApiController]
+        public class AuthController : ControllerBase
         {
-            _authService = authService;
-        }
+            private readonly IAuthService _authService;
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterDTO dto)
-        {
-            var (success, errors) = await _authService.RegisterAsync(dto);
-
-            if (!success)
+            public AuthController(IAuthService authService)
             {
-                var modelState = new Dictionary<string, string[]>();
+                _authService = authService;
+            }
 
-                foreach (var error in errors)
+            [HttpPost("register")]
+            public async Task<IActionResult> Register([FromBody] RegisterDTO dto)
+            {
+                var (success, errors) = await _authService.RegisterAsync(dto);
+
+                if (!success)
                 {
-                    if (error.Contains("UserName"))
-                        modelState["userName"] = new[] { "Това име е заето." };
+                    var errorDict = new Dictionary<string, string[]>();
 
-                    else if (error.Contains("Email"))
-                        modelState["email"] = new[] { "Имейлът вече съществува." };
+                    // Handle specific error messages
+                    foreach (var error in errors)
+                    {
+                        if (error.Contains("DuplicateUserName"))
+                        {
+                            errorDict.Add("userName", new[] { "Това потребителско име вече е заето." });
+                        }
+                        else if (error.Contains("DuplicateEmail"))
+                        {
+                            errorDict.Add("email", new[] { "Този имейл вече е регистриран." });
+                        }
+                        else
+                        {
+                            errorDict.Add("general", new[] { error });
+                        }
+                    }
 
-                    else
-                        modelState["general"] = new[] { error };
+                    return BadRequest(new { errors = errorDict });
                 }
 
-                return BadRequest(new { errors = modelState });
+                return Ok(new { message = "Регистрацията е успешна!" });
             }
 
-            return Ok();
-        }
-
-        [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginDTO dto)
-        {
-            var (success, role) = await _authService.LoginAsync(dto);
-
-            if (!success)
+            [HttpPost("login")]
+            public async Task<IActionResult> Login([FromBody] LoginDTO dto)
             {
-                return Unauthorized();
+                var (success, role) = await _authService.LoginAsync(dto);
+
+                if (!success)
+                {
+                    return BadRequest(new
+                    {
+                        errors = new Dictionary<string, string[]> {
+                        { "email", new[] { "Грешен имейл или парола." } }
+                    }
+                    });
+                }
+
+               
+                var user = new
+                {
+                    email = dto.Email,
+                    role = role ?? "User",
+                    userName = dto.Email.Split('@')[0] 
+                };
+
+                return Ok(user);
             }
-            return Ok(new
+
+            [Authorize]
+            [HttpGet("me")]
+            public async Task<IActionResult> GetCurrentUser()
             {
-                dto.Email,
-                Role = role
-            });
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var email = User.FindFirst(ClaimTypes.Email)?.Value;
+                var role = User.FindFirst(ClaimTypes.Role)?.Value ?? "User";
+
+                return Ok(new
+                {
+                    id = userId,
+                    email = email,
+                    role = role,
+                    userName = email?.Split('@')[0]
+                });
+            }
         }
     }
 
-}
+

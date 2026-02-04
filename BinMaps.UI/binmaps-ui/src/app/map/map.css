@@ -9,7 +9,6 @@ body {
   overflow: hidden;
 }
 
-/* HEADER */
 .dashboard-header {
   height: 64px;
   background: linear-gradient(135deg, #059669 0%, #10b981 100%);
@@ -49,78 +48,31 @@ body {
   color: white;
 }
 
-/* Role Badges */
-.role-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-}
-
-.role-icon {
-  width: 18px;
-  height: 18px;
-  stroke: white;
-  stroke-width: 2;
-  fill: none;
-}
-
-.driver-role {
-  background: rgba(251, 191, 36, 0.2);
-  border-color: rgba(251, 191, 36, 0.5);
-}
-
-.admin-role {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.5);
-}
-
-/* Header Right */
 .header-right {
   display: flex;
   align-items: center;
   gap: 1.5rem;
 }
 
+.auth-btns {
+  display: flex;
+  gap: 1rem;
+}
+
 .header-btn {
-  position: relative;
   background: rgba(255, 255, 255, 0.15);
   border: none;
-  padding: 0.625rem;
+  padding: 0.625rem 1.25rem;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s;
-}
-
-.header-btn svg {
-  width: 20px;
-  height: 20px;
-  stroke: white;
-  stroke-width: 2;
-  fill: none;
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
 .header-btn:hover {
   background: rgba(255, 255, 255, 0.25);
-}
-
-.notification-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: #ef4444;
-  color: white;
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 10px;
-  border: 2px solid #059669;
 }
 
 .user-menu {
@@ -166,24 +118,22 @@ body {
 .dashboard-container {
   display: grid;
   grid-template-columns: 320px 1fr 320px;
-  /* Изчисляваме височината: 100% от екрана минус височината на хедъра */
-  height: calc(100vh - 64px); 
+  height: calc(100vh - 64px);
   background: #0f172a;
-  overflow: hidden; /* Важно: самият контейнер не се скролва */
+  overflow: hidden;
 }
 
-
-
-/* SIDEBARS */
 .left-sidebar,
 .right-sidebar {
   background: #1e293b;
+  height: 100%;
   overflow-y: auto;
   border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .right-sidebar {
-  overflow-y: auto; 
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: none;
 }
 
 .sidebar-section {
@@ -200,29 +150,183 @@ body {
   font-weight: 700;
   margin-bottom: 1.25rem;
 }
-/* Промени основния контейнер */
-.dashboard-container {
-  display: grid;
-  grid-template-columns: 320px 1fr 320px;
-  /* Изчисляваме височината: 100% от екрана минус височината на хедъра */
-  height: calc(100vh - 64px); 
-  background: #0f172a;
-  overflow: hidden; /* Важно: самият контейнер не се скролва */
-}
 
-/* Направи сайдбаровете да се скролват сами за себе си */
-.left-sidebar,
-.right-sidebar {
-  background: #1e293b;
-  height: 100%;
-  overflow-y: auto; /* Скрол само тук */
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-/* Картата също трябва да заема останалото място */
 .map-container {
   height: 100%;
   position: relative;
+}
+
+.map-legend {
+  background: rgba(15, 23, 42, 0.95) !important;
+  color: #fff !important;
+  padding: 12px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(0, 242, 255, 0.3) !important;
+  pointer-events: auto !important;
+  min-width: 170px !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.legend-header {
+  font-weight: bold !important;
+  color: #00f2ff !important;
+  margin-bottom: 10px !important;
+  text-align: center !important;
+  font-size: 14px !important;
+}
+
+.legend-section {
+  margin: 8px 0 !important;
+}
+
+.legend-row {
+  display: flex !important;
+  align-items: center !important;
+  padding: 6px 10px !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  transition: all 0.2s !important;
+  border-radius: 4px !important;
+  margin: 2px 0 !important;
+}
+
+.legend-row:hover {
+  background: rgba(0, 242, 255, 0.1) !important;
+}
+
+.bin-icon {
+  margin-right: 8px !important;
+  font-size: 16px !important;
+}
+
+.bin-icon.plastic { color: #00f2ff !important; }
+.bin-icon.paper { color: #10b981 !important; }
+.bin-icon.glass { color: #8b5cf6 !important; }
+.bin-icon.mixed { color: #f59e0b !important; }
+
+.fill {
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 2px !important;
+  margin-right: 10px !important;
+  display: inline-block !important;
+}
+
+.low {
+  background: #00ff88 !important;
+}
+
+.medium {
+  background: #ffcc00 !important;
+}
+
+.high {
+  background: #ff3300 !important;
+}
+
+.sensor-active-dot {
+  width: 10px !important;
+  height: 10px !important;
+  background: #00f2ff !important;
+  border-radius: 50% !important;
+  border: 2px solid #1e293b !important;
+  box-shadow: 0 0 8px #00f2ff !important;
+  animation: pulse-blue 2s infinite !important;
+}
+
+.reset-btn {
+  background: #00f2ff !important;
+  color: #000 !important;
+  font-weight: bold !important;
+  justify-content: center !important;
+  margin-top: 5px !important;
+  padding: 8px !important;
+}
+
+.reset-btn:hover {
+  background: #00b8d4 !important;
+}
+
+.sim-container {
+  pointer-events: auto !important;
+}
+
+.sim-main-btn {
+  background: #00f2ff !important;
+  color: #000 !important;
+  border: none !important;
+  padding: 10px 15px !important;
+  font-weight: bold !important;
+  border-radius: 5px !important;
+  cursor: pointer !important;
+  transition: all 0.3s !important;
+  font-size: 14px !important;
+}
+
+.sim-main-btn:hover {
+  background: #00b8d4 !important;
+}
+
+.sim-menu-panel {
+  background: rgba(30, 41, 59, 0.95) !important;
+  color: white !important;
+  padding: 15px !important;
+  margin-top: 10px !important;
+  border-radius: 8px !important;
+  border: 1px solid #00f2ff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  min-width: 200px !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.sim-menu-panel label {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  color: #cbd5e1 !important;
+}
+
+.sim-menu-panel select {
+  padding: 8px !important;
+  background: #0f172a !important;
+  border: 2px solid #334155 !important;
+  border-radius: 6px !important;
+  color: white !important;
+  font-size: 0.875rem !important;
+}
+
+.sim-start-btn {
+  background: #00ff88 !important;
+  color: #000 !important;
+  border: none !important;
+  padding: 8px !important;
+  font-weight: bold !important;
+  cursor: pointer !important;
+  border-radius: 4px !important;
+  margin-top: 5px !important;
+  transition: all 0.3s !important;
+}
+
+.sim-start-btn:hover {
+  background: #00cc6a !important;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.legend-icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 10px;
+  filter: invert(1) brightness(2);
+}
+
+.bin-img {
+  width: 22px;
+  height: 22px;
+  filter: invert(1) brightness(2);
 }
 
 #map {
@@ -230,11 +334,11 @@ body {
   width: 100%;
 }
 
-/* Премахни overflow: hidden от body, за да няма бъгове */
 body {
   margin: 0;
   height: 100vh;
 }
+
 .sidebar-title svg {
   width: 20px;
   height: 20px;
@@ -243,7 +347,6 @@ body {
   fill: none;
 }
 
-/* REPORT FORM */
 .report-form {
   display: flex;
   flex-direction: column;
@@ -321,297 +424,6 @@ body {
   box-shadow: 0 6px 20px rgba(0, 242, 255, 0.4);
 }
 
-/* USER STATS */
-.user-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.stat-card {
-  background: #0f172a;
-  padding: 1rem;
-  border-radius: 10px;
-  text-align: center;
-  border: 1px solid #334155;
-}
-
-.stat-number {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #00f2ff;
-  margin-bottom: 0.25rem;
-}
-
-.stat-label {
-  font-size: 0.8rem;
-  color: #94a3b8;
-}
-
-/* DRIVER ROUTE PANEL */
-.route-info {
-  background: #0f172a;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-}
-
-.route-stat {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #334155;
-}
-
-.route-stat:last-child {
-  border-bottom: none;
-}
-
-.route-label {
-  color: #94a3b8;
-  font-size: 0.875rem;
-}
-
-.route-value {
-  color: white;
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.btn-start-route {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-  border: none;
-  padding: 0.875rem;
-  border-radius: 8px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s;
-  margin-bottom: 1rem;
-}
-
-.btn-start-route svg {
-  width: 18px;
-  height: 18px;
-  stroke: white;
-  stroke-width: 2;
-  fill: none;
-}
-
-.btn-start-route:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
-}
-
-.route-bins-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.route-bin-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: #0f172a;
-  padding: 0.75rem;
-  border-radius: 6px;
-  border-left: 3px solid #00f2ff;
-}
-
-.bin-number {
-  color: #00f2ff;
-  font-weight: 700;
-  font-size: 0.875rem;
-}
-
-.bin-id {
-  color: white;
-  font-size: 0.875rem;
-  flex: 1;
-}
-
-.bin-distance {
-  color: #94a3b8;
-  font-size: 0.8rem;
-}
-
-/* ADMIN PANEL */
-.admin-stats {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.admin-stat-card {
-  background: #0f172a;
-  padding: 1rem;
-  border-radius: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-left: 3px solid #00f2ff;
-}
-
-.admin-stat-card.alert {
-  border-left-color: #ef4444;
-}
-
-.admin-stat-number {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #00f2ff;
-}
-
-.admin-stat-card.alert .admin-stat-number {
-  color: #ef4444;
-}
-
-.admin-stat-label {
-  font-size: 0.85rem;
-  color: #94a3b8;
-}
-
-.btn-admin-action {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  background: #0f172a;
-  color: white;
-  border: 2px solid #334155;
-  padding: 0.875rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  margin-bottom: 0.75rem;
-  font-size: 0.9rem;
-}
-
-.btn-admin-action svg {
-  width: 18px;
-  height: 18px;
-  stroke: #00f2ff;
-  stroke-width: 2;
-  fill: none;
-}
-
-.btn-admin-action:hover {
-  border-color: #00f2ff;
-  background: #1e293b;
-}
-
-/* ALERTS LIST */
-.alerts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.alert-item {
-  display: flex;
-  gap: 1rem;
-  background: #0f172a;
-  padding: 1rem;
-  border-radius: 8px;
-  border-left: 4px solid;
-}
-
-.alert-item.critical {
-  border-left-color: #ef4444;
-}
-
-.alert-item.high {
-  border-left-color: #f59e0b;
-}
-
-.alert-item.medium {
-  border-left-color: #3b82f6;
-}
-
-.alert-icon {
-  font-size: 1.5rem;
-}
-
-.alert-content {
-  flex: 1;
-}
-
-.alert-title {
-  color: white;
-  font-weight: 700;
-  font-size: 0.9rem;
-  margin-bottom: 0.25rem;
-}
-
-.alert-description {
-  color: #94a3b8;
-  font-size: 0.85rem;
-  margin-bottom: 0.25rem;
-}
-
-.alert-time {
-  color: #64748b;
-  font-size: 0.75rem;
-}
-
-/* ACTIVITY LIST */
-.activity-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.activity-item {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-}
-
-.activity-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-top: 4px;
-  flex-shrink: 0;
-}
-
-.activity-dot.green {
-  background: #10b981;
-}
-
-.activity-dot.blue {
-  background: #3b82f6;
-}
-
-.activity-dot.orange {
-  background: #f59e0b;
-}
-
-.activity-content {
-  flex: 1;
-}
-
-.activity-text {
-  color: #cbd5e1;
-  font-size: 0.875rem;
-  margin-bottom: 0.25rem;
-}
-
-.activity-time {
-  color: #64748b;
-  font-size: 0.75rem;
-}
-
-/* SYSTEM STATS */
 .system-stats {
   display: flex;
   flex-direction: column;
@@ -644,19 +456,6 @@ body {
   color: #10b981;
 }
 
-/* MAP CONTAINER */
-.map-container {
-  position: relative;
-  overflow: hidden;
-}
-
-#map {
-  height: 100vh;
-  width: 100%;
-  background: #0f172a;
-}
-
-/* ORIGINAL BIN MARKER STYLES */
 .bin-marker-container {
   animation: fadeIn 0.5s ease-in-out;
 }
@@ -698,11 +497,6 @@ body {
   justify-content: center;
 }
 
-.bin-img {
-  width: 22px;
-  height: 22px;
-}
-
 .sensor-dot-active {
   position: absolute;
   bottom: -2px;
@@ -728,161 +522,6 @@ body {
   }
 }
 
-/* MAP LEGEND */
-.map-legend {
-  background: rgba(15, 23, 42, 0.95);
-  color: #fff;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(0, 242, 255, 0.3);
-  pointer-events: auto !important;
-  min-width: 170px;
-}
-
-.legend-header {
-  font-weight: bold;
-  color: #00f2ff;
-  margin-bottom: 10px;
-  text-align: center;
-}
-
-.legend-row {
-  display: flex;
-  align-items: center;
-  padding: 6px 10px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: background 0.2s;
-  border-radius: 4px;
-}
-
-.legend-row:hover {
-  background: rgba(0, 242, 255, 0.1);
-}
-
-.legend-row img {
-  width: 18px;
-  margin-right: 10px;
-}
-
-.fill {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  margin-right: 10px;
-  display: inline-block;
-}
-
-.low {
-  background: #00ff88;
-}
-
-.medium {
-  background: #ffcc00;
-}
-
-.high {
-  background: #ff3300;
-}
-
-.reset-btn {
-  background: #00f2ff;
-  color: #000;
-  font-weight: bold;
-  justify-content: center;
-  margin-top: 5px;
-}
-
-.reset-btn:hover {
-  background: #00b8d4;
-}
-
-/* SIMULATION MENU */
-.sim-container {
-  pointer-events: auto !important;
-}
-
-.sim-main-btn {
-  background: #00f2ff;
-  color: #000;
-  border: none;
-  padding: 10px 15px;
-  font-weight: bold;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.sim-main-btn:hover {
-  background: #00b8d4;
-}
-
-.sim-menu-panel {
-  background: #1e293b;
-  color: white;
-  padding: 15px;
-  margin-top: 10px;
-  border-radius: 8px;
-  border: 1px solid #00f2ff;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.sim-menu-panel label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #cbd5e1;
-}
-
-.sim-menu-panel select {
-  padding: 8px;
-  background: #0f172a;
-  border: 2px solid #334155;
-  border-radius: 6px;
-  color: white;
-  font-size: 0.875rem;
-}
-
-.sim-start-btn {
-  background: #00ff88;
-  color: #000;
-  border: none;
-  padding: 8px;
-  font-weight: bold;
-  cursor: pointer;
-  border-radius: 4px;
-  margin-top: 5px;
-  transition: all 0.3s;
-}
-
-.sim-start-btn:hover {
-  background: #00cc6a;
-}
-
-.hidden {
-  display: none;
-}
-
-
-@media (max-width: 1400px) {
-  .dashboard-container {
-    grid-template-columns: 280px 1fr 280px;
-  }
-}
-
-@media (max-width: 1200px) {
-  .dashboard-container {
-    grid-template-columns: 1fr;
-  }
-
-  .left-sidebar,
-  .right-sidebar {
-    display: none;
-  }
-}
-
-/* Scrollbar styling */
 .left-sidebar::-webkit-scrollbar,
 .right-sidebar::-webkit-scrollbar {
   width: 6px;
@@ -902,4 +541,21 @@ body {
 .left-sidebar::-webkit-scrollbar-thumb:hover,
 .right-sidebar::-webkit-scrollbar-thumb:hover {
   background: #475569;
+}
+
+@media (max-width: 1400px) {
+  .dashboard-container {
+    grid-template-columns: 280px 1fr 280px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .dashboard-container {
+    grid-template-columns: 1fr;
+  }
+
+  .left-sidebar,
+  .right-sidebar {
+    display: none;
+  }
 }

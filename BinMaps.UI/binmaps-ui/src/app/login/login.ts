@@ -50,38 +50,41 @@ export class LoginComponent {
   }
 
   onSubmit() {
-    if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched();
-      return;
-    }
+  if (this.loginForm.invalid) {
+    this.loginForm.markAllAsTouched();
+    return;
+  }
 
-    this.isLoading = true;
-    this.errorMessage = '';
+  this.isLoading = true;
+  this.errorMessage = '';
 
-    this.http.post<any>('https://localhost:7277/api/auth/login', this.loginForm.value)
-      .subscribe({
-        next: (res) => {
-          localStorage.setItem('user', JSON.stringify(res));
-          this.isLoading = false;
-          
-          if (res.role === 'Admin' || res.role === 'Driver') {
-            this.router.navigate(['/map']);
-          } else {
-            this.router.navigate(['/']);
-          }
-        },
-        error: (err) => {
-          this.isLoading = false;
-
-          if (err.status === 400 && err.error?.errors?.email) {
-            this.errorMessage = err.error.errors.email[0];
-            this.email?.setErrors({ serverError: true });
-          } else if (err.status === 0) {
-            this.errorMessage = 'Не може да се свърже със сървъра. Моля, проверете връзката.';
-          } else {
-            this.errorMessage = 'Грешка при влизане. Моля, опитайте отново.';
-          }
+  this.http.post<any>('https://localhost:7277/api/Auth/login', this.loginForm.value)
+    .subscribe({
+      next: (res) => {
+        localStorage.setItem('user', JSON.stringify(res));
+        this.isLoading = false;
+        
+        // Trigger storage event so header updates
+        window.dispatchEvent(new Event('storage'));
+        
+        // Navigate based on role
+        if (res.role === 'Admin' || res.role === 'Driver') {
+          this.router.navigate(['/map']);
+        } else {
+          this.router.navigate(['/']);
         }
-      });
+      },
+      error: (err) => {
+        this.isLoading = false;
+
+        if (err.status === 400 && err.error?.errors?.email) {
+          this.errorMessage = err.error.errors.email[0];
+        } else if (err.status === 0) {
+          this.errorMessage = 'Не може да се свърже със сървъра. Проверете дали API-то е стартирано.';
+        } else {
+          this.errorMessage = 'Грешка при влизане. Моля, опитайте отново.';
+        }
+      }
+    });
   }
 }
