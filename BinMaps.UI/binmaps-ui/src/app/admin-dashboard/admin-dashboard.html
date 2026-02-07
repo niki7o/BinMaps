@@ -194,7 +194,7 @@
                 </span>
               </td>
               <td>
-                <span [class.hot]="container.temperature > 50">
+                <span [class.hot]="(container.temperature || 0) > 50">
                   {{ container.temperature || '-' }}°C
                 </span>
               </td>

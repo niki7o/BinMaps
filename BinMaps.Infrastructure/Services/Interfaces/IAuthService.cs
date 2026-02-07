@@ -9,7 +9,7 @@ namespace BinMaps.Infrastructure.Services.Interfaces
     {
         Task<(bool success, IEnumerable<string> errors)> RegisterAsync(RegisterDTO dto);
 
-        Task<(bool success,string role )> LoginAsync(LoginDTO dto);
+        Task<(bool success, string role, string token)> LoginAsync(LoginDTO dto);
 
     }
 }

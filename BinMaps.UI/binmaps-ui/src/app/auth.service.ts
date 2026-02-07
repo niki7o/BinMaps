@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -11,27 +10,22 @@ export class AuthService {
   public currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(private http: HttpClient) {
-    this.loadUserFromStorage();
+    this.loadFromLocalStorage();
   }
 
-  private loadUserFromStorage() {
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
-    
-    if (token && userStr) {
-      const user = JSON.parse(userStr);
-      this.currentUserSubject.next(user);
-    }
+  private loadFromLocalStorage() {
+    const user = localStorage.getItem('user');
+    if (user) this.currentUserSubject.next(JSON.parse(user));
   }
 
   login(email: string, password: string): Observable<any> {
-    return this.http.post('https://localhost:7277/api/Auth/login', { email, password })
+    return this.http.post<any>('https://localhost:7277/api/Auth/login', { email, password })
       .pipe(
-        tap((response: any) => {
-          if (response.token && response.user) {
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('user', JSON.stringify(response.user));
-            this.currentUserSubject.next(response.user);
+        tap(res => {
+          if (res.token) {
+            localStorage.setItem('token', res.token);
+            localStorage.setItem('user', JSON.stringify(res.user));
+            this.currentUserSubject.next(res.user);
           }
         })
       );
@@ -43,25 +37,28 @@ export class AuthService {
     this.currentUserSubject.next(null);
   }
 
+  getAuthHeaders(): { headers: HttpHeaders } {
+    const token = localStorage.getItem('token');
+    return {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      })
+    };
+  }
+
   getCurrentUser() {
     return this.currentUserSubject.value;
   }
 
-  getToken(): string | null {
-    return localStorage.getItem('token');
-  }
-
   isLoggedIn(): boolean {
-    return !!this.getToken();
+    return !!this.getCurrentUser();
   }
 
   isAdmin(): boolean {
-    const user = this.getCurrentUser();
-    return user?.role === 'Admin';
+    return this.getCurrentUser()?.role === 'Admin';
   }
 
   isDriver(): boolean {
-    const user = this.getCurrentUser();
-    return user?.role === 'Driver';
+    return this.getCurrentUser()?.role === 'Driver';
   }
 }

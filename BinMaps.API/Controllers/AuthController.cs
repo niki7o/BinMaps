@@ -1,99 +1,104 @@
-﻿using BinMaps.Infrastructure.Services.Interfaces;
+﻿using BinMaps.Data.Entities;
+using BinMaps.Infrastructure.Services.Interfaces;
 using BinMaps.Shared.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 
-
-    namespace BinMaps.API.Controllers
+namespace BinMaps.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class AuthController : ControllerBase
     {
-        [Route("api/[controller]")]
-        [ApiController]
-        public class AuthController : ControllerBase
+        private readonly IAuthService _authService;
+        private readonly UserManager<User> _userManager;
+        private readonly IConfiguration _config;
+
+        public AuthController(IAuthService authService, UserManager<User> userManager, IConfiguration config)
         {
-            private readonly IAuthService _authService;
+            _authService = authService;
+            _userManager = userManager;
+            _config = config;
+        }
 
-            public AuthController(IAuthService authService)
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterDTO dto)
+        {
+            var (success, errors) = await _authService.RegisterAsync(dto);
+
+            if (!success)
             {
-                _authService = authService;
-            }
-
-            [HttpPost("register")]
-            public async Task<IActionResult> Register([FromBody] RegisterDTO dto)
-            {
-                var (success, errors) = await _authService.RegisterAsync(dto);
-
-                if (!success)
+                var errorDict = new Dictionary<string, string[]>();
+                foreach (var error in errors)
                 {
-                    var errorDict = new Dictionary<string, string[]>();
-
-                    // Handle specific error messages
-                    foreach (var error in errors)
-                    {
-                        if (error.Contains("DuplicateUserName"))
-                        {
-                            errorDict.Add("userName", new[] { "Това потребителско име вече е заето." });
-                        }
-                        else if (error.Contains("DuplicateEmail"))
-                        {
-                            errorDict.Add("email", new[] { "Този имейл вече е регистриран." });
-                        }
-                        else
-                        {
-                            errorDict.Add("general", new[] { error });
-                        }
-                    }
-
-                    return BadRequest(new { errors = errorDict });
+                    if (error.Contains("DuplicateUserName"))
+                        errorDict.Add("userName", new[] { "Това потребителско име вече е заето." });
+                    else if (error.Contains("DuplicateEmail"))
+                        errorDict.Add("email", new[] { "Този имейл вече е регистриран." });
+                    else
+                        errorDict.Add("general", new[] { error });
                 }
-
-                return Ok(new { message = "Регистрацията е успешна!" });
+                return BadRequest(new { errors = errorDict });
             }
 
-            [HttpPost("login")]
-            public async Task<IActionResult> Login([FromBody] LoginDTO dto)
+            return Ok(new { message = "Регистрацията е успешна!" });
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDTO dto)
+        {
+           
+            var (success, role, token) = await _authService.LoginAsync(dto);
+
+            if (!success)
             {
-                var (success, role) = await _authService.LoginAsync(dto);
-
-                if (!success)
+                return BadRequest(new
                 {
-                    return BadRequest(new
-                    {
-                        errors = new Dictionary<string, string[]> {
-                        { "email", new[] { "Грешен имейл или парола." } }
-                    }
-                    });
-                }
-
-               
-                var user = new
-                {
-                    email = dto.Email,
-                    role = role ?? "User",
-                    userName = dto.Email.Split('@')[0] 
-                };
-
-                return Ok(user);
+                    errors = new Dictionary<string, string[]> {
+                { "email", new[] { "Грешен имейл или парола." } }
             }
-
-            [Authorize]
-            [HttpGet("me")]
-            public async Task<IActionResult> GetCurrentUser()
-            {
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                var email = User.FindFirst(ClaimTypes.Email)?.Value;
-                var role = User.FindFirst(ClaimTypes.Role)?.Value ?? "User";
-
-                return Ok(new
-                {
-                    id = userId,
-                    email = email,
-                    role = role,
-                    userName = email?.Split('@')[0]
                 });
             }
+
+           
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+
+            return Ok(new
+            {
+                token,
+                user = new
+                {
+                    user.Id,
+                    user.UserName,
+                    user.Email,
+                    role
+                }
+            });
+        }
+
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            var userId = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return Unauthorized();
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var role = roles.FirstOrDefault() ?? "User";
+
+            return Ok(new
+            {
+                id = user.Id,
+                email = user.Email,
+                userName = user.UserName,
+                role = role
+            });
         }
     }
-
-
+}

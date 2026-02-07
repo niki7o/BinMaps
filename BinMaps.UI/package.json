@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "leaflet.markercluster": "^1.5.3"
+    "leaflet.markercluster": "^1.5.3",
+    "zone.js": "^0.16.0"
   },
   "devDependencies": {
     "@types/leaflet.markercluster": "^1.5.6"
