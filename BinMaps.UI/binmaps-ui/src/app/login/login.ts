@@ -61,19 +61,18 @@ export class LoginComponent {
   this.http.post<any>('https://localhost:7277/api/Auth/login', this.loginForm.value)
     .subscribe({
       next: (res) => {
-        localStorage.setItem('user', JSON.stringify(res));
-        this.isLoading = false;
-        
-        // Trigger storage event so header updates
-        window.dispatchEvent(new Event('storage'));
-        
-        // Navigate based on role
-        if (res.role === 'Admin' || res.role === 'Driver') {
-          this.router.navigate(['/map']);
-        } else {
-          this.router.navigate(['/']);
-        }
-      },
+         localStorage.setItem('token', res.token);
+  localStorage.setItem('user', JSON.stringify(res.user));
+
+  this.isLoading = false;
+
+  window.dispatchEvent(new Event('storage'));
+
+  if (res.user.role === 'Admin' || res.user.role === 'Driver') {
+    this.router.navigate(['/map']);
+  } else {
+    this.router.navigate(['/']);
+  }},
       error: (err) => {
         this.isLoading = false;
 

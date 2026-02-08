@@ -22,7 +22,7 @@
 
     <!-- Показване на ролята на потребителя -->
     <ng-container *ngIf="currentUser">
-      <div class="role-badge" [ngClass]="currentUser.role?.toLowerCase() + '-role'">
+      <div class="role-badge" [ngClass]="currentUser.role.toLowerCase() + '-role'">
         <span>{{ currentUser.role || 'Потребител' }}</span>
       </div>
     </ng-container>
