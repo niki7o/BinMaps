@@ -4,6 +4,7 @@ import { RegisterComponent } from './register/register';
 import { MapComponent } from './map/map'; 
 import { HomeComponent } from './home/home';
 import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard';
+import { AnalyticsDashboardComponent } from './bin-details/analytics-dashboard.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -11,5 +12,6 @@ export const routes: Routes = [
   {path: '', component:HomeComponent},
   { path: 'map', component: MapComponent }, 
   {path: 'admin', component: AdminDashboardComponent},
+   { path: 'analytics', component: AnalyticsDashboardComponent },
   { path: '**', redirectTo: '' } 
 ];

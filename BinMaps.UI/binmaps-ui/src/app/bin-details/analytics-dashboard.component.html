@@ -1,0 +1,99 @@
+<header class="dashboard-header">
+  <div class="header-left">
+    <div class="logo" routerLink="/">
+      <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path d="M3 6h18"/>
+        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+      </svg>
+      <span class="logo-text">BinMaps Analytics</span>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <div class="user-menu" *ngIf="currentUser">
+      <span class="user-name">{{ currentUser.userName || currentUser.email }}</span>
+      <button class="logout-btn" (click)="logout()">Logout</button>
+    </div>
+    <div class="auth-btns" *ngIf="!currentUser">
+      <button routerLink="/login">Вход</button>
+      <button routerLink="/register">Регистрация</button>
+    </div>
+  </div>
+</header>
+
+<div class="dashboard-container">
+
+  <!-- Ляво меню за бърз репорт -->
+  <aside class="left-sidebar">
+    <div class="sidebar-section">
+      <h3 class="sidebar-title">Бърз репорт</h3>
+      <div class="report-form user-only">
+        <label>Кофа</label>
+        <input type="text" placeholder="Кликни върху кофа от картата" readonly id="selected-bin-id" />
+
+        <label>Тип проблем</label>
+        <select id="report-type">
+          <option value="Full">Препълнена</option>
+          <option value="Fire">Пожар</option>
+          <option value="SensorBroken">Повреден сензор</option>
+        </select>
+
+        <label>Снимка (опционално)</label>
+        <input type="file" id="report-image" accept="image/*" />
+
+        <button class="btn-submit-report" (click)="submitReport()">Изпрати репорт</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Централна карта -->
+  <main class="map-container">
+    <div id="map"></div>
+  </main>
+
+  <!-- Дясна секция с аналитики -->
+  <aside class="right-sidebar">
+    <div class="kpi-row">
+      <div class="kpi-block">
+        <span class="kpi-title">Total Containers</span>
+        <span class="kpi-value">{{ stats.totalBins }}</span>
+      </div>
+      <div class="kpi-block">
+        <span class="kpi-title">Efficiency</span>
+        <span class="kpi-value">{{ stats.efficiency }}%</span>
+      </div>
+      <div class="kpi-block">
+        <span class="kpi-title">Saved / month</span>
+        <span class="kpi-value">{{ stats.savedMoney | currency:'BGN':'symbol':'1.0-0' }}</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Fill Distribution</h3>
+      <canvas baseChart
+              [data]="pieChartData"
+              [options]="pieChartOptions"
+              type="pie">
+      </canvas>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>System Efficiency</h3>
+      <canvas baseChart
+              [data]="efficiencyChartData"
+              [options]="efficiencyChartOptions"
+              type="doughnut">
+      </canvas>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Top 5 Filled Bins</h3>
+      <canvas baseChart
+              [data]="barChartData"
+              [options]="barChartOptions"
+              type="bar">
+      </canvas>
+    </div>
+  </aside>
+</div>

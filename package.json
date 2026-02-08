@@ -6,6 +6,7 @@
   },
   "dependencies": {
     "chart.js": "^4.5.1",
+    "chartjs-gauge": "^0.3.0",
     "ng2-charts": "^8.0.0"
   }
 }
