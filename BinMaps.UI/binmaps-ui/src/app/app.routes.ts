@@ -5,6 +5,7 @@ import { MapComponent } from './map/map';
 import { HomeComponent } from './home/home';
 import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard';
 import { AnalyticsDashboardComponent } from './bin-details/analytics-dashboard.component';
+import { Header } from './header/header';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },

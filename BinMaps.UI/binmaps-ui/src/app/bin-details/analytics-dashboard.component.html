@@ -1,99 +1,113 @@
-<header class="dashboard-header">
-  <div class="header-left">
-    <div class="logo" routerLink="/">
-      <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <path d="M3 6h18"/>
-        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-      </svg>
-      <span class="logo-text">BinMaps Analytics</span>
+<div class="analytics-container">
+  <div class="analytics-header">
+    <div class="header-title">
+      <h1>Аналитика на системата</h1>
+      <p class="subtitle">Обобщени данни за ефективността на управлението на отпадъците</p>
     </div>
   </div>
 
-  <div class="header-right">
-    <div class="user-menu" *ngIf="currentUser">
-      <span class="user-name">{{ currentUser.userName || currentUser.email }}</span>
-      <button class="logout-btn" (click)="logout()">Logout</button>
+  <section class="metrics-grid">
+    <div class="metric-card primary">
+      <div class="metric-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+        </svg>
+        <span class="metric-label">Общо контейнери</span>
+      </div>
+      <p class="metric-value">{{ stats.totalBins }}</p>
+      <p class="metric-description">Общият брой активни контейнери в системата</p>
     </div>
-    <div class="auth-btns" *ngIf="!currentUser">
-      <button routerLink="/login">Вход</button>
-      <button routerLink="/register">Регистрация</button>
+
+    <div class="metric-card success">
+      <div class="metric-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+        <span class="metric-label">Средна ефективност</span>
+      </div>
+      <p class="metric-value">{{ stats.efficiency }}%</p>
+      <p class="metric-description">Средно ниво на запълняемост на контейнерите</p>
     </div>
-  </div>
-</header>
 
-<div class="dashboard-container">
+    <div class="metric-card info">
+      <div class="metric-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="1" x2="12" y2="23"/>
+          <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+        </svg>
+        <span class="metric-label">Очаквани спестявания</span>
+      </div>
+      <p class="metric-value">{{ stats.savedMoney | currency:'BGN':'symbol':'1.0-0' }}</p>
+      <p class="metric-description">Прогнозни спестени средства от оптимизация</p>
+    </div>
 
-  <!-- Ляво меню за бърз репорт -->
-  <aside class="left-sidebar">
-    <div class="sidebar-section">
-      <h3 class="sidebar-title">Бърз репорт</h3>
-      <div class="report-form user-only">
-        <label>Кофа</label>
-        <input type="text" placeholder="Кликни върху кофа от картата" readonly id="selected-bin-id" />
+    <div class="metric-card warning">
+      <div class="metric-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <span class="metric-label">Контейнери над 80%</span>
+      </div>
+      <p class="metric-value">{{ stats.highLoad }}</p>
+      <p class="metric-description">Контейнери с висок риск от препълване</p>
+    </div>
 
-        <label>Тип проблем</label>
-        <select id="report-type">
-          <option value="Full">Препълнена</option>
-          <option value="Fire">Пожар</option>
-          <option value="SensorBroken">Повреден сензор</option>
-        </select>
+    <div class="metric-card secondary">
+      <div class="metric-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3v18h18"/>
+          <path d="M18 17V9M13 17V5M8 17v-3"/>
+        </svg>
+        <span class="metric-label">Контейнери под 30%</span>
+      </div>
+      <p class="metric-value">{{ stats.lowLoad }}</p>
+      <p class="metric-description">Контейнери с ниска натовареност</p>
+    </div>
 
-        <label>Снимка (опционално)</label>
-        <input type="file" id="report-image" accept="image/*" />
+    <div class="metric-card accent">
+      <div class="metric-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <span class="metric-label">Прогнозен пик</span>
+      </div>
+      <p class="metric-value">{{ stats.peakPrediction }}</p>
+      <p class="metric-description">Очаквано време за максимално натоварване</p>
+    </div>
+  </section>
 
-        <button class="btn-submit-report" (click)="submitReport()">Изпрати репорт</button>
+  <section class="charts-section">
+    <div class="chart-card">
+      <div class="chart-header">
+        <h2>Разпределение по запълняемост</h2>
+        <p class="chart-subtitle">Класификация на контейнерите по ниво на запълване</p>
+      </div>
+      <div class="chart-body">
+        <canvas baseChart [data]="pieChartData" type="pie"></canvas>
       </div>
     </div>
-  </aside>
 
-  <!-- Централна карта -->
-  <main class="map-container">
-    <div id="map"></div>
-  </main>
-
-  <!-- Дясна секция с аналитики -->
-  <aside class="right-sidebar">
-    <div class="kpi-row">
-      <div class="kpi-block">
-        <span class="kpi-title">Total Containers</span>
-        <span class="kpi-value">{{ stats.totalBins }}</span>
+    <div class="chart-card">
+      <div class="chart-header">
+        <h2>Обща ефективност</h2>
+        <p class="chart-subtitle">Процент на ефективно използване на системата</p>
       </div>
-      <div class="kpi-block">
-        <span class="kpi-title">Efficiency</span>
-        <span class="kpi-value">{{ stats.efficiency }}%</span>
-      </div>
-      <div class="kpi-block">
-        <span class="kpi-title">Saved / month</span>
-        <span class="kpi-value">{{ stats.savedMoney | currency:'BGN':'symbol':'1.0-0' }}</span>
+      <div class="chart-body">
+        <canvas baseChart [data]="efficiencyChartData" type="doughnut"></canvas>
       </div>
     </div>
 
-    <div class="sidebar-section">
-      <h3>Fill Distribution</h3>
-      <canvas baseChart
-              [data]="pieChartData"
-              [options]="pieChartOptions"
-              type="pie">
-      </canvas>
+    <div class="chart-card wide">
+      <div class="chart-header">
+        <h2>Топ 5 най-натоварени контейнери</h2>
+        <p class="chart-subtitle">Контейнери с най-висока запълняемост в момента</p>
+      </div>
+      <div class="chart-body">
+        <canvas baseChart [data]="barChartData" type="bar"></canvas>
+      </div>
     </div>
-
-    <div class="sidebar-section">
-      <h3>System Efficiency</h3>
-      <canvas baseChart
-              [data]="efficiencyChartData"
-              [options]="efficiencyChartOptions"
-              type="doughnut">
-      </canvas>
-    </div>
-
-    <div class="sidebar-section">
-      <h3>Top 5 Filled Bins</h3>
-      <canvas baseChart
-              [data]="barChartData"
-              [options]="barChartOptions"
-              type="bar">
-      </canvas>
-    </div>
-  </aside>
+  </section>
 </div>

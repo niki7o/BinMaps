@@ -68,9 +68,10 @@ export class LoginComponent {
 
   window.dispatchEvent(new Event('storage'));
 
-  if (res.user.role === 'Admin' || res.user.role === 'Driver') {
+  if (res.user.role === 'Driver') {
     this.router.navigate(['/map']);
-  } else {
+  }
+   else {
     this.router.navigate(['/']);
   }},
       error: (err) => {

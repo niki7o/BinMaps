@@ -296,4 +296,23 @@ export class AdminDashboardComponent implements OnInit {
       day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
     });
   }
+
+
+  getInitials(name: string): string {
+    if (!name) return 'U';
+    const parts = name.split(' ').filter(p => p.length > 0);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  }
+
+  getRoleText(role: string): string {
+    const roleLabels: { [key: string]: string } = {
+      'Admin': 'Администратор',
+      'Driver': 'Шофьор',
+      'User': 'Потребител'
+    };
+    return roleLabels[role] || 'Потребител';
+  }
 }

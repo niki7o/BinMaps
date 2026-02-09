@@ -1,50 +1,57 @@
-
-<header class="dashboard-header">
-  <div class="header-left">
-    <div class="logo" routerLink="/">
-      <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <path d="M3 6h18"/>
-        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+<header class="main-header">
+  <div class="header-container">
+    <div class="header-brand" routerLink="/">
+      <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
       </svg>
-      <span class="logo-text">BinMaps</span>
+      <span class="brand-name">BinMaps</span>
     </div>
-    
-    <div *ngIf="currentUser?.role === 'Admin'" class="admin-link">
-  <button class="header-btn" routerLink="/admin">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-      <path d="M12 2l9 4.5v6C21 17.5 16.5 21 12 22c-4.5-1-9-4.5-9-9.5v-6L12 2z"/>
-      <polyline points="9 11 12 14 16 10"/>
-    </svg>
-    Админ
-  </button>
-</div>
 
-    <!-- Показване на ролята на потребителя -->
-    <ng-container *ngIf="currentUser">
-      <div class="role-badge" [ngClass]="currentUser.role.toLowerCase() + '-role'">
-        <span>{{ currentUser.role || 'Потребител' }}</span>
-      </div>
-    </ng-container>
-  </div>
-
-  <div class="header-right">
-    <!-- Показване на информация за потребителя ако е логнат -->
-    <div class="user-menu" *ngIf="currentUser">
-      <span class="user-name">{{ currentUser.userName || currentUser.email || 'Потребител' }}</span>
-      <button class="logout-btn" (click)="logout()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
-          <polyline points="16 17 21 12 16 7"/>
-          <line x1="21" y1="12" x2="9" y2="12"/>
+    <nav class="header-nav">
+      <button 
+        *ngIf="currentUser?.role === 'Admin'" 
+        class="nav-link admin-link" 
+        routerLink="/admin"
+        routerLinkActive="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2l9 4.5v6C21 17.5 16.5 21 12 22c-4.5-1-9-4.5-9-9.5v-6L12 2z"/>
         </svg>
+        <span>Администрация</span>
       </button>
-    </div>
 
-    <!-- Бутони за вход/регистрация ако не е логнат -->
-    <div class="auth-btns" *ngIf="!currentUser">
-      <button class="header-btn" routerLink="/login">Вход</button>
-      <button class="header-btn" routerLink="/register">Регистрация</button>
+      <button 
+        *ngIf="currentUser?.role === 'Admin'" 
+        class="nav-link" 
+        routerLink="/analytics"
+        routerLinkActive="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3v18h18"/>
+          <path d="M18 17V9M13 17V5M8 17v-3"/>
+        </svg>
+        <span>Аналитика</span>
+      </button>
+    </nav>
+
+    <div class="header-actions">
+      <div class="user-section" *ngIf="currentUser">
+        <div class="user-info">
+          <span class="user-name">{{ currentUser.userName || currentUser.email }}</span>
+          <span class="user-role">{{ getRoleLabel(currentUser.role) }}</span>
+        </div>
+        <div class="user-avatar">
+          {{ getInitials(currentUser.userName || currentUser.email) }}
+        </div>
+        <button class="btn-logout" (click)="logout()" title="Изход">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="auth-section" *ngIf="!currentUser">
+        <button class="btn-secondary" routerLink="/login">Вход</button>
+        <button class="btn-primary" routerLink="/register">Регистрация</button>
+      </div>
     </div>
   </div>
 </header>
