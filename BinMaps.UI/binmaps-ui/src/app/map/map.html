@@ -1,53 +1,4 @@
 <div class="map-page">
-  <header class="map-header">
-    <div class="header-container">
-      <div class="header-brand" routerLink="/">
-        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-        </svg>
-        <span class="brand-name">BinMaps</span>
-      </div>
-
-      <nav class="header-nav" *ngIf="!isGuest">
-        <button class="nav-btn" routerLink="/analytics" *ngIf="isAdmin">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 3v18h18"/>
-            <path d="M18 17V9M13 17V5M8 17v-3"/>
-          </svg>
-          <span>Аналитика</span>
-        </button>
-        
-        <button class="nav-btn" routerLink="/admin" *ngIf="isAdmin">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2l9 4.5v6C21 17.5 16.5 21 12 22c-4.5-1-9-4.5-9-9.5v-6L12 2z"/>
-          </svg>
-          <span>Админ панел</span>
-        </button>
-      </nav>
-
-      <div class="header-actions">
-        <div class="user-section" *ngIf="currentUser">
-          <div class="user-info">
-            <span class="user-name">{{ currentUser.userName || currentUser.email }}</span>
-            <span class="user-role">{{ currentUser.role }}</span>
-          </div>
-          <div class="user-avatar">
-            {{ getInitials(currentUser.userName || currentUser.email) }}
-          </div>
-          <button class="btn-logout" (click)="logout()" title="Изход">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
-            </svg>
-          </button>
-        </div>
-
-        <div class="auth-section" *ngIf="isGuest">
-          <button class="btn-secondary" routerLink="/login">Вход</button>
-          <button class="btn-primary" routerLink="/register">Регистрация</button>
-        </div>
-      </div>
-    </div>
-  </header>
 
   <div class="map-layout">
     <aside class="map-sidebar left" *ngIf="isUser || isDriver">
@@ -141,44 +92,4 @@
       </div>
     </main>
   </div>
-
-  <footer class="map-footer">
-    <div class="footer-container">
-      <div class="footer-section">
-        <div class="footer-brand">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-          </svg>
-          <span>BinMaps</span>
-        </div>
-        <p class="footer-description">Интелигентна платформа за управление на отпадъците в София</p>
-      </div>
-
-      <div class="footer-section">
-        <h4>Контакти</h4>
-        <ul class="footer-links">
-          <li><a href="mailto:info@binmaps.bg">info@binmaps.bg</a></li>
-          <li>София, България</li>
-        </ul>
-      </div>
-
-      <div class="footer-section">
-        <h4>Бързи връзки</h4>
-        <ul class="footer-links">
-          <li><a routerLink="/">Начало</a></li>
-          <li><a routerLink="/map">Карта</a></li>
-          <li><a routerLink="/login" *ngIf="isGuest">Вход</a></li>
-          <li><a routerLink="/register" *ngIf="isGuest">Регистрация</a></li>
-        </ul>
-      </div>
-
-      <div class="footer-section">
-        <h4>Информация</h4>
-        <ul class="footer-links">
-          <li>© 2026 BinMaps</li>
-          <li>Всички права запазени</li>
-        </ul>
-      </div>
-    </div>
-  </footer>
 </div>
