@@ -373,24 +373,34 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private createBinIcon(bin: Bin): L.DivIcon {
     const fillColor = this.getFillColor(bin.fillPercentage);
     const isFire = bin.status === 1 || (bin.temperature !== null && bin.temperature > 55);
-    const typeIcon = this.getTypeIcon(bin.trashType);
+    const typeIconPath = this.getTypeIconPath(bin.trashType);
     
     return L.divIcon({
       className: 'custom-bin-marker',
       html: `
         <div class="bin-marker ${isFire ? 'fire' : ''}">
           <div class="bin-id">#${bin.id}</div>
-          <div class="bin-icon-wrapper" style="border-color: ${fillColor}; box-shadow: 0 0 12px ${fillColor}80;">
-            ${typeIcon}
+          <div class="bin-icon-wrapper" style="border-color: ${fillColor};">
+            <img src="${typeIconPath}" class="bin-type-icon" alt="Bin type"/>
             <div class="fill-indicator-ring" style="background: conic-gradient(${fillColor} ${bin.fillPercentage}%, transparent ${bin.fillPercentage}%);"></div>
-            ${bin.hasSensor ? '<div class="sensor-dot"></div>' : ''}
-            ${isFire ? '<div class="fire-icon">🔥</div>' : ''}
+            ${bin.hasSensor ? '<img src="assets/icons/sensor-dot.svg" class="sensor-dot" alt="Sensor"/>' : ''}
+            ${isFire ? '<img src="assets/icons/bin-fire.svg" class="fire-icon" alt="Fire"/>' : ''}
           </div>
         </div>
       `,
       iconSize: [50, 50],
       iconAnchor: [25, 25]
     });
+  }
+
+  private getTypeIconPath(type: number): string {
+    const icons: { [key: number]: string } = {
+      0: 'assets/icons/bin-mixed.svg',
+      1: 'assets/icons/bin-plastic.svg',
+      2: 'assets/icons/bin-paper.svg',
+      3: 'assets/icons/bin-glass.svg'
+    };
+    return icons[type] || icons[0];
   }
 
   private getTypeIcon(type: number): string {

@@ -1,34 +1,9 @@
 <div class="home-container">
-  <!-- Header -->
-  <header class="header">
-    <div class="header-content">
-      <div class="logo">
-        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M3 6h18"/>
-          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-          <line x1="10" y1="11" x2="10" y2="17"/>
-          <line x1="14" y1="11" x2="14" y2="17"/>
-        </svg>
-        <span class="logo-text">BinMaps</span>
-      </div>
-      <nav class="nav-menu">
-        <button class="nav-link" (click)="scrollToSection('features')">Функции</button>
-        <button class="nav-link" (click)="scrollToSection('how-it-works')">Как работи</button>
-        <button class="nav-link" (click)="scrollToSection('about')">За нас</button>
-      </nav>
-      <div class="header-actions">
-        <button class="btn-header-login" (click)="navigateToLogin()">Вход</button>
-        <button class="btn-header-register" (click)="navigateToRegister()">Регистрация</button>
-      </div>
-    </div>
-  </header>
-
   <!-- Hero Section -->
   <section class="hero-section">
     <div class="hero-content">
       <div class="hero-badge">
-        <svg class="badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <svg class="badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2L2 7l10 5 10-5-10-5z"/>
           <path d="M2 17l10 5 10-5"/>
           <path d="M2 12l10 5 10-5"/>
@@ -47,7 +22,7 @@
 
       <div class="hero-buttons">
         <button class="btn-primary" (click)="navigateToRegister()">
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
             <circle cx="8.5" cy="7" r="4"/>
             <line x1="20" y1="8" x2="20" y2="14"/>
@@ -55,16 +30,15 @@
           </svg>
           Започни сега
         </button>
-        <button class="btn-secondary" (click)="scrollToSection('how-it-works')">
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <circle cx="12" cy="12" r="10"/>
-            <polygon points="10 8 16 12 10 16 10 8"/>
+        <button class="btn-secondary" (click)="navigateToMap()">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+            <circle cx="12" cy="10" r="3"/>
           </svg>
-          Виж как работи
+          Разгледай картата
         </button>
       </div>
 
-      <!-- Stats -->
       <div class="stats-grid">
         <div class="stat-card" *ngFor="let stat of stats">
           <div class="stat-number">{{ stat.number }}</div>
@@ -73,7 +47,6 @@
       </div>
     </div>
 
-    <!-- Decorative Elements -->
     <div class="decoration decoration-1"></div>
     <div class="decoration decoration-2"></div>
     <div class="decoration decoration-3"></div>
@@ -92,33 +65,33 @@
       <div class="features-grid">
         <div class="feature-card" *ngFor="let feature of features">
           <div class="feature-icon" [ngClass]="feature.icon">
-            <svg *ngIf="feature.icon === 'map'" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <svg *ngIf="feature.icon === 'map'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
               <circle cx="12" cy="10" r="3"/>
             </svg>
-            <svg *ngIf="feature.icon === 'report'" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <svg *ngIf="feature.icon === 'report'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
               <line x1="16" y1="13" x2="8" y2="13"/>
               <line x1="16" y1="17" x2="8" y2="17"/>
             </svg>
-            <svg *ngIf="feature.icon === 'ai'" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <svg *ngIf="feature.icon === 'ai'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
               <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/>
             </svg>
-            <svg *ngIf="feature.icon === 'route'" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <svg *ngIf="feature.icon === 'route'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="1" y="3" width="15" height="13"/>
               <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
               <circle cx="5.5" cy="18.5" r="2.5"/>
               <circle cx="18.5" cy="18.5" r="2.5"/>
             </svg>
-            <svg *ngIf="feature.icon === 'sensor'" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <svg *ngIf="feature.icon === 'sensor'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 2a3 3 0 003 3 3 3 0 003-3 3 3 0 00-3 3 3 3 0 00-3-3"/>
               <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
               <path d="M12 8v8"/>
               <path d="M8 12h8"/>
             </svg>
-            <svg *ngIf="feature.icon === 'notification'" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <svg *ngIf="feature.icon === 'notification'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
               <path d="M13.73 21a2 2 0 01-3.46 0"/>
             </svg>
@@ -160,7 +133,7 @@
     <div class="section-content">
       <div class="about-grid">
         <div class="about-content">
-          <h2 class="section-title">За нас</h2>
+          <h2 class="section-title">За проекта</h2>
           <p class="about-text">
             <strong>BinMaps</strong> е иновативна платформа, разработена с цел модернизиране на системата за 
             управление на отпадъците в София. Ние вярваме, че технологията може да направи градовете ни 
@@ -173,25 +146,25 @@
           </p>
           <div class="about-features">
             <div class="about-feature">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
               <span>Реално време данни</span>
             </div>
             <div class="about-feature">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
               <span>AI-базирана верификация</span>
             </div>
             <div class="about-feature">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
               <span>Оптимизирани маршрути</span>
             </div>
             <div class="about-feature">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
               <span>Граждански участие</span>
@@ -199,11 +172,13 @@
           </div>
         </div>
         <div class="about-image">
-          <div class="about-icon-grid">
-            <div class="about-icon green">♻️</div>
-            <div class="about-icon blue">🗺️</div>
-            <div class="about-icon purple">🤖</div>
-            <div class="about-icon orange">🚛</div>
+          <div class="about-visual">
+            <svg viewBox="0 0 200 200" class="about-graphic">
+              <circle cx="100" cy="100" r="80" fill="#f0fdf4" stroke="#047857" stroke-width="2"/>
+              <circle cx="100" cy="100" r="60" fill="#d1fae5" stroke="#059669" stroke-width="2"/>
+              <circle cx="100" cy="100" r="40" fill="#a7f3d0" stroke="#10b981" stroke-width="2"/>
+              <circle cx="100" cy="100" r="20" fill="#047857"/>
+            </svg>
           </div>
         </div>
       </div>
@@ -214,7 +189,7 @@
   <section class="mission-section">
     <div class="section-content">
       <div class="mission-card">
-        <svg class="mission-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <svg class="mission-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2L2 7l10 5 10-5-10-5z"/>
           <path d="M2 17l10 5 10-5"/>
           <path d="M2 12l10 5 10-5"/>
@@ -248,13 +223,13 @@
   <section class="cta-section">
     <div class="section-content">
       <div class="cta-content">
-        <h2 class="cta-title">Готови ли сте за промяна?</h2>
+        <h2 class="cta-title">Готови ли сте да участвате?</h2>
         <p class="cta-subtitle">
-          Присъединете се към BinMaps и бъдете част от революцията в градското управление
+          Присъединете се към BinMaps и бъдете част от промяната в градското управление
         </p>
         <button class="btn-cta" (click)="navigateToRegister()">
           Създай акаунт безплатно
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="5" y1="12" x2="19" y2="12"/>
             <polyline points="12 5 19 12 12 19"/>
           </svg>
@@ -269,12 +244,10 @@
       <div class="footer-grid">
         <div class="footer-column">
           <div class="footer-logo">
-            <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 6h18"/>
               <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
               <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-              <line x1="10" y1="11" x2="10" y2="17"/>
-              <line x1="14" y1="11" x2="14" y2="17"/>
             </svg>
             <span class="logo-text">BinMaps</span>
           </div>
@@ -290,7 +263,7 @@
             <li><button (click)="scrollToSection('features')">Функции</button></li>
             <li><button (click)="scrollToSection('how-it-works')">Как работи</button></li>
             <li><button (click)="scrollToSection('about')">За нас</button></li>
-            <li><button (click)="navigateToRegister()">Регистрация</button></li>
+            <li><button (click)="navigateToMap()">Карта</button></li>
           </ul>
         </div>
 
@@ -298,7 +271,6 @@
           <h3 class="footer-heading">Ресурси</h3>
           <ul class="footer-links">
             <li><a href="#">Документация</a></li>
-            <li><a href="#">API</a></li>
             <li><a href="#">Поддръжка</a></li>
             <li><a href="#">Често задавани въпроси</a></li>
           </ul>
@@ -308,14 +280,14 @@
           <h3 class="footer-heading">Контакти</h3>
           <ul class="footer-contacts">
             <li>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                 <polyline points="22,6 12,13 2,6"/>
               </svg>
               <span>info@binmaps.bg</span>
             </li>
             <li>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
                 <circle cx="12" cy="10" r="3"/>
               </svg>
