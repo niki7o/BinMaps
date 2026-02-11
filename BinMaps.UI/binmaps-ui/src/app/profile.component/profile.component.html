@@ -1,0 +1,167 @@
+<div class="profile-container">
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Зареждане на профил...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-state" *ngIf="!isLoading && errorMessage">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <h2>{{ errorMessage }}</h2>
+    <button class="btn-primary" (click)="navigateBack()">Назад</button>
+  </div>
+
+  <!-- Profile Content -->
+  <div class="profile-content" *ngIf="!isLoading && !errorMessage && userProfile">
+    <!-- Header -->
+    <div class="profile-header">
+      <button class="btn-back" (click)="navigateBack()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <span>Назад</span>
+      </button>
+      <h1>Моят профил</h1>
+    </div>
+
+    <!-- Profile Card -->
+    <div class="profile-card">
+      <!-- Avatar Section -->
+      <div class="avatar-section">
+        <div class="avatar-large">
+          {{ getInitials(userProfile.userName || userProfile.email) }}
+        </div>
+        <div class="avatar-info">
+          <h2 class="user-name">{{ userProfile.userName || 'Потребител' }}</h2>
+          <span class="role-badge" [ngClass]="getRoleBadgeClass(userProfile.role)">
+            {{ getRoleLabel(userProfile.role) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Info Grid -->
+      <div class="info-grid">
+        <!-- Email -->
+        <div class="info-item">
+          <div class="info-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </div>
+          <div class="info-content">
+            <span class="info-label">Email</span>
+            <span class="info-value">{{ userProfile.email }}</span>
+          </div>
+        </div>
+
+        <!-- Phone -->
+        <div class="info-item">
+          <div class="info-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
+            </svg>
+          </div>
+          <div class="info-content">
+            <span class="info-label">Телефон</span>
+            <span class="info-value">{{ userProfile.phoneNumber || 'Не е посочен' }}</span>
+          </div>
+        </div>
+
+        <!-- User ID -->
+        <div class="info-item">
+          <div class="info-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="8.5" cy="7" r="4"/>
+              <polyline points="17 11 19 13 23 9"/>
+            </svg>
+          </div>
+          <div class="info-content">
+            <span class="info-label">Потребителски ID</span>
+            <span class="info-value">#{{ userProfile.id }}</span>
+          </div>
+        </div>
+
+        <!-- Member Since -->
+        <div class="info-item">
+          <div class="info-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          </div>
+          <div class="info-content">
+            <span class="info-label">Член от</span>
+            <span class="info-value">{{ formatDate(userProfile.createdAt) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Section -->
+      <div class="stats-section">
+        <h3>Статистика</h3>
+        <div class="stats-grid">
+          <!-- Reputation -->
+          <div class="stat-card" [ngClass]="getReputationClass(userProfile.reputation)">
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+            </div>
+            <div class="stat-content">
+              <div class="stat-header">
+                <span class="stat-label">Репутация</span>
+                <span class="stat-badge">{{ getReputationLevel(userProfile.reputation) }}</span>
+              </div>
+              <div class="stat-value">{{ userProfile.reputation }}<span class="stat-max">/100</span></div>
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="userProfile.reputation"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Report Count -->
+          <div class="stat-card stat-reports">
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </div>
+            <div class="stat-content">
+              <span class="stat-label">Подадени репорти</span>
+              <div class="stat-value">{{ userProfile.reportCount }}</div>
+              <p class="stat-description">
+                {{ userProfile.reportCount === 0 ? 'Все още няма репорти' : 
+                   userProfile.reportCount === 1 ? 'Благодарим за активността!' : 
+                   'Благодарим за приноса!' }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions (placeholder for future features) -->
+      <div class="actions-section">
+        <button class="btn-secondary" (click)="editProfile()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Редактирай профил (скоро)
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

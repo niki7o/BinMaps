@@ -139,6 +139,13 @@
   font-weight: 600;
   flex-shrink: 0;
   text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
 }
 
 .btn-logout {

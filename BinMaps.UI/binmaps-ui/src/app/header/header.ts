@@ -61,4 +61,8 @@ export class Header implements OnInit, OnDestroy {
     };
     return roleLabels[role] || 'Потребител';
   }
+
+  navigateToProfile() {
+    this.router.navigate(['/profile']);
+  }
 }

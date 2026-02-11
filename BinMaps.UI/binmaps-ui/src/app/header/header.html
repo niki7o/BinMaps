@@ -38,7 +38,7 @@
           <span class="user-name">{{ currentUser.userName || currentUser.email }}</span>
           <span class="user-role">{{ getRoleLabel(currentUser.role) }}</span>
         </div>
-        <div class="user-avatar">
+        <div class="user-avatar" (click)="navigateToProfile()" title="Виж профил">
           {{ getInitials(currentUser.userName || currentUser.email) }}
         </div>
         <button class="btn-logout" (click)="logout()" title="Изход">
