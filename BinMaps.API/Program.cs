@@ -59,7 +59,7 @@ namespace BinMaps.API
 
             builder.Services.AddHttpClient();
 
-            // DI
+          
             builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
             builder.Services.AddScoped<ITruckRouteService, TruckRouteService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
@@ -100,7 +100,7 @@ namespace BinMaps.API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            app.UseStaticFiles();
             app.UseHttpsRedirection();
             app.UseCors("AllowAngular");
 

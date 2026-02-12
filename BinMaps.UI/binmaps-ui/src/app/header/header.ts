@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Router, RouterModule, NavigationEnd } from '@angular/router';
+import { Subject, takeUntil, filter } from 'rxjs';
 import { AuthService } from '../auth.service';
 
 export interface User {
@@ -19,6 +19,8 @@ export interface User {
 })
 export class Header implements OnInit, OnDestroy {
   currentUser: User | null = null;
+  isAdmin = false;
+  showUserMenu = false;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -27,11 +29,39 @@ export class Header implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+   
     this.authService.currentUser$
       .pipe(takeUntil(this.destroy$))
       .subscribe(user => {
         this.currentUser = user;
+        this.isAdmin = user?.role === 'Admin';
+        console.log('Header: User state updated:', user);
       });
+
+    
+    this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+       
+        this.showUserMenu = false;
+        
+       
+        const userData = localStorage.getItem('user');
+        if (userData && !this.currentUser) {
+          try {
+            const user = JSON.parse(userData);
+            this.authService['currentUserSubject'].next(user);
+          } catch (e) {
+            console.error('Failed to parse user data', e);
+          }
+        }
+      });
+
+    
+    this.loadUserFromStorage();
   }
 
   ngOnDestroy() {
@@ -39,10 +69,85 @@ export class Header implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.user-menu')) {
+      this.showUserMenu = false;
+    }
+  }
+
+  private loadUserFromStorage() {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        if (!this.currentUser) {
+          this.authService['currentUserSubject'].next(user);
+        }
+      } catch (e) {
+        console.error('Failed to load user from storage', e);
+      }
+    }
+  }
+
+
+  toggleUserMenu() {
+    this.showUserMenu = !this.showUserMenu;
+  }
+
+ 
+
+  navigateToHome() {
+    this.router.navigate(['/']);
+    this.showUserMenu = false;
+  }
+
+  navigateToMap() {
+    this.router.navigate(['/map']);
+    this.showUserMenu = false;
+  }
+
+  navigateToAnalytics() {
+    this.router.navigate(['/analytics']);
+    this.showUserMenu = false;
+  }
+
+  navigateToAdmin() {
+    this.router.navigate(['/admin-dashboard']);
+    this.showUserMenu = false;
+  }
+
+  navigateToProfile() {
+    this.router.navigate(['/profile']);
+    this.showUserMenu = false;
+  }
+
+  navigateToSettings() {
+    this.router.navigate(['/settings']);
+    this.showUserMenu = false;
+  }
+
+  navigateToLogin() {
+    this.router.navigate(['/login']);
+    this.showUserMenu = false;
+  }
+
+  navigateToRegister() {
+    this.router.navigate(['/register']);
+    this.showUserMenu = false;
+  }
+
+ 
+
   logout() {
     this.authService.logout();
+    this.currentUser = null;
+    this.showUserMenu = false;
     this.router.navigate(['/']);
   }
+
+
 
   getInitials(name: string): string {
     if (!name) return 'U';
@@ -60,9 +165,5 @@ export class Header implements OnInit, OnDestroy {
       'User': 'Потребител'
     };
     return roleLabels[role] || 'Потребител';
-  }
-
-  navigateToProfile() {
-    this.router.navigate(['/profile']);
   }
 }

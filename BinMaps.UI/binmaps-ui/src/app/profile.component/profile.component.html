@@ -1,167 +1,311 @@
-<div class="profile-container">
+<div class="profile-page">
   <!-- Loading State -->
-  <div class="loading-state" *ngIf="isLoading">
+  <div *ngIf="loading" class="loading-container">
     <div class="spinner"></div>
     <p>Зареждане на профил...</p>
   </div>
 
-  <!-- Error State -->
-  <div class="error-state" *ngIf="!isLoading && errorMessage">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="12" cy="12" r="10"/>
-      <line x1="12" y1="8" x2="12" y2="12"/>
-      <line x1="12" y1="16" x2="12.01" y2="16"/>
-    </svg>
-    <h2>{{ errorMessage }}</h2>
-    <button class="btn-primary" (click)="navigateBack()">Назад</button>
-  </div>
-
   <!-- Profile Content -->
-  <div class="profile-content" *ngIf="!isLoading && !errorMessage && userProfile">
-    <!-- Header -->
+  <div *ngIf="!loading && profile" class="profile-content">
+    
+    <!-- Profile Header -->
     <div class="profile-header">
-      <button class="btn-back" (click)="navigateBack()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-        <span>Назад</span>
-      </button>
-      <h1>Моят профил</h1>
+      <div class="header-background"></div>
+      <div class="header-content">
+        
+        <!-- Profile Picture Section -->
+        <div class="profile-picture-section">
+          <div class="picture-container">
+            <img [src]="previewUrl || getProfilePictureUrl()" 
+                 alt="Profile Picture" 
+                 class="profile-picture">
+            <div class="picture-overlay" *ngIf="!editMode">
+              <label class="upload-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+                <input type="file" 
+                       accept="image/*" 
+                       (change)="onFileSelected($event)" 
+                       style="display: none">
+              </label>
+              <button class="delete-btn" 
+                      *ngIf="profile.profilePicturePath"
+                      (click)="deletePicture()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Upload Controls -->
+          <div class="upload-controls" *ngIf="selectedFile">
+            <button class="btn-upload" 
+                    (click)="uploadPicture()" 
+                    [disabled]="uploadingPicture">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              {{ uploadingPicture ? 'Качване...' : 'Качи снимка' }}
+            </button>
+            <button class="btn-cancel" (click)="cancelPictureUpload()">
+              Откажи
+            </button>
+          </div>
+
+          <!-- Level Badge -->
+          <div class="level-badge" [style.background]="getLevelColor(profile.level)">
+            {{ profile.level }}
+          </div>
+        </div>
+
+      
+        <div class="profile-info">
+          <div class="info-header">
+            <h1 class="user-name">{{ profile.userName }}</h1>
+            <span class="user-role">{{ getRoleLabel(profile.role) }}</span>
+          </div>
+          
+          <div class="info-details">
+            <div class="detail-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              <span>{{ profile.email }}</span>
+            </div>
+            
+            <div class="detail-item" *ngIf="profile.phoneNumber">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
+              </svg>
+              <span>{{ profile.phoneNumber }}</span>
+            </div>
+
+            <div class="detail-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <span>Член от {{ formatMemberSince(profile.memberSince) }}</span>
+            </div>
+          </div>
+
+          <button class="btn-edit" (click)="toggleEditMode()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            {{ editMode ? 'Откажи' : 'Редактирай профил' }}
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- Profile Card -->
-    <div class="profile-card">
-      <!-- Avatar Section -->
-      <div class="avatar-section">
-        <div class="avatar-large">
-          {{ getInitials(userProfile.userName || userProfile.email) }}
+    <!-- Edit Form -->
+    <div class="edit-section" *ngIf="editMode">
+      <div class="edit-card">
+        <h2>Редактиране на профил</h2>
+        <form (ngSubmit)="saveProfile()">
+          <div class="form-group">
+            <label>Потребителско име</label>
+            <input type="text" 
+                   [(ngModel)]="editForm.userName" 
+                   name="userName"
+                   class="form-input"
+                   required>
+          </div>
+
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" 
+                   [(ngModel)]="editForm.email" 
+                   name="email"
+                   class="form-input"
+                   required>
+          </div>
+
+          <div class="form-group">
+            <label>Телефон</label>
+            <input type="tel" 
+                   [(ngModel)]="editForm.phoneNumber" 
+                   name="phoneNumber"
+                   class="form-input"
+                   placeholder="+359...">
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" 
+                    class="btn-save" 
+                    [disabled]="savingProfile">
+              {{ savingProfile ? 'Записване...' : 'Запази промените' }}
+            </button>
+            <button type="button" 
+                    class="btn-cancel" 
+                    (click)="toggleEditMode()">
+              Откажи
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card primary">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
         </div>
-        <div class="avatar-info">
-          <h2 class="user-name">{{ userProfile.userName || 'Потребител' }}</h2>
-          <span class="role-badge" [ngClass]="getRoleBadgeClass(userProfile.role)">
-            {{ getRoleLabel(userProfile.role) }}
+        <div class="stat-content">
+          <div class="stat-value">{{ profile.totalReports }}</div>
+          <div class="stat-label">Общо доклади</div>
+        </div>
+      </div>
+
+      <div class="stat-card success">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ profile.approvedReports }}</div>
+          <div class="stat-label">Одобрени</div>
+        </div>
+      </div>
+
+      <div class="stat-card info">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ profile.reputation }}</div>
+          <div class="stat-label">Репутация</div>
+        </div>
+      </div>
+
+      <div class="stat-card warning">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ getAccuracyRate() }}%</div>
+          <div class="stat-label">Точност</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reputation Progress -->
+    <div class="reputation-section" *ngIf="reputationInfo">
+      <div class="reputation-card">
+        <div class="reputation-header">
+          <h2>Репутация</h2>
+          <span class="level-badge large" [style.background]="getLevelColor(reputationInfo.level)">
+            {{ reputationInfo.level }}
           </span>
         </div>
-      </div>
 
-      <!-- Info Grid -->
-      <div class="info-grid">
-        <!-- Email -->
-        <div class="info-item">
-          <div class="info-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-              <polyline points="22,6 12,13 2,6"/>
-            </svg>
-          </div>
-          <div class="info-content">
-            <span class="info-label">Email</span>
-            <span class="info-value">{{ userProfile.email }}</span>
-          </div>
-        </div>
-
-        <!-- Phone -->
-        <div class="info-item">
-          <div class="info-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
-            </svg>
-          </div>
-          <div class="info-content">
-            <span class="info-label">Телефон</span>
-            <span class="info-value">{{ userProfile.phoneNumber || 'Не е посочен' }}</span>
-          </div>
-        </div>
-
-        <!-- User ID -->
-        <div class="info-item">
-          <div class="info-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-              <circle cx="8.5" cy="7" r="4"/>
-              <polyline points="17 11 19 13 23 9"/>
-            </svg>
-          </div>
-          <div class="info-content">
-            <span class="info-label">Потребителски ID</span>
-            <span class="info-value">#{{ userProfile.id }}</span>
-          </div>
-        </div>
-
-        <!-- Member Since -->
-        <div class="info-item">
-          <div class="info-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-          </div>
-          <div class="info-content">
-            <span class="info-label">Член от</span>
-            <span class="info-value">{{ formatDate(userProfile.createdAt) }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Stats Section -->
-      <div class="stats-section">
-        <h3>Статистика</h3>
-        <div class="stats-grid">
-          <!-- Reputation -->
-          <div class="stat-card" [ngClass]="getReputationClass(userProfile.reputation)">
-            <div class="stat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-              </svg>
-            </div>
-            <div class="stat-content">
-              <div class="stat-header">
-                <span class="stat-label">Репутация</span>
-                <span class="stat-badge">{{ getReputationLevel(userProfile.reputation) }}</span>
-              </div>
-              <div class="stat-value">{{ userProfile.reputation }}<span class="stat-max">/100</span></div>
-              <div class="progress-bar">
-                <div class="progress-fill" [style.width.%]="userProfile.reputation"></div>
-              </div>
+        <div class="reputation-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" 
+                 [style.width.%]="reputationInfo.progress"
+                 [style.background]="getLevelColor(reputationInfo.level)">
             </div>
           </div>
-
-          <!-- Report Count -->
-          <div class="stat-card stat-reports">
-            <div class="stat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-                <polyline points="10 9 9 9 8 9"/>
-              </svg>
-            </div>
-            <div class="stat-content">
-              <span class="stat-label">Подадени репорти</span>
-              <div class="stat-value">{{ userProfile.reportCount }}</div>
-              <p class="stat-description">
-                {{ userProfile.reportCount === 0 ? 'Все още няма репорти' : 
-                   userProfile.reportCount === 1 ? 'Благодарим за активността!' : 
-                   'Благодарим за приноса!' }}
-              </p>
-            </div>
+          <div class="progress-labels">
+            <span>{{ reputationInfo.reputation }}</span>
+            <span *ngIf="reputationInfo.nextLevel > 0">{{ reputationInfo.nextLevel }}</span>
+            <span *ngIf="reputationInfo.nextLevel === 0">MAX</span>
           </div>
         </div>
-      </div>
 
-      <!-- Actions (placeholder for future features) -->
-      <div class="actions-section">
-        <button class="btn-secondary" (click)="editProfile()" disabled>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-          Редактирай профил (скоро)
-        </button>
+        <p class="reputation-text" *ngIf="reputationInfo.nextLevel > 0">
+          Още {{ reputationInfo.nextLevel - reputationInfo.reputation }} точки до следващо ниво
+        </p>
+        <p class="reputation-text" *ngIf="reputationInfo.nextLevel === 0">
+          Достигнахте максималното ниво! 🏆
+        </p>
       </div>
     </div>
+
+    <!-- Reports History -->
+    <div class="reports-section">
+      <h2 class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        История на докладите
+      </h2>
+
+      <div class="reports-empty" *ngIf="reports.length === 0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <p>Все още нямате доклади</p>
+      </div>
+
+      <div class="reports-grid" *ngIf="reports.length > 0">
+        <div class="report-card" *ngFor="let report of reports">
+          <div class="report-header">
+            <span class="report-type" [ngClass]="getReportTypeClass(report.reportType)">
+              {{ getReportTypeLabel(report.reportType) }}
+            </span>
+            <span class="report-status" [class.approved]="report.isApproved">
+              {{ report.isApproved ? 'Одобрен' : 'В очакване' }}
+            </span>
+          </div>
+
+          <div class="report-body">
+            <div class="report-info">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span>{{ formatDate(report.createdAt) }}</span>
+            </div>
+
+            <div class="report-info" *ngIf="report.container">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              <span>{{ report.container.areaId }} - {{ getTrashTypeLabel(report.container.trashType) }}</span>
+            </div>
+
+            <p class="report-description" *ngIf="report.description">
+              {{ report.description }}
+            </p>
+
+            <div class="report-confidence" *ngIf="report.finalConfidence > 0">
+              <span class="confidence-label">AI Увереност:</span>
+              <div class="confidence-bar">
+                <div class="confidence-fill" [style.width.%]="report.finalConfidence * 100"></div>
+              </div>
+              <span class="confidence-value">{{ (report.finalConfidence * 100).toFixed(0) }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>

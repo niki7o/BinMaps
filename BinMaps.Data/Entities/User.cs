@@ -11,5 +11,7 @@ namespace BinMaps.Data.Entities
     {
 
         public int Reputation { get; set;  } = 0;
+        public string? ProfilePicturePath { get; set; }  
+        public DateTime CreatedAt { get; set; }
     }
 }

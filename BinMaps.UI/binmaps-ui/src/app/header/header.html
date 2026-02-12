@@ -1,56 +1,101 @@
-<header class="main-header">
+<header class="header">
   <div class="header-container">
-    <div class="header-brand" routerLink="/">
+   
+    <div class="header-brand" (click)="navigateToHome()">
       <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+        <path d="M3 6h18"/>
+        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
       </svg>
       <span class="brand-name">BinMaps</span>
     </div>
 
-    <nav class="header-nav">
-      <button 
-        *ngIf="currentUser?.role === 'Admin'" 
-        class="nav-link admin-link" 
-        routerLink="/admin"
-        routerLinkActive="active">
+ 
+    <nav class="header-nav" *ngIf="currentUser">
+      <button class="nav-btn" (click)="navigateToMap()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2l9 4.5v6C21 17.5 16.5 21 12 22c-4.5-1-9-4.5-9-9.5v-6L12 2z"/>
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+          <circle cx="12" cy="10" r="3"/>
         </svg>
-        <span>Администрация</span>
+        Карта
       </button>
 
-      <button 
-        *ngIf="currentUser?.role === 'Admin'" 
-        class="nav-link" 
-        routerLink="/analytics"
-        routerLinkActive="active">
+      <button class="nav-btn" (click)="navigateToAnalytics()" *ngIf="currentUser">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 3v18h18"/>
-          <path d="M18 17V9M13 17V5M8 17v-3"/>
+          <line x1="12" y1="20" x2="12" y2="10"/>
+          <line x1="18" y1="20" x2="18" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="16"/>
         </svg>
-        <span>Аналитика</span>
+        Аналитика
+      </button>
+
+      <button class="nav-btn" (click)="navigateToAdmin()" *ngIf="isAdmin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+        Админ
       </button>
     </nav>
 
+ 
     <div class="header-actions">
       <div class="user-section" *ngIf="currentUser">
-        <div class="user-info">
-          <span class="user-name">{{ currentUser.userName || currentUser.email }}</span>
-          <span class="user-role">{{ getRoleLabel(currentUser.role) }}</span>
+        <div class="user-menu">
+          <button class="user-menu-trigger" (click)="toggleUserMenu()">
+            <div class="user-info">
+              <span class="user-name">{{ currentUser.userName }}</span>
+              <span class="user-role">{{ getRoleLabel(currentUser.role) }}</span>
+            </div>
+            <div class="user-avatar">
+              {{ getInitials(currentUser.userName) }}
+            </div>
+            <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+
+          
+          <div class="user-dropdown" [class.show]="showUserMenu">
+            <button class="dropdown-item" (click)="navigateToProfile()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              Моят профил
+            </button>
+
+            <button class="dropdown-item" (click)="navigateToSettings()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
+              </svg>
+              Настройки
+            </button>
+
+            <div class="dropdown-divider"></div>
+
+            <button class="dropdown-item danger" (click)="logout()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Изход
+            </button>
+          </div>
         </div>
-        <div class="user-avatar" (click)="navigateToProfile()" title="Виж профил">
-          {{ getInitials(currentUser.userName || currentUser.email) }}
-        </div>
-        <button class="btn-logout" (click)="logout()" title="Изход">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
-          </svg>
-        </button>
       </div>
 
+     
       <div class="auth-section" *ngIf="!currentUser">
-        <button class="btn-secondary" routerLink="/login">Вход</button>
-        <button class="btn-primary" routerLink="/register">Регистрация</button>
+        <button class="btn-secondary" (click)="navigateToLogin()">
+          Вход
+        </button>
+        <button class="btn-primary" (click)="navigateToRegister()">
+          Регистрация
+        </button>
       </div>
     </div>
   </div>
