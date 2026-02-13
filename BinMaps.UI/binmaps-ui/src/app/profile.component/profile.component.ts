@@ -312,7 +312,7 @@ export class ProfileComponent implements OnInit {
     if (this.profile?.profilePicturePath) {
       return `${this.apiUrl.replace('/api', '')}${this.profile.profilePicturePath}`;
     }
-    return 'assets/images/default-avatar.png';
+    return 'assets/icons/avatar.svg';
   }
 
   getReportTypeLabel(type: number): string {
