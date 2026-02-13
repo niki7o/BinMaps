@@ -1,6 +1,6 @@
 <header class="header">
   <div class="header-container">
-   
+    <!-- Logo/Brand -->
     <div class="header-brand" (click)="navigateToHome()">
       <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M3 6h18"/>
@@ -10,7 +10,7 @@
       <span class="brand-name">BinMaps</span>
     </div>
 
- 
+    <!-- Navigation -->
     <nav class="header-nav" *ngIf="currentUser">
       <button class="nav-btn" (click)="navigateToMap()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -20,7 +20,7 @@
         Карта
       </button>
 
-      <button class="nav-btn" (click)="navigateToAnalytics()" *ngIf="currentUser">
+      <button class="nav-btn" (click)="navigateToAnalytics()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="20" x2="12" y2="10"/>
           <line x1="18" y1="20" x2="18" y2="4"/>
@@ -39,7 +39,7 @@
       </button>
     </nav>
 
- 
+    <!-- User Section -->
     <div class="header-actions">
       <div class="user-section" *ngIf="currentUser">
         <div class="user-menu">
@@ -56,7 +56,7 @@
             </svg>
           </button>
 
-          
+          <!-- Dropdown Menu -->
           <div class="user-dropdown" [class.show]="showUserMenu">
             <button class="dropdown-item" (click)="navigateToProfile()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -88,7 +88,7 @@
         </div>
       </div>
 
-     
+      <!-- Auth Buttons (if not logged in) -->
       <div class="auth-section" *ngIf="!currentUser">
         <button class="btn-secondary" (click)="navigateToLogin()">
           Вход

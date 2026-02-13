@@ -38,14 +38,14 @@ export class Header implements OnInit, OnDestroy {
         console.log('Header: User state updated:', user);
       });
 
-    
+ 
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
         takeUntil(this.destroy$)
       )
       .subscribe(() => {
-       
+      
         this.showUserMenu = false;
         
        
@@ -69,6 +69,7 @@ export class Header implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+ 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
@@ -91,12 +92,13 @@ export class Header implements OnInit, OnDestroy {
     }
   }
 
+  
 
   toggleUserMenu() {
     this.showUserMenu = !this.showUserMenu;
   }
 
- 
+
 
   navigateToHome() {
     this.router.navigate(['/']);
@@ -147,7 +149,7 @@ export class Header implements OnInit, OnDestroy {
     this.router.navigate(['/']);
   }
 
-
+ 
 
   getInitials(name: string): string {
     if (!name) return 'U';

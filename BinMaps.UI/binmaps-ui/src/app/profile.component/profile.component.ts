@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../auth.service';
 
@@ -60,7 +60,6 @@ export class ProfileComponent implements OnInit {
   uploadingPicture = false;
   savingProfile = false;
   
-  // Edit form
   editForm = {
     userName: '',
     email: '',
@@ -79,15 +78,53 @@ export class ProfileComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+  
+    const token = this.getAuthToken();
+    if (!token) {
+      console.error('No auth token found - redirecting to login');
+      this.router.navigate(['/login']);
+      return;
+    }
+
     this.loadProfile();
     this.loadReports();
     this.loadReputation();
   }
 
+
+
+  private getAuthToken(): string | null {
   
+    const token = localStorage.getItem('token');
+    if (token) {
+      return token;
+    }
+
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        return user.token || null;
+      } catch (e) {
+        console.error('Failed to parse user data', e);
+      }
+    }
+
+    return null;
+  }
+
+  private getAuthHeaders(): HttpHeaders {
+    const token = this.getAuthToken();
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
+  }
 
   private loadProfile() {
-    this.http.get<UserProfile>(`${this.apiUrl}/UserProfile`).subscribe({
+    const headers = this.getAuthHeaders();
+    
+    this.http.get<UserProfile>(`${this.apiUrl}/UserProfile`, { headers }).subscribe({
       next: (profile) => {
         this.profile = profile;
         this.editForm = {
@@ -96,38 +133,59 @@ export class ProfileComponent implements OnInit {
           phoneNumber: profile.phoneNumber || ''
         };
         this.loading = false;
+        console.log('Profile loaded successfully:', profile);
       },
       error: (err) => {
         console.error('Failed to load profile:', err);
         this.loading = false;
+        
+        if (err.status === 401) {
+          alert('Сесията ви е изтекла. Моля влезте отново.');
+          this.authService.logout();
+          this.router.navigate(['/login']);
+        }
       }
     });
   }
 
   private loadReports() {
-    this.http.get<Report[]>(`${this.apiUrl}/UserProfile/reports`).subscribe({
+    const headers = this.getAuthHeaders();
+    
+    this.http.get<Report[]>(`${this.apiUrl}/UserProfile/reports`, { headers }).subscribe({
       next: (reports) => {
         this.reports = reports;
+        console.log('Reports loaded:', reports.length);
       },
-      error: (err) => console.error('Failed to load reports:', err)
+      error: (err) => {
+        console.error('Failed to load reports:', err);
+        if (err.status === 401) {
+          console.log('Unauthorized - session expired');
+        }
+      }
     });
   }
 
   private loadReputation() {
-    this.http.get<ReputationInfo>(`${this.apiUrl}/UserProfile/reputation`).subscribe({
+    const headers = this.getAuthHeaders();
+    
+    this.http.get<ReputationInfo>(`${this.apiUrl}/UserProfile/reputation`, { headers }).subscribe({
       next: (info) => {
         this.reputationInfo = info;
+        console.log('Reputation loaded:', info);
       },
-      error: (err) => console.error('Failed to load reputation:', err)
+      error: (err) => {
+        console.error('Failed to load reputation:', err);
+        if (err.status === 401) {
+          console.log('Unauthorized - session expired');
+        }
+      }
     });
   }
 
- 
 
   toggleEditMode() {
     this.editMode = !this.editMode;
     if (!this.editMode && this.profile) {
-    
       this.editForm = {
         userName: this.profile.userName,
         email: this.profile.email,
@@ -138,8 +196,9 @@ export class ProfileComponent implements OnInit {
 
   saveProfile() {
     this.savingProfile = true;
+    const headers = this.getAuthHeaders();
 
-    this.http.put(`${this.apiUrl}/UserProfile`, this.editForm).subscribe({
+    this.http.put(`${this.apiUrl}/UserProfile`, this.editForm, { headers }).subscribe({
       next: (response: any) => {
         console.log('Profile updated:', response);
         this.loadProfile();
@@ -150,19 +209,25 @@ export class ProfileComponent implements OnInit {
       error: (err) => {
         console.error('Failed to update profile:', err);
         this.savingProfile = false;
-        alert('Грешка при актуализация на профила');
+        
+        if (err.status === 401) {
+          alert('Сесията ви е изтекла. Моля влезте отново.');
+          this.authService.logout();
+          this.router.navigate(['/login']);
+        } else {
+          alert('Грешка при актуализация на профила');
+        }
       }
     });
   }
 
- 
+  
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       this.selectedFile = input.files[0];
 
-      
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.previewUrl = e.target.result;
@@ -181,7 +246,13 @@ export class ProfileComponent implements OnInit {
     const formData = new FormData();
     formData.append('file', this.selectedFile);
 
-    this.http.post<any>(`${this.apiUrl}/UserProfile/upload-picture`, formData).subscribe({
+    const token = this.getAuthToken();
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+      
+    });
+
+    this.http.post<any>(`${this.apiUrl}/UserProfile/upload-picture`, formData, { headers }).subscribe({
       next: (response) => {
         console.log('Picture uploaded:', response);
         this.loadProfile();
@@ -193,7 +264,14 @@ export class ProfileComponent implements OnInit {
       error: (err) => {
         console.error('Failed to upload picture:', err);
         this.uploadingPicture = false;
-        alert(err.error?.error || 'Грешка при качване на снимката');
+        
+        if (err.status === 401) {
+          alert('Сесията ви е изтекла. Моля влезте отново.');
+          this.authService.logout();
+          this.router.navigate(['/login']);
+        } else {
+          alert(err.error?.error || 'Грешка при качване на снимката');
+        }
       }
     });
   }
@@ -203,14 +281,23 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
-    this.http.delete(`${this.apiUrl}/UserProfile/picture`).subscribe({
+    const headers = this.getAuthHeaders();
+
+    this.http.delete(`${this.apiUrl}/UserProfile/picture`, { headers }).subscribe({
       next: () => {
         this.loadProfile();
         alert('Снимката е изтрита');
       },
       error: (err) => {
         console.error('Failed to delete picture:', err);
-        alert('Грешка при изтриване на снимката');
+        
+        if (err.status === 401) {
+          alert('Сесията ви е изтекла. Моля влезте отново.');
+          this.authService.logout();
+          this.router.navigate(['/login']);
+        } else {
+          alert('Грешка при изтриване на снимката');
+        }
       }
     });
   }
@@ -219,7 +306,6 @@ export class ProfileComponent implements OnInit {
     this.selectedFile = null;
     this.previewUrl = null;
   }
-
 
 
   getProfilePictureUrl(): string {
