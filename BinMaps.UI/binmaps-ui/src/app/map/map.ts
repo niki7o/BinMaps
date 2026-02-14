@@ -4,6 +4,7 @@ import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../auth.service';
+import { HttpHeaders } from '@angular/common/http';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
 
@@ -641,39 +642,58 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const reportTypeSelect = document.getElementById('report-type') as HTMLSelectElement;
     const imageInput = document.getElementById('report-image') as HTMLInputElement;
 
+    // Map string values to enum numbers
+    const reportTypeMap: { [key: string]: number } = {
+      'Full': 0,
+      'Fire': 1,
+      'SensorBroken': 2,
+      'TruckProblem': 3,
+      'ContainerDamage': 4
+    };
+
+    const reportTypeValue = reportTypeMap[reportTypeSelect.value] ?? 0;
+
     const formData = new FormData();
     formData.append('TrashContainerId', this.selectedBinForReport.id.toString());
-    formData.append('ReportType', reportTypeSelect.value);
-
+    formData.append('ReportType', reportTypeValue.toString()); 
     if (imageInput.files && imageInput.files[0]) {
       formData.append('Photo', imageInput.files[0]);
     }
 
-    const token = localStorage.getItem('token');
-    
-    fetch('https://localhost:7277/api/reports', {
-      method: 'POST',
-      headers: {
+    const token = localStorage.getItem('token') || 
+                  JSON.parse(localStorage.getItem('user') || '{}').token;
+
+
+    this.http.post('https://localhost:7277/api/reports', formData, {
+      headers: new HttpHeaders({
         'Authorization': `Bearer ${token}`
+      })
+    }).subscribe({
+      next: (result: any) => {
+        alert('Докладването е изпратено успешно!');
+        this.selectedBinForReport = null;
+        
+        const input = document.getElementById('selected-bin-id') as HTMLInputElement;
+        if (input) input.value = '';
+        reportTypeSelect.value = 'Full';
+        imageInput.value = '';
       },
-      body: formData
-    })
-    .then(response => response.json())
-    .then(result => {
-      alert('Докладването е изпратено успешно!');
-      this.selectedBinForReport = null;
-      
-      const input = document.getElementById('selected-bin-id') as HTMLInputElement;
-      if (input) input.value = '';
-      reportTypeSelect.value = 'Full';
-      imageInput.value = '';
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('Възникна грешка при изпращането');
+      error: (error) => {
+        console.error('Error submitting report:', error);
+        
+        if (error.status === 401) {
+          alert('Сесията ви е изтекла. Моля влезте отново.');
+          this.router.navigate(['/login']);
+        } else if (error.status === 500) {
+          const errorMsg = error.error?.error || 'Грешка на сървъра';
+          alert(`Грешка: ${errorMsg}`);
+          console.error('Server error:', error.error);
+        } else {
+          alert('Възникна грешка при изпращането');
+        }
+      }
     });
   }
-
   getInitials(name: string): string {
     if (!name) return 'U';
     const parts = name.split(' ').filter(p => p.length > 0);

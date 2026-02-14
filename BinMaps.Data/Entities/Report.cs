@@ -13,8 +13,8 @@ namespace BinMaps.Data.Entities
         [Key]
         public int Id { get; set; }
 
-        [Required]
-        public string Description { get; set; }
+        [MaxLength(500)]
+        public string? Description { get; set; }
 
         [ForeignKey(nameof(TrashContainer))]
         public int? TrashContainerId { get; set; }

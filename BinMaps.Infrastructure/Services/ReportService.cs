@@ -11,7 +11,7 @@ namespace BinMaps.Infrastructure.Services
     {
         private readonly IRepository<Report, int> _reportRepo;
         private readonly IAIService _aiService;
-        private readonly UserManager<User> _userManager; 
+        private readonly UserManager<User> _userManager;
 
         public ReportService(IRepository<Report, int> reportRepo, IAIService aiService, UserManager<User> userManager)
         {
@@ -35,11 +35,15 @@ namespace BinMaps.Infrastructure.Services
 
             var finalConfidence = CalculateFinalConfidence(aiResult, reputation);
 
+            // FIXED: Generate default description based on ReportType
+            string description = dto.Description ?? GetDefaultDescription(dto.ReportType);
+
             var report = new Report
             {
                 TrashContainerId = dto.TrashContainerId,
                 UserId = userId,
                 UserName = userName,
+                Description = description,  // ADDED!
                 ReportType = dto.ReportType,
                 AI_Score = aiResult?.Confidence ?? 0,
                 UserReputationOnSubmit = reputation,
@@ -96,6 +100,20 @@ namespace BinMaps.Infrastructure.Services
         {
             if (ai == null) return reputation * 0.4;
             return (ai.Confidence * 0.6) + (reputation * 0.4);
+        }
+
+       
+        private string GetDefaultDescription(ReportType reportType)
+        {
+            return reportType switch
+            {
+                ReportType.Full => "Контейнерът е препълнен",
+                ReportType.Fire => "Пожар в контейнер",
+                ReportType.SensorBroken => "Повреден сензор",
+                ReportType.TruckProblem => "Проблем с камиона",
+                ReportType.ContainerDamage => "Повреден контейнер",
+                _ => "Докладване на проблем"
+            };
         }
     }
 }

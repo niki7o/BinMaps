@@ -17,5 +17,8 @@ namespace BinMaps.Shared.DTOs
         public ReportType ReportType { get; set; }
 
         public IFormFile? Photo { get; set; }
+
+        [MaxLength(500)]
+        public string? Description { get; set; }
     }   
 }
