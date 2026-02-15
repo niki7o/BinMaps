@@ -8,6 +8,6 @@ namespace BinMaps.Infrastructure.Services.Interfaces
 {
     public interface ITruckRouteService
     {
-        Task<IEnumerable<TrashContainerRouteDto>> GenerateRouteAsync(int truckId, TrashType? overrideType = null);
+        Task<RouteResultDto> GenerateRouteAsync(int truckId, TrashType? overrideType = null);
     }
 }

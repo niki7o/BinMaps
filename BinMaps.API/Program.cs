@@ -62,9 +62,11 @@ namespace BinMaps.API
           
             builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
             builder.Services.AddScoped<ITruckRouteService, TruckRouteService>();
+            builder.Services.AddHostedService<ContainerDynamicsService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddScoped<IAIService, AIService>();
+
 
             builder.Services.AddCors(options =>
             {

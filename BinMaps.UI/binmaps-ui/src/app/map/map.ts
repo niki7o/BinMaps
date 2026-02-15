@@ -58,6 +58,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private currentAnimationInterval?: number;
 
+
   private http = inject(HttpClient);
   private router = inject(Router);
   private authService = inject(AuthService);
@@ -70,6 +71,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   selectedAreaId: string = '';
   selectedTrashType: number = 0;
+  truckRoute: any[] = [];
+
+routeLayer: L.Polyline | null = null;
+currentTruckLoad = 0;
+simulationActive = false;
+
+  
 
   ngOnInit() {
     this.authService.currentUser$
@@ -129,7 +137,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap',
+      
       className: 'map-tiles'
     }).addTo(this.map);
 
@@ -404,17 +412,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     return icons[type] || icons[0];
   }
 
-  private getTypeIcon(type: number): string {
-    const iconPaths: { [key: number]: string } = {
-      0: '/assets/icons/bin-mixed.svg',
-      1: '/assets/icons/bin-plastic.svg',
-      2: '/assets/icons/bin-paper.svg',
-      3: '/assets/icons/bin-glass.svg'
-    };
-    
-    const path = iconPaths[type] || iconPaths[0];
-    return `<img src="${path}" class="bin-type-icon" alt="bin-icon"/>`;
-  }
 
   private getFillColor(fillPercentage: number): string {
     if (fillPercentage >= 80) return '#ef4444';
@@ -606,6 +603,109 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       currentIndex++;
     }, 50);
   }
+
+  async visualizeTruckRoute(truckId: number) {
+  try {
+    const response = await this.http.get<any>(
+      `https://localhost:7277/api/trucks/${truckId}/route`
+    ).toPromise();
+    
+    this.truckRoute = response.route;
+    
+   
+    if (this.routeLayer) {
+      this.map.removeLayer(this.routeLayer);
+    }
+    
+   
+    const routePoints = this.truckRoute.map(stop => 
+      [stop.locationY, stop.locationX] as [number, number]
+    );
+    
+    this.routeLayer = L.polyline(routePoints, {
+      color: '#3b82f6',
+      weight: 4,
+      opacity: 0.7,
+      dashArray: '10, 5'
+    }).addTo(this.map);
+    
+    
+    this.truckRoute.forEach((stop, index) => {
+      const marker = L.marker([stop.locationY, stop.locationX], {
+        icon: L.divIcon({
+          className: 'route-stop-marker',
+          html: `<div class="stop-number">${index + 1}</div>`,
+          iconSize: [30, 30]
+        })
+      }).addTo(this.map);
+      
+      marker.bindPopup(`
+        <strong>Спирка ${index + 1}</strong><br>
+        Пълнота: ${stop.fillPercentage}%<br>
+        Товар: ${stop.estimatedLoad.toFixed(1)} л
+      `);
+    });
+    
+    
+    alert(`
+      Маршрут създаден!
+      Контейнери: ${response.containersCount}
+      Разстояние: ${response.totalDistance.toFixed(2)} км
+      Товар: ${response.totalLoad.toFixed(0)} / ${response.truckCapacity} л
+      Време: ${response.estimatedTimeMinutes} мин
+    `);
+    
+  } catch (error) {
+    console.error('Error loading route:', error);
+    alert('Грешка при зареждане на маршрут');
+  }
+  }
+
+async simulateTruckRoute() {
+  if (!this.truckRoute || this.truckRoute.length === 0) {
+    alert('Първо заредете маршрут');
+    return;
+  }
+  
+  this.simulationActive = true;
+  this.currentTruckLoad = 0;
+  
+ 
+  const truckIcon = L.divIcon({
+    className: 'truck-marker',
+    html: '<div class="truck-icon">🚛</div>',
+    iconSize: [40, 40]
+  });
+  
+  for (let i = 0; i < this.truckRoute.length; i++) {
+    if (!this.simulationActive) break;
+    
+    const stop = this.truckRoute[i];
+    
+   
+    if (this.truckMarker) {
+      this.map.removeLayer(this.truckMarker);
+    }
+    
+    this.truckMarker = L.marker([stop.locationY, stop.locationX], {
+      icon: truckIcon
+    }).addTo(this.map);
+    
+    this.currentTruckLoad += stop.estimatedLoad;
+    
+    console.log(`Спирка ${i + 1}: Товар ${this.currentTruckLoad.toFixed(0)} л`);
+    
+   
+    await this.http.put(`https://localhost:7277/api/containers/${stop.id}/empty`, {}).toPromise();
+    
+    
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+  
+  this.simulationActive = false;
+  alert(`Маршрут завършен! Общо събран товар: ${this.currentTruckLoad.toFixed(0)} л`);
+}
+
 
   private stopRoute() {
     if (this.currentAnimationInterval) {

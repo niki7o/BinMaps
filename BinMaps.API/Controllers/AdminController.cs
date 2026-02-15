@@ -5,6 +5,8 @@ using BinMaps.Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using System.ComponentModel;
 
 namespace BinMaps.API.Controllers
 {
@@ -19,19 +21,24 @@ namespace BinMaps.API.Controllers
         private readonly IRepository<Truck, int> _truckRepo;
         private readonly UserManager<User> _userManager;
         private readonly IReportService _reportService;
+        private readonly IServiceProvider _serviceProvider;
+
 
         public AdminController(
             IRepository<Report, int> reportRepo,
             IRepository<TrashContainer, int> containerRepo,
             IRepository<Truck, int> truckRepo,
             UserManager<User> userManager,
-            IReportService reportService)
+            IReportService reportService,
+            
+            IServiceProvider serviceProvider)
         {
             _reportRepo = reportRepo;
             _containerRepo = containerRepo;
             _truckRepo = truckRepo;
             _userManager = userManager;
             _reportService = reportService;
+            _serviceProvider = serviceProvider;
         }
 
         [HttpGet("reports")]
@@ -44,10 +51,57 @@ namespace BinMaps.API.Controllers
         [HttpPost("reports/{id}/approve")]
         public async Task<IActionResult> ApproveReport(int id)
         {
-            await _reportService.ApproveAsync(id);
-            return Ok(new { message = "Репортът е одобрен" });
-        }
+            var report = await _reportRepo.GetByIdAsync(id);
+            if (report == null)
+                return NotFound();
 
+         
+            await _reportService.ApproveAsync(id);
+
+            
+            if (report.TrashContainerId.HasValue)
+            {
+                var reportTypeMap = new Dictionary<ReportType, string>
+        {
+            { ReportType.Full, "Full" },
+            { ReportType.Fire, "Fire" },
+            { ReportType.SensorBroken, "SensorBroken" },
+            { ReportType.ContainerDamage, "ContainerDamage" }
+        };
+
+                var reportTypeString = reportTypeMap.GetValueOrDefault(report.ReportType, "Full");
+
+               
+                var containerRepo = _serviceProvider.GetRequiredService<IRepository<TrashContainer, int>>();
+                var container = await containerRepo.GetByIdAsync(report.TrashContainerId.Value);
+
+                if (container != null)
+                {
+                    switch (report.ReportType)
+                    {
+                        case ReportType.Full:
+                            container.FillPercentage = Math.Max(container.FillPercentage, 90);
+                            break;
+                        case ReportType.Fire:
+                            container.Status = TrashContainerStatus.Fire;
+                            if (container.HasSensor) container.Temperature = 60;
+                            break;
+                        case ReportType.SensorBroken:
+                            container.HasSensor = false;
+                            container.Temperature = null;
+                            break;
+                        case ReportType.ContainerDamage:
+                            container.Status = TrashContainerStatus.Offline;
+                            break;
+                    }
+
+                    await containerRepo.UpdateAsync(container);
+                }
+            }
+
+            return Ok(new { message = "Репортът е одобрен и контейнерът е актуализиран" });
+        }
+       
         [HttpPost("reports/{id}/reject")]
         public async Task<IActionResult> RejectReport(int id)
         {
