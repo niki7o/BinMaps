@@ -116,7 +116,7 @@ export class Header implements OnInit, OnDestroy {
   }
 
   navigateToAdmin() {
-    this.router.navigate(['/admin-dashboard']);
+    this.router.navigate(['/admin']);
     this.showUserMenu = false;
   }
 

@@ -1,12 +1,13 @@
 import { Component, AfterViewInit, ViewEncapsulation, inject, OnInit, OnDestroy } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../auth.service';
-import { HttpHeaders } from '@angular/common/http';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
+
 
 interface User {
   userName: string;
@@ -26,22 +27,51 @@ interface Bin {
   locationY: number;
 }
 
-interface RoutePoint {
+interface RouteResult {
+  truckId: number;
+  areaId: string;
+  trashType: number;
+  route: RouteStop[];
+  totalDistance: number;
+  totalLoad: number;
+  truckCapacity: number;
+  capacityUtilization: number;
+  containersCount: number;
+  estimatedTimeMinutes: number;
+  message: string;
+}
+
+interface RouteStop {
   id: number;
+  areaId: string;
+  capacity: number;
+  fillPercentage: number;
+  hasSensor: boolean;
   locationX: number;
   locationY: number;
-  fillPercentage: number;
+  temperature: number | null;
+  trashType: number;
+  status: number | null;
+  stopNumber: number;
+  distanceFromPrevious: number;
+  estimatedLoad: number;
 }
+
+
 
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './map.html',
   styleUrls: ['./map.css'],
   encapsulation: ViewEncapsulation.None
 })
 export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
+
+ 
+
+  private readonly API_URL = 'https://localhost:7277/api';
   private map!: L.Map;
   private cluster = L.markerClusterGroup({
     maxClusterRadius: 50,
@@ -56,28 +86,29 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private truckMarker?: L.Marker;
   private selectedBinForReport: Bin | null = null;
   private destroy$ = new Subject<void>();
-  private currentAnimationInterval?: number;
-
+  private navigationInterval?: number;
 
   private http = inject(HttpClient);
   private router = inject(Router);
   private authService = inject(AuthService);
 
+  
   currentUser: User | null = null;
   isAdmin = false;
   isDriver = false;
   isUser = false;
   isGuest = true;
 
+  
   selectedAreaId: string = '';
   selectedTrashType: number = 0;
-  truckRoute: any[] = [];
+  routeResult: RouteResult | null = null;
+  routeActive = false;
+  navigationActive = false;
+  currentStop = 0;
+  currentTruckLoad = 0;
 
-routeLayer: L.Polyline | null = null;
-currentTruckLoad = 0;
-simulationActive = false;
 
-  
 
   ngOnInit() {
     this.authService.currentUser$
@@ -88,13 +119,19 @@ simulationActive = false;
       });
   }
 
+  ngAfterViewInit(): void {
+    this.initializeMap();
+    this.loadBins();
+    this.initMapControls();
+  }
+
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
-    if (this.currentAnimationInterval) {
-      clearInterval(this.currentAnimationInterval);
-    }
+    this.stopNavigation();
   }
+
+  
 
   private updateUserRole() {
     if (!this.currentUser) {
@@ -110,16 +147,7 @@ simulationActive = false;
     }
   }
 
-  logout() {
-    this.authService.logout();
-    this.router.navigate(['/']);
-  }
-
-  ngAfterViewInit(): void {
-    this.initializeMap();
-    this.loadBins();
-    this.initMapControls();
-  }
+  
 
   private initializeMap() {
     const sofiaCenter: L.LatLngExpression = [42.6977, 23.3219];
@@ -137,7 +165,6 @@ simulationActive = false;
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      
       className: 'map-tiles'
     }).addTo(this.map);
 
@@ -146,11 +173,334 @@ simulationActive = false;
 
   private initMapControls() {
     this.initFilterControl();
-    
-    if (this.isDriver || this.isAdmin) {
-      this.initRouteControl();
+  }
+
+  private loadBins() {
+    this.http.get<Bin[]>(`${this.API_URL}/containers`).subscribe({
+      next: (bins) => {
+        this.allBins = bins;
+        this.renderBins(this.allBins);
+      },
+      error: (err) => console.error('Error loading bins:', err)
+    });
+  }
+
+ 
+  async generateRoute() {
+    if (!this.selectedAreaId) {
+      alert('Моля изберете зона');
+      return;
+    }
+
+    try {
+      const token = this.getAuthToken();
+      if (!token) {
+        alert('Сесията ви е изтекла');
+        this.router.navigate(['/login']);
+        return;
+      }
+
+      console.log(`Generating route: Area=${this.selectedAreaId}, TrashType=${this.selectedTrashType}`);
+
+      const response = await this.http.get<RouteResult>(
+        `${this.API_URL}/trucks/route`,
+        {
+          params: {
+            areaId: this.selectedAreaId,
+            trashType: this.selectedTrashType.toString()
+          },
+          headers: new HttpHeaders({
+            'Authorization': `Bearer ${token}`
+          })
+        }
+      ).toPromise();
+
+      if (!response) {
+        alert('Грешка при генериране на маршрут');
+        return;
+      }
+
+      if (!response.route || response.route.length === 0) {
+        alert(response.message || 'Няма контейнери за събиране');
+        return;
+      }
+
+      this.routeResult = response;
+      this.routeActive = true;
+      this.visualizeRoute();
+
+      console.log('Route generated successfully:', response);
+
+    } catch (error: any) {
+      console.error('Route generation error:', error);
+      
+      if (error.status === 401) {
+        alert('Сесията ви е изтекла');
+        this.router.navigate(['/login']);
+      } else if (error.status === 404) {
+        alert('Няма наличен камион в тази зона');
+      } else {
+        alert('Грешка при генериране на маршрут');
+      }
     }
   }
+
+ 
+  private visualizeRoute() {
+    if (!this.routeResult) return;
+
+   
+    this.clearRouteVisualization();
+
+    const route = this.routeResult.route;
+
+  
+    const routePoints = route.map(stop => 
+      [stop.locationY, stop.locationX] as [number, number]
+    );
+
+    this.routeLine = L.polyline(routePoints, {
+      color: '#3b82f6',
+      weight: 4,
+      opacity: 0.7,
+      dashArray: '10, 5'
+    }).addTo(this.map);
+
+   
+    route.forEach((stop) => {
+      const marker = L.marker([stop.locationY, stop.locationX], {
+        icon: L.divIcon({
+          className: 'route-stop-marker',
+          html: `<div class="stop-number">${stop.stopNumber}</div>`,
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
+        })
+      }).addTo(this.map);
+
+      marker.bindPopup(`
+        <div class="route-popup">
+          <strong>Спирка ${stop.stopNumber}</strong>
+          <p>Контейнер #${stop.id}</p>
+          <p>Пълнота: ${stop.fillPercentage}%</p>
+          <p>Товар: ${stop.estimatedLoad.toFixed(1)} л</p>
+          <p>Разстояние: ${stop.distanceFromPrevious.toFixed(2)} км</p>
+        </div>
+      `);
+
+      this.routeMarkers.push(marker);
+    });
+
+   
+    this.map.fitBounds(L.latLngBounds(routePoints));
+  }
+
+  
+  async startNavigation() {
+    if (!this.routeResult || !this.routeResult.route.length) {
+      alert('Няма активен маршрут');
+      return;
+    }
+
+    this.navigationActive = true;
+    this.currentStop = 0;
+    this.currentTruckLoad = 0;
+
+   
+    const truckIcon = L.divIcon({
+      className: 'truck-marker-active',
+      html: `
+        <div class="truck-icon">
+          <svg viewBox="0 0 24 24" fill="#3b82f6" stroke="white" stroke-width="1.5">
+            <rect x="1" y="3" width="15" height="13"/>
+            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+            <circle cx="5.5" cy="18.5" r="2.5"/>
+            <circle cx="18.5" cy="18.5" r="2.5"/>
+          </svg>
+        </div>
+      `,
+      iconSize: [48, 48],
+      iconAnchor: [24, 24]
+    });
+
+  
+    for (let i = 0; i < this.routeResult.route.length; i++) {
+      if (!this.navigationActive) break;
+
+      const stop = this.routeResult.route[i];
+      this.currentStop = i + 1;
+
+     
+      if (this.truckMarker) {
+        this.map.removeLayer(this.truckMarker);
+      }
+
+      this.truckMarker = L.marker([stop.locationY, stop.locationX], {
+        icon: truckIcon
+      }).addTo(this.map);
+
+      this.map.panTo([stop.locationY, stop.locationX]);
+
+     
+      this.currentTruckLoad += stop.estimatedLoad;
+
+      console.log(`Stop ${i + 1}: Container #${stop.id}, Load: ${this.currentTruckLoad.toFixed(0)} л`);
+
+      
+      try {
+        await this.http.put(`${this.API_URL}/containers/${stop.id}/empty`, {}).toPromise();
+        console.log(`Container #${stop.id} emptied successfully`);
+      } catch (err) {
+        console.error(`Error emptying container #${stop.id}:`, err);
+      }
+
+      
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+
+    this.navigationActive = false;
+    alert(`Маршрут завършен!\nОбщо събран товар: ${this.currentTruckLoad.toFixed(0)} л`);
+  }
+
+ 
+  private stopNavigation() {
+    this.navigationActive = false;
+    if (this.navigationInterval) {
+      clearInterval(this.navigationInterval);
+      this.navigationInterval = undefined;
+    }
+  }
+
+ 
+  stopRoute() {
+    this.stopNavigation();
+    this.clearRouteVisualization();
+    this.routeResult = null;
+    this.routeActive = false;
+    this.currentStop = 0;
+    this.currentTruckLoad = 0;
+    this.selectedAreaId = '';
+    this.selectedTrashType = 0;
+  }
+
+ 
+  private clearRouteVisualization() {
+    if (this.routeLine) {
+      this.map.removeLayer(this.routeLine);
+      this.routeLine = undefined;
+    }
+
+    if (this.truckMarker) {
+      this.map.removeLayer(this.truckMarker);
+      this.truckMarker = undefined;
+    }
+
+    this.routeMarkers.forEach(marker => this.map.removeLayer(marker));
+    this.routeMarkers = [];
+  }
+
+  
+
+  private renderBins(bins: Bin[]) {
+    this.cluster.clearLayers();
+    
+    bins.forEach(bin => {
+      const marker = L.marker(
+        [bin.locationY, bin.locationX],
+        { icon: this.createBinIcon(bin) }
+      );
+
+      marker.bindPopup(this.createPopupContent(bin));
+
+      if (this.isUser || this.isDriver) {
+        marker.on('click', () => {
+          this.selectedBinForReport = bin;
+          this.updateReportForm(bin);
+        });
+      }
+
+      this.cluster.addLayer(marker);
+    });
+  }
+
+  private createBinIcon(bin: Bin): L.DivIcon {
+    const fillColor = this.getFillColor(bin.fillPercentage);
+    const isFire = bin.status === 1 || (bin.temperature !== null && bin.temperature > 55);
+    const typeIconPath = this.getTypeIconPath(bin.trashType);
+    
+    return L.divIcon({
+      className: 'custom-bin-marker',
+      html: `
+        <div class="bin-marker ${isFire ? 'fire' : ''}">
+          <div class="bin-id">#${bin.id}</div>
+          <div class="bin-icon-wrapper" style="border-color: ${fillColor};">
+            <img src="${typeIconPath}" class="bin-type-icon" alt="Bin"/>
+            <div class="fill-indicator-ring" style="background: conic-gradient(${fillColor} ${bin.fillPercentage}%, transparent ${bin.fillPercentage}%);"></div>
+            ${bin.hasSensor ? '<div class="sensor-dot"></div>' : ''}
+            ${isFire ? '<div class="fire-icon">🔥</div>' : ''}
+          </div>
+        </div>
+      `,
+      iconSize: [50, 50],
+      iconAnchor: [25, 25]
+    });
+  }
+
+  private getTypeIconPath(type: number): string {
+    const icons: { [key: number]: string } = {
+      0: 'assets/icons/bin-mixed.svg',
+      1: 'assets/icons/bin-plastic.svg',
+      2: 'assets/icons/bin-paper.svg',
+      3: 'assets/icons/bin-glass.svg'
+    };
+    return icons[type] || icons[0];
+  }
+
+  private getFillColor(fillPercentage: number): string {
+    if (fillPercentage >= 80) return '#ef4444';
+    if (fillPercentage >= 50) return '#f59e0b';
+    return '#10b981';
+  }
+
+  private createPopupContent(bin: Bin): string {
+    const typeNames = ['Смесен', 'Пластмаса', 'Хартия', 'Стъкло'];
+    const statusNames = ['Активен', 'Пожар', 'Повреден', 'Offline'];
+    
+    return `
+      <div class="bin-popup">
+        <div class="popup-header">
+          <h3>Контейнер #${bin.id}</h3>
+          <span class="popup-badge">${typeNames[bin.trashType]}</span>
+        </div>
+        <div class="popup-body">
+          <div class="popup-stat">
+            <span class="stat-label">Запълване</span>
+            <div class="stat-bar">
+              <div class="stat-fill" style="width: ${bin.fillPercentage}%; background: ${this.getFillColor(bin.fillPercentage)}"></div>
+              <span class="stat-value">${bin.fillPercentage}%</span>
+            </div>
+          </div>
+          ${bin.temperature !== null ? `
+            <div class="popup-stat">
+              <span class="stat-label">Температура</span>
+              <span class="stat-value">${bin.temperature}°C</span>
+            </div>
+          ` : ''}
+          <div class="popup-stat">
+            <span class="stat-label">Сензор</span>
+            <span class="stat-value">${bin.hasSensor ? '✓ Активен' : '✗ Няма'}</span>
+          </div>
+          ${bin.status !== null ? `
+            <div class="popup-stat">
+              <span class="stat-label">Статус</span>
+              <span class="stat-value">${statusNames[bin.status]}</span>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  
 
   private initFilterControl() {
     const filterControl = (L.Control as any).extend({
@@ -169,54 +519,21 @@ simulationActive = false;
           <div class="filter-section">
             <label class="filter-label">Тип отпадък</label>
             <div class="filter-options">
-              <button class="filter-btn" data-type="all">
-                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
-                <span>Всички</span>
-              </button>
-              <button class="filter-btn" data-type="1">
-                <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                <span>Пластмаса</span>
-              </button>
-              <button class="filter-btn" data-type="2">
-                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16c0 1 1 2 2 2h12c1 0 2-1 2-2V8l-6-6z"/></svg>
-                <span>Хартия</span>
-              </button>
-              <button class="filter-btn" data-type="3">
-                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-                <span>Стъкло</span>
-              </button>
-              <button class="filter-btn" data-type="0">
-                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                <span>Смесен</span>
-              </button>
+              <button class="filter-btn active" data-type="all"><span>Всички</span></button>
+              <button class="filter-btn" data-type="1"><span>Пластмаса</span></button>
+              <button class="filter-btn" data-type="2"><span>Хартия</span></button>
+              <button class="filter-btn" data-type="3"><span>Стъкло</span></button>
+              <button class="filter-btn" data-type="0"><span>Смесен</span></button>
             </div>
           </div>
           <div class="filter-section">
             <label class="filter-label">Ниво на запълване</label>
             <div class="filter-options">
-              <button class="filter-btn" data-fill="all">
-                <div class="fill-indicator all"></div>
-                <span>Всички</span>
-              </button>
-              <button class="filter-btn" data-fill="low">
-                <div class="fill-indicator low"></div>
-                <span>< 40%</span>
-              </button>
-              <button class="filter-btn" data-fill="medium">
-                <div class="fill-indicator medium"></div>
-                <span>40-70%</span>
-              </button>
-              <button class="filter-btn" data-fill="high">
-                <div class="fill-indicator high"></div>
-                <span>> 70%</span>
-              </button>
+              <button class="filter-btn active" data-fill="all"><span>Всички</span></button>
+              <button class="filter-btn" data-fill="low"><span>< 40%</span></button>
+              <button class="filter-btn" data-fill="medium"><span>40-70%</span></button>
+              <button class="filter-btn" data-fill="high"><span>> 70%</span></button>
             </div>
-          </div>
-          <div class="filter-section">
-            <button class="filter-btn sensor-filter" data-sensor="true">
-              <div class="sensor-indicator active"></div>
-              <span>Само със сензор</span>
-            </button>
           </div>
         `;
 
@@ -244,232 +561,11 @@ simulationActive = false;
         this.updateActiveButton(container, '[data-fill]', e.currentTarget as HTMLElement);
       });
     });
-
-    container.querySelector('[data-sensor]')?.addEventListener('click', (e) => {
-      const btn = e.currentTarget as HTMLElement;
-      btn.classList.toggle('active');
-      this.applyFilter('sensor', btn.classList.contains('active'));
-    });
   }
 
   private updateActiveButton(container: HTMLElement, selector: string, activeBtn: HTMLElement) {
     container.querySelectorAll(selector).forEach(btn => btn.classList.remove('active'));
     activeBtn.classList.add('active');
-  }
-
-  private initRouteControl() {
-    const routeControl = (L.Control as any).extend({
-      options: { position: 'topright' },
-      onAdd: () => {
-        const container = L.DomUtil.create('div', 'route-control');
-        L.DomEvent.disableClickPropagation(container);
-        
-        container.innerHTML = `
-          <div class="route-header">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="1" y="3" width="15" height="13"/>
-              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-              <circle cx="5.5" cy="18.5" r="2.5"/>
-              <circle cx="18.5" cy="18.5" r="2.5"/>
-            </svg>
-            <span>${this.isDriver ? 'Навигация' : 'Маршрут'}</span>
-          </div>
-          <div class="route-content">
-            <select class="route-select" id="area-select">
-              <option value="">Избери зона</option>
-            </select>
-            <select class="route-select" id="type-select">
-              <option value="0">Смесен</option>
-              <option value="1">Пластмаса</option>
-              <option value="2">Хартия</option>
-              <option value="3">Стъкло</option>
-            </select>
-            <button class="route-btn-start" id="start-route-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="5 3 19 12 5 21 5 3"/>
-              </svg>
-              <span>Старт</span>
-            </button>
-            <button class="route-btn-stop hidden" id="stop-route-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="6" y="6" width="12" height="12"/>
-              </svg>
-              <span>Стоп</span>
-            </button>
-          </div>
-        `;
-
-        setTimeout(() => this.loadAreasForRoute(container), 100);
-        return container;
-      }
-    });
-
-    new routeControl().addTo(this.map);
-  }
-
-  private loadAreasForRoute(container: HTMLElement) {
-    this.http.get<Bin[]>('https://localhost:7277/api/containers').subscribe(bins => {
-      const uniqueAreas = [...new Set(bins.map(b => b.areaId))].sort();
-      const select = container.querySelector('#area-select') as HTMLSelectElement;
-      
-      uniqueAreas.forEach(area => {
-        const option = document.createElement('option');
-        option.value = area;
-        option.textContent = area;
-        select.appendChild(option);
-      });
-
-      container.querySelector('#start-route-btn')?.addEventListener('click', () => {
-        const areaId = (container.querySelector('#area-select') as HTMLSelectElement).value;
-        const trashType = Number((container.querySelector('#type-select') as HTMLSelectElement).value);
-        
-        if (areaId) {
-          this.startRouteNavigation(areaId, trashType);
-          this.toggleRouteButtons(container, true);
-        }
-      });
-
-      container.querySelector('#stop-route-btn')?.addEventListener('click', () => {
-        this.stopRoute();
-        this.toggleRouteButtons(container, false);
-      });
-    });
-  }
-
-  private toggleRouteButtons(container: HTMLElement, isRouteActive: boolean) {
-    const startBtn = container.querySelector('#start-route-btn');
-    const stopBtn = container.querySelector('#stop-route-btn');
-    
-    if (isRouteActive) {
-      startBtn?.classList.add('hidden');
-      stopBtn?.classList.remove('hidden');
-    } else {
-      startBtn?.classList.remove('hidden');
-      stopBtn?.classList.add('hidden');
-    }
-  }
-
-  private loadBins() {
-    this.http.get<Bin[]>('https://localhost:7277/api/containers').subscribe(bins => {
-      this.allBins = bins;
-      this.renderBins(this.allBins);
-    });
-  }
-
-  private renderBins(bins: Bin[]) {
-    this.cluster.clearLayers();
-    
-    bins.forEach(bin => {
-      const marker = L.marker(
-        [bin.locationY, bin.locationX],
-        { icon: this.createBinIcon(bin) }
-      );
-
-      const popupContent = this.createPopupContent(bin);
-      marker.bindPopup(popupContent);
-
-      if (this.isUser || this.isDriver) {
-        marker.on('click', () => {
-          this.selectedBinForReport = bin;
-          this.updateReportForm(bin);
-        });
-      }
-
-      this.cluster.addLayer(marker);
-    });
-  }
-
-  private createBinIcon(bin: Bin): L.DivIcon {
-    const fillColor = this.getFillColor(bin.fillPercentage);
-    const isFire = bin.status === 1 || (bin.temperature !== null && bin.temperature > 55);
-    const typeIconPath = this.getTypeIconPath(bin.trashType);
-    
-    return L.divIcon({
-      className: 'custom-bin-marker',
-      html: `
-        <div class="bin-marker ${isFire ? 'fire' : ''}">
-          <div class="bin-id">#${bin.id}</div>
-          <div class="bin-icon-wrapper" style="border-color: ${fillColor};">
-            <img src="${typeIconPath}" class="bin-type-icon" alt="Bin type"/>
-            <div class="fill-indicator-ring" style="background: conic-gradient(${fillColor} ${bin.fillPercentage}%, transparent ${bin.fillPercentage}%);"></div>
-            ${bin.hasSensor ? '<img src="assets/icons/sensor-dot.svg" class="sensor-dot" alt="Sensor"/>' : ''}
-            ${isFire ? '<img src="assets/icons/bin-fire.svg" class="fire-icon" alt="Fire"/>' : ''}
-          </div>
-        </div>
-      `,
-      iconSize: [50, 50],
-      iconAnchor: [25, 25]
-    });
-  }
-
-  private getTypeIconPath(type: number): string {
-    const icons: { [key: number]: string } = {
-      0: 'assets/icons/bin-mixed.svg',
-      1: 'assets/icons/bin-plastic.svg',
-      2: 'assets/icons/bin-paper.svg',
-      3: 'assets/icons/bin-glass.svg'
-    };
-    return icons[type] || icons[0];
-  }
-
-
-  private getFillColor(fillPercentage: number): string {
-    if (fillPercentage >= 80) return '#ef4444';
-    if (fillPercentage >= 50) return '#f59e0b';
-    return '#10b981';
-  }
-
-  private createPopupContent(bin: Bin): string {
-    const typeNames = ['Смесен', 'Пластмаса', 'Хартия', 'Стъкло'];
-    const statusNames = ['Активен', 'Пожар', 'Повреден', 'Offline'];
-    
-    return `
-      <div class="bin-popup">
-        <div class="popup-header">
-          <h3>Контейнер #${bin.id}</h3>
-          <span class="popup-badge type-${bin.trashType}">${typeNames[bin.trashType]}</span>
-        </div>
-        <div class="popup-body">
-          <div class="popup-stat">
-            <span class="stat-label">Запълване</span>
-            <div class="stat-bar">
-              <div class="stat-fill" style="width: ${bin.fillPercentage}%; background: ${this.getFillColor(bin.fillPercentage)}"></div>
-              <span class="stat-value">${bin.fillPercentage}%</span>
-            </div>
-          </div>
-          ${bin.temperature !== null ? `
-            <div class="popup-stat">
-              <span class="stat-label">Температура</span>
-              <span class="stat-value ${bin.temperature > 50 ? 'danger' : ''}">${bin.temperature}°C</span>
-            </div>
-          ` : ''}
-          <div class="popup-stat">
-            <span class="stat-label">Сензор</span>
-            <span class="stat-value">${bin.hasSensor ? '✓ Активен' : '✗ Няма'}</span>
-          </div>
-          ${bin.status !== null ? `
-            <div class="popup-stat">
-              <span class="stat-label">Статус</span>
-              <span class="stat-value status-${bin.status}">${statusNames[bin.status]}</span>
-            </div>
-          ` : ''}
-        </div>
-        ${(this.isUser || this.isDriver) ? `
-          <div class="popup-footer">
-            <button class="popup-btn" onclick="window.selectBinForReport(${bin.id})">
-              Докладване
-            </button>
-          </div>
-        ` : ''}
-      </div>
-    `;
-  }
-
-  private updateReportForm(bin: Bin) {
-    const input = document.getElementById('selected-bin-id') as HTMLInputElement;
-    if (input) {
-      input.value = `Контейнер #${bin.id}`;
-    }
   }
 
   private applyFilter(type: string, value: any) {
@@ -485,321 +581,81 @@ simulationActive = false;
       if (value === 'high') filtered = filtered.filter(b => b.fillPercentage > 70);
     }
 
-    if (type === 'sensor' && value === true) {
-      filtered = filtered.filter(b => b.hasSensor);
-    }
-
     this.renderBins(filtered);
   }
 
-  private startRouteNavigation(areaId: string, trashType: number) {
-    const encodedArea = encodeURIComponent(areaId);
-    
-    this.http.get<RoutePoint[]>(`https://localhost:7277/api/Trucks/route-by-area/${encodedArea}/${trashType}`)
-      .subscribe({
-        next: (points) => {
-          if (!points || points.length === 0) {
-            alert('Няма контейнери за събиране в тази зона');
-            return;
-          }
-
-          this.createRouteVisualization(points);
-        },
-        error: (err) => {
-          console.error('Route error:', err);
-          alert('Грешка при зареждане на маршрут');
-        }
-      });
-  }
-
-  private createRouteVisualization(points: RoutePoint[]) {
-    this.stopRoute();
-
-    const coords = points.map(p => `${p.locationX},${p.locationY}`).join(';');
-    const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=true`;
-
-    this.http.get<any>(url).subscribe({
-      next: (response) => {
-        if (response.code === 'Ok' && response.routes && response.routes.length > 0) {
-          const coordinates = response.routes[0].geometry.coordinates.map((c: number[]) => [c[1], c[0]] as L.LatLngExpression);
-          this.animateRoute(coordinates, points);
-          this.map.fitBounds(L.latLngBounds(coordinates));
-        }
-      },
-      error: (err) => {
-        console.error('OSRM error:', err);
-        this.createSimpleRoute(points);
-      }
-    });
-  }
-
-  private createSimpleRoute(points: RoutePoint[]) {
-    const coordinates = points.map(p => [p.locationY, p.locationX] as L.LatLngExpression);
-    this.animateRoute(coordinates, points);
-    this.map.fitBounds(L.latLngBounds(coordinates));
-  }
-
-  private animateRoute(path: L.LatLngExpression[], points: RoutePoint[]) {
-    this.routeLine = L.polyline(path, {
-      color: '#059669',
-      weight: 4,
-      opacity: 0.7,
-      dashArray: '10, 5'
-    }).addTo(this.map);
-
-    points.forEach((point, index) => {
-      const marker = L.marker([point.locationY, point.locationX], {
-        icon: L.divIcon({
-          className: 'route-point-marker',
-          html: `
-            <div class="route-point">
-              <div class="route-number">${index + 1}</div>
-            </div>
-          `,
-          iconSize: [30, 30],
-          iconAnchor: [15, 15]
-        })
-      }).addTo(this.map);
-
-      marker.bindPopup(`
-        <div class="route-popup">
-          <strong>Точка ${index + 1}</strong>
-          <p>Контейнер #${point.id}</p>
-          <p>Запълване: ${point.fillPercentage}%</p>
-        </div>
-      `);
-
-      this.routeMarkers.push(marker);
-    });
-
-    const truckIcon = L.divIcon({
-      className: 'truck-marker',
-      html: `
-        <div class="truck-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="1" y="3" width="15" height="13"/>
-            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-            <circle cx="5.5" cy="18.5" r="2.5"/>
-            <circle cx="18.5" cy="18.5" r="2.5"/>
-          </svg>
-        </div>
-      `,
-      iconSize: [40, 40],
-      iconAnchor: [20, 20]
-    });
-
-    this.truckMarker = L.marker(path[0], { icon: truckIcon }).addTo(this.map);
-
-    let currentIndex = 0;
-    this.currentAnimationInterval = window.setInterval(() => {
-      if (currentIndex >= path.length) {
-        if (this.currentAnimationInterval) {
-          clearInterval(this.currentAnimationInterval);
-        }
-        return;
-      }
-
-      this.truckMarker?.setLatLng(path[currentIndex]);
-      currentIndex++;
-    }, 50);
-  }
-
-  async visualizeTruckRoute(truckId: number) {
-  try {
-    const response = await this.http.get<any>(
-      `https://localhost:7277/api/trucks/${truckId}/route`
-    ).toPromise();
-    
-    this.truckRoute = response.route;
-    
-   
-    if (this.routeLayer) {
-      this.map.removeLayer(this.routeLayer);
-    }
-    
-   
-    const routePoints = this.truckRoute.map(stop => 
-      [stop.locationY, stop.locationX] as [number, number]
-    );
-    
-    this.routeLayer = L.polyline(routePoints, {
-      color: '#3b82f6',
-      weight: 4,
-      opacity: 0.7,
-      dashArray: '10, 5'
-    }).addTo(this.map);
-    
-    
-    this.truckRoute.forEach((stop, index) => {
-      const marker = L.marker([stop.locationY, stop.locationX], {
-        icon: L.divIcon({
-          className: 'route-stop-marker',
-          html: `<div class="stop-number">${index + 1}</div>`,
-          iconSize: [30, 30]
-        })
-      }).addTo(this.map);
-      
-      marker.bindPopup(`
-        <strong>Спирка ${index + 1}</strong><br>
-        Пълнота: ${stop.fillPercentage}%<br>
-        Товар: ${stop.estimatedLoad.toFixed(1)} л
-      `);
-    });
-    
-    
-    alert(`
-      Маршрут създаден!
-      Контейнери: ${response.containersCount}
-      Разстояние: ${response.totalDistance.toFixed(2)} км
-      Товар: ${response.totalLoad.toFixed(0)} / ${response.truckCapacity} л
-      Време: ${response.estimatedTimeMinutes} мин
-    `);
-    
-  } catch (error) {
-    console.error('Error loading route:', error);
-    alert('Грешка при зареждане на маршрут');
-  }
-  }
-
-async simulateTruckRoute() {
-  if (!this.truckRoute || this.truckRoute.length === 0) {
-    alert('Първо заредете маршрут');
-    return;
-  }
   
-  this.simulationActive = true;
-  this.currentTruckLoad = 0;
-  
- 
-  const truckIcon = L.divIcon({
-    className: 'truck-marker',
-    html: '<div class="truck-icon">🚛</div>',
-    iconSize: [40, 40]
-  });
-  
-  for (let i = 0; i < this.truckRoute.length; i++) {
-    if (!this.simulationActive) break;
-    
-    const stop = this.truckRoute[i];
-    
-   
-    if (this.truckMarker) {
-      this.map.removeLayer(this.truckMarker);
+
+  private updateReportForm(bin: Bin) {
+    const input = document.getElementById('selected-bin-id') as HTMLInputElement;
+    if (input) {
+      input.value = `Контейнер #${bin.id}`;
     }
-    
-    this.truckMarker = L.marker([stop.locationY, stop.locationX], {
-      icon: truckIcon
-    }).addTo(this.map);
-    
-    this.currentTruckLoad += stop.estimatedLoad;
-    
-    console.log(`Спирка ${i + 1}: Товар ${this.currentTruckLoad.toFixed(0)} л`);
-    
-   
-    await this.http.put(`https://localhost:7277/api/containers/${stop.id}/empty`, {}).toPromise();
-    
-    
-    await new Promise(resolve => setTimeout(resolve, 2000));
-  }
-  
-  this.simulationActive = false;
-  alert(`Маршрут завършен! Общо събран товар: ${this.currentTruckLoad.toFixed(0)} л`);
-}
-
-
-  private stopRoute() {
-    if (this.currentAnimationInterval) {
-      clearInterval(this.currentAnimationInterval);
-      this.currentAnimationInterval = undefined;
-    }
-
-    if (this.routeLine) {
-      this.map.removeLayer(this.routeLine);
-      this.routeLine = undefined;
-    }
-
-    if (this.truckMarker) {
-      this.map.removeLayer(this.truckMarker);
-      this.truckMarker = undefined;
-    }
-
-    this.routeMarkers.forEach(marker => this.map.removeLayer(marker));
-    this.routeMarkers = [];
   }
 
   submitReport() {
     if (!this.currentUser) {
-      alert('Моля влезте в системата за да докладвате проблем');
+      alert('Моля влезте в системата');
       this.router.navigate(['/login']);
       return;
     }
 
     if (!this.selectedBinForReport) {
-      alert('Моля изберете контейнер от картата');
+      alert('Моля изберете контейнер');
       return;
     }
 
     const reportTypeSelect = document.getElementById('report-type') as HTMLSelectElement;
     const imageInput = document.getElementById('report-image') as HTMLInputElement;
 
-    // Map string values to enum numbers
     const reportTypeMap: { [key: string]: number } = {
-      'Full': 0,
-      'Fire': 1,
-      'SensorBroken': 2,
-      'TruckProblem': 3,
-      'ContainerDamage': 4
+      'Full': 0, 'Fire': 1, 'SensorBroken': 2,
+      'TruckProblem': 3, 'ContainerDamage': 4
     };
 
     const reportTypeValue = reportTypeMap[reportTypeSelect.value] ?? 0;
-
     const formData = new FormData();
     formData.append('TrashContainerId', this.selectedBinForReport.id.toString());
-    formData.append('ReportType', reportTypeValue.toString()); 
+    formData.append('ReportType', reportTypeValue.toString());
+    
     if (imageInput.files && imageInput.files[0]) {
       formData.append('Photo', imageInput.files[0]);
     }
 
-    const token = localStorage.getItem('token') || 
-                  JSON.parse(localStorage.getItem('user') || '{}').token;
+    const token = this.getAuthToken();
+    if (!token) {
+      alert('Сесията ви е изтекла');
+      this.router.navigate(['/login']);
+      return;
+    }
 
-
-    this.http.post('https://localhost:7277/api/reports', formData, {
-      headers: new HttpHeaders({
-        'Authorization': `Bearer ${token}`
-      })
+    this.http.post(`${this.API_URL}/reports`, formData, {
+      headers: new HttpHeaders({ 'Authorization': `Bearer ${token}` })
     }).subscribe({
-      next: (result: any) => {
+      next: () => {
         alert('Докладването е изпратено успешно!');
         this.selectedBinForReport = null;
-        
         const input = document.getElementById('selected-bin-id') as HTMLInputElement;
         if (input) input.value = '';
-        reportTypeSelect.value = 'Full';
-        imageInput.value = '';
       },
       error: (error) => {
-        console.error('Error submitting report:', error);
-        
         if (error.status === 401) {
-          alert('Сесията ви е изтекла. Моля влезте отново.');
+          alert('Сесията ви е изтекла');
           this.router.navigate(['/login']);
-        } else if (error.status === 500) {
-          const errorMsg = error.error?.error || 'Грешка на сървъра';
-          alert(`Грешка: ${errorMsg}`);
-          console.error('Server error:', error.error);
         } else {
-          alert('Възникна грешка при изпращането');
+          alert('Грешка при изпращане');
         }
       }
     });
   }
-  getInitials(name: string): string {
-    if (!name) return 'U';
-    const parts = name.split(' ').filter(p => p.length > 0);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
+
+
+
+  private getAuthToken(): string | null {
+    return localStorage.getItem('token') || 
+           JSON.parse(localStorage.getItem('user') || '{}').token || 
+           null;
   }
+
+ 
 }

@@ -1,7 +1,8 @@
 <div class="map-page">
-
   <div class="map-layout">
-    <aside class="map-sidebar left" *ngIf="isUser || isDriver">
+    
+ 
+    <aside class="map-sidebar left" *ngIf="(isUser || isDriver) && !routeActive">
       <div class="sidebar-panel">
         <div class="panel-header">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -59,64 +60,130 @@
             <span>Изпрати докладване</span>
           </button>
         </div>
+      </div>
+    </aside>
 
-        <div class="panel-info" *ngIf="isDriver">
-          <div class="info-card">
+    <!-- ========================================= -->
+    <!-- DRIVER ROUTE PANEL - Driver Only -->
+    <!-- ========================================= -->
+    <aside class="map-sidebar right" *ngIf="isDriver">
+      <div class="sidebar-panel">
+        <div class="panel-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="3" width="15" height="13"/>
+            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+            <circle cx="5.5" cy="18.5" r="2.5"/>
+            <circle cx="18.5" cy="18.5" r="2.5"/>
+          </svg>
+          <h2>{{ routeActive ? 'Навигация' : 'Генериране на маршрут' }}</h2>
+        </div>
+
+        <!-- Route Configuration -->
+        <div class="panel-content" *ngIf="!routeActive">
+          <div class="form-group">
+            <label class="form-label">Зона</label>
+            <select class="form-select" [(ngModel)]="selectedAreaId">
+              <option value="">Избери зона</option>
+              <option value="Зона 1 - Надежда север">Зона 1 - Надежда север</option>
+              <option value="Зона 2 - Център">Зона 2 - Център</option>
+              <option value="Зона 3 - Люлин">Зона 3 - Люлин</option>
+              <option value="Зона 4 - Овча Купел">Зона 4 - Овча Купел</option>
+              <option value="Зона 5 - Юг и Витоша">Зона 5 - Юг и Витоша</option>
+              <option value="Зона 6 - Изток">Зона 6 - Изток</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Тип отпадък</label>
+            <select class="form-select" [(ngModel)]="selectedTrashType">
+              <option [value]="0">Смесен</option>
+              <option [value]="1">Пластмаса</option>
+              <option [value]="2">Хартия</option>
+              <option [value]="3">Стъкло</option>
+            </select>
+          </div>
+
+          <button 
+            class="btn-route" 
+            (click)="generateRoute()"
+            [disabled]="!selectedAreaId">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="16" x2="12" y2="12"/>
-              <line x1="12" y1="8" x2="12.01" y2="8"/>
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
             </svg>
-            <p>Използвайте контролите от дясно за навигация по маршрута</p>
+            <span>Генерирай маршрут</span>
+          </button>
+        </div>
+
+        <!-- Route Statistics & Navigation -->
+        <div class="panel-content" *ngIf="routeActive && routeResult">
+          <div class="route-stats">
+            <div class="stat-card">
+              <span class="stat-label">Спирки</span>
+              <span class="stat-value">{{ routeResult.containersCount }}</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Разстояние</span>
+              <span class="stat-value">{{ routeResult.totalDistance.toFixed(1) }} км</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Товар</span>
+              <span class="stat-value">{{ routeResult.totalLoad.toFixed(0) }} л</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Капацитет</span>
+              <span class="stat-value">{{ routeResult.capacityUtilization.toFixed(0) }}%</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Време</span>
+              <span class="stat-value">{{ routeResult.estimatedTimeMinutes }} мин</span>
+            </div>
+          </div>
+
+          <div class="route-actions">
+            <button 
+              class="btn-simulate" 
+              (click)="startNavigation()"
+              [disabled]="navigationActive">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              <span>Стартирай навигация</span>
+            </button>
+
+            <button 
+              class="btn-stop" 
+              (click)="stopRoute()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="6" width="12" height="12"/>
+              </svg>
+              <span>Нов маршрут</span>
+            </button>
+          </div>
+
+          <!-- Navigation Progress -->
+          <div class="navigation-progress" *ngIf="navigationActive">
+            <div class="progress-header">
+              <span>Спирка {{ currentStop }} / {{ routeResult.containersCount }}</span>
+              <span>{{ currentTruckLoad.toFixed(0) }} л / {{ routeResult.truckCapacity.toFixed(0) }} л</span>
+            </div>
+            <div class="progress-bar">
+              <div 
+                class="progress-fill" 
+                [style.width.%]="(currentStop / routeResult.containersCount) * 100">
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </aside>
-<aside class="map-sidebar right" *ngIf="isDriver">
-  <div class="sidebar-panel">
-    <div class="panel-header">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M9 17H7A5 5 0 0 1 7 7h2m6 10h2a5 5 0 0 0 0-10h-2"/>
-        <line x1="7" y1="12" x2="17" y2="12"/>
-      </svg>
-      <h2>Маршрут</h2>
-    </div>
 
-    <div class="panel-content">
-      <div class="route-controls">
-        <button class="btn-route" (click)="visualizeTruckRoute(1)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-          </svg>
-          Генерирай маршрут
-        </button>
-
-        <button class="btn-simulate" 
-                (click)="simulateTruckRoute()"
-                [disabled]="!truckRoute || truckRoute.length === 0">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="5 3 19 12 5 21 5 3"/>
-          </svg>
-          Стартирай симулация
-        </button>
-
-        <div class="truck-stats" *ngIf="truckRoute && truckRoute.length > 0">
-          <div class="stat-item">
-            <span class="stat-label">Спирки:</span>
-            <span class="stat-value">{{ truckRoute.length }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Текущ товар:</span>
-            <span class="stat-value">{{ currentTruckLoad.toFixed(0) }} л</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</aside>
+    <!-- ========================================= -->
+    <!-- MAP CONTAINER -->
+    <!-- ========================================= -->
     <main class="map-container">
       <div id="map"></div>
       
+      <!-- Guest Overlay -->
       <div class="map-overlay-info" *ngIf="isGuest">
         <div class="guest-banner">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

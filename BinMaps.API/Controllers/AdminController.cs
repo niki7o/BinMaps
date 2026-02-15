@@ -41,12 +41,15 @@ namespace BinMaps.API.Controllers
             _serviceProvider = serviceProvider;
         }
 
+        #region Reports
         [HttpGet("reports")]
         public async Task<IActionResult> GetReports()
         {
             var reports = await _reportRepo.GetAllAsync();
             return Ok(reports.OrderByDescending(r => r.CreatedAt));
         }
+        #endregion
+
 
         [HttpPost("reports/{id}/approve")]
         public async Task<IActionResult> ApproveReport(int id)

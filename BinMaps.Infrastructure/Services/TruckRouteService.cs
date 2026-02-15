@@ -3,172 +3,200 @@ using BinMaps.Data.Entities.Enums;
 using BinMaps.Infrastructure.Repository;
 using BinMaps.Infrastructure.Services.Interfaces;
 using BinMaps.Shared.DTOs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace BinMaps.Infrastructure.Services
 {
+  
     public class TruckRouteService : ITruckRouteService
     {
-        private readonly IRepository<Truck, int> _truckRepo;
+        #region Private Fields & Constants
+
         private readonly IRepository<TrashContainer, int> _containerRepo;
+        private readonly IRepository<Truck, int> _truckRepo;
+
         private const double EARTH_RADIUS_KM = 6371.0;
+        private const double AVG_SPEED_KMH = 30.0;        
+        private const int TIME_PER_STOP_MINUTES = 5;      
+        private const double MIN_FILL_THRESHOLD = 40.0;   
+        private const double PRIORITY_FILL_THRESHOLD = 70.0; 
+
+        #endregion
+
+        #region Constructor
 
         public TruckRouteService(
-            IRepository<Truck, int> truckRepo,
-            IRepository<TrashContainer, int> containerRepo)
+            IRepository<TrashContainer, int> containerRepo,
+            IRepository<Truck, int> truckRepo)
         {
-            _truckRepo = truckRepo;
             _containerRepo = containerRepo;
+            _truckRepo = truckRepo;
         }
 
-        public async Task<RouteResultDto> GenerateRouteAsync(int truckId, TrashType? overrideType = null)
+        #endregion
+
+        #region Public API
+
+        
+        public async Task<RouteResultDto> GenerateRouteAsync(string areaId, TrashType trashType)
         {
-            var truck = await _truckRepo.GetByIdAsync(truckId);
+            // 1. Намери камион в зоната
+            var truck = await FindTruckForAreaAsync(areaId, trashType);
             if (truck == null)
-                return new RouteResultDto { Route = new List<TrashContainerRouteDto>() };
-
-            var selectedType = overrideType ?? truck.TrashType;
-
-
-            var allContainers = (await _containerRepo.GetAllAsync())
-                .Where(c => c.AreaId == truck.AreaId)
-                .Where(c => c.Status != TrashContainerStatus.Fire)
-                .Where(c => c.TrashType == selectedType)
-                .ToList();
-
-            var priorityContainers = allContainers
-                .Where(c => c.FillPercentage >= 70)
-                .ToList();
-
-
-            var secondaryContainers = allContainers
-                .Where(c => c.FillPercentage >= 40 && c.FillPercentage < 70)
-                .ToList();
-
-
-            var containersToCollect = new List<TrashContainer>(priorityContainers);
-
-
-            var estimatedPriorityLoad = priorityContainers.Sum(c => (c.FillPercentage / 100.0) * c.Capacity);
-            var remainingCapacity = truck.Capacity - estimatedPriorityLoad;
-
-            foreach (var container in secondaryContainers.OrderByDescending(c => c.FillPercentage))
             {
-                var containerLoad = (container.FillPercentage / 100.0) * container.Capacity;
-                if (containerLoad <= remainingCapacity)
+                return CreateEmptyRoute(areaId, trashType, "Няма наличен камион в тази зона");
+            }
+
+            // 2. Намери подходящи контейнери
+            var containers = await GetContainersForCollectionAsync(areaId, trashType);
+            if (!containers.Any())
+            {
+                return CreateEmptyRoute(areaId, trashType, "Няма контейнери за събиране");
+            }
+
+            // 3. Приоритизирай и филтрирай по капацитет
+            var selectedContainers = SelectContainersByCapacity(containers, truck.Capacity);
+            if (!selectedContainers.Any())
+            {
+                return CreateEmptyRoute(areaId, trashType, "Камионът няма достатъчен капацитет");
+            }
+
+            // 4. Оптимизирай маршрут с TSP
+            var optimizedRoute = OptimizeRoute(truck, selectedContainers);
+
+            // 5. Изчисли статистики
+            return BuildRouteResult(truck, optimizedRoute, areaId, trashType);
+        }
+
+        #endregion
+
+        #region Container Selection & Filtering
+
+       
+        private async Task<Truck?> FindTruckForAreaAsync(string areaId, TrashType trashType)
+        {
+            var trucks = await _truckRepo.GetAllAsync();
+            return trucks.FirstOrDefault(t =>
+                t.AreaId == areaId &&
+                t.TrashType == trashType);
+        }
+
+        /// <summary>
+        /// Намира всички подходящи контейнери за събиране
+        /// </summary>
+        private async Task<List<TrashContainer>> GetContainersForCollectionAsync(string areaId, TrashType trashType)
+        {
+            var allContainers = await _containerRepo.GetAllAsync();
+
+            return allContainers
+                .Where(c => c.AreaId == areaId)
+                .Where(c => c.TrashType == trashType)
+                .Where(c => c.Status != TrashContainerStatus.Fire)
+                .Where(c => c.Status != TrashContainerStatus.Offline)
+                .Where(c => c.FillPercentage >= MIN_FILL_THRESHOLD)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Избира контейнери според капацитета на камиона
+        /// Приоритизира: 1) Пожари 2) Пълни (>90%) 3) Високо ниво (>70%)
+        /// </summary>
+        private List<TrashContainer> SelectContainersByCapacity(
+            List<TrashContainer> containers,
+            double truckCapacity)
+        {
+            // Приоритизация
+            var prioritized = containers
+                .OrderByDescending(c => c.Status == TrashContainerStatus.Fire ? 3 : 0)
+                .ThenByDescending(c => c.FillPercentage >= 90 ? 2 : 0)
+                .ThenByDescending(c => c.FillPercentage >= PRIORITY_FILL_THRESHOLD ? 1 : 0)
+                .ThenByDescending(c => c.FillPercentage)
+                .ToList();
+
+            // Капацитетен филтър
+            var selected = new List<TrashContainer>();
+            double totalLoad = 0;
+
+            foreach (var container in prioritized)
+            {
+                double containerLoad = (container.FillPercentage / 100.0) * container.Capacity;
+
+                if (totalLoad + containerLoad <= truckCapacity)
                 {
-                    containersToCollect.Add(container);
-                    remainingCapacity -= containerLoad;
+                    selected.Add(container);
+                    totalLoad += containerLoad;
                 }
             }
 
-            if (!containersToCollect.Any())
-            {
-                return new RouteResultDto
-                {
-                    Route = new List<TrashContainerRouteDto>(),
-                    Message = "Няма контейнери за събиране в момента"
-                };
-            }
-
-
-            var route = SolveTSP(truck, containersToCollect);
-
-
-            var totalDistance = CalculateTotalDistance(truck.LocationX, truck.LocationY, route);
-            var totalLoad = route.Sum(r => (r.FillPercentage / 100.0) * r.Capacity);
-            var estimatedTime = CalculateEstimatedTime(totalDistance, route.Count);
-
-            return new RouteResultDto
-            {
-                Route = route,
-                TotalDistance = totalDistance,
-                TotalLoad = totalLoad,
-                TruckCapacity = truck.Capacity,
-                CapacityUtilization = (totalLoad / truck.Capacity) * 100,
-                EstimatedTimeMinutes = estimatedTime,
-                ContainersCount = route.Count,
-                Message = $"Оптимален маршрут с {route.Count} контейнера"
-            };
+            return selected;
         }
 
+        #endregion
 
-        private List<TrashContainerRouteDto> SolveTSP(Truck truck, List<TrashContainer> containers)
+        #region TSP Optimization
+
+       
+        private List<TrashContainer> OptimizeRoute(Truck truck, List<TrashContainer> containers)
         {
-            if (!containers.Any()) return new List<TrashContainerRouteDto>();
-            if (containers.Count == 1)
-                return new List<TrashContainerRouteDto> { MapToRouteDto(containers[0], truck.LocationX, truck.LocationY, 0) };
+            if (containers.Count <= 1) return containers;
 
-            // Phase 1: Nearest Neighbor algorithm
+          
+            var route = SolveTSPNearestNeighbor(truck.LocationX, truck.LocationY, containers);
+
+         
+            if (route.Count >= 4)
+            {
+                route = Improve2Opt(route);
+            }
+
+            return route;
+        }
+
+      
+        private List<TrashContainer> SolveTSPNearestNeighbor(
+            double startLat,
+            double startLon,
+            List<TrashContainer> containers)
+        {
+            var unvisited = new List<TrashContainer>(containers);
             var route = new List<TrashContainer>();
-            var remaining = new List<TrashContainer>(containers);
-            double currentX = truck.LocationX;
-            double currentY = truck.LocationY;
-            int stopNumber = 0;
 
-            while (remaining.Any())
+            double currentLat = startLat;
+            double currentLon = startLon;
+
+            while (unvisited.Any())
             {
+                // Намери най-близката
+                var nearest = unvisited
+                    .OrderBy(c => HaversineDistance(currentLat, currentLon, c.LocationX, c.LocationY))
+                    .First();
 
-                var next = remaining
-                    .Select(c => new
-                    {
-                        Container = c,
-                        Distance = HaversineDistance(currentX, currentY, c.LocationX, c.LocationY),
-                        Priority = c.FillPercentage >= 70 ? 2.0 : 1.0
-                    })
-                    .OrderBy(x => x.Distance / x.Priority)
-                    .First()
-                    .Container;
-
-                route.Add(next);
-                remaining.Remove(next);
-                currentX = next.LocationX;
-                currentY = next.LocationY;
+                route.Add(nearest);
+                currentLat = nearest.LocationX;
+                currentLon = nearest.LocationY;
+                unvisited.Remove(nearest);
             }
 
-
-            route = TwoOptImprovement(route, truck);
-
-
-            return route.Select((c, index) => MapToRouteDto(c,
-                index == 0 ? truck.LocationX : route[index - 1].LocationX,
-                index == 0 ? truck.LocationY : route[index - 1].LocationY,
-                index + 1))
-                .ToList();
+            return route;
         }
 
-
-        private List<TrashContainer> TwoOptImprovement(List<TrashContainer> route, Truck truck)
+       
+     
+        private List<TrashContainer> Improve2Opt(List<TrashContainer> route)
         {
-            if (route.Count < 4) return route;
-
             bool improved = true;
             var bestRoute = new List<TrashContainer>(route);
 
             while (improved)
             {
                 improved = false;
-                double bestDistance = CalculateTotalDistance(truck.LocationX, truck.LocationY,
-                    bestRoute.Select((c, i) => MapToRouteDto(c,
-                        i == 0 ? truck.LocationX : bestRoute[i - 1].LocationX,
-                        i == 0 ? truck.LocationY : bestRoute[i - 1].LocationY, i)).ToList());
+                double bestDistance = CalculateRouteDistance(bestRoute);
 
-                for (int i = 0; i < bestRoute.Count - 2; i++)
+                for (int i = 1; i < bestRoute.Count - 1; i++)
                 {
-                    for (int j = i + 2; j < bestRoute.Count; j++)
+                    for (int k = i + 1; k < bestRoute.Count; k++)
                     {
-                        var newRoute = new List<TrashContainer>(bestRoute);
-
-
-                        newRoute.Reverse(i + 1, j - i);
-
-                        double newDistance = CalculateTotalDistance(truck.LocationX, truck.LocationY,
-                            newRoute.Select((c, idx) => MapToRouteDto(c,
-                                idx == 0 ? truck.LocationX : newRoute[idx - 1].LocationX,
-                                idx == 0 ? truck.LocationY : newRoute[idx - 1].LocationY, idx)).ToList());
+                        var newRoute = Reverse2OptSegment(bestRoute, i, k);
+                        double newDistance = CalculateRouteDistance(newRoute);
 
                         if (newDistance < bestDistance)
                         {
@@ -183,82 +211,130 @@ namespace BinMaps.Infrastructure.Services
             return bestRoute;
         }
 
-
-        private double HaversineDistance(double lat1, double lon1, double lat2, double lon2)
+      
+        private List<TrashContainer> Reverse2OptSegment(List<TrashContainer> route, int i, int k)
         {
-            var dLat = ToRadians(lat2 - lat1);
-            var dLon = ToRadians(lon2 - lon1);
-
-            var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                    Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
-                    Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-
-            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-            return EARTH_RADIUS_KM * c;
+            var newRoute = new List<TrashContainer>(route);
+            newRoute.Reverse(i, k - i + 1);
+            return newRoute;
         }
 
-        private double ToRadians(double degrees) => degrees * Math.PI / 180.0;
-
-        private double CalculateTotalDistance(double startX, double startY, List<TrashContainerRouteDto> route)
+       
+        private double CalculateRouteDistance(List<TrashContainer> route)
         {
-            if (!route.Any()) return 0;
-
-            double total = HaversineDistance(startY, startX, route[0].LocationY, route[0].LocationX);
-
+            double total = 0;
             for (int i = 0; i < route.Count - 1; i++)
             {
                 total += HaversineDistance(
-                    route[i].LocationY, route[i].LocationX,
-                    route[i + 1].LocationY, route[i + 1].LocationX);
+                    route[i].LocationX, route[i].LocationY,
+                    route[i + 1].LocationX, route[i + 1].LocationY);
             }
-
             return total;
         }
 
-        private int CalculateEstimatedTime(double distanceKm, int stops)
+        #endregion
+
+        #region Distance Calculation
+
+       
+        private double HaversineDistance(double lat1, double lon1, double lat2, double lon2)
         {
-            const double AVG_SPEED_KMH = 30.0;
-            const int TIME_PER_STOP_MIN = 5;
+            double dLat = ToRadians(lat2 - lat1);
+            double dLon = ToRadians(lon2 - lon1);
 
-            double drivingTime = (distanceKm / AVG_SPEED_KMH) * 60;
-            double stopTime = stops * TIME_PER_STOP_MIN;
+            double a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                       Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
+                       Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
 
-            return (int)Math.Ceiling(drivingTime + stopTime);
+            double c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+
+            return EARTH_RADIUS_KM * c;
         }
 
-        private TrashContainerRouteDto MapToRouteDto(TrashContainer c, double prevX, double prevY, int stopNumber)
-        {
-            var distance = HaversineDistance(prevY, prevX, c.LocationY, c.LocationX);
+        private double ToRadians(double degrees) => degrees * (Math.PI / 180.0);
 
-            return new TrashContainerRouteDto
+        #endregion
+
+        #region Result Building
+
+      
+        private RouteResultDto BuildRouteResult(
+            Truck truck,
+            List<TrashContainer> optimizedRoute,
+            string areaId,
+            TrashType trashType)
+        {
+            double totalDistance = 0;
+            double totalLoad = 0;
+            double prevLat = truck.LocationX;
+            double prevLon = truck.LocationY;
+
+            var routeDtos = new List<TrashContainerRouteDto>();
+
+            for (int i = 0; i < optimizedRoute.Count; i++)
             {
-                Id = c.Id,
-                AreaId = c.AreaId,
-                Capacity = c.Capacity,
-                FillPercentage = c.FillPercentage,
-                HasSensor = c.HasSensor,
-                LocationX = c.LocationX,
-                LocationY = c.LocationY,
-                Temperature = c.Temperature,
-                TrashType = c.TrashType,
-                Status = c.Status ?? TrashContainerStatus.Active,
-                StopNumber = stopNumber,
-                DistanceFromPrevious = distance,
-                EstimatedLoad = (c.FillPercentage / 100.0) * c.Capacity
+                var container = optimizedRoute[i];
+                double distance = HaversineDistance(prevLat, prevLon, container.LocationX, container.LocationY);
+                double load = (container.FillPercentage / 100.0) * container.Capacity;
+
+                totalDistance += distance;
+                totalLoad += load;
+
+                routeDtos.Add(new TrashContainerRouteDto
+                {
+                    Id = container.Id,
+                    AreaId = container.AreaId,
+                    Capacity = container.Capacity,
+                    FillPercentage = container.FillPercentage,
+                    HasSensor = container.HasSensor,
+                    LocationX = container.LocationX,
+                    LocationY = container.LocationY,
+                    Temperature = container.Temperature,
+                    TrashType = container.TrashType,
+                    Status = container.Status,
+                    StopNumber = i + 1,
+                    DistanceFromPrevious = Math.Round(distance, 2),
+                    EstimatedLoad = Math.Round(load, 2)
+                });
+
+                prevLat = container.LocationX;
+                prevLon = container.LocationY;
+            }
+
+            int estimatedTime = (int)Math.Ceiling(
+                (totalDistance / AVG_SPEED_KMH * 60) +
+                (routeDtos.Count * TIME_PER_STOP_MINUTES));
+
+            return new RouteResultDto
+            {
+                TruckId = truck.Id,
+                AreaId = areaId,
+                TrashType = trashType,
+                Route = routeDtos,
+                TotalDistance = Math.Round(totalDistance, 2),
+                TotalLoad = Math.Round(totalLoad, 2),
+                TruckCapacity = truck.Capacity,
+                CapacityUtilization = Math.Round((totalLoad / truck.Capacity) * 100, 2),
+                ContainersCount = routeDtos.Count,
+                EstimatedTimeMinutes = estimatedTime,
+
+                Message = $"Оптимален маршрут: {routeDtos.Count} контейнера, {Math.Round(totalDistance, 1)} км"
             };
         }
-    }
 
+      
+        private RouteResultDto CreateEmptyRoute(string areaId, TrashType trashType, string message)
+        {
+            return new RouteResultDto
+            {
+                TruckId = 0,
+                AreaId = areaId,
+                TrashType = trashType,
+                Route = new List<TrashContainerRouteDto>(),
+                Message = message
+            };
+        }
 
-    public class RouteResultDto
-    {
-        public List<TrashContainerRouteDto> Route { get; set; } = new();
-        public double TotalDistance { get; set; }
-        public double TotalLoad { get; set; }
-        public double TruckCapacity { get; set; }
-        public double CapacityUtilization { get; set; }
-        public int EstimatedTimeMinutes { get; set; }
-        public int ContainersCount { get; set; }
-        public string Message { get; set; } = string.Empty;
+        #endregion
     }
 }

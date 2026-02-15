@@ -1,73 +1,101 @@
-﻿using BinMaps.Data.Entities;
-using BinMaps.Data.Entities.Enums;
-using BinMaps.Infrastructure.Repository;
-using BinMaps.Infrastructure.Services;
+﻿using BinMaps.Data.Entities.Enums;
 using BinMaps.Infrastructure.Services.Interfaces;
 using BinMaps.Shared.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BinMaps.API.Controllers
 {
+    
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
     public class TrucksController : ControllerBase
     {
-        private readonly ITruckRouteService _truckRouteService;
-        private readonly IRepository<Truck, int> _truckRepo;
+        #region Private Fields
+
+        private readonly ITruckRouteService _routeService;
+        private readonly ILogger<TrucksController> _logger;
+
+        #endregion
+
+        #region Constructor
 
         public TrucksController(
-            ITruckRouteService truckRouteService,
-            IRepository<Truck, int> truckRepo)
+            ITruckRouteService routeService,
+            ILogger<TrucksController> logger)
         {
-            _truckRouteService = truckRouteService;
-            _truckRepo = truckRepo;
+            _routeService = routeService;
+            _logger = logger;
         }
 
-        
-        [HttpGet("{truckId}/route")]
-        public async Task<ActionResult<RouteResultDto>> GetTruckRoute(int truckId)
+        #endregion
+
+        #region API Endpoints
+
+       
+        [HttpGet("route")]
+        [Authorize(Roles = "Driver,Admin")]
+        [ProducesResponseType(typeof(RouteResultDto), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(500)]
+        public async Task<ActionResult<RouteResultDto>> GenerateRoute(
+            [FromQuery] string areaId,
+            [FromQuery] TrashType trashType)
         {
             try
             {
-                var result = await _truckRouteService.GenerateRouteAsync(truckId);
-
-                if (result == null || result.Route.Count == 0)
+               
+                if (string.IsNullOrWhiteSpace(areaId))
                 {
-                    return Ok(new RouteResultDto
-                    {
-                        Route = new List<TrashContainerRouteDto>(),
-                        Message = "Няма контейнери за събиране"
-                    });
+                    _logger.LogWarning("GenerateRoute called with empty areaId");
+                    return BadRequest(new { error = "Моля изберете зона" });
                 }
+
+                _logger.LogInformation(
+                    "Generating route for Area: {AreaId}, TrashType: {TrashType}",
+                    areaId,
+                    trashType);
+
+               
+                var result = await _routeService.GenerateRouteAsync(areaId, trashType);
+
+                
+                if (result.Route == null || !result.Route.Any())
+                {
+                    _logger.LogInformation(
+                        "No route generated for Area: {AreaId}, TrashType: {TrashType}. Reason: {Message}",
+                        areaId,
+                        trashType,
+                        result.Message);
+
+                    return Ok(result); 
+                }
+
+                _logger.LogInformation(
+                    "Route generated successfully: {ContainersCount} containers, {Distance} km",
+                    result.ContainersCount,
+                    result.TotalDistance);
 
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = ex.Message });
-            }
-        }
+                _logger.LogError(
+                    ex,
+                    "Error generating route for Area: {AreaId}, TrashType: {TrashType}",
+                    areaId,
+                    trashType);
 
-        [HttpGet("route-by-area/{areaId}/{trashType}")]
-        public async Task<ActionResult<RouteResultDto>> GetRouteByArea(string areaId, TrashType trashType)
-        {
-            try
-            {
-                var trucks = await _truckRepo.GetAllAsync();
-                var truck = trucks.FirstOrDefault(t => t.AreaId == areaId);
-
-                if (truck == null)
+                return StatusCode(500, new
                 {
-                    return NotFound(new { message = $"No truck found for area: {areaId}" });
-                }
-
-                var result = await _truckRouteService.GenerateRouteAsync(truck.Id, trashType);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { error = ex.Message });
+                    error = "Грешка при генериране на маршрут",
+                    details = ex.Message
+                });
             }
         }
+
+        #endregion
     }
 }
