@@ -357,8 +357,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
+    const finalLoad = this.currentTruckLoad;
     this.navigationActive = false;
-    alert(`Маршрут завършен!\nОбщо събран товар: ${this.currentTruckLoad.toFixed(0)} л`);
+    
+    alert(`Маршрут завършен!\nОбщо събран товар: ${finalLoad.toFixed(0)} л\n\nКамионът се връща в базата за изпразване...`);
+    
+   
+    this.currentTruckLoad = 0;
+    
+    console.log('Navigation completed. Truck emptied at depot.');
   }
 
  

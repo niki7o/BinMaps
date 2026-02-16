@@ -63,9 +63,7 @@
       </div>
     </aside>
 
-    <!-- ========================================= -->
-    <!-- DRIVER ROUTE PANEL - Driver Only -->
-    <!-- ========================================= -->
+ 
     <aside class="map-sidebar right" *ngIf="isDriver">
       <div class="sidebar-panel">
         <div class="panel-header">
@@ -78,7 +76,7 @@
           <h2>{{ routeActive ? 'Навигация' : 'Генериране на маршрут' }}</h2>
         </div>
 
-        <!-- Route Configuration -->
+       
         <div class="panel-content" *ngIf="!routeActive">
           <div class="form-group">
             <label class="form-label">Зона</label>
@@ -114,7 +112,7 @@
           </button>
         </div>
 
-        <!-- Route Statistics & Navigation -->
+    
         <div class="panel-content" *ngIf="routeActive && routeResult">
           <div class="route-stats">
             <div class="stat-card">
@@ -160,7 +158,7 @@
             </button>
           </div>
 
-          <!-- Navigation Progress -->
+          
           <div class="navigation-progress" *ngIf="navigationActive">
             <div class="progress-header">
               <span>Спирка {{ currentStop }} / {{ routeResult.containersCount }}</span>
@@ -177,13 +175,11 @@
       </div>
     </aside>
 
-    <!-- ========================================= -->
-    <!-- MAP CONTAINER -->
-    <!-- ========================================= -->
+   
     <main class="map-container">
       <div id="map"></div>
       
-      <!-- Guest Overlay -->
+     
       <div class="map-overlay-info" *ngIf="isGuest">
         <div class="guest-banner">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
