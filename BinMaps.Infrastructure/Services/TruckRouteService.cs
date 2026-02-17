@@ -37,37 +37,37 @@ namespace BinMaps.Infrastructure.Services
 
         public async Task<RouteResultDto> GenerateRouteAsync(string areaId, TrashType trashType)
         {
-          
+
             var truck = await FindTruckForAreaAsync(areaId, trashType);
             if (truck == null)
             {
                 return CreateEmptyRoute(areaId, trashType, "Няма наличен камион в тази зона");
             }
 
-           
+
             var containers = await GetContainersForCollectionAsync(areaId, trashType);
             if (!containers.Any())
             {
                 return CreateEmptyRoute(areaId, trashType, "Няма контейнери за събиране");
             }
 
-           
+
             var prioritizedContainers = PrioritizeContainers(containers);
 
-           
+
             var selectedContainers = SelectByCapacity(prioritizedContainers, truck.Capacity);
             if (!selectedContainers.Any())
             {
                 return CreateEmptyRoute(areaId, trashType, "Камионът няма достатъчен капацитет");
             }
 
-           
+
             var graph = BuildGraph(truck, selectedContainers);
 
-           
+
             var route = FindOptimalPath(graph, truck, selectedContainers);
 
-           
+
             return BuildRouteResult(truck, route, areaId, trashType);
         }
 
@@ -129,12 +129,12 @@ namespace BinMaps.Infrastructure.Services
 
         #region Graph Construction
 
-       
+
         private Graph BuildGraph(Truck truck, List<TrashContainer> containers)
         {
             var graph = new Graph();
 
-       
+
             var truckNode = new GraphNode
             {
                 Id = -1,
@@ -156,7 +156,7 @@ namespace BinMaps.Infrastructure.Services
                 graph.AddNode(node);
             }
 
-            
+
             foreach (var nodeA in graph.Nodes)
             {
                 foreach (var nodeB in graph.Nodes)
@@ -179,12 +179,12 @@ namespace BinMaps.Infrastructure.Services
 
         #region Dijkstra Algorithm
 
-        
+
         private List<TrashContainer> FindOptimalPath(Graph graph, Truck truck, List<TrashContainer> containers)
         {
             var route = new List<TrashContainer>();
             var visited = new HashSet<int>();
-            int currentNodeId = -1; 
+            int currentNodeId = -1;
 
             visited.Add(currentNodeId);
 
@@ -333,7 +333,7 @@ namespace BinMaps.Infrastructure.Services
 
     #region Graph Data Structures
 
-    
+
     public class Graph
     {
         public List<GraphNode> Nodes { get; set; } = new();
@@ -354,7 +354,7 @@ namespace BinMaps.Infrastructure.Services
         public GraphNode? GetNode(int id) => Nodes.FirstOrDefault(n => n.Id == id);
     }
 
-  
+
     public class GraphNode
     {
         public int Id { get; set; }
@@ -365,7 +365,7 @@ namespace BinMaps.Infrastructure.Services
         public List<GraphEdge> Edges { get; set; } = new();
     }
 
-    
+
     public class GraphEdge
     {
         public int SourceNodeId { get; set; }

@@ -35,7 +35,7 @@ namespace BinMaps.Infrastructure.Services
 
             var finalConfidence = CalculateFinalConfidence(aiResult, reputation);
 
-            // FIXED: Generate default description based on ReportType
+           
             string description = dto.Description ?? GetDefaultDescription(dto.ReportType);
 
             var report = new Report
@@ -43,7 +43,7 @@ namespace BinMaps.Infrastructure.Services
                 TrashContainerId = dto.TrashContainerId,
                 UserId = userId,
                 UserName = userName,
-                Description = description,  // ADDED!
+                Description = description,  
                 ReportType = dto.ReportType,
                 AI_Score = aiResult?.Confidence ?? 0,
                 UserReputationOnSubmit = reputation,

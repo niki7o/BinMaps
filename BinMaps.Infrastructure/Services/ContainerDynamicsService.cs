@@ -12,14 +12,14 @@ using System.Threading.Tasks;
 
 namespace BinMaps.Infrastructure.Services
 {
-   
+
     public class ContainerDynamicsService : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<ContainerDynamicsService> _logger;
-        private readonly TimeSpan _updateInterval = TimeSpan.FromMinutes(3); 
+        private readonly TimeSpan _updateInterval = TimeSpan.FromMinutes(3);
 
-      
+
         private readonly Dictionary<string, TrafficPattern> _trafficPatterns = new()
         {
             { "A", new TrafficPattern { BaseRate = 0.8, PeakMultiplier = 2.0, PeakHours = new[] { 8, 12, 18 } } },
@@ -28,13 +28,13 @@ namespace BinMaps.Infrastructure.Services
             { "D", new TrafficPattern { BaseRate = 1.0, PeakMultiplier = 2.2, PeakHours = new[] { 8, 12, 19 } } },
         };
 
-        
+
         private readonly Dictionary<TrashType, double> _trashTypeMultipliers = new()
         {
-            { TrashType.Mixed, 1.0 },      
-            { TrashType.Plastic, 0.7 },    
-            { TrashType.Paper, 0.5 },      
-            { TrashType.Glass, 0.3 }       
+            { TrashType.Mixed, 1.0 },
+            { TrashType.Plastic, 0.7 },
+            { TrashType.Paper, 0.5 },
+            { TrashType.Glass, 0.3 }
         };
 
         public ContainerDynamicsService(
@@ -76,7 +76,7 @@ namespace BinMaps.Infrastructure.Services
 
             foreach (var container in containers)
             {
-              
+
                 if (container.Status == TrashContainerStatus.Fire)
                     continue;
 
@@ -87,17 +87,17 @@ namespace BinMaps.Infrastructure.Services
                     dayOfWeek,
                     container.HasSensor);
 
-               
+
                 var newFill = Math.Min(100, container.FillPercentage + fillRate);
                 container.FillPercentage = Math.Round(newFill, 2);
 
-               
+
                 if (container.HasSensor)
                 {
                     container.Temperature = CalculateTemperature(container.FillPercentage, currentHour);
                 }
 
-               
+
                 if (container.HasSensor &&
                     container.Temperature > 50 &&
                     container.FillPercentage > 80)
@@ -119,11 +119,11 @@ namespace BinMaps.Infrastructure.Services
             DayOfWeek dayOfWeek,
             bool hasSensor)
         {
-            
+
             var pattern = _trafficPatterns.GetValueOrDefault(areaId, new TrafficPattern { BaseRate = 1.0 });
             var baseRate = pattern.BaseRate;
 
-           
+
             if (pattern.PeakHours.Contains(hour))
             {
                 baseRate *= pattern.PeakMultiplier;
@@ -131,34 +131,34 @@ namespace BinMaps.Infrastructure.Services
 
             baseRate *= _trashTypeMultipliers.GetValueOrDefault(trashType, 1.0);
 
-           
+
             if (dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday)
             {
                 baseRate *= 0.6;
             }
 
-          
+
             if (hour >= 2 && hour <= 6)
             {
                 baseRate *= 0.2;
             }
 
-           
+
             if (hasSensor)
             {
-                baseRate *= (0.95 + new Random().NextDouble() * 0.1); 
+                baseRate *= (0.95 + new Random().NextDouble() * 0.1);
             }
 
-           
+
             return baseRate * 0.15;
         }
 
         private double CalculateTemperature(double fillPercentage, int hour)
         {
-            
-            var ambient = 15 + (hour >= 12 && hour <= 18 ? 10 : 0); 
 
-           
+            var ambient = 15 + (hour >= 12 && hour <= 18 ? 10 : 0);
+
+
             var decompositionHeat = fillPercentage > 50
                 ? (fillPercentage - 50) * 0.3
                 : 0;
