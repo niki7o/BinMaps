@@ -38,7 +38,7 @@ namespace BinMaps.Infrastructure.Services
         public async Task<RouteResultDto> GenerateRouteAsync(string areaId, TrashType trashType)
         {
 
-            var truck = await FindTruckForAreaAsync(areaId, trashType);
+            var truck = await FindTruckForAreaAsync(areaId);
             if (truck == null)
             {
                 return CreateEmptyRoute(areaId, trashType, "Няма наличен камион в тази зона");
@@ -75,12 +75,12 @@ namespace BinMaps.Infrastructure.Services
 
         #region Container Selection
 
-        private async Task<Truck?> FindTruckForAreaAsync(string areaId, TrashType trashType)
+        private async Task<Truck?> FindTruckForAreaAsync(string areaId)
         {
             var trucks = await _truckRepo.GetAllAsync();
-            return trucks.FirstOrDefault(t =>
-                t.AreaId == areaId &&
-                t.TrashType == trashType);
+
+          
+            return trucks.FirstOrDefault(t => t.AreaId == areaId);
         }
 
         private async Task<List<TrashContainer>> GetContainersForCollectionAsync(string areaId, TrashType trashType)

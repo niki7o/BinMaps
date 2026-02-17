@@ -109,7 +109,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   currentTruckLoad = 0;
 
 
+private baseLayers: { [key: string]: L.TileLayer } = {};
+currentMapStyle: string = 'standard';
 
+mapStyles = [
+  { key: 'standard', label: 'Standard' },
+  { key: 'dark', label: 'Dark' },
+  { key: 'terrain', label: 'Terrain' },
+  { key: 'satellite', label: 'Satellite' }
+];
   ngOnInit() {
     this.authService.currentUser$
       .pipe(takeUntil(this.destroy$))
@@ -150,31 +158,70 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   
 
   private initializeMap() {
-    const sofiaCenter: L.LatLngExpression = [42.6977, 23.3219];
-    
-    this.map = L.map('map', {
-      center: sofiaCenter,
-      zoom: 12,
-      minZoom: 11,
-      maxZoom: 18,
-      maxBounds: [
-        [42.55, 23.15],
-        [42.85, 23.50]
-      ],
-      maxBoundsViscosity: 0.8
-    });
+  const sofiaCenter: L.LatLngExpression = [42.6977, 23.3219];
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      className: 'map-tiles'
-    }).addTo(this.map);
+  this.map = L.map('map', {
+    center: sofiaCenter,
+    zoom: 12,
+    minZoom: 11,
+    maxZoom: 18,
+    maxBounds: [
+      [42.55, 23.15],
+      [42.85, 23.50]
+    ],
+    maxBoundsViscosity: 0.8
+  });
 
-    this.map.addLayer(this.cluster);
-  }
+  
+  this.baseLayers['standard'] = L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    { className: 'map-tiles' }
+  );
+
+  
+  this.baseLayers['dark'] = L.tileLayer(
+    'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+  );
+
+  
+  this.baseLayers['terrain'] = L.tileLayer(
+    'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png'
+  );
+
+  
+  this.baseLayers['satellite'] = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+  );
+
+  
+  const savedStyle = localStorage.getItem('mapStyle') || 'standard';
+  this.currentMapStyle = savedStyle;
+
+  this.baseLayers[this.currentMapStyle].addTo(this.map);
+
+  this.map.addLayer(this.cluster);
+}
+
 
   private initMapControls() {
     this.initFilterControl();
   }
 
+
+  changeMapStyle(styleKey: string) {
+
+  if (this.currentMapStyle === styleKey) return;
+
+  
+  this.map.removeLayer(this.baseLayers[this.currentMapStyle]);
+
+
+  this.baseLayers[styleKey].addTo(this.map);
+
+  this.currentMapStyle = styleKey;
+
+  localStorage.setItem('mapStyle', styleKey);
+}
   private loadBins() {
     this.http.get<Bin[]>(`${this.API_URL}/containers`).subscribe({
       next: (bins) => {

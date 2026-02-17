@@ -177,6 +177,14 @@
 
    
     <main class="map-container">
+      <div class="map-style-switcher">
+  <button 
+    *ngFor="let style of mapStyles"
+    [class.active]="currentMapStyle === style.key"
+    (click)="changeMapStyle(style.key)">
+    {{ style.label }}
+  </button>
+</div>
       <div id="map"></div>
       
      
