@@ -10,7 +10,8 @@
       <span class="brand-name">BinMaps</span>
     </div>
 
-    <!-- Navigation -->
+
+    
     <nav class="header-nav" *ngIf="currentUser">
       <button class="nav-btn" (click)="navigateToMap()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -49,7 +50,7 @@
               <span class="user-role">{{ getRoleLabel(currentUser.role) }}</span>
             </div>
             <div class="user-avatar">
-              {{ getInitials(currentUser.userName) }}
+              {{ getInitials(currentUser.userName)|| "{this.apiUrl}/UserProfile/upload-picture"}}
             </div>
             <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6 9 12 15 18 9"/>

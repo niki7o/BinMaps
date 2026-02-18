@@ -1,3 +1,4 @@
+using BinMaps.API.Hubs;
 using BinMaps.Data;
 using BinMaps.Data.Entities;
 using BinMaps.Infrastructure.Repository;
@@ -66,6 +67,7 @@ namespace BinMaps.API
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddScoped<IAIService, AIService>();
+            builder.Services.AddSignalR();
 
 
             builder.Services.AddCors(options =>
@@ -76,7 +78,7 @@ namespace BinMaps.API
                         .AllowAnyHeader()
                         .AllowAnyMethod();
                 });
-            });
+            }); 
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
@@ -96,12 +98,13 @@ namespace BinMaps.API
                 await BinMapsDbContext.SeedUsers(userManager);
                 await BinMapsDbContext.SeedAsync(context);
             }
-
+           
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            app.MapHub<ContainerHub>("/hubs/containers");
             app.UseStaticFiles();
             app.UseHttpsRedirection();
             app.UseCors("AllowAngular");

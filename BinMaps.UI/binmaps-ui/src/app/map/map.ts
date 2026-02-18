@@ -4,10 +4,10 @@ import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { AuthService } from '../auth.service';
+import { AuthService } from '../services/auth.service';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
-
+import { ContainerSignalRService } from '../services/signalr.service';
 
 interface User {
   userName: string;
@@ -57,8 +57,6 @@ interface RouteStop {
   estimatedLoad: number;
 }
 
-
-
 @Component({
   selector: 'app-map',
   standalone: true,
@@ -68,8 +66,6 @@ interface RouteStop {
   encapsulation: ViewEncapsulation.None
 })
 export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
-
- 
 
   private readonly API_URL = 'https://localhost:7277/api';
   private map!: L.Map;
@@ -87,18 +83,20 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private selectedBinForReport: Bin | null = null;
   private destroy$ = new Subject<void>();
   private navigationInterval?: number;
+  
+  // ⚡ За реалния път
+  private realRouteCoordinates: [number, number][] = [];
 
   private http = inject(HttpClient);
   private router = inject(Router);
   private authService = inject(AuthService);
-
+  private signalR = inject(ContainerSignalRService);
   
   currentUser: User | null = null;
   isAdmin = false;
   isDriver = false;
   isUser = false;
   isGuest = true;
-
   
   selectedAreaId: string = '';
   selectedTrashType: number = 0;
@@ -108,16 +106,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   currentStop = 0;
   currentTruckLoad = 0;
 
+  private baseLayers: { [key: string]: L.TileLayer } = {};
+  currentMapStyle: string = 'standard';
 
-private baseLayers: { [key: string]: L.TileLayer } = {};
-currentMapStyle: string = 'standard';
+  mapStyles = [
+    { key: 'standard', label: 'Standard' },
+    { key: 'dark', label: 'Dark' },
+    { key: 'terrain', label: 'Terrain' },
+    { key: 'satellite', label: 'Satellite' }
+  ];
 
-mapStyles = [
-  { key: 'standard', label: 'Standard' },
-  { key: 'dark', label: 'Dark' },
-  { key: 'terrain', label: 'Terrain' },
-  { key: 'satellite', label: 'Satellite' }
-];
   ngOnInit() {
     this.authService.currentUser$
       .pipe(takeUntil(this.destroy$))
@@ -125,6 +123,12 @@ mapStyles = [
         this.currentUser = user;
         this.updateUserRole();
       });
+
+    this.signalR.start();
+
+    this.signalR.containerUpdates$.subscribe(updates => {
+      this.handleContainerUpdates(updates);
+    });
   }
 
   ngAfterViewInit(): void {
@@ -137,9 +141,8 @@ mapStyles = [
     this.destroy$.next();
     this.destroy$.complete();
     this.stopNavigation();
+    this.signalR.stop();
   }
-
-  
 
   private updateUserRole() {
     if (!this.currentUser) {
@@ -155,73 +158,59 @@ mapStyles = [
     }
   }
 
-  
-
   private initializeMap() {
-  const sofiaCenter: L.LatLngExpression = [42.6977, 23.3219];
+    const sofiaCenter: L.LatLngExpression = [42.6977, 23.3219];
 
-  this.map = L.map('map', {
-    center: sofiaCenter,
-    zoom: 12,
-    minZoom: 11,
-    maxZoom: 18,
-    maxBounds: [
-      [42.55, 23.15],
-      [42.85, 23.50]
-    ],
-    maxBoundsViscosity: 0.8
-  });
+    this.map = L.map('map', {
+      center: sofiaCenter,
+      zoom: 12,
+      minZoom: 11,
+      maxZoom: 18,
+      maxBounds: [
+        [42.55, 23.15],
+        [42.85, 23.50]
+      ],
+      maxBoundsViscosity: 0.8
+    });
 
-  
-  this.baseLayers['standard'] = L.tileLayer(
-    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    { className: 'map-tiles' }
-  );
+    this.baseLayers['standard'] = L.tileLayer(
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      { className: 'map-tiles' }
+    );
 
-  
-  this.baseLayers['dark'] = L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-  );
+    this.baseLayers['dark'] = L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    );
 
-  
-  this.baseLayers['terrain'] = L.tileLayer(
-    'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png'
-  );
+    this.baseLayers['terrain'] = L.tileLayer(
+      'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png'
+    );
 
-  
-  this.baseLayers['satellite'] = L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-  );
+    this.baseLayers['satellite'] = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+    );
 
-  
-  const savedStyle = localStorage.getItem('mapStyle') || 'standard';
-  this.currentMapStyle = savedStyle;
+    const savedStyle = localStorage.getItem('mapStyle') || 'standard';
+    this.currentMapStyle = savedStyle;
 
-  this.baseLayers[this.currentMapStyle].addTo(this.map);
-
-  this.map.addLayer(this.cluster);
-}
-
+    this.baseLayers[this.currentMapStyle].addTo(this.map);
+    this.map.addLayer(this.cluster);
+  }
 
   private initMapControls() {
     this.initFilterControl();
   }
 
-
   changeMapStyle(styleKey: string) {
+    if (this.currentMapStyle === styleKey) return;
 
-  if (this.currentMapStyle === styleKey) return;
+    this.map.removeLayer(this.baseLayers[this.currentMapStyle]);
+    this.baseLayers[styleKey].addTo(this.map);
 
-  
-  this.map.removeLayer(this.baseLayers[this.currentMapStyle]);
+    this.currentMapStyle = styleKey;
+    localStorage.setItem('mapStyle', styleKey);
+  }
 
-
-  this.baseLayers[styleKey].addTo(this.map);
-
-  this.currentMapStyle = styleKey;
-
-  localStorage.setItem('mapStyle', styleKey);
-}
   private loadBins() {
     this.http.get<Bin[]>(`${this.API_URL}/containers`).subscribe({
       next: (bins) => {
@@ -232,7 +221,8 @@ mapStyles = [
     });
   }
 
- 
+  
+
   async generateRoute() {
     if (!this.selectedAreaId) {
       alert('Моля изберете зона');
@@ -292,26 +282,44 @@ mapStyles = [
     }
   }
 
- 
-  private visualizeRoute() {
+  
+
+  private async visualizeRoute() {
     if (!this.routeResult) return;
 
-   
     this.clearRouteVisualization();
 
     const route = this.routeResult.route;
 
-  
-    const routePoints = route.map(stop => 
-      [stop.locationY, stop.locationX] as [number, number]
-    );
+    
+    try {
+      const coords = route.map(s => `${s.locationX},${s.locationY}`).join(';');
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+      
+      const response = await fetch(osrmUrl);
+      const data = await response.json();
 
-    this.routeLine = L.polyline(routePoints, {
-      color: '#3b82f6',
-      weight: 4,
-      opacity: 0.7,
-      dashArray: '10, 5'
-    }).addTo(this.map);
+      if (data.code === 'Ok' && data.routes && data.routes[0]) {
+        // Конвертирай [lng, lat] → [lat, lng]
+        this.realRouteCoordinates = data.routes[0].geometry.coordinates
+          .map((c: number[]) => [c[1], c[0]] as [number, number]);
+
+        this.routeLine = L.polyline(this.realRouteCoordinates, {
+          color: '#3b82f6',
+          weight: 4,
+          opacity: 0.7,
+          dashArray: '10, 5'
+        }).addTo(this.map);
+
+        console.log(`✅ Route: ${(data.routes[0].distance / 1000).toFixed(1)} km по пътища`);
+      } else {
+        console.warn('OSRM failed, using straight lines');
+        this.fallbackStraightRoute(route);
+      }
+    } catch (error) {
+      console.error('Routing error:', error);
+      this.fallbackStraightRoute(route);
+    }
 
    
     route.forEach((stop) => {
@@ -330,21 +338,35 @@ mapStyles = [
           <p>Контейнер #${stop.id}</p>
           <p>Пълнота: ${stop.fillPercentage}%</p>
           <p>Товар: ${stop.estimatedLoad.toFixed(1)} л</p>
-          <p>Разстояние: ${stop.distanceFromPrevious.toFixed(2)} км</p>
         </div>
       `);
 
       this.routeMarkers.push(marker);
     });
 
-   
-    this.map.fitBounds(L.latLngBounds(routePoints));
+    this.map.fitBounds(L.latLngBounds(route.map(s => [s.locationY, s.locationX] as [number, number])));
+  }
+
+  private fallbackStraightRoute(route: RouteStop[]) {
+    this.realRouteCoordinates = route.map(s => [s.locationY, s.locationX] as [number, number]);
+    this.routeLine = L.polyline(this.realRouteCoordinates, {
+      color: '#3b82f6',
+      weight: 4,
+      opacity: 0.7,
+      dashArray: '10, 5'
+    }).addTo(this.map);
   }
 
   
+
   async startNavigation() {
     if (!this.routeResult || !this.routeResult.route.length) {
       alert('Няма активен маршрут');
+      return;
+    }
+
+    if (!this.realRouteCoordinates || this.realRouteCoordinates.length === 0) {
+      alert('Маршрутът не е готов');
       return;
     }
 
@@ -352,7 +374,6 @@ mapStyles = [
     this.currentStop = 0;
     this.currentTruckLoad = 0;
 
-   
     const truckIcon = L.divIcon({
       className: 'truck-marker-active',
       html: `
@@ -369,53 +390,69 @@ mapStyles = [
       iconAnchor: [24, 24]
     });
 
-  
-    for (let i = 0; i < this.routeResult.route.length; i++) {
+    let currentStopIndex = 0;
+    const route = this.routeResult.route;
+
+    
+    for (let i = 0; i < this.realRouteCoordinates.length; i++) {
       if (!this.navigationActive) break;
 
-      const stop = this.routeResult.route[i];
-      this.currentStop = i + 1;
+      const coord = this.realRouteCoordinates[i];
 
-     
       if (this.truckMarker) {
         this.map.removeLayer(this.truckMarker);
       }
 
-      this.truckMarker = L.marker([stop.locationY, stop.locationX], {
-        icon: truckIcon
-      }).addTo(this.map);
-
-      this.map.panTo([stop.locationY, stop.locationX]);
-
-     
-      this.currentTruckLoad += stop.estimatedLoad;
-
-      console.log(`Stop ${i + 1}: Container #${stop.id}, Load: ${this.currentTruckLoad.toFixed(0)} л`);
+      this.truckMarker = L.marker(coord, { icon: truckIcon }).addTo(this.map);
+      this.map.panTo(coord);
 
       
-      try {
-        await this.http.put(`${this.API_URL}/containers/${stop.id}/empty`, {}).toPromise();
-        console.log(`Container #${stop.id} emptied successfully`);
-      } catch (err) {
-        console.error(`Error emptying container #${stop.id}:`, err);
+      if (currentStopIndex < route.length) {
+        const stop = route[currentStopIndex];
+        const distance = this.calculateDistance(coord, [stop.locationY, stop.locationX]);
+
+        if (distance < 0.05) {  // < 50м
+          this.currentStop = currentStopIndex + 1;
+          this.currentTruckLoad += stop.estimatedLoad;
+
+          console.log(`Stop ${currentStopIndex + 1}: Container #${stop.id}, Load: ${this.currentTruckLoad.toFixed(0)} л`);
+
+          try {
+            await this.http.put(`${this.API_URL}/containers/${stop.id}/empty`, {}).toPromise();
+            console.log(`Container #${stop.id} emptied`);
+          } catch (err) {
+            console.error(`Error emptying #${stop.id}:`, err);
+          }
+
+          currentStopIndex++;
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        }
       }
 
-      
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
     const finalLoad = this.currentTruckLoad;
     this.navigationActive = false;
-    
+
     alert(`Маршрут завършен!\nОбщо събран товар: ${finalLoad.toFixed(0)} л\n\nКамионът се връща в базата за изпразване...`);
-    
-   
+
     this.currentTruckLoad = 0;
-    
     console.log('Navigation completed. Truck emptied at depot.');
   }
 
- 
+  private calculateDistance(coord1: [number, number], coord2: [number, number]): number {
+    const R = 6371;
+    const dLat = (coord2[0] - coord1[0]) * Math.PI / 180;
+    const dLon = (coord2[1] - coord1[1]) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(coord1[0] * Math.PI / 180) * Math.cos(coord2[0] * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
   private stopNavigation() {
     this.navigationActive = false;
     if (this.navigationInterval) {
@@ -424,7 +461,6 @@ mapStyles = [
     }
   }
 
- 
   stopRoute() {
     this.stopNavigation();
     this.clearRouteVisualization();
@@ -436,7 +472,6 @@ mapStyles = [
     this.selectedTrashType = 0;
   }
 
- 
   private clearRouteVisualization() {
     if (this.routeLine) {
       this.map.removeLayer(this.routeLine);
@@ -450,9 +485,44 @@ mapStyles = [
 
     this.routeMarkers.forEach(marker => this.map.removeLayer(marker));
     this.routeMarkers = [];
+    this.realRouteCoordinates = [];
   }
 
+
+
+  private handleContainerUpdates(updates: any[]) {
+    if (!this.allBins || !this.allBins.length) return;
+
+    updates.forEach(update => {
+      const bin = this.allBins.find(b => b.id === update.id);
+      if (!bin) return;
+
+      bin.fillPercentage = update.fillPercentage;
+      bin.temperature = update.temperature;
+      if (update.status !== null && update.status !== undefined) {
+        bin.status = update.status;
+      }
+
+      this.updateMarkerOnMap(bin);
+    });
+
   
+  }
+
+  private updateMarkerOnMap(bin: Bin) {
+    this.cluster.eachLayer((layer: any) => {
+      if (layer.options && layer.options.binId === bin.id) {
+        layer.setIcon(this.createBinIcon(bin));
+        
+        const popup = layer.getPopup();
+        if (popup) {
+          popup.setContent(this.createPopupContent(bin));
+        }
+      }
+    });
+  }
+
+ 
 
   private renderBins(bins: Bin[]) {
     this.cluster.clearLayers();
@@ -460,7 +530,10 @@ mapStyles = [
     bins.forEach(bin => {
       const marker = L.marker(
         [bin.locationY, bin.locationX],
-        { icon: this.createBinIcon(bin) }
+        { 
+          icon: this.createBinIcon(bin),
+          binId: bin.id
+        } as any
       );
 
       marker.bindPopup(this.createPopupContent(bin));
@@ -554,7 +627,7 @@ mapStyles = [
     `;
   }
 
-  
+ 
 
   private initFilterControl() {
     const filterControl = (L.Control as any).extend({
@@ -638,7 +711,7 @@ mapStyles = [
     this.renderBins(filtered);
   }
 
-  
+ 
 
   private updateReportForm(bin: Bin) {
     const input = document.getElementById('selected-bin-id') as HTMLInputElement;
@@ -703,13 +776,9 @@ mapStyles = [
     });
   }
 
-
-
   private getAuthToken(): string | null {
     return localStorage.getItem('token') || 
            JSON.parse(localStorage.getItem('user') || '{}').token || 
            null;
   }
-
- 
 }

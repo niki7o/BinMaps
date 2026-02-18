@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { Subject, takeUntil, filter } from 'rxjs';
-import { AuthService } from '../auth.service';
+import { AuthService } from '../services/auth.service';
 
 export interface User {
   userName: string;
