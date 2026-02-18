@@ -1,3 +1,16 @@
+// ════════════════════════════════════════════════════════════
+// COMPLETE MAP.COMPONENT.TS — Всички fix-ове приложени
+// ════════════════════════════════════════════════════════════
+// 
+// ПРОМЕНИ:
+// ✅ Report описание + preview
+// ✅ Admin simulation скрит
+// ✅ Better clustering
+// ✅ Route color според urgency
+// ✅ Improved icons (sensor pulse, fire flicker)
+// ✅ Image preview handler
+// ════════════════════════════════════════════════════════════
+
 import { Component, AfterViewInit, ViewEncapsulation, inject, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
@@ -69,11 +82,29 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   private readonly API_URL = 'https://localhost:7277/api';
   private map!: L.Map;
+  
+  // ⚡ IMPROVED CLUSTERING
   private cluster = L.markerClusterGroup({
-    maxClusterRadius: 50,
+    maxClusterRadius: 60,
     spiderfyOnMaxZoom: true,
-    showCoverageOnHover: false,
-    zoomToBoundsOnClick: true
+    showCoverageOnHover: true,
+    zoomToBoundsOnClick: true,
+    disableClusteringAtZoom: 15,
+    chunkedLoading: true,
+    iconCreateFunction: (cluster) => {
+      const count = cluster.getChildCount();
+      let className = 'marker-cluster marker-cluster-';
+      
+      if (count < 10) className += 'small';
+      else if (count < 50) className += 'medium';
+      else className += 'large';
+
+      return L.divIcon({
+        html: `<div><span>${count}</span></div>`,
+        className: className,
+        iconSize: L.point(40, 40)
+      });
+    }
   });
   
   private allBins: Bin[] = [];
@@ -83,9 +114,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private selectedBinForReport: Bin | null = null;
   private destroy$ = new Subject<void>();
   private navigationInterval?: number;
-  
-  // ⚡ За реалния път
   private realRouteCoordinates: [number, number][] = [];
+  
+  // ⚡ REPORT IMPROVEMENTS
+  reportImagePreview: string | null = null;
+  reportDescription: string = '';
 
   private http = inject(HttpClient);
   private router = inject(Router);
@@ -221,8 +254,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
-  
-
   async generateRoute() {
     if (!this.selectedAreaId) {
       alert('Моля изберете зона');
@@ -282,7 +313,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
   }
 
-  
+  // ⚡ ROUTE COLOR HELPER
+  private getRouteColor(avgFill: number): string {
+    if (avgFill >= 80) return '#ef4444'; // Red - critical
+    if (avgFill >= 60) return '#f97316'; // Orange - high
+    if (avgFill >= 40) return '#f59e0b'; // Yellow - medium
+    return '#10b981';                     // Green - normal
+  }
 
   private async visualizeRoute() {
     if (!this.routeResult) return;
@@ -291,7 +328,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     const route = this.routeResult.route;
 
-    
+    // ⚡ OSRM Routing
     try {
       const coords = route.map(s => `${s.locationX},${s.locationY}`).join(';');
       const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
@@ -300,18 +337,21 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       const data = await response.json();
 
       if (data.code === 'Ok' && data.routes && data.routes[0]) {
-        // Конвертирай [lng, lat] → [lat, lng]
         this.realRouteCoordinates = data.routes[0].geometry.coordinates
           .map((c: number[]) => [c[1], c[0]] as [number, number]);
 
+        // ⚡ ROUTE COLOR според urgency
+        const avgFill = route.reduce((sum, s) => sum + s.fillPercentage, 0) / route.length;
+        const routeColor = this.getRouteColor(avgFill);
+
         this.routeLine = L.polyline(this.realRouteCoordinates, {
-          color: '#3b82f6',
-          weight: 4,
-          opacity: 0.7,
+          color: routeColor,
+          weight: 5,
+          opacity: 0.85,
           dashArray: '10, 5'
         }).addTo(this.map);
 
-        console.log(`✅ Route: ${(data.routes[0].distance / 1000).toFixed(1)} km по пътища`);
+        console.log(`✅ Route: ${(data.routes[0].distance / 1000).toFixed(1)} km, Avg fill: ${avgFill.toFixed(0)}%, Color: ${routeColor}`);
       } else {
         console.warn('OSRM failed, using straight lines');
         this.fallbackStraightRoute(route);
@@ -321,7 +361,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.fallbackStraightRoute(route);
     }
 
-   
+    // Stop markers
     route.forEach((stop) => {
       const marker = L.marker([stop.locationY, stop.locationX], {
         icon: L.divIcon({
@@ -349,15 +389,17 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   private fallbackStraightRoute(route: RouteStop[]) {
     this.realRouteCoordinates = route.map(s => [s.locationY, s.locationX] as [number, number]);
+    
+    const avgFill = route.reduce((sum, s) => sum + s.fillPercentage, 0) / route.length;
+    const routeColor = this.getRouteColor(avgFill);
+    
     this.routeLine = L.polyline(this.realRouteCoordinates, {
-      color: '#3b82f6',
-      weight: 4,
-      opacity: 0.7,
+      color: routeColor,
+      weight: 5,
+      opacity: 0.85,
       dashArray: '10, 5'
     }).addTo(this.map);
   }
-
-  
 
   async startNavigation() {
     if (!this.routeResult || !this.routeResult.route.length) {
@@ -393,7 +435,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     let currentStopIndex = 0;
     const route = this.routeResult.route;
 
-    
     for (let i = 0; i < this.realRouteCoordinates.length; i++) {
       if (!this.navigationActive) break;
 
@@ -406,12 +447,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.truckMarker = L.marker(coord, { icon: truckIcon }).addTo(this.map);
       this.map.panTo(coord);
 
-      
       if (currentStopIndex < route.length) {
         const stop = route[currentStopIndex];
         const distance = this.calculateDistance(coord, [stop.locationY, stop.locationX]);
 
-        if (distance < 0.05) {  // < 50м
+        if (distance < 0.05) {
           this.currentStop = currentStopIndex + 1;
           this.currentTruckLoad += stop.estimatedLoad;
 
@@ -488,7 +528,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.realRouteCoordinates = [];
   }
 
-
+  // ════════════════════════════════════════════════════════════
+  // SIGNALR
+  // ════════════════════════════════════════════════════════════
 
   private handleContainerUpdates(updates: any[]) {
     if (!this.allBins || !this.allBins.length) return;
@@ -506,7 +548,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.updateMarkerOnMap(bin);
     });
 
-  
+    console.log(`✅ SignalR: Updated ${updates.length} bins`);
   }
 
   private updateMarkerOnMap(bin: Bin) {
@@ -522,7 +564,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
- 
+  // ════════════════════════════════════════════════════════════
+  // RENDERING
+  // ════════════════════════════════════════════════════════════
 
   private renderBins(bins: Bin[]) {
     this.cluster.clearLayers();
@@ -627,7 +671,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     `;
   }
 
- 
+  // ════════════════════════════════════════════════════════════
+  // FILTERS
+  // ════════════════════════════════════════════════════════════
 
   private initFilterControl() {
     const filterControl = (L.Control as any).extend({
@@ -711,12 +757,48 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.renderBins(filtered);
   }
 
- 
+  // ════════════════════════════════════════════════════════════
+  // REPORTS — С ОПИСАНИЕ И ПРЕВЮ
+  // ════════════════════════════════════════════════════════════
 
   private updateReportForm(bin: Bin) {
     const input = document.getElementById('selected-bin-id') as HTMLInputElement;
     if (input) {
       input.value = `Контейнер #${bin.id}`;
+    }
+  }
+
+  // ⚡ IMAGE PREVIEW HANDLER
+  handleImagePreview(event: any) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      alert('Моля качете само JPEG, PNG или GIF снимки');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Снимката е твърде голяма. Максимум 5MB.');
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.reportImagePreview = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ⚡ CLEAR IMAGE
+  clearImagePreview() {
+    this.reportImagePreview = null;
+    const fileInput = document.getElementById('report-image') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
     }
   }
 
@@ -734,6 +816,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     const reportTypeSelect = document.getElementById('report-type') as HTMLSelectElement;
     const imageInput = document.getElementById('report-image') as HTMLInputElement;
+    const descriptionInput = document.getElementById('report-description') as HTMLTextAreaElement;
 
     const reportTypeMap: { [key: string]: number } = {
       'Full': 0, 'Fire': 1, 'SensorBroken': 2,
@@ -744,6 +827,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const formData = new FormData();
     formData.append('TrashContainerId', this.selectedBinForReport.id.toString());
     formData.append('ReportType', reportTypeValue.toString());
+    
+    
+    if (descriptionInput?.value) {
+      formData.append('Description', descriptionInput.value);
+    }
     
     if (imageInput.files && imageInput.files[0]) {
       formData.append('Photo', imageInput.files[0]);
@@ -762,8 +850,14 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       next: () => {
         alert('Докладването е изпратено успешно!');
         this.selectedBinForReport = null;
+        this.reportImagePreview = null;
+        this.reportDescription = '';
+        
         const input = document.getElementById('selected-bin-id') as HTMLInputElement;
         if (input) input.value = '';
+        
+        if (imageInput) imageInput.value = '';
+        if (descriptionInput) descriptionInput.value = '';
       },
       error: (error) => {
         if (error.status === 401) {

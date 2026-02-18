@@ -18,7 +18,7 @@ namespace BinMaps.Data.Entities
 
         [ForeignKey(nameof(TrashContainer))]
         public int? TrashContainerId { get; set; }
-        public TrashContainer TrashContainer { get; set; }
+        public TrashContainer? TrashContainer { get; set; }
 
         [Required]
         public string UserId { get; set; }

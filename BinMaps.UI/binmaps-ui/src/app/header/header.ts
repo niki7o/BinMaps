@@ -1,13 +1,15 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { Subject, takeUntil, filter } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { HttpClient } from '@angular/common/http';
 
 export interface User {
   userName: string;
   email: string;
   role: string;
+  profilePictureUrl?: string;
 }
 
 @Component({
@@ -18,9 +20,14 @@ export interface User {
   styleUrls: ['./header.css']
 })
 export class Header implements OnInit, OnDestroy {
+  private http = inject(HttpClient);
+  private readonly API_URL = 'https://localhost:7277/api';
+
   currentUser: User | null = null;
   isAdmin = false;
   showUserMenu = false;
+  profilePictureUrl: string | null = null;
+  
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -29,26 +36,28 @@ export class Header implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-   
     this.authService.currentUser$
       .pipe(takeUntil(this.destroy$))
       .subscribe(user => {
         this.currentUser = user;
         this.isAdmin = user?.role === 'Admin';
-        console.log('Header: User state updated:', user);
+        
+        // ⚡ Зареди profile picture ако има user
+        if (user) {
+          this.loadProfilePicture();
+        } else {
+          this.profilePictureUrl = null;
+        }
       });
 
- 
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
         takeUntil(this.destroy$)
       )
       .subscribe(() => {
-      
         this.showUserMenu = false;
         
-       
         const userData = localStorage.getItem('user');
         if (userData && !this.currentUser) {
           try {
@@ -60,7 +69,6 @@ export class Header implements OnInit, OnDestroy {
         }
       });
 
-    
     this.loadUserFromStorage();
   }
 
@@ -69,7 +77,6 @@ export class Header implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
- 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
@@ -92,13 +99,36 @@ export class Header implements OnInit, OnDestroy {
     }
   }
 
+  // ⚡ Зареди profile picture от API
+  private loadProfilePicture() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    this.http.get(`${this.API_URL}/UserProfile/picture`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+      responseType: 'blob'
+    }).subscribe({
+      next: (blob) => {
+        if (blob.size > 0) {
+          this.profilePictureUrl = URL.createObjectURL(blob);
+        } else {
+          this.profilePictureUrl = null;
+        }
+      },
+      error: () => {
+        this.profilePictureUrl = null;
+      }
+    });
+  }
+
   
+  onImageError() {
+    this.profilePictureUrl = null;
+  }
 
   toggleUserMenu() {
     this.showUserMenu = !this.showUserMenu;
   }
-
-
 
   navigateToHome() {
     this.router.navigate(['/']);
@@ -116,17 +146,17 @@ export class Header implements OnInit, OnDestroy {
   }
 
   navigateToAdmin() {
+    // ⚡ Проверка дали е admin
+    if (!this.isAdmin) {
+      alert('Нямате достъп до админ панела');
+      return;
+    }
     this.router.navigate(['/admin']);
     this.showUserMenu = false;
   }
 
   navigateToProfile() {
     this.router.navigate(['/profile']);
-    this.showUserMenu = false;
-  }
-
-  navigateToSettings() {
-    this.router.navigate(['/settings']);
     this.showUserMenu = false;
   }
 
@@ -140,16 +170,13 @@ export class Header implements OnInit, OnDestroy {
     this.showUserMenu = false;
   }
 
- 
-
   logout() {
     this.authService.logout();
     this.currentUser = null;
+    this.profilePictureUrl = null;
     this.showUserMenu = false;
     this.router.navigate(['/']);
   }
-
- 
 
   getInitials(name: string): string {
     if (!name) return 'U';

@@ -1,7 +1,14 @@
-
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+
+interface StatsResponse {
+  totalContainers: number;
+  totalTrucks: number;
+  criticalContainers: number;
+  sensorCoverage: number;
+}
 
 @Component({
   selector: 'app-home',
@@ -11,14 +18,19 @@ import { Router } from '@angular/router';
   imports: [CommonModule]
 })
 export class HomeComponent implements OnInit {
+  private http = inject(HttpClient);
+  private router = inject(Router);
+  private readonly API_URL = 'https://localhost:7277/api';
+
   currentYear = new Date().getFullYear();
   isLoggedIn = false;
 
+  
   stats = [
-    { number: '250+', label: 'Контейнери' },
-    { number: '5+', label: 'Камиона' },
-    { number: '24/7', label: 'Мониторинг' },
-    { number: '100%', label: 'Ефективност' }
+    { number: '—', label: 'Контейнери' },
+    { number: '—', label: 'Камиона' },
+    { number: '—', label: 'Критични' },
+    { number: '—', label: 'Покритие' }
   ];
 
   features = [
@@ -30,7 +42,7 @@ export class HomeComponent implements OnInit {
     {
       icon: 'report',
       title: 'Граждански доклади',
-      description: 'Докладвай за препълнени или повредени контейнери чрез QR код и AI анализ на снимки.'
+      description: 'Докладвай за препълнени или повредени контейнери с AI анализ на снимки.'
     },
     {
       icon: 'ai',
@@ -40,7 +52,7 @@ export class HomeComponent implements OnInit {
     {
       icon: 'route',
       title: 'Оптимални маршрути',
-      description: 'Алгоритми за най-ефективни маршрути на камионите базирани на състояние и приоритет.'
+      description: 'Алгоритми за най-ефективни маршрути на камионите базирани на TSP и приоритет.'
     },
     {
       icon: 'sensor',
@@ -48,9 +60,9 @@ export class HomeComponent implements OnInit {
       description: 'Мониторинг на запълване, температура и статус на всеки контейнер чрез сензори.'
     },
     {
-      icon: 'notification',
-      title: 'Нотификации',
-      description: 'Автоматични известия за спешни случаи като пожари или критично препълване.'
+      icon: 'dashboard',
+      title: 'Analytics Dashboard',
+      description: 'Визуализация на данни, hotspot карти и прогнозиране на натовареността.'
     }
   ];
 
@@ -68,7 +80,7 @@ export class HomeComponent implements OnInit {
     {
       step: '3',
       title: 'Оптимизация',
-      description: 'Алгоритъмът изчислява най-ефективните маршрути за камионите по зони.'
+      description: 'TSP алгоритъмът изчислява най-ефективните маршрути за камионите по зони.'
     },
     {
       step: '4',
@@ -77,15 +89,45 @@ export class HomeComponent implements OnInit {
     }
   ];
 
-  constructor(private router: Router) {}
-
   ngOnInit() {
     this.checkLoginStatus();
+    this.loadRealStats();
   }
 
   checkLoginStatus() {
     const userData = localStorage.getItem('user');
     this.isLoggedIn = !!userData;
+  }
+
+ 
+  loadRealStats() {
+    this.http.get<any[]>(`${this.API_URL}/containers`).subscribe({
+      next: (containers) => {
+        const totalContainers = containers.length;
+        const criticalContainers = containers.filter(c => c.fillPercentage > 80).length;
+        const withSensors = containers.filter(c => c.hasSensor).length;
+        const sensorCoverage = totalContainers > 0 
+          ? Math.round((withSensors / totalContainers) * 100) 
+          : 0;
+
+        this.stats = [
+          { number: `${totalContainers}`, label: 'Контейнери' },
+          { number: '6', label: 'Камиона' }, // От seed data
+          { number: `${criticalContainers}`, label: 'Критични' },
+          { number: `${sensorCoverage}%`, label: 'Покритие' }
+        ];
+      },
+      error: (err) => {
+        console.error('Failed to load stats:', err);
+       
+        this.stats = [
+          { number: '246', label: 'Контейнери' },
+          { number: '6', label: 'Камиона' },
+          { number: '—', label: 'Критични' },
+          { number: '—', label: 'Покритие' }
+        ];
+      }
+    });
   }
 
   navigateToRegister() {

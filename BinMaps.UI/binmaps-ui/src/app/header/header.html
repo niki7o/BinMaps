@@ -1,6 +1,6 @@
 <header class="header">
   <div class="header-container">
-    <!-- Logo/Brand -->
+
     <div class="header-brand" (click)="navigateToHome()">
       <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M3 6h18"/>
@@ -10,8 +10,7 @@
       <span class="brand-name">BinMaps</span>
     </div>
 
-
-    
+   
     <nav class="header-nav" *ngIf="currentUser">
       <button class="nav-btn" (click)="navigateToMap()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -30,6 +29,7 @@
         Аналитика
       </button>
 
+     
       <button class="nav-btn" (click)="navigateToAdmin()" *ngIf="isAdmin">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2L2 7l10 5 10-5-10-5z"/>
@@ -40,7 +40,7 @@
       </button>
     </nav>
 
-    <!-- User Section -->
+    
     <div class="header-actions">
       <div class="user-section" *ngIf="currentUser">
         <div class="user-menu">
@@ -49,15 +49,24 @@
               <span class="user-name">{{ currentUser.userName }}</span>
               <span class="user-role">{{ getRoleLabel(currentUser.role) }}</span>
             </div>
+            
+           
             <div class="user-avatar">
-              {{ getInitials(currentUser.userName)|| "{this.apiUrl}/UserProfile/upload-picture"}}
+              <img 
+                *ngIf="profilePictureUrl" 
+                [src]="profilePictureUrl" 
+                alt="Profile" 
+                class="avatar-img"
+                (error)="onImageError()"
+              />
+              <span *ngIf="!profilePictureUrl">{{ getInitials(currentUser.userName) }}</span>
             </div>
+
             <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6 9 12 15 18 9"/>
             </svg>
           </button>
 
-          <!-- Dropdown Menu -->
           <div class="user-dropdown" [class.show]="showUserMenu">
             <button class="dropdown-item" (click)="navigateToProfile()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -65,14 +74,6 @@
                 <circle cx="12" cy="7" r="4"/>
               </svg>
               Моят профил
-            </button>
-
-            <button class="dropdown-item" (click)="navigateToSettings()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
-              </svg>
-              Настройки
             </button>
 
             <div class="dropdown-divider"></div>
@@ -89,7 +90,7 @@
         </div>
       </div>
 
-      <!-- Auth Buttons (if not logged in) -->
+   
       <div class="auth-section" *ngIf="!currentUser">
         <button class="btn-secondary" (click)="navigateToLogin()">
           Вход

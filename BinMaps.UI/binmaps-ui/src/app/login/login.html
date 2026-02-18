@@ -1,21 +1,5 @@
 <div class="login-container">
- 
-  <header class="header">
-    <div class="header-content">
-      <div class="logo" (click)="navigateToHome()">
-        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M3 6h18"/>
-          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-          <line x1="10" y1="11" x2="10" y2="17"/>
-          <line x1="14" y1="11" x2="14" y2="17"/>
-        </svg>
-        <span class="logo-text">BinMaps</span>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Content -->
+  
   <main class="main-content">
     <div class="login-card">
       <div class="card-header">
@@ -25,7 +9,7 @@
 
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
         
-        <!-- Email Field -->
+       
         <div class="form-group">
           <label for="email" class="form-label">
             Имейл адрес
@@ -52,7 +36,7 @@
           </div>
         </div>
 
-        <!-- Password Field -->
+       
         <div class="form-group">
           <label for="password" class="form-label">
             Парола
@@ -94,7 +78,7 @@
           </div>
         </div>
 
-        <!-- Error Alert -->
+        
         <div class="alert alert-error" *ngIf="errorMessage">
           <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <circle cx="12" cy="12" r="10"/>
@@ -104,7 +88,7 @@
           <span>{{ errorMessage }}</span>
         </div>
 
-        <!-- Submit Button -->
+        
         <button
           type="submit"
           class="btn btn-primary"
@@ -119,7 +103,7 @@
           </span>
         </button>
 
-        <!-- Form Footer -->
+       
         <div class="form-footer">
           <p class="register-text">
             Нямате акаунт?
@@ -135,7 +119,4 @@
       </form>
     </div>
   </main>
-
- 
-  
 </div>
