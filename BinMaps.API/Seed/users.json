@@ -1,0 +1,22 @@
+﻿{
+  "users": [
+    {
+      "username": "admin",
+      "email": "admin@binmaps.com",
+      "password": "Admin123!",
+      "role": "Admin"
+    },
+    {
+      "username": "driver",
+      "email": "driver@binmaps.com",
+      "password": "Driver123!",
+      "role": "Driver"
+    },
+    {
+      "username": "user1",
+      "email": "user1@binmaps.com",
+      "password": "User123!",
+      "role": "User"
+    }
+  ]
+}

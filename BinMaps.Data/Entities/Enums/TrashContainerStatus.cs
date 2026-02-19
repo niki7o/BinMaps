@@ -8,7 +8,8 @@ namespace BinMaps.Data.Entities.Enums
     {
         Active,
         Offline,
-        Fire
+        Fire,
+        SensorBroken
 
     }
 }

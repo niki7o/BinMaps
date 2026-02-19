@@ -1,0 +1,46 @@
+﻿{
+  "trucks": [
+    {
+      "id": 1,
+      "areaId": "Зона 2 - Център",
+      "capacity": 12000,
+      "locationX": 23.3219,
+      "locationY": 42.6977
+    },
+    {
+      "id": 2,
+      "areaId": "Зона 1 - Надежда север",
+      "capacity": 12000,
+      "locationX": 23.3400,
+      "locationY": 42.7350
+    },
+    {
+      "id": 3,
+      "areaId": "Зона 3 - Люлин",
+      "capacity": 12000,
+      "locationX": 23.2750,
+      "locationY": 42.7400
+    },
+    {
+      "id": 4,
+      "areaId": "Зона 4 - Овча Купел",
+      "capacity": 12000,
+      "locationX": 23.2600,
+      "locationY": 42.6700
+    },
+    {
+      "id": 5,
+      "areaId": "Зона 6 - Изток",
+      "capacity": 12000,
+      "locationX": 23.3700,
+      "locationY": 42.6900
+    },
+    {
+      "id": 6,
+      "areaId": "Зона 5 - Юг и Витоша",
+      "capacity": 12000,
+      "locationX": 23.3300,
+      "locationY": 42.6500
+    }
+  ]
+}

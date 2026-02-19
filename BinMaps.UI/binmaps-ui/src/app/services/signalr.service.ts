@@ -18,7 +18,7 @@ export class ContainerSignalRService {
   private hubConnection!: signalR.HubConnection;
   private connectionEstablished = false;
 
-  // Observable stream за updates
+ 
   public containerUpdates$ = new Subject<ContainerUpdate[]>();
   public connectionStatus$ = new Subject<'connected' | 'disconnected' | 'error'>();
 
@@ -26,9 +26,7 @@ export class ContainerSignalRService {
     this.initConnection();
   }
 
-  // ═══════════════════════════════════════
-  // INITIALIZE CONNECTION
-  // ═══════════════════════════════════════
+
 
   private initConnection() {
     this.hubConnection = new signalR.HubConnectionBuilder()
@@ -36,36 +34,37 @@ export class ContainerSignalRService {
         skipNegotiation: false,
         transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.ServerSentEvents
       })
-      .withAutomaticReconnect([0, 2000, 5000, 10000])  // retry delays
+      .withAutomaticReconnect([0, 2000, 5000, 10000])  
       .configureLogging(signalR.LogLevel.Information)
       .build();
 
-    // ── Event handlers ──
+   
     this.hubConnection.on('ContainersUpdated', (updates: ContainerUpdate[]) => {
       this.containerUpdates$.next(updates);
-      console.log(`📡 Received ${updates.length} container updates`);
+      
     });
 
     this.hubConnection.onclose(() => {
       this.connectionEstablished = false;
       this.connectionStatus$.next('disconnected');
-      console.log('❌ SignalR disconnected');
+      console.log(' SignalR disconnected');
     });
 
     this.hubConnection.onreconnecting(() => {
-      console.log('🔄 SignalR reconnecting...');
+      console.log(' SignalR reconnecting...');
     });
 
     this.hubConnection.onreconnected(() => {
       this.connectionEstablished = true;
       this.connectionStatus$.next('connected');
-      console.log('✅ SignalR reconnected');
+      console.log(' SignalR reconnected');
     });
+
+    this.hubConnection.on('connected', (message: string) => {
+  console.log('Hub says:', message);
+});
   }
 
-  // ═══════════════════════════════════════
-  // START / STOP
-  // ═══════════════════════════════════════
 
   public async start(): Promise<void> {
     if (this.connectionEstablished) return;
@@ -74,12 +73,12 @@ export class ContainerSignalRService {
       await this.hubConnection.start();
       this.connectionEstablished = true;
       this.connectionStatus$.next('connected');
-      console.log('✅ SignalR connected');
+      console.log(' SignalR connected');
     } catch (err) {
       this.connectionStatus$.next('error');
-      console.error('❌ SignalR connection failed:', err);
+      console.error(' SignalR connection failed:', err);
       
-      // Retry after 5 seconds
+      
       setTimeout(() => this.start(), 5000);
     }
   }
@@ -91,7 +90,7 @@ export class ContainerSignalRService {
       await this.hubConnection.stop();
       this.connectionEstablished = false;
       this.connectionStatus$.next('disconnected');
-      console.log('⏹ SignalR stopped');
+      console.log(' SignalR stopped');
     } catch (err) {
       console.error('Error stopping SignalR:', err);
     }

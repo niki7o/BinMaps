@@ -23,6 +23,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Update="Seed\*.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	
+	<ItemGroup>
 		
 		<ProjectReference Include="..\BinMaps.Data\BinMaps.Data.csproj" />
 		

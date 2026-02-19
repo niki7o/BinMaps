@@ -1,4 +1,7 @@
+
+
 using BinMaps.API.Hubs;
+using BinMaps.API.Seed;
 using BinMaps.Data;
 using BinMaps.Data.Entities;
 using BinMaps.Infrastructure.Repository;
@@ -35,7 +38,6 @@ namespace BinMaps.API
             .AddEntityFrameworkStores<BinMapsDbContext>()
             .AddDefaultTokenProviders();
 
-            // JWT Authentication
             var jwtSettings = builder.Configuration.GetSection("Jwt");
             var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
 
@@ -59,26 +61,28 @@ namespace BinMaps.API
             });
 
             builder.Services.AddHttpClient();
-
-          
             builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
             builder.Services.AddScoped<ITruckRouteService, TruckRouteService>();
-            builder.Services.AddHostedService<ContainerDynamicsService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddScoped<IAIService, AIService>();
-            builder.Services.AddSignalR();
 
+            
+            builder.Services.AddScoped<InitialStateSeeder>();
+
+            builder.Services.AddHostedService<ContainerDynamicsService>();
+            builder.Services.AddSignalR();
 
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAngular", policy =>
                 {
-                    policy.WithOrigins("https://localhost:4200", "http://localhost:4200")
-                        .AllowAnyHeader()
-                        .AllowAnyMethod();
+                    policy.WithOrigins("http://localhost:4200")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
                 });
-            }); 
+            });
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
@@ -86,35 +90,36 @@ namespace BinMaps.API
 
             var app = builder.Build();
 
+
+
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
-                var context = services.GetRequiredService<BinMapsDbContext>();
-                var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-                var userManager = services.GetRequiredService<UserManager<User>>();
 
-                await context.Database.MigrateAsync();
-                await BinMapsDbContext.SeedRoles(roleManager);
-                await BinMapsDbContext.SeedUsers(userManager);
-                await BinMapsDbContext.SeedAsync(context);
+                
+                var seeder = services.GetRequiredService<InitialStateSeeder>();
+
+                await seeder.SeedAllAsync();
             }
-           
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-            app.MapHub<ContainerHub>("/hubs/containers");
+
+            app.UseCors("AllowAngular");
             app.UseStaticFiles();
             app.UseHttpsRedirection();
-            app.UseCors("AllowAngular");
-
+            app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
-
+            app.MapHub<ContainerHub>("/hubs/containers");
             app.MapControllers();
 
             await app.RunAsync();
         }
+
+       
     }
 }
