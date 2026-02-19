@@ -1,16 +1,3 @@
-// ════════════════════════════════════════════════════════════
-// COMPLETE MAP.COMPONENT.TS — Всички fix-ове приложени
-// ════════════════════════════════════════════════════════════
-// 
-// ПРОМЕНИ:
-// ✅ Report описание + preview
-// ✅ Admin simulation скрит
-// ✅ Better clustering
-// ✅ Route color според urgency
-// ✅ Improved icons (sensor pulse, fire flicker)
-// ✅ Image preview handler
-// ════════════════════════════════════════════════════════════
-
 import { Component, AfterViewInit, ViewEncapsulation, inject, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
@@ -83,7 +70,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private readonly API_URL = 'https://localhost:7277/api';
   private map!: L.Map;
   
-  // ⚡ IMPROVED CLUSTERING
   private cluster = L.markerClusterGroup({
     maxClusterRadius: 60,
     spiderfyOnMaxZoom: true,
@@ -116,7 +102,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private navigationInterval?: number;
   private realRouteCoordinates: [number, number][] = [];
   
-  // ⚡ REPORT IMPROVEMENTS
   reportImagePreview: string | null = null;
   reportDescription: string = '';
 
@@ -268,8 +253,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         return;
       }
 
-      console.log(`Generating route: Area=${this.selectedAreaId}, TrashType=${this.selectedTrashType}`);
-
       const response = await this.http.get<RouteResult>(
         `${this.API_URL}/trucks/route`,
         {
@@ -297,8 +280,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.routeActive = true;
       this.visualizeRoute();
 
-      console.log('Route generated successfully:', response);
-
     } catch (error: any) {
       console.error('Route generation error:', error);
       
@@ -313,12 +294,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
   }
 
-  // ⚡ ROUTE COLOR HELPER
   private getRouteColor(avgFill: number): string {
-    if (avgFill >= 80) return '#ef4444'; // Red - critical
-    if (avgFill >= 60) return '#f97316'; // Orange - high
-    if (avgFill >= 40) return '#f59e0b'; // Yellow - medium
-    return '#10b981';                     // Green - normal
+    if (avgFill >= 80) return '#ef4444';
+    if (avgFill >= 60) return '#f97316';
+    if (avgFill >= 40) return '#f59e0b';
+    return '#10b981';
   }
 
   private async visualizeRoute() {
@@ -328,7 +308,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     const route = this.routeResult.route;
 
-    // ⚡ OSRM Routing
     try {
       const coords = route.map(s => `${s.locationX},${s.locationY}`).join(';');
       const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
@@ -340,7 +319,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         this.realRouteCoordinates = data.routes[0].geometry.coordinates
           .map((c: number[]) => [c[1], c[0]] as [number, number]);
 
-        // ⚡ ROUTE COLOR според urgency
         const avgFill = route.reduce((sum, s) => sum + s.fillPercentage, 0) / route.length;
         const routeColor = this.getRouteColor(avgFill);
 
@@ -350,10 +328,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
           opacity: 0.85,
           dashArray: '10, 5'
         }).addTo(this.map);
-
-        console.log(`✅ Route: ${(data.routes[0].distance / 1000).toFixed(1)} km, Avg fill: ${avgFill.toFixed(0)}%, Color: ${routeColor}`);
       } else {
-        console.warn('OSRM failed, using straight lines');
         this.fallbackStraightRoute(route);
       }
     } catch (error) {
@@ -361,7 +336,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.fallbackStraightRoute(route);
     }
 
-    // Stop markers
     route.forEach((stop) => {
       const marker = L.marker([stop.locationY, stop.locationX], {
         icon: L.divIcon({
@@ -420,7 +394,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       className: 'truck-marker-active',
       html: `
         <div class="truck-icon">
-          <svg viewBox="0 0 24 24" fill="#3b82f6" stroke="white" stroke-width="1.5">
+          <svg viewBox="0 0 24 24" fill="white">
             <rect x="1" y="3" width="15" height="13"/>
             <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
             <circle cx="5.5" cy="18.5" r="2.5"/>
@@ -434,8 +408,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     let currentStopIndex = 0;
     const route = this.routeResult.route;
+    const totalSteps = this.realRouteCoordinates.length;
+    const delay = 40;
 
-    for (let i = 0; i < this.realRouteCoordinates.length; i++) {
+    for (let i = 0; i < totalSteps; i++) {
       if (!this.navigationActive) break;
 
       const coord = this.realRouteCoordinates[i];
@@ -445,40 +421,57 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       }
 
       this.truckMarker = L.marker(coord, { icon: truckIcon }).addTo(this.map);
-      this.map.panTo(coord);
+      
+      if (i % 8 === 0) {
+        this.map.panTo(coord, { animate: true, duration: 0.25, easeLinearity: 0.1 });
+      }
 
       if (currentStopIndex < route.length) {
         const stop = route[currentStopIndex];
         const distance = this.calculateDistance(coord, [stop.locationY, stop.locationX]);
 
-        if (distance < 0.05) {
+        if (distance < 0.015) {
           this.currentStop = currentStopIndex + 1;
           this.currentTruckLoad += stop.estimatedLoad;
 
-          console.log(`Stop ${currentStopIndex + 1}: Container #${stop.id}, Load: ${this.currentTruckLoad.toFixed(0)} л`);
+          this.routeMarkers.forEach((marker, idx) => {
+            if (idx === currentStopIndex) {
+              marker.setIcon(L.divIcon({
+                className: 'route-stop-marker-completed',
+                html: `<div class="stop-number">✓</div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+              }));
+            }
+          });
 
-          try {
-            await this.http.put(`${this.API_URL}/containers/${stop.id}/empty`, {}).toPromise();
-            console.log(`Container #${stop.id} emptied`);
-          } catch (err) {
-            console.error(`Error emptying #${stop.id}:`, err);
-          }
+         try {
+  await this.http.put(`${this.API_URL}/containers/${stop.id}/empty`, {}).toPromise();
+  
+ 
+  const binToUpdate = this.allBins.find(b => b.id === stop.id);
+  if (binToUpdate) {
+    binToUpdate.fillPercentage = Math.random() * 6 + 2;
+    this.updateMarkerOnMap(binToUpdate);
+  }
+} catch (err) {
+  console.error(`Error emptying #${stop.id}:`, err);
+}
 
           currentStopIndex++;
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          await new Promise(resolve => setTimeout(resolve, 600));
         }
       }
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
 
     const finalLoad = this.currentTruckLoad;
     this.navigationActive = false;
 
-    alert(`Маршрут завършен!\nОбщо събран товар: ${finalLoad.toFixed(0)} л\n\nКамионът се връща в базата за изпразване...`);
+    alert(`Маршрут завършен!\nСпирки: ${route.length}\nСъбран товар: ${finalLoad.toFixed(0)} л`);
 
     this.currentTruckLoad = 0;
-    console.log('Navigation completed. Truck emptied at depot.');
   }
 
   private calculateDistance(coord1: [number, number], coord2: [number, number]): number {
@@ -528,10 +521,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.realRouteCoordinates = [];
   }
 
-  // ════════════════════════════════════════════════════════════
-  // SIGNALR
-  // ════════════════════════════════════════════════════════════
-
   private handleContainerUpdates(updates: any[]) {
     if (!this.allBins || !this.allBins.length) return;
 
@@ -547,8 +536,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
       this.updateMarkerOnMap(bin);
     });
-
-    console.log(`✅ SignalR: Updated ${updates.length} bins`);
   }
 
   private updateMarkerOnMap(bin: Bin) {
@@ -563,10 +550,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       }
     });
   }
-
-  // ════════════════════════════════════════════════════════════
-  // RENDERING
-  // ════════════════════════════════════════════════════════════
 
   private renderBins(bins: Bin[]) {
     this.cluster.clearLayers();
@@ -671,10 +654,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     `;
   }
 
-  // ════════════════════════════════════════════════════════════
-  // FILTERS
-  // ════════════════════════════════════════════════════════════
-
   private initFilterControl() {
     const filterControl = (L.Control as any).extend({
       options: { position: 'topleft' },
@@ -757,10 +736,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.renderBins(filtered);
   }
 
-  // ════════════════════════════════════════════════════════════
-  // REPORTS — С ОПИСАНИЕ И ПРЕВЮ
-  // ════════════════════════════════════════════════════════════
-
   private updateReportForm(bin: Bin) {
     const input = document.getElementById('selected-bin-id') as HTMLInputElement;
     if (input) {
@@ -768,12 +743,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
   }
 
-  // ⚡ IMAGE PREVIEW HANDLER
   handleImagePreview(event: any) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
     if (!validTypes.includes(file.type)) {
       alert('Моля качете само JPEG, PNG или GIF снимки');
@@ -785,7 +758,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
-    // Create preview
     const reader = new FileReader();
     reader.onload = (e: any) => {
       this.reportImagePreview = e.target.result;
@@ -793,7 +765,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     reader.readAsDataURL(file);
   }
 
-  // ⚡ CLEAR IMAGE
   clearImagePreview() {
     this.reportImagePreview = null;
     const fileInput = document.getElementById('report-image') as HTMLInputElement;
@@ -827,7 +798,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const formData = new FormData();
     formData.append('TrashContainerId', this.selectedBinForReport.id.toString());
     formData.append('ReportType', reportTypeValue.toString());
-    
     
     if (descriptionInput?.value) {
       formData.append('Description', descriptionInput.value);

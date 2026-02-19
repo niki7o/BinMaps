@@ -6,11 +6,8 @@ using BinMaps.Shared.DTOs;
 
 namespace BinMaps.Infrastructure.Services
 {
-
     public class TruckRouteService : ITruckRouteService
     {
-        #region Private Fields & Constants
-
         private readonly IRepository<TrashContainer, int> _containerRepo;
         private readonly IRepository<Truck, int> _truckRepo;
 
@@ -18,10 +15,6 @@ namespace BinMaps.Infrastructure.Services
         private const double AVG_SPEED_KMH = 30.0;
         private const int TIME_PER_STOP_MINUTES = 5;
         private const double MIN_FILL_THRESHOLD = 40.0;
-
-        #endregion
-
-        #region Constructor
 
         public TruckRouteService(
             IRepository<TrashContainer, int> containerRepo,
@@ -31,19 +24,13 @@ namespace BinMaps.Infrastructure.Services
             _truckRepo = truckRepo;
         }
 
-        #endregion
-
-        #region Public API
-
         public async Task<RouteResultDto> GenerateRouteAsync(string areaId, TrashType trashType)
         {
-
             var truck = await FindTruckForAreaAsync(areaId);
             if (truck == null)
             {
                 return CreateEmptyRoute(areaId, trashType, "Няма наличен камион в тази зона");
             }
-
 
             var containers = await GetContainersForCollectionAsync(areaId, trashType);
             if (!containers.Any())
@@ -51,35 +38,23 @@ namespace BinMaps.Infrastructure.Services
                 return CreateEmptyRoute(areaId, trashType, "Няма контейнери за събиране");
             }
 
-
             var prioritizedContainers = PrioritizeContainers(containers);
-
-
             var selectedContainers = SelectByCapacity(prioritizedContainers, truck.Capacity);
+
             if (!selectedContainers.Any())
             {
                 return CreateEmptyRoute(areaId, trashType, "Камионът няма достатъчен капацитет");
             }
 
-
             var graph = BuildGraph(truck, selectedContainers);
-
-
-            var route = FindOptimalPath(graph, truck, selectedContainers);
-
+            var route = SolveTSPWithDijkstra(graph, truck, selectedContainers);
 
             return BuildRouteResult(truck, route, areaId, trashType);
         }
 
-        #endregion
-
-        #region Container Selection
-
         private async Task<Truck?> FindTruckForAreaAsync(string areaId)
         {
             var trucks = await _truckRepo.GetAllAsync();
-
-          
             return trucks.FirstOrDefault(t => t.AreaId == areaId);
         }
 
@@ -99,9 +74,9 @@ namespace BinMaps.Infrastructure.Services
         private List<TrashContainer> PrioritizeContainers(List<TrashContainer> containers)
         {
             return containers
-                .OrderByDescending(c => c.Status == TrashContainerStatus.Fire ? 3 : 0)
-                .ThenByDescending(c => c.FillPercentage >= 90 ? 2 : 0)
-                .ThenByDescending(c => c.FillPercentage >= 70 ? 1 : 0)
+                .OrderByDescending(c => c.FillPercentage >= 90 ? 3 : 0)
+                .ThenByDescending(c => c.FillPercentage >= 70 ? 2 : 0)
+                .ThenByDescending(c => c.FillPercentage >= 50 ? 1 : 0)
                 .ThenByDescending(c => c.FillPercentage)
                 .ToList();
         }
@@ -125,15 +100,9 @@ namespace BinMaps.Infrastructure.Services
             return selected;
         }
 
-        #endregion
-
-        #region Graph Construction
-
-
         private Graph BuildGraph(Truck truck, List<TrashContainer> containers)
         {
             var graph = new Graph();
-
 
             var truckNode = new GraphNode
             {
@@ -156,7 +125,6 @@ namespace BinMaps.Infrastructure.Services
                 graph.AddNode(node);
             }
 
-
             foreach (var nodeA in graph.Nodes)
             {
                 foreach (var nodeB in graph.Nodes)
@@ -175,63 +143,79 @@ namespace BinMaps.Infrastructure.Services
             return graph;
         }
 
-        #endregion
-
-        #region Dijkstra Algorithm
-
-
-        private List<TrashContainer> FindOptimalPath(Graph graph, Truck truck, List<TrashContainer> containers)
+        private List<TrashContainer> SolveTSPWithDijkstra(Graph graph, Truck truck, List<TrashContainer> containers)
         {
             var route = new List<TrashContainer>();
-            var visited = new HashSet<int>();
+            var unvisited = new HashSet<int>(containers.Select(c => c.Id));
             int currentNodeId = -1;
 
-            visited.Add(currentNodeId);
-
-            while (visited.Count <= containers.Count)
+            while (unvisited.Any())
             {
-                var nearestNode = FindNearestUnvisitedNode(graph, currentNodeId, visited);
+                var shortestPaths = DijkstraShortestPath(graph, currentNodeId, unvisited);
 
-                if (nearestNode == null) break;
+                if (!shortestPaths.Any()) break;
 
-                if (!nearestNode.IsTruck)
-                {
-                    route.Add(nearestNode.Container!);
-                }
+                var bestPath = shortestPaths
+                    .OrderBy(p => p.TotalDistance)
+                    .First();
 
-                visited.Add(nearestNode.Id);
-                currentNodeId = nearestNode.Id;
+                var nextContainer = containers.First(c => c.Id == bestPath.TargetNodeId);
+                route.Add(nextContainer);
+                unvisited.Remove(bestPath.TargetNodeId);
+                currentNodeId = bestPath.TargetNodeId;
             }
 
             return route;
         }
 
-        private GraphNode? FindNearestUnvisitedNode(Graph graph, int currentNodeId, HashSet<int> visited)
+        private List<DijkstraPath> DijkstraShortestPath(Graph graph, int startNodeId, HashSet<int> targets)
         {
-            var currentNode = graph.GetNode(currentNodeId);
-            if (currentNode == null) return null;
+            var distances = new Dictionary<int, double>();
+            var visited = new HashSet<int>();
+            var priorityQueue = new SortedSet<(double distance, int nodeId)>();
 
-            GraphNode? nearest = null;
-            double minDistance = double.MaxValue;
-
-            foreach (var edge in currentNode.Edges)
+            foreach (var node in graph.Nodes)
             {
-                if (!visited.Contains(edge.TargetNodeId))
+                distances[node.Id] = double.MaxValue;
+            }
+            distances[startNodeId] = 0;
+            priorityQueue.Add((0, startNodeId));
+
+            while (priorityQueue.Any())
+            {
+                var (currentDistance, currentNodeId) = priorityQueue.Min;
+                priorityQueue.Remove(priorityQueue.Min);
+
+                if (visited.Contains(currentNodeId)) continue;
+                visited.Add(currentNodeId);
+
+                var currentNode = graph.GetNode(currentNodeId);
+                if (currentNode == null) continue;
+
+                foreach (var edge in currentNode.Edges)
                 {
-                    if (edge.Weight < minDistance)
+                    if (visited.Contains(edge.TargetNodeId)) continue;
+
+                    double newDistance = currentDistance + edge.Weight;
+
+                    if (newDistance < distances[edge.TargetNodeId])
                     {
-                        minDistance = edge.Weight;
-                        nearest = graph.GetNode(edge.TargetNodeId);
+                        priorityQueue.Remove((distances[edge.TargetNodeId], edge.TargetNodeId));
+                        distances[edge.TargetNodeId] = newDistance;
+                        priorityQueue.Add((newDistance, edge.TargetNodeId));
                     }
                 }
             }
 
-            return nearest;
+            return targets
+                .Where(t => distances.ContainsKey(t) && distances[t] != double.MaxValue)
+                .Select(t => new DijkstraPath
+                {
+                    TargetNodeId = t,
+                    TotalDistance = distances[t]
+                })
+                .ToList();
         }
-
-        #endregion
-
-        #region GPS Distance
 
         private double CalculateGPSDistance(double lat1, double lon1, double lat2, double lon2)
         {
@@ -248,10 +232,6 @@ namespace BinMaps.Infrastructure.Services
         }
 
         private double ToRadians(double degrees) => degrees * (Math.PI / 180.0);
-
-        #endregion
-
-        #region Result Building
 
         private RouteResultDto BuildRouteResult(
             Truck truck,
@@ -312,7 +292,7 @@ namespace BinMaps.Infrastructure.Services
                 CapacityUtilization = Math.Round((totalLoad / truck.Capacity) * 100, 2),
                 ContainersCount = routeDtos.Count,
                 EstimatedTimeMinutes = estimatedTime,
-                Message = $"Граф маршрут (Dijkstra): {routeDtos.Count} контейнера, {Math.Round(totalDistance, 1)} км"
+                Message = $"Dijkstra TSP: {routeDtos.Count} контейнера, {Math.Round(totalDistance, 1)} км"
             };
         }
 
@@ -327,12 +307,7 @@ namespace BinMaps.Infrastructure.Services
                 Message = message
             };
         }
-
-        #endregion
     }
-
-    #region Graph Data Structures
-
 
     public class Graph
     {
@@ -354,7 +329,6 @@ namespace BinMaps.Infrastructure.Services
         public GraphNode? GetNode(int id) => Nodes.FirstOrDefault(n => n.Id == id);
     }
 
-
     public class GraphNode
     {
         public int Id { get; set; }
@@ -365,7 +339,6 @@ namespace BinMaps.Infrastructure.Services
         public List<GraphEdge> Edges { get; set; } = new();
     }
 
-
     public class GraphEdge
     {
         public int SourceNodeId { get; set; }
@@ -373,5 +346,9 @@ namespace BinMaps.Infrastructure.Services
         public double Weight { get; set; }
     }
 
-    #endregion
+    public class DijkstraPath
+    {
+        public int TargetNodeId { get; set; }
+        public double TotalDistance { get; set; }
+    }
 }

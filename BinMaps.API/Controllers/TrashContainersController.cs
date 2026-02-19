@@ -10,10 +10,11 @@ namespace BinMaps.API.Controllers
     public class TrashContainersController : Controller
     {
         private readonly IRepository<TrashContainer, int> _repo;
-
-        public TrashContainersController(IRepository<TrashContainer, int> repo)
+        private readonly Random random = new();
+        public TrashContainersController(IRepository<TrashContainer, int> repo, Random random)
         {
             _repo = repo;
+            this.random = random;
         }
 
         [HttpGet]
@@ -42,9 +43,9 @@ namespace BinMaps.API.Controllers
                 return NotFound(new { error = "Контейнер не е намерен" });
 
            
-            container.FillPercentage = 0;
+            container.FillPercentage = random.Next(2, 8);
 
-           
+
             if (container.HasSensor)
             {
                 container.Temperature = 15;
