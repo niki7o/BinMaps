@@ -1,16 +1,13 @@
-/* Register Component CSS - BinMaps Theme (Green/Ecology) */
-
 .register-container {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, #0f766e 0%, #059669 50%, #10b981 100%);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   position: relative;
   overflow-x: hidden;
 }
 
-/* Background decorations */
 .register-container::before {
   content: '';
   position: absolute;
@@ -35,7 +32,6 @@
   pointer-events: none;
 }
 
-/* Header */
 .header {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
@@ -81,7 +77,6 @@
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Main Content */
 .main-content {
   flex: 1;
   display: flex;
@@ -150,7 +145,6 @@
   z-index: 1;
 }
 
-/* Form */
 .register-form {
   padding: 2.5rem;
 }
@@ -257,16 +251,15 @@
   margin-top: 0.6rem;
   font-size: 0.825rem;
   color: #dc2626;
-  display: block; /* Сменено на block за по-добра подредба на няколко грешки */
+  display: block;
   line-height: 1.4;
 }
 
 .error-message span {
-    display: block;
-    margin-bottom: 2px;
+  display: block;
+  margin-bottom: 2px;
 }
 
-/* Checkbox */
 .checkbox-group {
   margin-bottom: 1.75rem;
 }
@@ -326,7 +319,6 @@
   font-weight: 600;
 }
 
-/* Alert */
 .alert {
   padding: 1rem 1.25rem;
   border-radius: 10px;
@@ -362,7 +354,6 @@
   stroke-width: 2;
 }
 
-/* Button & Spinner */
 .btn {
   width: 100%;
   padding: 1rem 1.5rem;
@@ -407,7 +398,6 @@
   to { transform: rotate(360deg); }
 }
 
-/* Footer */
 .form-footer {
   margin-top: 2rem;
   text-align: center;
@@ -434,7 +424,6 @@
   z-index: 10;
 }
 
-/* Mobile Responsive */
 @media (max-width: 768px) {
   .form-row { grid-template-columns: 1fr; gap: 0; }
   .register-card { margin: 1rem; }

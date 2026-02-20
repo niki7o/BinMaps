@@ -1,16 +1,13 @@
-/* Login Component CSS - BinMaps Theme (Green/Ecology) */
-
 .login-container {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, #0f766e 0%, #059669 50%, #10b981 100%);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   position: relative;
   overflow: hidden;
 }
 
-/* Background decorations */
 .login-container::before {
   content: '';
   position: absolute;
@@ -35,7 +32,6 @@
   pointer-events: none;
 }
 
-/* Header */
 .header {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
@@ -81,7 +77,6 @@
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Main Content */
 .main-content {
   flex: 1;
   display: flex;
@@ -148,7 +143,6 @@
   z-index: 1;
 }
 
-/* Form */
 .login-form {
   padding: 2.5rem;
 }
@@ -251,7 +245,6 @@
   gap: 0.25rem;
 }
 
-/* Alert */
 .alert {
   padding: 1rem 1.25rem;
   border-radius: 10px;
@@ -287,7 +280,6 @@
   stroke-width: 2;
 }
 
-/* Button */
 .btn {
   width: 100%;
   padding: 1rem 1.5rem;
@@ -348,7 +340,6 @@
   }
 }
 
-/* Form Footer */
 .form-footer {
   margin-top: 2rem;
   text-align: center;
@@ -379,7 +370,6 @@
   text-decoration: underline;
 }
 
-/* Footer */
 .footer {
   padding: 1.5rem 2rem;
   text-align: center;
@@ -395,32 +385,25 @@
   opacity: 0.9;
 }
 
-/* Responsive */
 @media (max-width: 640px) {
   .main-content {
     padding: 1.5rem 1rem;
   }
-
   .login-card {
     border-radius: 16px;
   }
-
   .card-header {
     padding: 2.5rem 1.5rem 1.5rem;
   }
-
   .title {
     font-size: 2rem;
   }
-
   .login-form {
     padding: 2rem 1.5rem;
   }
-
   .header {
     padding: 1rem;
   }
-
   .logo-text {
     font-size: 1.5rem;
   }

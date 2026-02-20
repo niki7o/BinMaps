@@ -1,20 +1,17 @@
 <div class="analytics-container">
 
-  <!-- ══════════ HEADER ══════════ -->
   <div class="analytics-header">
     <div class="header-title">
-      <h1>Аналитика на системата</h1>
-      <p class="subtitle">Данни от реалните сензори · Автообновяване на 60 секунди</p>
+      <h1>Аналитика в реално време</h1>
+      <p class="subtitle">Интелигентен мониторинг • AI прогнози • IoT данни</p>
     </div>
     <div class="live-badge">
       <span class="pulse-dot"></span>
-      Последно обновяване: <strong>{{ stats.lastUpdated }}</strong>
+      Live • {{ stats.lastUpdated }}
     </div>
   </div>
 
-  <!-- ══════════ KPI CARDS ══════════ -->
   <section class="metrics-grid">
-
     <div class="metric-card primary">
       <div class="metric-header">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -23,7 +20,7 @@
         <span class="metric-label">Общо контейнери</span>
       </div>
       <p class="metric-value">{{ stats.totalBins }}</p>
-      <p class="metric-description">Активни контейнери в системата</p>
+      <p class="metric-description">Активни в мрежата</p>
     </div>
 
     <div class="metric-card" [ngClass]="getCardClass(stats.avgFill)">
@@ -35,12 +32,9 @@
       </div>
       <p class="metric-value">{{ stats.avgFill }}%</p>
       <div class="mini-bar">
-        <div class="mini-fill"
-             [style.width.%]="stats.avgFill"
-             [style.background]="getFillColor(stats.avgFill)">
-        </div>
+        <div class="mini-fill" [style.width.%]="stats.avgFill" [style.background]="getFillColor(stats.avgFill)"></div>
       </div>
-      <p class="metric-description">Усреднено за цялата мрежа</p>
+      <p class="metric-description">Цялостна мрежа</p>
     </div>
 
     <div class="metric-card" [ngClass]="stats.criticalBins > 10 ? 'danger' : 'warning'">
@@ -50,10 +44,10 @@
           <line x1="12" y1="9" x2="12" y2="13"/>
           <line x1="12" y1="17" x2="12.01" y2="17"/>
         </svg>
-        <span class="metric-label">Критични (&gt;80%)</span>
+        <span class="metric-label">Критични</span>
       </div>
       <p class="metric-value">{{ stats.criticalBins }}</p>
-      <p class="metric-description">Изискват събиране в скоро</p>
+      <p class="metric-description">Над 80% запълване</p>
     </div>
 
     <div class="metric-card" [ngClass]="stats.onFireCount > 0 ? 'danger' : 'success'">
@@ -61,10 +55,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 01-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"/>
         </svg>
-        <span class="metric-label">Риск от пожар</span>
+        <span class="metric-label">Риск пожар</span>
       </div>
       <p class="metric-value">{{ stats.onFireCount }}</p>
-      <p class="metric-description">Температура над 50°C или активен огън</p>
+      <p class="metric-description">Температура &gt; 50°C</p>
     </div>
 
     <div class="metric-card info">
@@ -76,7 +70,7 @@
         <span class="metric-label">IoT покритие</span>
       </div>
       <p class="metric-value">{{ stats.sensorCoverage }}%</p>
-      <p class="metric-description">Контейнери с реални сензорни данни</p>
+      <p class="metric-description">Сензорни данни</p>
     </div>
 
     <div class="metric-card accent">
@@ -84,28 +78,25 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="1" y="3" width="15" height="13"/>
           <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-          <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+          <circle cx="5.5" cy="18.5" r="2.5"/>
+          <circle cx="18.5" cy="18.5" r="2.5"/>
         </svg>
-        <span class="metric-label">Нужни маршрута</span>
+        <span class="metric-label">Маршрути</span>
       </div>
       <p class="metric-value">{{ stats.estimatedRoutes }}</p>
-      <p class="metric-description">Прогнозни събирания при текущ критичен брой</p>
+      <p class="metric-description">Прогнозни</p>
     </div>
-
   </section>
 
-  <!-- ══════════ ZONE PILLS ══════════ -->
   <section class="zone-pills-section">
     <div class="pills-label">
-      Натоварване по зони:
+      Зонално натоварване
       <span class="dot dot-high"></span> Критична
       <span class="dot dot-medium"></span> Умерена
       <span class="dot dot-low"></span> Нормална
     </div>
     <div class="zone-pills">
-      <div class="zone-pill"
-           *ngFor="let z of zoneStats"
-           [ngClass]="getRiskClass(z.loadScore)">
+      <div class="zone-pill" *ngFor="let z of zoneStats" [ngClass]="getRiskClass(z.loadScore)">
         <span class="pill-name">{{ z.name }}</span>
         <span class="pill-fill">{{ z.avgFill }}%</span>
         <span class="pill-warn" *ngIf="z.critical > 0">⚠ {{ z.critical }}</span>
@@ -114,17 +105,13 @@
     </div>
   </section>
 
-  <!-- ══════════ HOTSPOT MAP ══════════ -->
   <section class="hotspot-section">
     <div class="chart-card wide">
       <div class="chart-header">
         <div class="chart-header-row">
           <div>
-            <h2>🔥 Hotspot карта на натоварване</h2>
-            <p class="chart-subtitle">
-              Реално натоварване: радиусът и интензитетът на кръга е пропорционален на запълването.
-              Показани само контейнери над 40%.
-            </p>
+            <h2>🗺️ Hotspot карта на натоварване</h2>
+            <p class="chart-subtitle">Реално време • Радиус = запълване • Показани над 40%</p>
           </div>
         </div>
       </div>
@@ -138,79 +125,53 @@
     </div>
   </section>
 
-  <!-- ══════════ CHARTS 2×2 ══════════ -->
   <section class="charts-section">
-
-    <!-- Разпределение -->
     <div class="chart-card">
       <div class="chart-header">
-        <h2>Разпределение по запълване</h2>
-        <p class="chart-subtitle">Колко контейнери попадат в кой диапазон</p>
+        <h2>📊 Разпределение по запълване</h2>
+        <p class="chart-subtitle">Брой контейнери в диапазон</p>
       </div>
       <div class="chart-body">
-        <canvas baseChart
-          [data]="fillDistData"
-          type="bar"
-          [options]="barOpts">
-        </canvas>
+        <canvas baseChart [data]="fillDistData" type="bar" [options]="barOpts"></canvas>
       </div>
     </div>
 
-    <!-- Зони -->
     <div class="chart-card">
       <div class="chart-header">
-        <h2>Натоварване по зони</h2>
-        <p class="chart-subtitle">Средно запълване и критични контейнери по зона</p>
+        <h2>🏙️ Натоварване по зони</h2>
+        <p class="chart-subtitle">Средно + критични</p>
       </div>
       <div class="chart-body">
-        <canvas baseChart
-          [data]="zoneData"
-          type="bar"
-          [options]="zoneOpts">
-        </canvas>
+        <canvas baseChart [data]="zoneData" type="bar" [options]="zoneOpts"></canvas>
       </div>
     </div>
 
-    <!-- Тип отпадък -->
     <div class="chart-card">
       <div class="chart-header">
-        <h2>Средно запълване по тип отпадък</h2>
-        <p class="chart-subtitle">Кой поток е най-натоварен в момента</p>
+        <h2>♻️ По тип отпадък</h2>
+        <p class="chart-subtitle">Средно запълване</p>
       </div>
       <div class="chart-body">
-        <canvas baseChart
-          [data]="typeData"
-          type="doughnut"
-          [options]="doughnutOpts">
-        </canvas>
+        <canvas baseChart [data]="typeData" type="doughnut" [options]="doughnutOpts"></canvas>
       </div>
     </div>
 
-    <!-- Топ 5 -->
     <div class="chart-card">
       <div class="chart-header">
-        <h2>Топ 5 — най-критични контейнери</h2>
-        <p class="chart-subtitle">Изискват незабавно внимание</p>
+        <h2>🔥 Топ 5 критични</h2>
+        <p class="chart-subtitle">Най-спешни</p>
       </div>
       <div class="chart-body">
-        <canvas baseChart
-          [data]="top5Data"
-          type="bar"
-          [options]="top5Opts">
-        </canvas>
+        <canvas baseChart [data]="top5Data" type="bar" [options]="top5Opts"></canvas>
       </div>
     </div>
-
   </section>
 
-  <!-- ══════════ ZONE TABLE ══════════ -->
   <section class="zone-table-section">
     <div class="chart-card wide">
       <div class="chart-header">
-        <h2>Подробен статус по зони</h2>
-        <p class="chart-subtitle">
-          Реално претеглено натоварване (Load Score = среден fill + бонус за критични контейнери)
-        </p>
+        <h2>📋 Детайлен статус по зони</h2>
+        <p class="chart-subtitle">Load Score = среден fill + бонус критични</p>
       </div>
       <table class="zone-table">
         <thead>
@@ -231,18 +192,13 @@
             <td>
               <div class="bar-wrap">
                 <div class="bar-track">
-                  <div class="bar-fill"
-                       [style.width.%]="z.avgFill"
-                       [style.background]="getFillColor(z.avgFill)">
-                  </div>
+                  <div class="bar-fill" [style.width.%]="z.avgFill" [style.background]="getFillColor(z.avgFill)"></div>
                 </div>
                 <span class="bar-label">{{ z.avgFill }}%</span>
               </div>
             </td>
             <td>
-              <span class="badge" [ngClass]="z.critical > 0 ? 'badge-danger' : 'badge-ok'">
-                {{ z.critical }}
-              </span>
+              <span class="badge" [ngClass]="z.critical > 0 ? 'badge-danger' : 'badge-ok'">{{ z.critical }}</span>
             </td>
             <td>
               <span *ngIf="z.onFire > 0" class="fire-badge">🔥 {{ z.onFire }}</span>
@@ -251,18 +207,13 @@
             <td>
               <div class="bar-wrap">
                 <div class="bar-track">
-                  <div class="bar-fill"
-                       [style.width.%]="z.loadScore"
-                       [style.background]="getFillColor(z.loadScore)">
-                  </div>
+                  <div class="bar-fill" [style.width.%]="z.loadScore" [style.background]="getFillColor(z.loadScore)"></div>
                 </div>
                 <span class="bar-label">{{ z.loadScore }}</span>
               </div>
             </td>
             <td>
-              <span class="risk-label" [ngClass]="getRiskClass(z.loadScore)">
-                {{ getRiskLabel(z.loadScore) }}
-              </span>
+              <span class="risk-label" [ngClass]="getRiskClass(z.loadScore)">{{ getRiskLabel(z.loadScore) }}</span>
             </td>
           </tr>
         </tbody>

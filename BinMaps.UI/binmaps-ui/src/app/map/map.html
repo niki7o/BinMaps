@@ -1,7 +1,6 @@
 <div class="map-page">
   <div class="map-layout">
     
-   
     <aside class="map-sidebar left" *ngIf="(isUser || isDriver) && !routeActive">
       <div class="sidebar-panel">
         <div class="panel-header">
@@ -33,7 +32,6 @@
             </select>
           </div>
 
-        
           <div class="form-group">
             <label class="form-label">Описание</label>
             <textarea 
@@ -46,7 +44,6 @@
 
           <div class="form-group">
             <label class="form-label">Снимка (опционално)</label>
-            
             
             <div class="image-preview" *ngIf="reportImagePreview">
               <img [src]="reportImagePreview" alt="Preview" />
@@ -90,7 +87,6 @@
       </div>
     </aside>
 
-    
     <aside class="map-sidebar right" *ngIf="isDriver">
       <div class="sidebar-panel">
         <div class="panel-header">
@@ -103,7 +99,6 @@
           <h2>{{ routeActive ? 'Навигация' : 'Генериране на маршрут' }}</h2>
         </div>
 
-     
         <div class="panel-content" *ngIf="!routeActive">
           <div class="form-group">
             <label class="form-label">Зона</label>
@@ -139,7 +134,6 @@
           </button>
         </div>
 
-        
         <div class="panel-content" *ngIf="routeActive && routeResult">
           <div class="route-stats">
             <div class="stat-card">
@@ -165,7 +159,6 @@
           </div>
 
           <div class="route-actions">
-           
             <button 
               class="btn-simulate" 
               (click)="startNavigation()"
@@ -187,7 +180,6 @@
             </button>
           </div>
 
-          
           <div class="navigation-progress" *ngIf="navigationActive">
             <div class="progress-header">
               <span>Спирка {{ currentStop }} / {{ routeResult.containersCount }}</span>
@@ -204,7 +196,6 @@
       </div>
     </aside>
 
-    
     <main class="map-container">
       <div class="map-style-switcher">
         <button 
@@ -262,7 +253,6 @@
         </div>
       </div>
 
-    
       <div class="map-overlay-info" *ngIf="isGuest">
         <div class="guest-banner">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
