@@ -337,10 +337,11 @@
               </td>
               <td>
                 <span class="badge"
-                  [class.badge--danger]="u.roles?.includes('Admin')"
-                  [class.badge--blue]="u.roles?.includes('Driver')"
+                [class.badge--danger]="u.roles.includes('Admin')"
+                [class.badge--blue]="u.roles.includes('Driver')"
+
                   [class.badge--eco]="!u.roles?.includes('Admin') && !u.roles?.includes('Driver')">
-                  {{ getRoleText(u.roles?.[0] ?? '') }}
+                  {{ getRoleText(u.roles[0] ?? '') }}
                 </span>
               </td>
               <td>
@@ -351,7 +352,7 @@
                   <span class="text-mono text-xs">{{ u.reputation | number:'1.0-0' }}</span>
                 </div>
               </td>
-              <td class="text-mono">{{ userReportCounts[u.id] ?? 0 }}</td>
+              <td class="text-mono">{{ userReportCounts[u.id] || 0 }}</td>
               <td>
                 <div class="action-group">
                   <button class="btn btn--icon btn--sm btn--ghost" (click)="adjustUserReputation(u)" title="Редактирай репутация">
