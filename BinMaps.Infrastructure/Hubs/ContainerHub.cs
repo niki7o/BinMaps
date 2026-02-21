@@ -8,7 +8,6 @@ namespace BinMaps.Infrastructure.Hubs
     {
         public override async Task OnConnectedAsync()
         {
-            await Clients.Caller.SendAsync("Connected", Context.ConnectionId);
             await base.OnConnectedAsync();
         }
 

@@ -14,6 +14,7 @@ namespace BinMaps.Infrastructure.Services
         private readonly IServiceProvider _serviceProvider;
         private readonly IHubContext<ContainerHub> _hubContext;
         private readonly FillageSimulator _fillSimulator;
+        private readonly Random _random = new();
 
         public ContainerDynamicsService(
             IServiceProvider serviceProvider,
@@ -35,7 +36,6 @@ namespace BinMaps.Infrastructure.Services
                     using var scope = _serviceProvider.CreateScope();
                     var context = scope.ServiceProvider.GetRequiredService<BinMapsDbContext>();
 
-                  
                     var containers = await context.TrashContainers
                         .AsNoTracking()
                         .ToListAsync(stoppingToken);
@@ -48,13 +48,22 @@ namespace BinMaps.Infrastructure.Services
 
                     var updates = new List<ContainerUpdateDto>();
 
-                   
                     foreach (var container in containers)
                     {
-                        if (container.FillPercentage < 100)
+                       
+                        if (container.FillPercentage >= 100)
+                        {
+                            container.FillPercentage = 2.0 + _random.NextDouble() * 6.0;
+
+                            if (container.HasSensor)
+                            {
+                                container.Temperature = 15 + _random.NextDouble() * 5;
+                            }
+                        }
+                        else
                         {
                             double increment = _fillSimulator.CalculateFillIncrement(container);
-                            container.FillPercentage = Math.Min(100.0, container.FillPercentage + increment);
+                            container.FillPercentage = Math.Min(99.9, container.FillPercentage + increment);
                         }
 
                         if (container.HasSensor)
@@ -81,7 +90,7 @@ namespace BinMaps.Infrastructure.Services
                         });
                     }
 
-                   
+                    // Save in batches
                     const int batchSize = 50;
                     int totalBatches = (int)Math.Ceiling(containers.Count / (double)batchSize);
 
@@ -92,30 +101,25 @@ namespace BinMaps.Infrastructure.Services
                             .Take(batchSize)
                             .ToList();
 
-                        // Attach and mark as modified
                         foreach (var container in batch)
                         {
                             context.Entry(container).State = EntityState.Modified;
                         }
 
-                        // Save this batch
                         await context.SaveChangesAsync(stoppingToken);
 
-                        // Detach to free memory
                         foreach (var container in batch)
                         {
                             context.Entry(container).State = EntityState.Detached;
                         }
                     }
 
-                    
                     await _hubContext.Clients.All.SendAsync(
                         "ContainersUpdated",
                         updates,
                         stoppingToken
                     );
 
-                  
                     if (DateTime.Now.Second % 30 == 0)
                     {
                         var avgFill = containers.Average(c => c.FillPercentage);
@@ -129,7 +133,6 @@ namespace BinMaps.Infrastructure.Services
                     Console.WriteLine($"   Stack: {ex.StackTrace}");
                 }
 
-             
                 await Task.Delay(10000, stoppingToken);
             }
         }
