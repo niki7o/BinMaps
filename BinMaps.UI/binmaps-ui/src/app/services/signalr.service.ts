@@ -1,41 +1,42 @@
-import { Injectable, inject } from '@angular/core';
-import { Subject, Observable } from 'rxjs';
+import { Injectable } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
-import { AuthService } from './auth.service';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ContainerSignalRService {
-  private auth = inject(AuthService);
 
-  private hub?: signalR.HubConnection;
-  private _updates$ = new Subject<any[]>();
+  private hub!: signalR.HubConnection;
+  private _updates$ = new BehaviorSubject<any[]>([]);
+  readonly containerUpdates$ = this._updates$.asObservable();
 
-  readonly containerUpdates$: Observable<any[]> = this._updates$.asObservable();
-
-  start(): void {
+  start() {
     if (this.hub) return;
 
     this.hub = new signalR.HubConnectionBuilder()
       .withUrl('https://localhost:7277/hubs/containers', {
-        accessTokenFactory: () => this.auth.getToken() ?? ''
+        skipNegotiation: true,
+        transport: signalR.HttpTransportType.WebSockets
       })
-      .withAutomaticReconnect()
+      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
       .configureLogging(signalR.LogLevel.Warning)
       .build();
+
+    
+    this.hub.on('Connected', (_connectionId: string) => {  });
 
     this.hub.on('ContainersUpdated', (updates: any[]) => {
       this._updates$.next(updates);
     });
 
-    this.hub.on('ContainerUpdated', (update: any) => {
-      this._updates$.next([update]);
-    });
+    this.hub.onreconnecting(() => console.log('[SignalR] Reconnecting...'));
+    this.hub.onreconnected(() => console.log('[SignalR] Reconnected.'));
+    this.hub.onclose(() => console.log('[SignalR] Connection closed.'));
 
-    this.hub.start().catch(err => console.error('SignalR start error:', err));
+    this.hub
+      .start()
+      .then(() => console.log('[SignalR] Connected to ContainerHub'))
+      .catch(err => console.error('[SignalR] Connection error:', err));
   }
 
-  stop(): void {
-    this.hub?.stop();
-    this.hub = undefined;
-  }
+  stop() { this.hub?.stop(); }
 }

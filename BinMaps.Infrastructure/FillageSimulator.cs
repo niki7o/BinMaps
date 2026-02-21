@@ -28,7 +28,7 @@ namespace BinMaps.Infrastructure.Services
             // Time-of-day multiplier
             double timeMultiplier = GetTimeMultiplier();
 
-            // Random ±20% variation
+           
             double randomFactor = 0.8 + (_random.NextDouble() * 0.4);
 
             double increment = baseIncrement * zoneMultiplier * typeMultiplier * timeMultiplier * randomFactor;
