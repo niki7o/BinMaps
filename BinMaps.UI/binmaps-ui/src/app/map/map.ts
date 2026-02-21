@@ -4,16 +4,12 @@ import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { AuthService } from '../services/auth.service';
+import { AuthService, AuthUser } from '../services/auth.service';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
 import { ContainerSignalRService } from '../services/signalr.service';
 
-interface User {
-  userName: string;
-  email: string;
-  role: string;
-}
+
 
 interface Bin {
   id: number;
@@ -110,7 +106,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private authService = inject(AuthService);
   private signalR = inject(ContainerSignalRService);
   
-  currentUser: User | null = null;
+  currentUser: AuthUser | null = null;
   isAdmin = false;
   isDriver = false;
   isUser = false;

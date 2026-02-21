@@ -1,159 +1,130 @@
 ﻿using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
-using System;
 
 namespace BinMaps.Infrastructure.Services
 {
     public class FillageSimulator
     {
-        private readonly Random _random = new();
+        private readonly Random _random = new Random();
 
+        
         public double CalculateFillIncrement(TrashContainer container)
         {
-            var now = DateTime.Now;
+            // Base fill rate per update cycle (every 10 seconds)
+            // Target: ~1% per hour = 0.0027% per 10 seconds
+            double baseIncrement = 0.003; // Very slow!
 
-            var hourFactor = GetHourFactor(now.Hour);
-            var dayFactor = GetDayOfWeekFactor(now.DayOfWeek);
-            var areaFactor = GetAreaDensityFactor(container.AreaId);
-            var typeFactor = GetWasteTypeFactor(container.TrashType);
-            var seasonFactor = GetSeasonalFactor(now.Month);
+            // Zone-based multiplier (some zones fill faster)
+            double zoneMultiplier = GetZoneMultiplier(container.AreaId);
 
-            var randomness = _random.NextDouble() * 0.5 + 0.75;
+            // Trash type multiplier
+            double typeMultiplier = container.TrashType switch
+            {
+                TrashType.Mixed => 1.5,      // Mixed fills fastest
+                TrashType.Plastic => 1.2,    // Plastic medium-fast
+                TrashType.Paper => 1.0,      // Paper normal
+                TrashType.Glass => 0.8,      // Glass slowest
+                _ => 1.0
+            };
 
-            var baseIncrement = 0.15;
-            var totalFactor = hourFactor * dayFactor * areaFactor * typeFactor * seasonFactor * randomness;
+            // Time-of-day multiplier (more waste during day)
+            double timeMultiplier = GetTimeMultiplier();
 
-            var increment = baseIncrement * totalFactor;
+            // Random variation (±20%)
+            double randomFactor = 0.8 + (_random.NextDouble() * 0.4);
 
-            if (container.FillPercentage > 85)
-                increment *= 0.3;
-            else if (container.FillPercentage > 70)
-                increment *= 0.6;
+            // Final increment
+            double increment = baseIncrement * zoneMultiplier * typeMultiplier * timeMultiplier * randomFactor;
+
+            // Slow down as container gets fuller (harder to compress)
+            if (container.FillPercentage > 80)
+            {
+                increment *= 0.5; // Half speed when nearly full
+            }
+            else if (container.FillPercentage > 60)
+            {
+                increment *= 0.7; // Slower when getting full
+            }
 
             return increment;
         }
 
-        private double GetHourFactor(int hour)
+        private double GetZoneMultiplier(string areaId)
         {
-            return hour switch
-            {
-                0 or 1 or 2 or 3 or 4 or 5 or 6 => 0.2,
-                7 or 8 or 9 => 1.8,
-                10 or 11 => 1.4,
-                12 => 2.5,
-                13 or 14 or 15 or 16 or 17 => 1.6,
-                18 or 19 or 20 => 2.0,
-                21 or 22 or 23 => 1.2,
-                _ => 1.0
-            };
-        }
-
-        private double GetDayOfWeekFactor(DayOfWeek day)
-        {
-            return day switch
-            {
-                DayOfWeek.Monday => 1.0,
-                DayOfWeek.Tuesday => 1.2,
-                DayOfWeek.Wednesday => 1.3,
-                DayOfWeek.Thursday => 1.4,
-                DayOfWeek.Friday => 1.8,
-                DayOfWeek.Saturday => 1.5,
-                DayOfWeek.Sunday => 0.7,
-                _ => 1.0
-            };
-        }
-
-        private double GetAreaDensityFactor(string areaId)
-        {
+            // City center and busy areas fill faster
             return areaId switch
             {
-                "Зона 2 - Център" => 2.0,
-                "Зона 1 - Надежда север" => 1.3,
-                "Зона 6 - Изток" => 1.2,
-                "Зона 3 - Люлин" => 1.1,
-                "Зона 4 - Овча Купел" => 0.9,
-                "Зона 5 - Юг и Витоша" => 0.8,
+                "Зона 2 - Център" => 2.0,           // Center - very busy
+                "Зона 1 - Надежда север" => 1.5,    // Residential - busy
+                "Зона 3 - Люлин" => 1.3,            // Residential
+                "Зона 6 - Изток" => 1.2,            // Mixed
+                "Зона 4 - Овча Купел" => 1.0,       // Moderate
+                "Зона 5 - Юг и Витоша" => 0.8,      // Less dense
                 _ => 1.0
             };
         }
 
-        private double GetWasteTypeFactor(TrashType type)
+        private double GetTimeMultiplier()
         {
-            return type switch
+            int hour = DateTime.Now.Hour;
+
+            // Peak waste times: 8-10 AM, 12-2 PM, 6-9 PM
+            if ((hour >= 8 && hour < 10) || (hour >= 12 && hour < 14) || (hour >= 18 && hour < 21))
             {
-                TrashType.Mixed => 1.5,
-                TrashType.Plastic => 1.3,
-                TrashType.Paper => 1.1,
-                TrashType.Glass => 0.7,
-                _ => 1.0
-            };
+                return 1.5; // Peak times
+            }
+            else if (hour >= 22 || hour < 6)
+            {
+                return 0.3; // Night - very slow
+            }
+            else
+            {
+                return 1.0; // Normal
+            }
         }
 
-        private double GetSeasonalFactor(int month)
-        {
-            return month switch
-            {
-                12 or 1 or 2 => 0.9,
-                3 => 1.0,
-                4 => 1.1,
-                5 => 1.2,
-                6 or 7 or 8 => 1.4,
-                9 => 1.2,
-                10 => 1.1,
-                11 => 1.0,
-                _ => 1.0
-            };
-        }
-
+        /// <summary>
+        /// Simulate temperature with realistic ranges
+        /// </summary>
         public double SimulateTemperature(TrashContainer container)
         {
-            var hour = DateTime.Now.Hour;
-            var month = DateTime.Now.Month;
+            // Base ambient temperature (15-25°C in Sofia)
+            double ambient = 15 + (_random.NextDouble() * 10);
 
-            var seasonalBase = month switch
-            {
-                12 or 1 or 2 => 5,
-                3 or 4 or 5 => 15,
-                6 or 7 or 8 => 30,
-                _ => 18
-            };
-
-            var diurnalOffset = hour switch
-            {
-                >= 4 and <= 6 => -5,
-                >= 13 and <= 16 => +10,
-                >= 20 or <= 3 => -3,
-                _ => 0
-            };
-
-            var containerHeat = container.TrashType == TrashType.Mixed
-                ? container.FillPercentage * 0.08
+            // Organic waste increases temperature
+            double organicHeat = container.TrashType == TrashType.Mixed
+                ? container.FillPercentage * 0.15  // Up to +15°C for full mixed waste
                 : 0;
 
-            var solarGain = (hour >= 9 && hour <= 17) ? _random.Next(3, 8) : 0;
+            // Summer heat boost
+            int month = DateTime.Now.Month;
+            double seasonalBoost = (month >= 6 && month <= 8) ? 5 : 0;
 
-            return Math.Round(seasonalBase + diurnalOffset + containerHeat + solarGain + _random.Next(-2, 3), 1);
+            // Random variation
+            double variation = -2 + (_random.NextDouble() * 4);
+
+            double temperature = ambient + organicHeat + seasonalBoost + variation;
+
+            return Math.Max(10, Math.Min(60, temperature));
         }
 
+      
         public double CalculateBatteryDrain(TrashContainer container)
         {
-            if (!container.HasSensor)
-                return 0;
+            
+            double baseDrain = 0.002;
 
-            var tempStress = Math.Abs((container.Temperature ?? 20) - 20) / 30.0;
-            var activityDrain = container.FillPercentage > 80 ? 1.2 : 1.0;
+           
+            double tempFactor = container.Temperature > 30 ? 1.3 : 1.0;
 
-            var drain = 0.08 * (1 + tempStress) * activityDrain;
-
-            return drain;
+            return baseDrain * tempFactor;
         }
 
-        public void EmptyContainer(TrashContainer container)
+        
+        public double GetEmptyFillLevel()
         {
-            container.FillPercentage = _random.Next(2, 8);
-
-            if (container.Status == TrashContainerStatus.Fire)
-                container.Status = TrashContainerStatus.Active;
+           
+            return 2.0 + (_random.NextDouble() * 6.0);
         }
     }
 }

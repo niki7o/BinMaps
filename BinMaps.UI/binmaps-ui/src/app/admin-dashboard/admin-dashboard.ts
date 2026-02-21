@@ -246,6 +246,20 @@ export class AdminDashboardComponent implements OnInit {
     this.filteredReports = this.reports.filter(r => r.userId === userId);
   }
 
+  emptyContainer(containerId: number) {
+    if (!confirm('Сигурни ли сте, че искате да изпразните този контейнер?')) return;
+    this.http.put(`https://localhost:7277/api/containers/${containerId}/empty`, {}, this.getAuthHeaders()).subscribe({
+      next: () => {
+        alert('Контейнерът е изпразнен');
+        this.loadContainers();
+      },
+      error: err => {
+        console.error('Error emptying container:', err);
+        alert('Грешка при изпразване на контейнер');
+      }
+    });
+  }
+
   adjustUserReputation(user: User) {
     const newRep = prompt(`Въведете нова репутация за ${user.userName} (0-100):`, user.reputation.toString());
     if (newRep !== null) {

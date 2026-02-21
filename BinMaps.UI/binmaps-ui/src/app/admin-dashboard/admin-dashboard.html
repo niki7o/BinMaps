@@ -1,563 +1,373 @@
-<div class="admin-container">
-  <div class="admin-header">
-    <div class="header-title">
-      <h1>Администрация</h1>
-      <p class="subtitle">Управление на системата за отпадъци</p>
+<div class="admin">
+
+  <!-- Header -->
+  <div class="admin__header">
+    <div>
+      <p class="section-label">Административен панел</p>
+      <h1 class="admin__title">Управление на системата</h1>
+    </div>
+    <div class="admin__header-stats">
+      <div class="admin__quick-stat">
+        <span class="admin__quick-stat-val text-warn">{{ stats.pendingReports ?? 0 }}</span>
+        <span class="admin__quick-stat-label">Чакащи сигнали</span>
+      </div>
+      <div class="admin__quick-stat">
+        <span class="admin__quick-stat-val text-danger">{{ stats.criticalContainers ?? 0 }}</span>
+        <span class="admin__quick-stat-label">Критични контейнера</span>
+      </div>
+      <div class="admin__quick-stat">
+        <span class="admin__quick-stat-val text-eco">{{ userCount }}</span>
+        <span class="admin__quick-stat-label">Потребители</span>
+      </div>
     </div>
   </div>
 
-  <section class="stats-overview">
-    <div class="stat-card">
-      <div class="stat-icon primary">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-        </svg>
-      </div>
-      <div class="stat-content">
-        <p class="stat-label">Общо репорти</p>
-        <p class="stat-value">{{ stats.TotalReports || 0 }}</p>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon warning">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-      </div>
-      <div class="stat-content">
-        <p class="stat-label">Чакащи одобрение</p>
-        <p class="stat-value">{{ stats.PendingReports || 0 }}</p>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon success">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-        </svg>
-      </div>
-      <div class="stat-content">
-        <p class="stat-label">Общо кофи</p>
-        <p class="stat-value">{{ stats.TotalContainers || 0 }}</p>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon danger">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/>
-        </svg>
-      </div>
-      <div class="stat-content">
-        <p class="stat-label">Пожарни сигнали</p>
-        <p class="stat-value">{{ stats.FireReports || 0 }}</p>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon info">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
-        </svg>
-      </div>
-      <div class="stat-content">
-        <p class="stat-label">Потребители</p>
-        <p class="stat-value">{{ userCount || 0 }}</p>
-      </div>
-    </div>
-  </section>
-
-  <nav class="tabs-nav">
-    <button 
-      class="tab-button" 
-      [class.active]="activeTab === 'reports'" 
-      (click)="setActiveTab('reports')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-      </svg>
-      <span>Репорти</span>
+  <!-- Tabs -->
+  <div class="tabs admin__tabs">
+    <button class="tab" [class.is-active]="activeTab === 'reports'" (click)="setActiveTab('reports')">
+      Сигнали
+      <span class="tab-count" *ngIf="reports.length > 0">{{ reports.length }}</span>
     </button>
-    
-    <button 
-      class="tab-button" 
-      [class.active]="activeTab === 'containers'" 
-      (click)="setActiveTab('containers')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-      </svg>
-      <span>Кофи</span>
-    </button>
-    
-    <button 
-      class="tab-button" 
-      [class.active]="activeTab === 'trucks'" 
-      (click)="setActiveTab('trucks')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="1" y="3" width="15" height="13"/>
-        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-        <circle cx="5.5" cy="18.5" r="2.5"/>
-        <circle cx="18.5" cy="18.5" r="2.5"/>
-      </svg>
-      <span>Камиони</span>
-    </button>
-    
-    <button 
-      class="tab-button" 
-      [class.active]="activeTab === 'users'" 
-      (click)="setActiveTab('users')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-        <circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
-      </svg>
-      <span>Потребители</span>
-    </button>
-  </nav>
+    <button class="tab" [class.is-active]="activeTab === 'containers'" (click)="setActiveTab('containers')">Контейнери</button>
+    <button class="tab" [class.is-active]="activeTab === 'trucks'" (click)="setActiveTab('trucks')">Камиони</button>
+    <button class="tab" [class.is-active]="activeTab === 'users'" (click)="setActiveTab('users')">Потребители</button>
+  </div>
 
-  <div class="tab-panel" *ngIf="activeTab === 'reports'">
-    <div class="panel-header">
-      <h2>Управление на репорти</h2>
-      <div class="filter-group">
-        <select class="filter-select" [(ngModel)]="reportFilter.status" (change)="filterReports()">
-          <option value="">Всички статуси</option>
-          <option value="pending">Чакащи</option>
-          <option value="approved">Одобрени</option>
-        </select>
-        
-        <select class="filter-select" [(ngModel)]="reportFilter.reportType" (change)="filterReports()">
-          <option value="">Всички типове</option>
-          <option value="Full">Препълнена</option>
-          <option value="Fire">Пожар</option>
-          <option value="SensorBroken">Повреден сензор</option>
-        </select>
-        
-        <input 
-          type="date" 
-          class="filter-input" 
-          [(ngModel)]="reportFilter.fromDate" 
-          (change)="filterReports()" 
-          placeholder="От дата">
-        
-        <input 
-          type="date" 
-          class="filter-input" 
-          [(ngModel)]="reportFilter.toDate" 
-          (change)="filterReports()" 
-          placeholder="До дата">
+  <!-- Body -->
+  <div class="admin__body" [ngSwitch]="activeTab">
+
+    <!-- ── Reports ─────────────────────────────── -->
+    <div *ngSwitchCase="'reports'" class="admin__panel animate-fade-in">
+
+      <div class="admin__toolbar">
+        <div class="admin__toolbar-filters">
+          <select class="form-select" style="width:auto" [(ngModel)]="reportFilter.status" (change)="filterReports()">
+            <option value="">Всички статуси</option>
+            <option value="pending">Чакащи</option>
+            <option value="approved">Одобрени</option>
+          </select>
+          <select class="form-select" style="width:auto" [(ngModel)]="reportFilter.reportType" (change)="filterReports()">
+            <option value="">Всички типове</option>
+            <option value="Full">Пълен контейнер</option>
+            <option value="Fire">Пожарна опасност</option>
+            <option value="SensorBroken">Повреден сензор</option>
+          </select>
+          <div class="admin__search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="admin__search-input" type="text" placeholder="Търсене…" [(ngModel)]="reportFilter.fromDate">
+          </div>
+        </div>
+        <div class="admin__toolbar-actions">
+          <div class="admin__result-count" *ngIf="filteredReports.length > 0">
+            <span class="text-muted text-xs">{{ filteredReports.length }} резултата</span>
+          </div>
+          <button class="btn btn--ghost btn--sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Експорт
+          </button>
+        </div>
       </div>
-    </div>
 
-    <div class="data-table-wrapper">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Кофа</th>
-            <th>Потребител</th>
-            <th>Тип репорт</th>
-            <th>Дата</th>
-            <th>AI оценка</th>
-            <th>Репутация</th>
-            <th>Увереност</th>
-            <th>Статус</th>
-            <th>Действия</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let report of filteredReports">
-            <td class="cell-id">#{{ report.id }}</td>
-            <td>
-              <span class="container-ref" *ngIf="report.trashContainerId">
-                Кофа #{{ report.trashContainerId }}
-              </span>
-              <span class="text-muted" *ngIf="!report.trashContainerId">—</span>
-            </td>
-            <td>{{ report.userName }}</td>
-            <td>
-              <span class="badge" [class]="'badge-' + getReportTypeClass(report.reportType)">
-                {{ getReportTypeText(report.reportType) }}
-              </span>
-            </td>
-            <td class="text-secondary">{{ formatDate(report.createdAt) }}</td>
-            <td>
-              <div class="progress-wrapper">
-                <div class="progress-bar">
-                  <div class="progress-fill primary" [style.width.%]="report.ai_Score"></div>
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="width:48px">#</th>
+              <th>Тип</th>
+              <th>Контейнер</th>
+              <th>Потребител</th>
+              <th>Репутация</th>
+              <th>AI Оценка</th>
+              <th>Увереност</th>
+              <th>Дата</th>
+              <th>Статус</th>
+              <th style="width:100px">Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of filteredReports"
+                class="admin-report-row"
+                [class.is-fire]="r.reportType === 'Fire'">
+
+              <td class="text-muted text-mono text-xs">{{ r.id }}</td>
+
+              <td>
+                <span class="badge" [ngClass]="getReportTypeClass(r.reportType)">
+                  {{ getReportTypeText(r.reportType) }}
+                </span>
+              </td>
+
+              <td>
+                <span class="font-semibold text-sm">{{ r.trashContainerId }}</span>
+              </td>
+
+              <td>
+                <div class="user-cell">
+                  <div class="user-avatar">{{ getInitials(r.userName) }}</div>
+                  <span class="text-sm">{{ r.userName }}</span>
                 </div>
-                <span class="progress-label">{{ report.ai_Score }}%</span>
-              </div>
-            </td>
-            <td class="text-center">{{ report.userReputationOnSubmit }}</td>
-            <td>
-              <span 
-                class="confidence-badge" 
-                [class.high]="report.finalConfidence >= 80"
-                [class.medium]="report.finalConfidence >= 50 && report.finalConfidence < 80"
-                [class.low]="report.finalConfidence < 50">
-                {{ report.finalConfidence.toFixed(0) }}%
-              </span>
-            </td>
-            <td>
-              <span class="status-badge" [class.approved]="report.isApproved" [class.pending]="!report.isApproved">
-                {{ report.isApproved ? 'Одобрен' : 'Чакащ' }}
-              </span>
-            </td>
-            <td>
-              <div class="action-group">
-                <button 
-                  *ngIf="!report.isApproved" 
-                  class="action-btn success" 
-                  (click)="approveReport(report.id)" 
-                  title="Одобри">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                </button>
-                <button 
-                  *ngIf="!report.isApproved" 
-                  class="action-btn danger" 
-                  (click)="rejectReport(report.id)" 
-                  title="Отхвърли">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"/>
-                    <line x1="6" y1="6" x2="18" y2="18"/>
-                  </svg>
-                </button>
-                <button 
-                  class="action-btn info" 
-                  (click)="viewReportDetails(report)" 
-                  title="Преглед">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                  </svg>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+              </td>
 
-  <div class="tab-panel" *ngIf="activeTab === 'containers'">
-    <div class="panel-header">
-      <h2>Управление на кофи</h2>
+              <td>
+                <div class="rep-mini">
+                  <div class="progress" style="width: 44px">
+                    <div class="progress__fill progress__fill--ok" [style.width]="r.userReputationOnSubmit + '%'"></div>
+                  </div>
+                  <span class="text-mono text-xs">{{ r.userReputationOnSubmit | number:'1.0-0' }}</span>
+                </div>
+              </td>
+
+              <td>
+                <span *ngIf="r.ai_Score" class="text-mono text-sm">{{ r.ai_Score | number:'1.0-0' }}%</span>
+                <span *ngIf="!r.ai_Score" class="text-muted">—</span>
+              </td>
+
+              <td>
+                <div class="confidence-cell">
+                  <div class="progress" style="width: 44px">
+                    <div class="progress__fill" [style.width]="r.finalConfidence + '%'"
+                         [style.background]="r.finalConfidence > 70 ? 'var(--eco-primary)' : r.finalConfidence > 40 ? 'var(--status-warn)' : 'var(--status-critical)'">
+                    </div>
+                  </div>
+                  <span class="text-mono text-xs">{{ r.finalConfidence | number:'1.0-0' }}%</span>
+                </div>
+              </td>
+
+              <td class="text-muted text-xs" style="white-space:nowrap">
+                {{ r.createdAt | date:'dd.MM HH:mm' }}
+              </td>
+
+              <td>
+                <span class="badge"
+                  [class.badge--warn]="r.isApproved === null"
+                  [class.badge--eco]="r.isApproved === true"
+                  [class.badge--danger]="r.isApproved === false">
+                  {{ r.isApproved === null ? 'Чакащ' : r.isApproved ? 'Одобрен' : 'Отхвърлен' }}
+                </span>
+              </td>
+
+              <td>
+                <div class="action-group">
+                  <ng-container *ngIf="r.isApproved === null">
+                    <button class="btn btn--icon btn--sm btn--secondary" (click)="approveReport(r.id)" title="Одобри">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    </button>
+                    <button class="btn btn--icon btn--sm btn--danger" (click)="rejectReport(r.id)" title="Отхвърли">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  </ng-container>
+                  <button class="btn btn--icon btn--sm btn--ghost" (click)="viewReportDetails(r)" title="Детайли">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+              </td>
+
+            </tr>
+
+            <!-- Empty state -->
+            <tr *ngIf="filteredReports.length === 0">
+              <td colspan="10">
+                <div class="admin__empty">
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <p>Няма сигнали</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <div class="data-table-wrapper">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Зона</th>
-            <th>Тип отпадък</th>
-            <th>Запълване</th>
-            <th>Статус</th>
-            <th>Сензор</th>
-            <th>Температура</th>
-            <th>Батерия</th>
-            <th>Действия</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let container of containers">
-            <td class="cell-id">#{{ container.id }}</td>
-            <td>{{ container.areaId }}</td>
-            <td>
-              <span class="badge" [class]="'badge-' + getTrashTypeClass(container.trashType)">
-                {{ getTrashTypeText(container.trashType) }}
-              </span>
-            </td>
-            <td>
-              <div class="progress-wrapper">
-                <div class="progress-bar">
-                  <div 
-                    class="progress-fill" 
-                    [class.success]="container.fillPercentage < 50"
-                    [class.warning]="container.fillPercentage >= 50 && container.fillPercentage < 80"
-                    [class.danger]="container.fillPercentage >= 80"
-                    [style.width.%]="container.fillPercentage">
+    <!-- ── Containers ───────────────────────────── -->
+    <div *ngSwitchCase="'containers'" class="admin__panel animate-fade-in">
+
+      <div class="admin__toolbar">
+        <div class="admin__toolbar-filters">
+          <div class="admin__search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="admin__search-input" type="text" placeholder="Търсене по зона или ID…">
+          </div>
+        </div>
+        <div class="admin__toolbar-actions">
+          <span class="text-muted text-xs">{{ containers.length }} контейнера</span>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Зона</th>
+              <th>Тип отпадък</th>
+              <th>Запълване</th>
+              <th>Температура</th>
+              <th>Батерия</th>
+              <th>IoT</th>
+              <th>Статус</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of containers">
+              <td class="text-muted text-mono text-xs">{{ c.id }}</td>
+              <td class="font-semibold text-sm">{{ c.areaId }}</td>
+              <td>
+                <span class="badge badge--offline">{{ getTrashTypeText(c.trashType) }}</span>
+              </td>
+              <td>
+                <div class="fill-cell">
+                  <div class="progress" style="width: 60px">
+                    <div class="progress__fill"
+                         [style.width]="c.fillPercentage + '%'"
+                         [style.background]="c.fillPercentage > 80 ? 'var(--status-critical)' : c.fillPercentage > 60 ? 'var(--status-warn)' : 'var(--eco-primary)'">
+                    </div>
+                  </div>
+                  <span class="text-mono text-xs" [class.text-danger]="c.fillPercentage > 80">{{ c.fillPercentage | number:'1.0-0' }}%</span>
+                </div>
+              </td>
+              <td>
+                <span *ngIf="c.temperature !== null" class="text-mono text-sm" [class.text-danger]="c.temperature! > 50">
+                  {{ c.temperature }}°C
+                </span>
+                <span *ngIf="c.temperature === null" class="text-muted">—</span>
+              </td>
+              <td>
+                <span *ngIf="c.batteryPercentage !== null" class="text-mono text-sm">{{ c.batteryPercentage }}%</span>
+                <span *ngIf="c.batteryPercentage === null" class="text-muted">—</span>
+              </td>
+              <td>
+                <span class="badge badge--cyan" *ngIf="c.hasSensor">
+                  <span class="live-dot" style="width:5px;height:5px;margin-right:4px"></span>
+                  IoT
+                </span>
+                <span class="text-muted text-xs" *ngIf="!c.hasSensor">Без сензор</span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getStatusClass(c.status)">{{ getStatusText(c.status) }}</span>
+              </td>
+              <td>
+                <div class="action-group">
+                  <button class="btn btn--icon btn--sm btn--ghost" (click)="editContainer(c)" title="Редактирай">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                  <button class="btn btn--icon btn--sm btn--secondary" (click)="emptyContainer(c.id)" title="Изпразни">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Trucks ───────────────────────────────── -->
+    <div *ngSwitchCase="'trucks'" class="admin__panel animate-fade-in">
+      <div class="admin__section-header">
+        <div>
+          <h3 class="admin__section-title">Флот от камиони</h3>
+          <p class="text-muted text-sm" style="margin-top:4px">{{ trucks.length }} камиона в системата</p>
+        </div>
+      </div>
+      <div class="trucks-grid">
+        <div *ngFor="let t of trucks" class="truck-card">
+          <div class="truck-card__header">
+            <div class="truck-card__icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <div>
+              <p class="truck-card__name">Камион #{{ t.id }}</p>
+              <p class="truck-card__zone">{{ t.areaId }}</p>
+            </div>
+            <span class="badge badge--eco" style="margin-left:auto">Активен</span>
+          </div>
+          <div class="truck-card__stats">
+            <div class="truck-stat">
+              <span class="truck-stat__label">Тип отпадък</span>
+              <span class="truck-stat__val">{{ getTrashTypeText(t.trashType) }}</span>
+            </div>
+            <div class="truck-stat">
+              <span class="truck-stat__label">Капацитет</span>
+              <span class="truck-stat__val">{{ t.capacity }} л</span>
+            </div>
+            <div class="truck-stat">
+              <span class="truck-stat__label">Позиция</span>
+              <span class="truck-stat__val">{{ t.locationX | number:'1.2-2' }}, {{ t.locationY | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Users ────────────────────────────────── -->
+    <div *ngSwitchCase="'users'" class="admin__panel animate-fade-in">
+
+      <div class="admin__toolbar">
+        <div class="admin__toolbar-filters">
+          <div class="admin__search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="admin__search-input" type="text" placeholder="Търси потребител…">
+          </div>
+        </div>
+        <span class="text-muted text-xs">{{ users.length }} потребители</span>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Потребител</th>
+              <th>Роля</th>
+              <th>Репутация</th>
+              <th>Сигнали</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of users">
+              <td>
+                <div class="user-cell">
+                  <div class="user-avatar">{{ getInitials(u.userName) }}</div>
+                  <div>
+                    <p class="font-semibold text-sm">{{ u.userName }}</p>
+                    <p class="text-muted text-xs">{{ u.email }}</p>
                   </div>
                 </div>
-                <span class="progress-label">{{ container.fillPercentage }}%</span>
-              </div>
-            </td>
-            <td>
-              <span class="status-badge" [class]="getStatusClass(container.status)">
-                {{ getStatusText(container.status) }}
-              </span>
-            </td>
-            <td class="text-center">
-              <span class="sensor-indicator" [class.active]="container.hasSensor">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="12" cy="12" r="10"/>
-                </svg>
-              </span>
-            </td>
-            <td class="text-center" [class.text-danger]="(container.temperature || 0) > 50">
-              {{ container.temperature ? container.temperature + '°C' : '—' }}
-            </td>
-            <td class="text-center" [class.text-warning]="container.batteryPercentage && container.batteryPercentage < 20">
-              {{ container.batteryPercentage ? container.batteryPercentage + '%' : '—' }}
-            </td>
-            <td>
-              <div class="action-group">
-                <button class="action-btn primary" (click)="editContainer(container)" title="Редактирай">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="tab-panel" *ngIf="activeTab === 'trucks'">
-    <div class="panel-header">
-      <h2>Управление на камиони</h2>
-    </div>
-
-    <div class="data-table-wrapper">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Зона</th>
-            <th>Тип отпадък</th>
-            <th>Капацитет</th>
-            <th>Координати</th>
-            <th>Действия</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let truck of trucks">
-            <td class="cell-id">#{{ truck.id }}</td>
-            <td>{{ truck.areaId }}</td>
-            <td>
-              <span class="badge" [class]="'badge-' + getTrashTypeClass(truck.trashType)">
-                {{ getTrashTypeText(truck.trashType) }}
-              </span>
-            </td>
-            <td>{{ truck.capacity }} л</td>
-            <td class="text-secondary">
-              <span *ngIf="truck.locationX && truck.locationY">
-                {{ truck.locationX.toFixed(4) }}, {{ truck.locationY.toFixed(4) }}
-              </span>
-              <span *ngIf="!truck.locationX || !truck.locationY">—</span>
-            </td>
-            <td>
-              <div class="action-group">
-                <button class="action-btn info" (click)="viewTruckRoute(truck.id)" title="Виж маршрут">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
-                    <line x1="8" y1="2" x2="8" y2="18"/>
-                    <line x1="16" y1="6" x2="16" y2="22"/>
-                  </svg>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="tab-panel" *ngIf="activeTab === 'users'">
-    <div class="panel-header">
-      <h2>Управление на потребители</h2>
-    </div>
-
-    <div class="data-table-wrapper">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Потребител</th>
-            <th>Имейл</th>
-            <th>Роля</th>
-            <th>Репутация</th>
-            <th>Репорти</th>
-            <th>Действия</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let user of users">
-            <td>
-              <div class="user-cell">
-                <div class="user-avatar-small">
-                  {{ getInitials(user.userName) }}
+              </td>
+              <td>
+                <span class="badge"
+                  [class.badge--danger]="u.roles?.includes('Admin')"
+                  [class.badge--blue]="u.roles?.includes('Driver')"
+                  [class.badge--eco]="!u.roles?.includes('Admin') && !u.roles?.includes('Driver')">
+                  {{ getRoleText(u.roles?.[0] ?? '') }}
+                </span>
+              </td>
+              <td>
+                <div class="rep-mini">
+                  <div class="progress" style="width: 56px">
+                    <div class="progress__fill progress__fill--ok" [style.width]="u.reputation + '%'"></div>
+                  </div>
+                  <span class="text-mono text-xs">{{ u.reputation | number:'1.0-0' }}</span>
                 </div>
-                <span>{{ user.userName }}</span>
-              </div>
-            </td>
-            <td class="text-secondary">{{ user.email }}</td>
-            <td>
-              <span class="role-badge" [class]="user.roles[0]">
-                {{ getRoleText(user.roles[0]) }}
-              </span>
-            </td>
-            <td>
-              <div class="progress-wrapper">
-                <div class="progress-bar">
-                  <div class="progress-fill info" [style.width.%]="user.reputation"></div>
+              </td>
+              <td class="text-mono">{{ userReportCounts[u.id] ?? 0 }}</td>
+              <td>
+                <div class="action-group">
+                  <button class="btn btn--icon btn--sm btn--ghost" (click)="adjustUserReputation(u)" title="Редактирай репутация">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                  <button class="btn btn--icon btn--sm btn--ghost" (click)="viewUserReports(u.id)" title="Виж сигналите">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
+                  </button>
                 </div>
-                <span class="progress-label">{{ user.reputation }}</span>
-              </div>
-            </td>
-            <td class="text-center">
-              {{ userReportCounts[user.id] || 0 }}
-            </td>
-            <td>
-              <div class="action-group">
-                <button class="action-btn info" (click)="viewUserReports(user.id)" title="Виж репорти">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                  </svg>
-                </button>
-                <button class="action-btn primary" (click)="adjustUserReputation(user)" title="Промени репутация">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="8" y1="12" x2="16" y2="12"/>
-                  </svg>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+
   </div>
-</div>
 
-<div *ngIf="selectedReport" class="modal-backdrop" (click)="closeModal()">
-  <div class="modal-dialog" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h3 class="modal-title">Детайли за репорт #{{ selectedReport.id }}</h3>
-      <button class="modal-close" (click)="closeModal()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>
-    </div>
-    
-    <div class="modal-body">
-      <div class="detail-grid">
-        <div class="detail-item">
-          <span class="detail-label">Потребител</span>
-          <span class="detail-value">{{ selectedReport.userName }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Кофа</span>
-          <span class="detail-value">#{{ selectedReport.trashContainerId || 'Няма' }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Тип</span>
-          <span class="detail-value">{{ getReportTypeText(selectedReport.reportType) }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Дата</span>
-          <span class="detail-value">{{ formatDate(selectedReport.createdAt) }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">AI оценка</span>
-          <span class="detail-value">{{ selectedReport.ai_Score }}%</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Репутация</span>
-          <span class="detail-value">{{ selectedReport.userReputationOnSubmit }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Увереност</span>
-          <span class="detail-value">{{ selectedReport.finalConfidence.toFixed(1) }}%</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">Статус</span>
-          <span class="detail-value">
-            {{ selectedReport.isApproved ? 'Одобрен' : 'Чакащ одобрение' }}
-          </span>
-        </div>
-      </div>
-
-      <div *ngIf="selectedReportPhoto" class="report-image-section">
-        <h4>Прикачена снимка</h4>
-        <img [src]="selectedReportPhoto" alt="Снимка от репорт" class="report-image">
-      </div>
-    </div>
-
-    <div class="modal-footer">
-      <button *ngIf="!selectedReport.isApproved" class="btn success" (click)="approveReport(selectedReport.id)">
-        Одобри репорт
-      </button>
-      <button *ngIf="!selectedReport.isApproved" class="btn danger" (click)="rejectReport(selectedReport.id)">
-        Отхвърли репорт
-      </button>
-      <button class="btn secondary" (click)="closeModal()">Затвори</button>
-    </div>
-  </div>
-</div>
-
-<div *ngIf="editingContainer" class="modal-backdrop" (click)="closeContainerModal()">
-  <div class="modal-dialog" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h3 class="modal-title">Редактиране на кофа #{{ editingContainer.id }}</h3>
-      <button class="modal-close" (click)="closeContainerModal()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"/>
-          <line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
-      </button>
-    </div>
-
-    <div class="modal-body">
-      <div class="form-field">
-        <label class="form-label">Запълване (%)</label>
-        <div class="range-input-group">
-          <input 
-            type="range" 
-            class="range-input" 
-            min="0" 
-            max="100" 
-            [(ngModel)]="editingContainer.fillPercentage">
-          <span class="range-value">{{ editingContainer.fillPercentage }}%</span>
-        </div>
-      </div>
-
-      <div class="form-field">
-        <label class="form-label">Статус</label>
-        <select class="form-select" [(ngModel)]="editingContainer.status">
-          <option [value]="undefined">Нормален</option>
-          <option value="0">Активен</option>
-          <option value="1">Пожар</option>
-          <option value="2">Повреден</option>
-          <option value="3">Извън линия</option>
-        </select>
-      </div>
-
-      <div class="form-field">
-        <label class="form-checkbox">
-          <input type="checkbox" [(ngModel)]="editingContainer.hasSensor">
-          <span>Има сензор</span>
-        </label>
-      </div>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn primary" (click)="saveContainer()">Запази промените</button>
-      <button class="btn secondary" (click)="closeContainerModal()">Отказ</button>
-    </div>
-  </div>
 </div>

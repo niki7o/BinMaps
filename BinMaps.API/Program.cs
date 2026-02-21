@@ -59,7 +59,7 @@ namespace BinMaps.API
                     IssuerSigningKey = new SymmetricSecurityKey(key)
                 };
             });
-
+            builder.Services.AddSingleton<Random>();
             builder.Services.AddHttpClient();
             builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
             builder.Services.AddScoped<ITruckRouteService, TruckRouteService>();

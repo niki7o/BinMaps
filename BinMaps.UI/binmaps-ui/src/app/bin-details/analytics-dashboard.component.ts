@@ -4,6 +4,7 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { ChartData } from 'chart.js';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
 import * as L from 'leaflet';
 
@@ -35,7 +36,7 @@ type TLabel = string | string[];
 @Component({
   selector: 'app-analytics-dashboard',
   standalone: true,
-  imports: [CommonModule, BaseChartDirective],
+  imports: [CommonModule, FormsModule, BaseChartDirective],
   templateUrl: './analytics-dashboard.component.html',
   styleUrls: ['./analytics-dashboard.component.css']
 })
@@ -46,6 +47,8 @@ export class AnalyticsDashboardComponent implements OnInit, AfterViewInit, OnDes
   private hotspotLayers: L.Layer[] = [];
   private timer?: ReturnType<typeof setInterval>;
   private mapReady = false;
+
+  selectedZoneFilter = '';
 
   
   stats = {
@@ -259,7 +262,7 @@ export class AnalyticsDashboardComponent implements OnInit, AfterViewInit, OnDes
       labels: top5.map(b => `#${b.id} · ${b.areaId.replace('Зона ', 'З.')}`),
       datasets: [{
         label: 'Запълване %',
-        data: top5.map(b => b.fillPercentage),
+        data: top5.map(b => Math.round(b.fillPercentage)),
         backgroundColor: top5.map(b =>
           b.fillPercentage >= 90 ? '#dc2626' :
           b.fillPercentage >= 80 ? '#ef4444' : '#f97316'
@@ -364,4 +367,19 @@ export class AnalyticsDashboardComponent implements OnInit, AfterViewInit, OnDes
     if (fill >= 60) return 'warning';
     return 'success';
   }
+  getTop5Width(index: number): string {
+  const val = this.top5Data.datasets[0]?.data[index];
+  return val !== undefined ? val + '%' : '0%';
+}
+
+getTop5Color(index: number): string {
+  const val = this.top5Data.datasets[0]?.data[index];
+  if (val === undefined) return 'var(--status-warn)';
+  return val > 80 ? 'var(--status-critical)' : 'var(--status-warn)';
+}
+
+getTop5Value(index: number): number {
+  const val = this.top5Data.datasets[0]?.data[index];
+  return val !== undefined ? Math.round(val) : 0;
+}
 }

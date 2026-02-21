@@ -1,64 +1,101 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 
-@Injectable({
-  providedIn: 'root'
-})
+export interface AuthUser {
+  id?: string;
+  userName?: string;
+  name?: string;
+  email: string;
+  role: string;
+  reputation?: number;
+  token?: string;
+}
+
+interface LoginResponse {
+  token: string;
+  userName: string;
+  email: string;
+  role: string;
+  userId?: string;
+  reputation?: number;
+}
+
+@Injectable({ providedIn: 'root' })
 export class AuthService {
-  private currentUserSubject = new BehaviorSubject<any>(null);
-  public currentUser$ = this.currentUserSubject.asObservable();
+  private readonly API_URL = 'https://localhost:7277/api';
 
-  constructor(private http: HttpClient) {
-    this.loadFromLocalStorage();
+  private _user$ = new BehaviorSubject<AuthUser | null>(this.loadUser());
+  readonly currentUser$ = this._user$.asObservable();
+
+  readonly currentUser = signal<AuthUser | null>(this.loadUser());
+  readonly isLoggedIn  = signal<boolean>(!!this.loadToken());
+
+  get role(): string { return this._user$.value?.role ?? ''; }
+
+  constructor(private http: HttpClient, private router: Router) {}
+
+  login(email: string, password: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.API_URL}/auth/login`, { email, password }).pipe(
+      tap(res => this.persist(res))
+    );
   }
 
-  private loadFromLocalStorage() {
-    const user = localStorage.getItem('user');
-    if (user) this.currentUserSubject.next(JSON.parse(user));
+  register(userName: string, email: string, password: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.API_URL}/auth/register`, { userName, email, password }).pipe(
+      tap(res => this.persist(res))
+    );
   }
 
-  login(email: string, password: string): Observable<any> {
-    return this.http.post<any>('https://localhost:7277/api/Auth/login', { email, password })
-      .pipe(
-        tap(res => {
-          if (res.token) {
-            localStorage.setItem('token', res.token);
-            localStorage.setItem('user', JSON.stringify(res.user));
-            this.currentUserSubject.next(res.user);
-          }
-        })
-      );
-  }
-
-  logout() {
+  logout(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    this.currentUserSubject.next(null);
+    this._user$.next(null);
+    this.currentUser.set(null);
+    this.isLoggedIn.set(false);
+    this.router.navigate(['/']);
+  }
+
+  getToken(): string | null {
+    const direct = localStorage.getItem('token');
+    if (direct) return direct;
+    try {
+      return JSON.parse(localStorage.getItem('user') ?? '{}').token ?? null;
+    } catch { return null; }
   }
 
   getAuthHeaders(): { headers: HttpHeaders } {
-    const token = localStorage.getItem('token');
     return {
       headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.getToken()}`
       })
     };
   }
 
-  getCurrentUser() {
-    return this.currentUserSubject.value;
+  getFormHeaders(): { headers: HttpHeaders } {
+    return {
+      headers: new HttpHeaders({ Authorization: `Bearer ${this.getToken()}` })
+    };
   }
 
-  isLoggedIn(): boolean {
-    return !!this.getCurrentUser();
+  private persist(res: LoginResponse): void {
+    const user: AuthUser = {
+      id: res.userId, userName: res.userName, name: res.userName,
+      email: res.email, role: res.role, reputation: res.reputation, token: res.token
+    };
+    localStorage.setItem('token', res.token);
+    localStorage.setItem('user', JSON.stringify(user));
+    this._user$.next(user);
+    this.currentUser.set(user);
+    this.isLoggedIn.set(true);
   }
 
-  isAdmin(): boolean {
-    return this.getCurrentUser()?.role === 'Admin';
-  }
+  private loadToken(): string | null { return localStorage.getItem('token'); }
 
-  isDriver(): boolean {
-    return this.getCurrentUser()?.role === 'Driver';
+  private loadUser(): AuthUser | null {
+    try { const r = localStorage.getItem('user'); return r ? JSON.parse(r) : null; }
+    catch { return null; }
   }
 }

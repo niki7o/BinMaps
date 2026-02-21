@@ -1,102 +1,41 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { Subject, Observable } from 'rxjs';
 import * as signalR from '@microsoft/signalr';
-import { Subject } from 'rxjs';
+import { AuthService } from './auth.service';
 
-export interface ContainerUpdate {
-  id: number;
-  areaId: string;
-  fillPercentage: number;
-  temperature: number | null;
-  status: string | null;
-}
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class ContainerSignalRService {
+  private auth = inject(AuthService);
 
-  private hubConnection!: signalR.HubConnection;
-  private connectionEstablished = false;
+  private hub?: signalR.HubConnection;
+  private _updates$ = new Subject<any[]>();
 
- 
-  public containerUpdates$ = new Subject<ContainerUpdate[]>();
-  public connectionStatus$ = new Subject<'connected' | 'disconnected' | 'error'>();
+  readonly containerUpdates$: Observable<any[]> = this._updates$.asObservable();
 
-  constructor() {
-    this.initConnection();
-  }
+  start(): void {
+    if (this.hub) return;
 
-
-
-  private initConnection() {
-    this.hubConnection = new signalR.HubConnectionBuilder()
+    this.hub = new signalR.HubConnectionBuilder()
       .withUrl('https://localhost:7277/hubs/containers', {
-        skipNegotiation: false,
-        transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.ServerSentEvents
+        accessTokenFactory: () => this.auth.getToken() ?? ''
       })
-      .withAutomaticReconnect([0, 2000, 5000, 10000])  
-      .configureLogging(signalR.LogLevel.Information)
+      .withAutomaticReconnect()
+      .configureLogging(signalR.LogLevel.Warning)
       .build();
 
-   
-    this.hubConnection.on('ContainersUpdated', (updates: ContainerUpdate[]) => {
-      this.containerUpdates$.next(updates);
-      
+    this.hub.on('ContainersUpdated', (updates: any[]) => {
+      this._updates$.next(updates);
     });
 
-    this.hubConnection.onclose(() => {
-      this.connectionEstablished = false;
-      this.connectionStatus$.next('disconnected');
-      console.log(' SignalR disconnected');
+    this.hub.on('ContainerUpdated', (update: any) => {
+      this._updates$.next([update]);
     });
 
-    this.hubConnection.onreconnecting(() => {
-      console.log(' SignalR reconnecting...');
-    });
-
-    this.hubConnection.onreconnected(() => {
-      this.connectionEstablished = true;
-      this.connectionStatus$.next('connected');
-      console.log(' SignalR reconnected');
-    });
-
-    this.hubConnection.on('connected', (message: string) => {
-  console.log('Hub says:', message);
-});
+    this.hub.start().catch(err => console.error('SignalR start error:', err));
   }
 
-
-  public async start(): Promise<void> {
-    if (this.connectionEstablished) return;
-
-    try {
-      await this.hubConnection.start();
-      this.connectionEstablished = true;
-      this.connectionStatus$.next('connected');
-      console.log(' SignalR connected');
-    } catch (err) {
-      this.connectionStatus$.next('error');
-      console.error(' SignalR connection failed:', err);
-      
-      
-      setTimeout(() => this.start(), 5000);
-    }
-  }
-
-  public async stop(): Promise<void> {
-    if (!this.connectionEstablished) return;
-
-    try {
-      await this.hubConnection.stop();
-      this.connectionEstablished = false;
-      this.connectionStatus$.next('disconnected');
-      console.log(' SignalR stopped');
-    } catch (err) {
-      console.error('Error stopping SignalR:', err);
-    }
-  }
-
-  public isConnected(): boolean {
-    return this.connectionEstablished;
+  stop(): void {
+    this.hub?.stop();
+    this.hub = undefined;
   }
 }
