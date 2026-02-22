@@ -1,101 +1,59 @@
-import { Injectable, signal } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
-
-export interface AuthUser {
-  id?: string;
-  userName?: string;
-  name?: string;
-  email: string;
-  role: string;
-  reputation?: number;
-  token?: string;
-}
-
-interface LoginResponse {
-  token: string;
-  userName: string;
-  email: string;
-  role: string;
-  userId?: string;
-  reputation?: number;
-}
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, distinctUntilChanged, tap } from 'rxjs';
+import { AuthUser, LoginResponse } from './auth.models';
+import { AuthStorageService } from './auth-storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly API_URL = 'https://localhost:7277/api';
 
-  private _user$ = new BehaviorSubject<AuthUser | null>(this.loadUser());
-  readonly currentUser$ = this._user$.asObservable();
+  
+  private static readonly API = 'https://localhost:7277/api';
+  
 
-  readonly currentUser = signal<AuthUser | null>(this.loadUser());
-  readonly isLoggedIn  = signal<boolean>(!!this.loadToken());
+ 
+  private readonly _state$: BehaviorSubject<AuthUser | null>;
 
-  get role(): string { return this._user$.value?.role ?? ''; }
+  readonly currentUser$: Observable<AuthUser | null>;
 
-  constructor(private http: HttpClient, private router: Router) {}
-
-  login(email: string, password: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.API_URL}/auth/login`, { email, password }).pipe(
-      tap(res => this.persist(res))
+  
+  constructor(
+    private readonly http:    HttpClient,
+    private readonly storage: AuthStorageService
+  ) {
+    this._state$ = new BehaviorSubject<AuthUser | null>(this.storage.load());
+    this.currentUser$ = this._state$.asObservable().pipe(
+      distinctUntilChanged((a, b) => a?.token === b?.token)
     );
   }
 
-  register(userName: string, email: string, password: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.API_URL}/auth/register`, { userName, email, password }).pipe(
-      tap(res => this.persist(res))
-    );
+  get currentUser(): AuthUser | null  { return this._state$.value; }
+  get isAuthenticated(): boolean      { return !!this._state$.value; }
+  getToken(): string | null           { return this._state$.value?.token ?? null; }
+  hasRole(role: string): boolean      { return this._state$.value?.role === role; }
+  
+  login(email: string, password: string): Observable<LoginResponse> {
+    return this.http
+      .post<LoginResponse>(`${AuthService.API}/auth/login`, { email, password })
+      .pipe(tap(r => this.applyResponse(r, email)));
   }
 
   logout(): void {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    this._user$.next(null);
-    this.currentUser.set(null);
-    this.isLoggedIn.set(false);
-    this.router.navigate(['/']);
+    this.storage.clear();
+    this._state$.next(null);
   }
-
-  getToken(): string | null {
-    const direct = localStorage.getItem('token');
-    if (direct) return direct;
-    try {
-      return JSON.parse(localStorage.getItem('user') ?? '{}').token ?? null;
-    } catch { return null; }
-  }
-
-  getAuthHeaders(): { headers: HttpHeaders } {
-    return {
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.getToken()}`
-      })
-    };
-  }
-
-  getFormHeaders(): { headers: HttpHeaders } {
-    return {
-      headers: new HttpHeaders({ Authorization: `Bearer ${this.getToken()}` })
-    };
-  }
-
-  private persist(res: LoginResponse): void {
+ 
+  private applyResponse(r: LoginResponse, email: string): void {
+    if (!r?.token) return;
     const user: AuthUser = {
-      id: res.userId, userName: res.userName, name: res.userName,
-      email: res.email, role: res.role, reputation: res.reputation, token: res.token
+      id:       r.id       ?? '',
+      userName: r.userName ?? r.username ?? email.split('@')[0],
+      email:    r.email    ?? email,
+      role:     r.role     ?? 'User',
+      token:    r.token
     };
-    localStorage.setItem('token', res.token);
-    localStorage.setItem('user', JSON.stringify(user));
-    this._user$.next(user);
-    this.currentUser.set(user);
-    this.isLoggedIn.set(true);
+    this.storage.save(user);
+    this._state$.next(user);
   }
-
-  private loadToken(): string | null { return localStorage.getItem('token'); }
-
-  private loadUser(): AuthUser | null {
-    try { const r = localStorage.getItem('user'); return r ? JSON.parse(r) : null; }
-    catch { return null; }
-  }
+ 
 }

@@ -1,29 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace BinMaps.Shared.DTOs
+namespace BinMaps.Shared.DTOs;
+
+public sealed class RegisterDTO
 {
-    public class RegisterDTO
-    {
-       
-            [Required]
-        [StringLength(50, MinimumLength = 3)]
-        public string UserName { get; set; }
+    [Required]
+    [StringLength(50, MinimumLength = 3)]
+    public string UserName { get; set; } = string.Empty;
 
-            [Required]
-            [EmailAddress]
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; } = string.Empty;
 
-            public string Email { get; set; }
+    [Phone]
+    [StringLength(13, MinimumLength = 7)]
+    public string? PhoneNumber { get; set; }
 
-            [Length(12, 13)]
-            public string? PhoneNumber { get; set; }
-            [Required]
-            public string Password { get; set; }
+    [Required]
+    [MinLength(6)]
+    public string Password { get; set; } = string.Empty;
 
-            public bool AcceptTerms { get; set; }
-        
-    }
+    [Required]
+    public bool AcceptTerms { get; set; }
 }

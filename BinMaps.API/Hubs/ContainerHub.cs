@@ -1,20 +1,15 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using System.Threading.Tasks;
 
-namespace BinMaps.API.Hubs
+namespace BinMaps.API.Hubs;
+
+public sealed class ContainerHub : Hub
 {
-  
-    public class ContainerHub : Hub
+    public override async Task OnConnectedAsync()
     {
-        public override async Task OnConnectedAsync()
-        {
-            await Clients.Caller.SendAsync("Connected", Context.ConnectionId);
-            await base.OnConnectedAsync();
-        }
-
-        public override async Task OnDisconnectedAsync(Exception? exception)
-        {
-            await base.OnDisconnectedAsync(exception);
-        }
+        await Clients.Caller.SendAsync("Connected", Context.ConnectionId);
+        await base.OnConnectedAsync();
     }
+
+    public override Task OnDisconnectedAsync(Exception? exception)
+        => base.OnDisconnectedAsync(exception);
 }

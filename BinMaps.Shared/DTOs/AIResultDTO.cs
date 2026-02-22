@@ -1,13 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text.Json.Serialization;
 
-namespace BinMaps.Shared.DTOs
+namespace BinMaps.Shared.DTOs;
+
+public sealed class AIResultDto
 {
-    public class AIResultDto
-    {
-        public double FillPercentage { get; set; }
-        public bool FireDetected { get; set; }
-        public int Confidence { get; set; }
-    }
+    [JsonPropertyName("fill_percentage")]
+    public double FillPercentage { get; set; }
+
+    [JsonPropertyName("fire_detected")]
+    public bool FireDetected { get; set; }
+
+    [JsonPropertyName("confidence")]
+    public double Confidence { get; set; }
 }

@@ -3,15 +3,26 @@ using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Text;
-
 namespace BinMaps.Data.Entities
 {
-    public class User: IdentityUser
+    public sealed class User: IdentityUser
     {
 
-        public int Reputation { get; set;  } = 0;
-        public string? ProfilePicturePath { get; set; }  
-        public DateTime CreatedAt { get; set; }
+        [Range(0, int.MaxValue)]
+        public int Reputation { get; set; } = 50;
+
+        [MaxLength(500)]
+        public string? ProfilePicturePath { get; set; }
+
+        public bool IsBanned { get; set; } = false;
+
+        [MaxLength(200)]
+        public string? BanReason { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? LastLoginAt { get; set; }
+
+        public ICollection<Report> Reports { get; set; } = new List<Report>();
     }
 }

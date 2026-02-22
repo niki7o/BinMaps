@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace BinMaps.Data.Entities.Enums
+﻿namespace BinMaps.Data.Entities.Enums
 {
     public enum ReportType
     {
@@ -15,12 +11,5 @@ namespace BinMaps.Data.Entities.Enums
         //for the driver 
         TruckProblem,
         ContainerDamage,
-       
-
-
-
-
-
-
     }
 }

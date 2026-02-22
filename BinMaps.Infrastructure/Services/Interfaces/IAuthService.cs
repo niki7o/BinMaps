@@ -1,15 +1,9 @@
 ﻿using BinMaps.Shared.DTOs;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace BinMaps.Infrastructure.Services.Interfaces
+namespace BinMaps.Infrastructure.Services.Interfaces;
+
+public interface IAuthService
 {
-    public interface IAuthService
-    {
-        Task<(bool success, IEnumerable<string> errors)> RegisterAsync(RegisterDTO dto);
-
-        Task<(bool success, string role, string token)> LoginAsync(LoginDTO dto);
-
-    }
+    Task<(bool Success, IEnumerable<string> Errors)> RegisterAsync(RegisterDTO dto);
+    Task<(bool Success, string? Role, string? Token)> LoginAsync(LoginDTO dto);
 }

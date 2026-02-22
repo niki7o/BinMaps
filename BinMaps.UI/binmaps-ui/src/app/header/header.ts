@@ -1,76 +1,83 @@
-import { Component, OnInit, HostListener, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, signal, computed } from '@angular/core';
+import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../services/auth.service';
-import { NotificationService, Notification } from '../services/notification.service';
+import { AuthUser } from '../services/auth.models';
 
 @Component({
-  selector: 'app-header',
-  standalone: true,
-  imports: [CommonModule, RouterModule],
+  selector:    'app-header',
+  standalone:  true,
+  imports:     [CommonModule, RouterModule],
   templateUrl: './header.html',
-  styleUrls: ['./header.css']
+  styleUrls:   ['./header.css']
 })
-export class Header implements OnInit {
-  private auth   = inject(AuthService);
-  private notifs = inject(NotificationService);
+export class Header implements OnInit, OnDestroy {
 
-  isScrolled     = false;
-  isSolidPage    = false;
-  userMenuOpen   = false;
-  notifPanelOpen = false;
-  notifFilter    = 'all';
+  
+  private readonly destroy$ = new Subject<void>();
 
-  readonly solidPages = ['/map', '/analytics', '/admin', '/profile'];
+  readonly isScrolled     = signal(false);
+  readonly showUserMenu   = signal(false);
+  readonly showNotifPanel = signal(false);
+  readonly currentUser    = signal<AuthUser | null>(null);
+  readonly unreadCount    = signal(0);
 
-  get isLoggedIn()  { return this.auth.isLoggedIn(); }
-  get role()        { return this.auth.role; }
-  get roleLabel()   { return this.roleLabelMap[this.role] ?? this.role; }
-  get userName()    { return this.auth.currentUser()?.name ?? ''; }
-  get userInitials(){ return this.userName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
-  get unreadCount() { return this.notifs.unreadCount(); }
-
-  get filteredNotifications(): Notification[] {
-    return this.notifs.forFilter(this.notifFilter);
+  readonly isLoggedIn = computed(() => !!this.currentUser());
+  readonly isAdmin    = computed(() => this.currentUser()?.role === 'Admin');
+  readonly isDriver   = computed(() => this.currentUser()?.role === 'Driver');
+  readonly initials   = computed(() =>
+    (this.currentUser()?.userName ?? '').slice(0, 2).toUpperCase() || 'U'
+  );
+  
+  constructor(
+    private readonly authService: AuthService,
+    private readonly router:      Router
+  ) {}
+ 
+  ngOnInit(): void {
+    this.authService.currentUser$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => {
+        this.currentUser.set(user);
+        this.showUserMenu.set(false);
+        this.showNotifPanel.set(false);
+      });
   }
 
-  private readonly roleLabelMap: Record<string, string> = {
-    User:   'Гражданин',
-    Driver: 'Шофьор',
-    Admin:  'Администратор'
-  };
-
-  ngOnInit(): void {
-    this.checkSolidPage(window.location.pathname);
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   @HostListener('window:scroll')
-  onScroll(): void {
-    this.isScrolled = window.scrollY > 20;
+  onScroll(): void { this.isScrolled.set(window.scrollY > 8); }
+
+  @HostListener('document:click', ['$event'])
+  onDocClick(e: MouseEvent): void {
+    const t = e.target as HTMLElement;
+    if (!t.closest('.navbar__user') && !t.closest('.user-menu'))
+      this.showUserMenu.set(false);
+    if (!t.closest('.navbar__notif') && !t.closest('.notif-panel'))
+      this.showNotifPanel.set(false);
+  }
+  
+  toggleUserMenu(e: Event): void {
+    e.stopPropagation();
+    this.showUserMenu.update(v => !v);
+    this.showNotifPanel.set(false);
   }
 
-  @HostListener('window:click', ['$event'])
-  onWindowClick(e: MouseEvent): void {
-    const target = e.target as HTMLElement;
-    if (!target.closest('.navbar__user') && this.userMenuOpen) {
-      this.userMenuOpen = false;
-    }
+  toggleNotifPanel(e: Event): void {
+    e.stopPropagation();
+    this.showNotifPanel.update(v => !v);
+    this.showUserMenu.set(false);
   }
-
-  toggleUserMenu(): void   { this.userMenuOpen = !this.userMenuOpen; }
-  toggleNotifications(): void {
-    this.notifPanelOpen = !this.notifPanelOpen;
-    if (!this.notifPanelOpen) return;
-  }
-
-  markAllRead(): void { this.notifs.markAllRead(); }
 
   logout(): void {
-    this.userMenuOpen = false;
-    this.auth.logout();
+    this.authService.logout();
+    this.showUserMenu.set(false);
+    this.router.navigate(['/']);
   }
-
-  private checkSolidPage(path: string): void {
-    this.isSolidPage = this.solidPages.some(p => path.startsWith(p));
-  }
+  
 }

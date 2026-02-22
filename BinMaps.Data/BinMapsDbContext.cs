@@ -3,42 +3,76 @@ using BinMaps.Data.Entities.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-
 namespace BinMaps.Data
 {
-    public class BinMapsDbContext : IdentityDbContext<User>
+    public sealed class BinMapsDbContext : IdentityDbContext<User>
     {
-        public BinMapsDbContext(DbContextOptions<BinMapsDbContext> options)
-         : base(options)
-        {
-        }
+        public BinMapsDbContext(DbContextOptions<BinMapsDbContext> options) : base(options) { }
 
-        public DbSet<User> Users { get; set; }
-        public DbSet<IdentityRole> Roles { get; set; }
-        public DbSet<IdentityUserRole<string>> UserRoles { get; set; }
-        public DbSet<Area> Areas { get; set; }
-        public DbSet<TrashContainer> TrashContainers { get; set; }
-        public DbSet<Truck> Trucks { get; set; }
-        public DbSet<Report> Reports { get; set; }
+        public DbSet<Area> Areas => Set<Area>();
+        public DbSet<TrashContainer> TrashContainers => Set<TrashContainer>();
+        public DbSet<Truck> Trucks => Set<Truck>();
+        public DbSet<Report> Reports => Set<Report>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.UseCollation("Cyrillic_General_CI_AS");
-
-            modelBuilder.Entity<IdentityUserRole<string>>().HasKey(r => new { r.UserId, r.RoleId });
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<TrashContainer>()
-                    .Property(tc => tc.Id)
-                    .ValueGeneratedNever();
+            modelBuilder.Entity<IdentityUserRole<string>>().HasKey(r => new { r.UserId, r.RoleId });
 
-            modelBuilder.Entity<TrashContainer>()
-                .Property(tc => tc.Status)
-                .HasConversion<string>();
+            modelBuilder.Entity<TrashContainer>(entity =>
+            {
+                entity.Property(tc => tc.Id).ValueGeneratedNever();
+                entity.Property(tc => tc.Status).HasConversion<string>();
+                entity.Property(tc => tc.TrashType).HasConversion<string>();
 
-            modelBuilder.Entity<Report>()
-                .Property(r => r.ReportType)
-                .HasConversion<string>();
+                entity.HasOne(tc => tc.Area)
+                    .WithMany(a => a.TrashContainers)
+                    .HasForeignKey(tc => tc.AreaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(tc => new { tc.AreaId, tc.TrashType, tc.Status })
+                    .HasDatabaseName("IX_Containers_Area_Type_Status");
+
+                entity.HasIndex(tc => new { tc.LocationX, tc.LocationY })
+                    .HasDatabaseName("IX_Containers_Location");
+            });
+
+            modelBuilder.Entity<Report>(entity =>
+            {
+                entity.Property(r => r.ReportType).HasConversion<string>();
+
+                entity.HasOne(r => r.TrashContainer)
+                    .WithMany(tc => tc.Reports)
+                    .HasForeignKey(r => r.TrashContainerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(r => new { r.IsApproved, r.CreatedAt })
+                    .HasDatabaseName("IX_Reports_Approval_Date");
+
+                entity.HasIndex(r => r.UserId)
+                    .HasDatabaseName("IX_Reports_UserId");
+            });
+
+            modelBuilder.Entity<Truck>(entity =>
+            {
+                entity.HasOne(t => t.Area)
+                    .WithMany(a => a.Trucks)
+                    .HasForeignKey(t => t.AreaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(t => t.AreaId)
+                    .HasDatabaseName("IX_Trucks_AreaId");
+            });
+
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasMany(u => u.Reports)
+                    .WithOne()
+                    .HasForeignKey(r => r.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
         }
     }
 }

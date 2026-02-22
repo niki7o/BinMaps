@@ -1,90 +1,54 @@
-
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
+import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { AuthService } from '../services/auth.service';
 
 @Component({
-  selector: 'app-login',
-  standalone: true,
+  selector:    'app-login',
+  standalone:  true,
+  imports:     [CommonModule, RouterModule, FormsModule],
   templateUrl: './login.html',
-  styleUrls: ['./login.css'],
-  imports: [CommonModule, ReactiveFormsModule]
+  styleUrls:   ['./login.css']
 })
 export class LoginComponent {
-  loginForm: FormGroup;
-  showPassword = false;
-  isLoading = false;
-  errorMessage = '';
 
+  
+  readonly email    = signal('');
+  readonly password = signal('');
+  readonly error    = signal('');
+  readonly loading  = signal(false);
+ 
   constructor(
-    private fb: FormBuilder, 
-    private router: Router, 
-    private http: HttpClient
-  ) {
-    this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+    private readonly auth:   AuthService,
+    private readonly router: Router
+  ) {}
+  
+  submit(): void {
+    if (!this.email() || !this.password()) {
+      this.error.set('Въведете имейл и парола');
+      return;
+    }
+    this.loading.set(true);
+    this.error.set('');
+
+    this.auth.login(this.email(), this.password()).subscribe({
+      next:  ()  => this.navigateByRole(),
+      error: (e) => this.onLoginError(e)
     });
   }
-
-  get email() {
-    return this.loginForm.get('email');
+  
+  private navigateByRole(): void {
+    const destination = this.auth.hasRole('Admin') ? '/admin' : '/map';
+    this.router.navigate([destination]);
   }
 
-  get password() {
-    return this.loginForm.get('password');
-  }
-
-  togglePasswordVisibility() {
-    this.showPassword = !this.showPassword;
-  }
-
-  navigateToRegister() {
-    this.router.navigate(['/register']);
-  }
-
-  navigateToHome() {
-    this.router.navigate(['/']);
-  }
-
-  onSubmit() {
-  if (this.loginForm.invalid) {
-    this.loginForm.markAllAsTouched();
-    return;
-  }
-
-  this.isLoading = true;
-  this.errorMessage = '';
-
-  this.http.post<any>('https://localhost:7277/api/Auth/login', this.loginForm.value)
-    .subscribe({
-      next: (res) => {
-         localStorage.setItem('token', res.token);
-  localStorage.setItem('user', JSON.stringify(res.user));
-
-  this.isLoading = false;
-
-  window.dispatchEvent(new Event('storage'));
-
-  if (res.user.role === 'Driver') {
-    this.router.navigate(['/map']);
-  }
-   else {
-    this.router.navigate(['/']);
-  }},
-      error: (err) => {
-        this.isLoading = false;
-
-        if (err.status === 400 && err.error?.errors?.email) {
-          this.errorMessage = err.error.errors.email[0];
-        } else if (err.status === 0) {
-          this.errorMessage = 'Не може да се свърже със сървъра. Проверете дали API-то е стартирано.';
-        } else {
-          this.errorMessage = 'Грешка при влизане. Моля, опитайте отново.';
-        }
-      }
-    });
+  private onLoginError(err: { status: number }): void {
+    this.loading.set(false);
+    this.error.set(
+      err.status === 401 || err.status === 400
+        ? 'Грешен имейл или парола'
+        : 'Грешка при вход. Опитайте отново.'
+    );
   }
 }
