@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BinMaps.Data.Migrations
 {
     [DbContext(typeof(BinMapsDbContext))]
-    [Migration("20260219183442_init")]
-    partial class init
+    [Migration("20260222194854_clearedprops")]
+    partial class clearedprops
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -29,7 +29,13 @@ namespace BinMaps.Data.Migrations
             modelBuilder.Entity("BinMaps.Data.Entities.Area", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -40,6 +46,14 @@ namespace BinMaps.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("RiskLevel")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<double>("ZoneMultiplier")
+                        .HasColumnType("float");
 
                     b.HasKey("Id");
 
@@ -54,8 +68,8 @@ namespace BinMaps.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AI_Score")
-                        .HasColumnType("int");
+                    b.Property<double>("AI_Score")
+                        .HasColumnType("float");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -71,19 +85,27 @@ namespace BinMaps.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("PhotoURL")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("ReportType")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int?>("TrashContainerId")
                         .HasColumnType("int");
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("UserName")
                         .IsRequired()
@@ -97,6 +119,12 @@ namespace BinMaps.Data.Migrations
 
                     b.HasIndex("TrashContainerId");
 
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_Reports_UserId");
+
+                    b.HasIndex("IsApproved", "CreatedAt")
+                        .HasDatabaseName("IX_Reports_Approval_Date");
+
                     b.ToTable("Reports");
                 });
 
@@ -107,7 +135,8 @@ namespace BinMaps.Data.Migrations
 
                     b.Property<string>("AreaId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<double?>("BatteryPercentage")
                         .HasColumnType("float");
@@ -121,6 +150,12 @@ namespace BinMaps.Data.Migrations
                     b.Property<bool>("HasSensor")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime?>("LastEmptiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastSensorReadAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<double>("LocationX")
                         .HasColumnType("float");
 
@@ -128,17 +163,23 @@ namespace BinMaps.Data.Migrations
                         .HasColumnType("float");
 
                     b.Property<string>("Status")
-                        .HasColumnType("nvarchar(max)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<double?>("Temperature")
                         .HasColumnType("float");
 
-                    b.Property<int>("TrashType")
-                        .HasColumnType("int");
+                    b.Property<string>("TrashType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AreaId");
+                    b.HasIndex("LocationX", "LocationY")
+                        .HasDatabaseName("IX_Containers_Location");
+
+                    b.HasIndex("AreaId", "TrashType", "Status")
+                        .HasDatabaseName("IX_Containers_Area_Type_Status");
 
                     b.ToTable("TrashContainers");
                 });
@@ -153,10 +194,19 @@ namespace BinMaps.Data.Migrations
 
                     b.Property<string>("AreaId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<double>("Capacity")
                         .HasColumnType("float");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LicensePlate")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<double>("LocationX")
                         .HasColumnType("float");
@@ -164,12 +214,10 @@ namespace BinMaps.Data.Migrations
                     b.Property<double>("LocationY")
                         .HasColumnType("float");
 
-                    b.Property<int>("TrashType")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("AreaId");
+                    b.HasIndex("AreaId")
+                        .HasDatabaseName("IX_Trucks_AreaId");
 
                     b.ToTable("Trucks");
                 });
@@ -181,6 +229,10 @@ namespace BinMaps.Data.Migrations
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
+
+                    b.Property<string>("BanReason")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -195,6 +247,12 @@ namespace BinMaps.Data.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<bool>("IsBanned")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -220,7 +278,8 @@ namespace BinMaps.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("ProfilePicturePath")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("Reputation")
                         .HasColumnType("int");
@@ -385,7 +444,14 @@ namespace BinMaps.Data.Migrations
                 {
                     b.HasOne("BinMaps.Data.Entities.TrashContainer", "TrashContainer")
                         .WithMany("Reports")
-                        .HasForeignKey("TrashContainerId");
+                        .HasForeignKey("TrashContainerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("BinMaps.Data.Entities.User", null)
+                        .WithMany("Reports")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("TrashContainer");
                 });
@@ -395,7 +461,7 @@ namespace BinMaps.Data.Migrations
                     b.HasOne("BinMaps.Data.Entities.Area", "Area")
                         .WithMany("TrashContainers")
                         .HasForeignKey("AreaId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Area");
@@ -406,7 +472,7 @@ namespace BinMaps.Data.Migrations
                     b.HasOne("BinMaps.Data.Entities.Area", "Area")
                         .WithMany("Trucks")
                         .HasForeignKey("AreaId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Area");
@@ -471,6 +537,11 @@ namespace BinMaps.Data.Migrations
                 });
 
             modelBuilder.Entity("BinMaps.Data.Entities.TrashContainer", b =>
+                {
+                    b.Navigation("Reports");
+                });
+
+            modelBuilder.Entity("BinMaps.Data.Entities.User", b =>
                 {
                     b.Navigation("Reports");
                 });

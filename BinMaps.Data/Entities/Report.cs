@@ -32,7 +32,7 @@ namespace BinMaps.Data.Entities
         [Range(0, int.MaxValue)]
         public int UserReputationOnSubmit { get; set; }
 
-        public bool? IsApproved { get; set; } = null;
+        public bool IsApproved { get; set; } 
 
         [Range(0, 100)]
         public double FinalConfidence { get; set; }

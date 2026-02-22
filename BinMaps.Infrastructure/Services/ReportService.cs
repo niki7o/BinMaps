@@ -58,13 +58,13 @@ public sealed class ReportService : IReportService
             AI_Score = aiResult?.Confidence ?? 0,
             UserReputationOnSubmit = reputation,
             FinalConfidence = finalConfidence,
-            IsApproved = isAutoApproved ? true : null
+            IsApproved = isAutoApproved 
         };
 
         await _reportRepo.AddAsync(report);
 
-        if (isAutoApproved && dto.TrashContainerId.HasValue)
-            await _containerUpdateService.ApplyReportEffectAsync(dto.TrashContainerId.Value, dto.ReportType);
+        if (isAutoApproved && dto.TrashContainerId>0)
+            await _containerUpdateService.ApplyReportEffectAsync(dto.TrashContainerId, dto.ReportType);
 
         return report.Id;
     }
@@ -74,7 +74,7 @@ public sealed class ReportService : IReportService
         var report = await _reportRepo.GetByIdAsync(reportId)
             ?? throw new KeyNotFoundException($"Доклад #{reportId} не е намерен.");
 
-        if (report.IsApproved.HasValue)
+        if (report.IsApproved)
             throw new InvalidOperationException("Докладът вече е прегледан.");
 
         report.IsApproved = true;
@@ -93,7 +93,7 @@ public sealed class ReportService : IReportService
         var report = await _reportRepo.GetByIdAsync(reportId)
             ?? throw new KeyNotFoundException($"Доклад #{reportId} не е намерен.");
 
-        if (report.IsApproved.HasValue)
+        if (report.IsApproved)
             throw new InvalidOperationException("Докладът вече е прегледан.");
 
         report.IsApproved = false;

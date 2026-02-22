@@ -5,6 +5,7 @@ using BinMaps.Infrastructure.Services.Interfaces;
 using BinMaps.Shared.DTOs;
 using Microsoft.EntityFrameworkCore;
 
+
 namespace BinMaps.Infrastructure.Services;
 
 public sealed class TruckRouteService : ITruckRouteService
@@ -133,10 +134,10 @@ public sealed class TruckRouteService : ITruckRouteService
         dist[startId] = 0;
         var visited = new HashSet<int>();
         var queue = new SortedSet<(double Distance, int Id)>(
-            Comparer<(double, int)>.Create((a, b) => a.Distance != b.Distance
+            Comparer<(double Distance, int Id)>.Create((a, b) => a.Distance != b.Distance
                 ? a.Distance.CompareTo(b.Distance)
                 : a.Id.CompareTo(b.Id)));
-        queue.Add((0, startId));
+        queue.Add((Distance: 0, Id: startId));
 
         while (queue.Count > 0)
         {
@@ -154,9 +155,9 @@ public sealed class TruckRouteService : ITruckRouteService
                 var newDist = currentDist + edge.Weight;
                 if (newDist < dist[edge.TargetId])
                 {
-                    queue.Remove((dist[edge.TargetId], edge.TargetId));
+                    queue.Remove((Distance: dist[edge.TargetId], Id: edge.TargetId));
                     dist[edge.TargetId] = newDist;
-                    queue.Add((newDist, edge.TargetId));
+                    queue.Add((Distance: newDist, Id: edge.TargetId));
                 }
             }
         }

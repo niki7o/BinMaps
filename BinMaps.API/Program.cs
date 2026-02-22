@@ -66,8 +66,10 @@ namespace BinMaps.API
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddScoped<IAIService, AIService>();
+            builder.Services.AddScoped<IReputationService, ReputationService>();
+            builder.Services.AddScoped<IContainerUpdateService, ContainerUpdateService>();
 
-            
+
             builder.Services.AddScoped<InitialStateSeeder>();
 
             builder.Services.AddHostedService<ContainerDynamicsService>();

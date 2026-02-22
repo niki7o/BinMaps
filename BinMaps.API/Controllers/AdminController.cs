@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using System.ComponentModel;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace BinMaps.API.Controllers
 {
@@ -58,10 +60,16 @@ namespace BinMaps.API.Controllers
             if (report == null)
                 return NotFound();
 
-         
-            await _reportService.ApproveAsync(id);
 
-            
+            var reviewerUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+          
+            reviewerUserId ??= User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
+            if (reviewerUserId == null)
+                return Unauthorized();
+
+            await _reportService.ApproveAsync(id, reviewerUserId);
+
             if (report.TrashContainerId.HasValue)
             {
                 var reportTypeMap = new Dictionary<ReportType, string>
@@ -108,7 +116,13 @@ namespace BinMaps.API.Controllers
         [HttpPost("reports/{id}/reject")]
         public async Task<IActionResult> RejectReport(int id)
         {
-            await _reportService.RejectAsync(id);
+            var reviewerUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                      ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
+            if (reviewerUserId == null)
+                return Unauthorized();
+
+            await _reportService.RejectAsync(id, reviewerUserId);
             return Ok(new { message = "Репортът е отхвърлен" });
         }
 
@@ -189,7 +203,7 @@ namespace BinMaps.API.Controllers
     public class UpdateContainerDto
     {
         public double FillPercentage { get; set; }
-        public TrashContainerStatus? Status { get; set; }
+        public TrashContainerStatus Status { get; set; }
         public bool HasSensor { get; set; }
     }
 
