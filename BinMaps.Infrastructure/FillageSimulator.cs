@@ -1,7 +1,7 @@
 ﻿using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
 
-namespace BinMaps.Infrastructure.Services
+namespace BinMaps.Infrastructure
 {
     public class FillageSimulator
     {

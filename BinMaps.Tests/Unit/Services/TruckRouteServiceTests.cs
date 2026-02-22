@@ -44,16 +44,16 @@ namespace BinMaps.Tests.Unit.Services
         [Fact]
         public async Task GenerateRoute_ValidInput_ReturnsOptimizedRoute()
         {
-            // Arrange
+           
             var containers = GetTestContainers();
             var truck = GetTestTruck();
             _mockContainerRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(containers);
             _mockTruckRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Truck> { truck });
 
-            // Act
+           
             var result = await _service.GenerateRouteAsync("Зона 1 - Надежда север", TrashType.Mixed);
 
-            // Assert
+           
             result.Should().NotBeNull();
             result.Route.Should().NotBeEmpty();
             result.TotalDistance.Should().BeGreaterThan(0);
@@ -64,32 +64,32 @@ namespace BinMaps.Tests.Unit.Services
         [Fact]
         public async Task GenerateRoute_PrioritizesCriticalContainers()
         {
-            // Arrange
+          
             var containers = GetTestContainers();
             var truck = GetTestTruck();
             _mockContainerRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(containers);
             _mockTruckRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Truck> { truck });
 
-            // Act
+            
             var result = await _service.GenerateRouteAsync("Зона 1 - Надежда север", TrashType.Mixed);
 
-            // Assert - Container with 92% fill should be included
+            
             result.Route.Should().Contain(c => c.Id == 3);
         }
 
         [Fact]
         public async Task GenerateRoute_RespectsCapacityLimit()
         {
-            // Arrange
+            
             var containers = GetTestContainers();
             var smallTruck = new Truck { Id = 1, AreaId = "Зона 1 - Надежда север", TrashType = TrashType.Mixed, Capacity = 1500, LocationX = 42.7100, LocationY = 23.3000 };
             _mockContainerRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(containers);
             _mockTruckRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Truck> { smallTruck });
 
-            // Act
+           
             var result = await _service.GenerateRouteAsync("Зона 1 - Надежда север", TrashType.Mixed);
 
-            // Assert
+            
             result.TotalLoad.Should().BeLessThan(smallTruck.Capacity);
             result.CapacityUtilization.Should().BeLessThan(100);
         }
@@ -97,18 +97,18 @@ namespace BinMaps.Tests.Unit.Services
         [Fact]
         public async Task GenerateRoute_CalculatesEstimatedTime()
         {
-            // Arrange
+            
             var containers = GetTestContainers();
             var truck = GetTestTruck();
             _mockContainerRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(containers);
             _mockTruckRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Truck> { truck });
 
-            // Act
+          
             var result = await _service.GenerateRouteAsync("Зона 1 - Надежда север", TrashType.Mixed);
 
-            // Assert
+            
             result.EstimatedTimeMinutes.Should().BeGreaterThan(0);
-            result.EstimatedTimeMinutes.Should().BeGreaterThan(result.ContainersCount * 5); // 5 min per stop
+            result.EstimatedTimeMinutes.Should().BeGreaterThan(result.ContainersCount * 5); 
         }
 
         #endregion
@@ -118,14 +118,14 @@ namespace BinMaps.Tests.Unit.Services
         [Fact]
         public async Task GenerateRoute_NoTruck_ReturnsEmptyRoute()
         {
-            // Arrange
+            
             _mockContainerRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(GetTestContainers());
             _mockTruckRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Truck>());
 
-            // Act
+           
             var result = await _service.GenerateRouteAsync("Зона 1 - Надежда север", TrashType.Mixed);
 
-            // Assert
+           
             result.Route.Should().BeEmpty();
             result.Message.Should().Contain("Няма наличен камион");
         }
@@ -133,14 +133,13 @@ namespace BinMaps.Tests.Unit.Services
         [Fact]
         public async Task GenerateRoute_NoContainers_ReturnsEmptyRoute()
         {
-            // Arrange
             _mockContainerRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<TrashContainer>());
             _mockTruckRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Truck> { GetTestTruck() });
 
-            // Act
+          
             var result = await _service.GenerateRouteAsync("Зона 1 - Надежда север", TrashType.Mixed);
 
-            // Assert
+           
             result.Route.Should().BeEmpty();
             result.Message.Should().Contain("Няма контейнери");
         }
@@ -148,7 +147,7 @@ namespace BinMaps.Tests.Unit.Services
         [Fact]
         public async Task GenerateRoute_LowFillContainers_ReturnsEmptyRoute()
         {
-            // Arrange
+           
             var lowFillContainers = new List<TrashContainer>
             {
                 new() { Id = 1, AreaId = "Зона 1 - Надежда север", TrashType = TrashType.Mixed, FillPercentage = 20.0, Capacity = 1100, LocationX = 42.7089, LocationY = 23.3028, Status = TrashContainerStatus.Active }
@@ -156,17 +155,16 @@ namespace BinMaps.Tests.Unit.Services
             _mockContainerRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(lowFillContainers);
             _mockTruckRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Truck> { GetTestTruck() });
 
-            // Act
             var result = await _service.GenerateRouteAsync("Зона 1 - Надежда север", TrashType.Mixed);
 
-            // Assert
+           
             result.Route.Should().BeEmpty();
         }
 
         [Fact]
         public async Task GenerateRoute_FireContainers_AreExcluded()
         {
-            // Arrange
+           
             var containers = new List<TrashContainer>
             {
                 new() { Id = 1, AreaId = "Зона 1 - Надежда север", TrashType = TrashType.Mixed, FillPercentage = 85.0, Capacity = 1100, LocationX = 42.7089, LocationY = 23.3028, Status = TrashContainerStatus.Fire },
@@ -175,10 +173,10 @@ namespace BinMaps.Tests.Unit.Services
             _mockContainerRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(containers);
             _mockTruckRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Truck> { GetTestTruck() });
 
-            // Act
+           
             var result = await _service.GenerateRouteAsync("Зона 1 - Надежда север", TrashType.Mixed);
 
-            // Assert
+            
             result.Route.Should().NotContain(c => c.Id == 1);
             result.Route.Should().Contain(c => c.Id == 2);
         }
@@ -190,16 +188,16 @@ namespace BinMaps.Tests.Unit.Services
         [Fact]
         public async Task GenerateRoute_SequentialStopNumbers()
         {
-            // Arrange
+           
             var containers = GetTestContainers();
             var truck = GetTestTruck();
             _mockContainerRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(containers);
             _mockTruckRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Truck> { truck });
 
-            // Act
+          
             var result = await _service.GenerateRouteAsync("Зона 1 - Надежда север", TrashType.Mixed);
 
-            // Assert
+          
             for (int i = 0; i < result.Route.Count; i++)
             {
                 result.Route[i].StopNumber.Should().Be(i + 1);
@@ -209,16 +207,16 @@ namespace BinMaps.Tests.Unit.Services
         [Fact]
         public async Task GenerateRoute_CalculatesLoadCorrectly()
         {
-            // Arrange
+            
             var containers = GetTestContainers();
             var truck = GetTestTruck();
             _mockContainerRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(containers);
             _mockTruckRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<Truck> { truck });
 
-            // Act
+           
             var result = await _service.GenerateRouteAsync("Зона 1 - Надежда север", TrashType.Mixed);
 
-            // Assert
+            
             double expectedLoad = result.Route.Sum(c => (c.FillPercentage / 100.0) * c.Capacity);
             result.TotalLoad.Should().BeApproximately(expectedLoad, 0.1);
         }
