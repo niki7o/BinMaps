@@ -1,8 +1,10 @@
-﻿using BinMaps.Data.Entities;
-using BinMaps.Data.Entities.Enums;
+﻿using BinMaps.Data.Entities.Enums;
 using BinMaps.Infrastructure.Repository;
 using BinMaps.Infrastructure.Services.Interfaces;
+using BinMaps.Data.Entities;
+
 namespace BinMaps.Infrastructure.Services;
+
 public sealed class ContainerUpdateService : IContainerUpdateService
 {
     private readonly IRepository<TrashContainer, int> _containerRepo;
@@ -12,38 +14,34 @@ public sealed class ContainerUpdateService : IContainerUpdateService
         _containerRepo = containerRepo;
     }
 
-    #region Apply
+    #region Public
+
     public async Task ApplyReportEffectAsync(int containerId, ReportType reportType)
     {
-        var container = await _containerRepo.GetByIdAsync(containerId);
-        if (container is null) return;
+        var container = await _containerRepo.GetByIdAsync(containerId)
+            ?? throw new InvalidOperationException($"Container {containerId} not found.");
 
-        switch (reportType)
-        {
-            case ReportType.Full:
-                container.FillPercentage = Math.Max(container.FillPercentage, 90.0);
-                break;
-
-            case ReportType.Fire:
-                container.Status = TrashContainerStatus.Fire;
-                if (container.HasSensor) container.Temperature = 60.0;
-                break;
-
-            case ReportType.SensorBroken:
-                container.Status = TrashContainerStatus.SensorBroken;
-                container.HasSensor = false;
-                container.Temperature = null;
-                container.BatteryPercentage = null;
-                break;
-
-            case ReportType.ContainerDamage:
-                container.Status = TrashContainerStatus.Offline;
-                break;
-        }
-
+        ApplyEffect(container, reportType);
         await _containerRepo.UpdateAsync(container);
-   
-    
     }
+
+    #endregion
+
+    #region Private
+
+    private static void ApplyEffect(TrashContainer container, ReportType reportType)
+    {
+        container.Status = reportType switch
+        {
+            ReportType.Fire => TrashContainerStatus.Fire,
+            ReportType.SensorBroken => TrashContainerStatus.SensorBroken,
+            ReportType.Full => container.Status,
+            _ => container.Status
+        };
+
+        if (reportType == ReportType.Full)
+            container.FillPercentage = Math.Min(container.FillPercentage, 95.0);
+    }
+
     #endregion
 }

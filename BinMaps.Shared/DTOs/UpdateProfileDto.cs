@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 namespace BinMaps.Shared.DTOs;
-public sealed class UpdateProfileRequest
+
+public sealed class UpdateProfileDto
 {
     [StringLength(50, MinimumLength = 3)]
     public string? UserName { get; set; }

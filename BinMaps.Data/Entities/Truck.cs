@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BinMaps.Data.Entities.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 namespace BinMaps.Data.Entities
 {
@@ -28,6 +29,8 @@ namespace BinMaps.Data.Entities
         [Required]
         [MaxLength(20)]
         public string LicensePlate { get; set; } = string.Empty;
+        [Required]
+        public TrashType TrashType { get; set; }
 
         public bool IsActive { get; set; } = true;
     }

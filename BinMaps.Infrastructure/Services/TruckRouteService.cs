@@ -1,216 +1,207 @@
 ﻿using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
+using BinMaps.Infrastructure.Models;
 using BinMaps.Infrastructure.Repository;
 using BinMaps.Infrastructure.Services.Interfaces;
 using BinMaps.Shared.DTOs;
 using Microsoft.EntityFrameworkCore;
 
-
 namespace BinMaps.Infrastructure.Services;
 
 public sealed class TruckRouteService : ITruckRouteService
 {
-    private readonly IRepository<TrashContainer, int> _containerRepo;
-    private readonly IRepository<Truck, int> _truckRepo;
+    private const double MinFillPercentForCollection = 40.0;
+    private const double AverageSpeedKmh = 30.0;
+    private const double MinutesPerStop = 5.0;
 
-    private const double EarthRadiusKm = 6_371.0;
-    private const double AvgSpeedKmh = 30.0;
-    private const int TimePerStopMinutes = 5;
-    private const double MinFillThreshold = 40.0;
+    private readonly IRepository<Truck, int> _truckRepo;
+    private readonly IRepository<TrashContainer, int> _containerRepo;
 
     public TruckRouteService(
-        IRepository<TrashContainer, int> containerRepo,
-        IRepository<Truck, int> truckRepo)
+        IRepository<Truck, int> truckRepo,
+        IRepository<TrashContainer, int> containerRepo)
     {
-        _containerRepo = containerRepo;
         _truckRepo = truckRepo;
+        _containerRepo = containerRepo;
     }
+
+    #region Public
 
     public async Task<RouteResultDto> GenerateRouteAsync(string areaId, TrashType trashType)
     {
-        var truck = await GetActiveTruckAsync(areaId);
-        if (truck is null)
-            return EmptyRoute(areaId, trashType, "Няма активен камион в тази зона.");
+        var truck = await FindTruckAsync(areaId, trashType);
 
-        var candidates = await GetEligibleContainersAsync(areaId, trashType);
-        if (candidates.Count == 0)
-            return EmptyRoute(areaId, trashType, "Няма контейнери за събиране.");
+        var candidates = await GetCandidateContainersAsync(areaId, trashType);
 
-        var prioritized = Prioritize(candidates);
-        var selected = SelectByCapacity(prioritized, truck.Capacity);
+        var selected = SelectByCapacity(candidates, truck.Capacity);
+
         if (selected.Count == 0)
-            return EmptyRoute(areaId, trashType, "Камионът няма достатъчен капацитет.");
+            return EmptyRoute(truck, areaId, trashType);
 
-        var graph = BuildGraph(truck, selected);
-        var route = SolveTSP(graph, selected);
+        var orderedRoute = SolveTSPWithDijkstra(truck, selected);
 
-        return BuildResult(truck, route, areaId, trashType);
+        return BuildResult(truck, areaId, trashType, orderedRoute);
     }
 
-    #region Private - Data
+    #endregion
 
-    private async Task<Truck?> GetActiveTruckAsync(string areaId)
-        => await _truckRepo.GetAllAttached()
-            .FirstOrDefaultAsync(t => t.AreaId == areaId && t.IsActive);
+    #region Private
 
-    private async Task<List<TrashContainer>> GetEligibleContainersAsync(string areaId, TrashType trashType)
-        => await _containerRepo.GetAllAttached()
+    private async Task<Truck> FindTruckAsync(string areaId, TrashType trashType)
+    {
+        var truck = await _truckRepo
+            .GetAllAttached()
+            .FirstOrDefaultAsync(t => t.AreaId == areaId && t.TrashType == trashType);
+
+        return truck ?? throw new InvalidOperationException(
+            $"No truck found for area '{areaId}' and type '{trashType}'.");
+    }
+
+    private async Task<List<TrashContainer>> GetCandidateContainersAsync(string areaId, TrashType trashType)
+    {
+        return await _containerRepo
+            .GetAllAttached()
             .Where(c =>
                 c.AreaId == areaId &&
                 c.TrashType == trashType &&
+                c.FillPercentage >= MinFillPercentForCollection &&
                 c.Status != TrashContainerStatus.Fire &&
-                c.Status != TrashContainerStatus.Offline &&
-                c.FillPercentage >= MinFillThreshold)
+                c.Status != TrashContainerStatus.Offline)
+            .OrderByDescending(c => c.FillPercentage)
             .ToListAsync();
+    }
 
-    private static List<TrashContainer> Prioritize(List<TrashContainer> containers)
-        => containers
-            .OrderByDescending(c =>
-                c.FillPercentage >= 90 ? 3 :
-                c.FillPercentage >= 70 ? 2 :
-                c.FillPercentage >= 50 ? 1 : 0)
-            .ThenByDescending(c => c.FillPercentage)
-            .ToList();
-
-    private static List<TrashContainer> SelectByCapacity(List<TrashContainer> ordered, double truckCapacity)
+    private static List<TrashContainer> SelectByCapacity(List<TrashContainer> containers, double truckCapacityKg)
     {
         var selected = new List<TrashContainer>();
-        var totalLoad = 0.0;
+        double totalKg = 0;
 
-        foreach (var c in ordered)
+        foreach (var c in containers)
         {
-            var load = c.FillPercentage / 100.0 * c.Capacity;
-            if (totalLoad + load > truckCapacity) continue;
-            selected.Add(c);
-            totalLoad += load;
+            var estimatedKg = (c.FillPercentage / 100.0) * c.Capacity;
+            if (totalKg + estimatedKg <= truckCapacityKg)
+            {
+                selected.Add(c);
+                totalKg += estimatedKg;
+            }
         }
 
         return selected;
     }
 
-    #endregion
-
-    #region Private - Graph
-
-    private static RouteGraph BuildGraph(Truck truck, List<TrashContainer> containers)
+    private static List<TrashContainer> SolveTSPWithDijkstra(Truck truck, List<TrashContainer> containers)
     {
-        var graph = new RouteGraph();
-        graph.AddNode(new RouteNode { Id = -1, LocationX = truck.LocationX, LocationY = truck.LocationY });
+        var graph = BuildGraph(truck, containers);
+
+        var visited = new HashSet<int>();
+        var ordered = new List<TrashContainer>();
+        var current = -1;
+
+        while (visited.Count < containers.Count)
+        {
+            var distances = graph.Dijkstra(current);
+
+            TrashContainer? nearest = null;
+            double nearestDist = double.MaxValue;
+
+            foreach (var container in containers)
+            {
+                if (visited.Contains(container.Id))
+                    continue;
+
+                if (distances.TryGetValue(container.Id, out var d) && d < nearestDist)
+                {
+                    nearestDist = d;
+                    nearest = container;
+                }
+            }
+
+            if (nearest is null)
+                break;
+
+            ordered.Add(nearest);
+            visited.Add(nearest.Id);
+            current = nearest.Id;
+        }
+
+        return ordered;
+    }
+
+    private static Graph BuildGraph(Truck truck, List<TrashContainer> containers)
+    {
+        var graph = new Graph();
+
+        graph.AddNode(new GraphNode { Id = -1, LocationX = truck.LocationX, LocationY = truck.LocationY, IsTruck = true });
 
         foreach (var c in containers)
-            graph.AddNode(new RouteNode { Id = c.Id, LocationX = c.LocationX, LocationY = c.LocationY, Container = c });
+            graph.AddNode(new GraphNode { Id = c.Id, LocationX = c.LocationX, LocationY = c.LocationY });
 
-        var nodes = graph.Nodes;
-        foreach (var a in nodes)
-            foreach (var b in nodes)
-                if (a.Id != b.Id)
-                    graph.AddEdge(a.Id, b.Id, HaversineKm(a.LocationX, a.LocationY, b.LocationX, b.LocationY));
+        var allNodes = new List<(int Id, double X, double Y)>
+        {
+            (-1, truck.LocationX, truck.LocationY)
+        };
+        allNodes.AddRange(containers.Select(c => (c.Id, c.LocationX, c.LocationY)));
+
+        for (int i = 0; i < allNodes.Count; i++)
+        {
+            for (int j = 0; j < allNodes.Count; j++)
+            {
+                if (i == j) continue;
+                var dist = Haversine(allNodes[i].X, allNodes[i].Y, allNodes[j].X, allNodes[j].Y);
+                graph.AddEdge(allNodes[i].Id, allNodes[j].Id, dist);
+            }
+        }
 
         return graph;
     }
 
-    private static List<TrashContainer> SolveTSP(RouteGraph graph, List<TrashContainer> containers)
+    private static double Haversine(double lat1, double lon1, double lat2, double lon2)
     {
-        var result = new List<TrashContainer>();
-        var unvisited = new HashSet<int>(containers.Select(c => c.Id));
-        var currentId = -1;
-
-        while (unvisited.Count > 0)
-        {
-            var nearest = FindNearestViaDijkstra(graph, currentId, unvisited);
-            if (nearest is null) break;
-
-            result.Add(containers.First(c => c.Id == nearest.TargetId));
-            unvisited.Remove(nearest.TargetId);
-            currentId = nearest.TargetId;
-        }
-
-        return result;
+        const double R = 6371.0;
+        var dLat = ToRad(lat2 - lat1);
+        var dLon = ToRad(lon2 - lon1);
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2)
+                 + Math.Cos(ToRad(lat1)) * Math.Cos(ToRad(lat2))
+                 * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+        return R * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
     }
 
-    private static DijkstraResult? FindNearestViaDijkstra(RouteGraph graph, int startId, HashSet<int> targets)
+    private static double ToRad(double deg) => deg * Math.PI / 180.0;
+
+    private static RouteResultDto BuildResult(Truck truck, string areaId, TrashType trashType, List<TrashContainer> ordered)
     {
-        var dist = graph.Nodes.ToDictionary(n => n.Id, _ => double.MaxValue);
-        dist[startId] = 0;
-        var visited = new HashSet<int>();
-        var queue = new SortedSet<(double Distance, int Id)>(
-            Comparer<(double Distance, int Id)>.Create((a, b) => a.Distance != b.Distance
-                ? a.Distance.CompareTo(b.Distance)
-                : a.Id.CompareTo(b.Id)));
-        queue.Add((Distance: 0, Id: startId));
+        var stops = new List<ContainerStopDTO>();
+        double prevX = truck.LocationX;
+        double prevY = truck.LocationY;
+        double total = 0;
+        double load = 0;
+        int stopNum = 1;
 
-        while (queue.Count > 0)
+        foreach (var c in ordered)
         {
-            var (currentDist, nodeId) = queue.Min;
-            queue.Remove(queue.Min);
+            var dist = Haversine(prevX, prevY, c.LocationX, c.LocationY);
+            var estLoad = (c.FillPercentage / 100.0) * c.Capacity;
 
-            if (!visited.Add(nodeId)) continue;
-
-            var node = graph.GetNode(nodeId);
-            if (node is null) continue;
-
-            foreach (var edge in node.Edges)
-            {
-                if (visited.Contains(edge.TargetId)) continue;
-                var newDist = currentDist + edge.Weight;
-                if (newDist < dist[edge.TargetId])
-                {
-                    queue.Remove((Distance: dist[edge.TargetId], Id: edge.TargetId));
-                    dist[edge.TargetId] = newDist;
-                    queue.Add((Distance: newDist, Id: edge.TargetId));
-                }
-            }
-        }
-
-        return targets
-            .Where(t => dist.TryGetValue(t, out var d) && d < double.MaxValue)
-            .Select(t => new DijkstraResult { TargetId = t, Distance = dist[t] })
-            .MinBy(r => r.Distance);
-    }
-
-    #endregion
-
-    #region Private - Result
-
-    private static RouteResultDto BuildResult(Truck truck, List<TrashContainer> route, string areaId, TrashType trashType)
-    {
-        var stops = new List<TrashContainerRouteDto>();
-        var totalDistance = 0.0;
-        var totalLoad = 0.0;
-        var prevX = truck.LocationX;
-        var prevY = truck.LocationY;
-
-        for (var i = 0; i < route.Count; i++)
-        {
-            var c = route[i];
-            var dist = HaversineKm(prevX, prevY, c.LocationX, c.LocationY);
-            var load = c.FillPercentage / 100.0 * c.Capacity;
-
-            totalDistance += dist;
-            totalLoad += load;
-
-            stops.Add(new TrashContainerRouteDto
+            stops.Add(new ContainerStopDTO
             {
                 Id = c.Id,
-                AreaId = c.AreaId,
-                Capacity = c.Capacity,
+                StopNumber = stopNum++,
                 FillPercentage = c.FillPercentage,
-                HasSensor = c.HasSensor,
                 LocationX = c.LocationX,
                 LocationY = c.LocationY,
-                Temperature = c.Temperature,
+                DistanceFromPreviousKm = Math.Round(dist, 3),
+                EstimatedLoadKg = Math.Round(estLoad, 1),
                 TrashType = c.TrashType,
-                Status = c.Status,
-                StopNumber = i + 1,
-                DistanceFromPrevious = Math.Round(dist, 2),
-                EstimatedLoad = Math.Round(load, 2)
+                Status = c.Status
             });
 
+            total += dist;
+            load += estLoad;
             prevX = c.LocationX;
             prevY = c.LocationY;
         }
 
-        var estimatedTime = (int)Math.Ceiling(totalDistance / AvgSpeedKmh * 60 + stops.Count * TimePerStopMinutes);
+        var timeMinutes = (total / AverageSpeedKmh * 60) + (ordered.Count * MinutesPerStop);
 
         return new RouteResultDto
         {
@@ -218,63 +209,111 @@ public sealed class TruckRouteService : ITruckRouteService
             AreaId = areaId,
             TrashType = trashType,
             Route = stops,
-            TotalDistance = Math.Round(totalDistance, 2),
-            TotalLoad = Math.Round(totalLoad, 2),
-            TruckCapacity = truck.Capacity,
-            CapacityUtilization = Math.Round(totalLoad / truck.Capacity * 100, 2),
-            ContainersCount = stops.Count,
-            EstimatedTimeMinutes = estimatedTime,
-            Message = $"Dijkstra TSP: {stops.Count} контейнера, {Math.Round(totalDistance, 1)} км"
+            TotalDistanceKm = Math.Round(total, 2),
+            TotalLoadKg = Math.Round(load, 1),
+            TruckCapacityKg = truck.Capacity,
+            CapacityUtilizationPercent = Math.Round(load / truck.Capacity * 100, 1),
+            ContainersCount = ordered.Count,
+            EstimatedTimeMinutes = Math.Round(timeMinutes, 1),
+            Message = $"Dijkstra TSP: {ordered.Count} контейнера, {Math.Round(total, 1)} км"
         };
     }
 
-    private static RouteResultDto EmptyRoute(string areaId, TrashType trashType, string message) =>
-        new() { AreaId = areaId, TrashType = trashType, Message = message };
+    private static RouteResultDto EmptyRoute(Truck truck, string areaId, TrashType trashType)
+        => new()
+        {
+            TruckId = truck.Id,
+            AreaId = areaId,
+            TrashType = trashType,
+            Message = "Няма контейнери за събиране в тази зона."
+        };
 
-    private static double HaversineKm(double lat1, double lon1, double lat2, double lon2)
-    {
-        var dLat = ToRad(lat2 - lat1);
-        var dLon = ToRad(lon2 - lon1);
-        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2)
-              + Math.Cos(ToRad(lat1)) * Math.Cos(ToRad(lat2))
-              * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-        return EarthRadiusKm * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-    }
 
-    private static double ToRad(double deg) => deg * Math.PI / 180.0;
+
+
 
     #endregion
-}
 
-internal sealed class RouteGraph
-{
-    public List<RouteNode> Nodes { get; } = new();
 
-    public void AddNode(RouteNode node) => Nodes.Add(node);
+    internal sealed class GraphEdge
+    {
+        public int TargetId { get; init; }
+        public double Weight { get; init; }
+    }
 
-    public void AddEdge(int fromId, int toId, double weight)
-        => GetNode(fromId)?.Edges.Add(new RouteEdge { TargetId = toId, Weight = weight });
+    internal sealed class GraphNode
+    {
+        public int Id { get; init; }
+        public double LocationX { get; init; }
+        public double LocationY { get; init; }
+        public bool IsTruck { get; init; }
 
-    public RouteNode? GetNode(int id) => Nodes.FirstOrDefault(n => n.Id == id);
-}
+        public List<GraphEdge> Edges { get; } = new();
+    }
 
-internal sealed class RouteNode
-{
-    public int Id { get; set; }
-    public double LocationX { get; set; }
-    public double LocationY { get; set; }
-    public TrashContainer? Container { get; set; }
-    public List<RouteEdge> Edges { get; } = new();
-}
+    internal sealed class Graph
+    {
+        private readonly Dictionary<int, GraphNode> _nodes = new();
 
-internal sealed class RouteEdge
-{
-    public int TargetId { get; set; }
-    public double Weight { get; set; }
-}
+        #region Building
 
-internal sealed class DijkstraResult
-{
-    public int TargetId { get; set; }
-    public double Distance { get; set; }
+        public void AddNode(GraphNode node)
+            => _nodes[node.Id] = node;
+
+        public void AddEdge(int fromId, int toId, double weight)
+        {
+            if (fromId == toId)
+                return;
+
+            if (_nodes.TryGetValue(fromId, out var from))
+                from.Edges.Add(new GraphEdge { TargetId = toId, Weight = weight });
+        }
+
+        public GraphNode? GetNode(int id)
+            => _nodes.GetValueOrDefault(id);
+
+        public IReadOnlyCollection<GraphNode> GetNodes()
+            => _nodes.Values;
+
+        #endregion
+
+        #region Dijkstra
+
+        public Dictionary<int, double> Dijkstra(int startId)
+        {
+            var distances = _nodes.Keys.ToDictionary(k => k, _ => double.MaxValue);
+            distances[startId] = 0;
+
+            var queue = new SortedSet<(double Distance, int Id)>(
+                Comparer<(double, int)>.Create((a, b)
+                    => a.Item1 != b.Item1 ? a.Item1.CompareTo(b.Item1) : a.Item2.CompareTo(b.Item2)));
+
+            queue.Add((0, startId));
+
+            while (queue.Count > 0)
+            {
+                var (currentDist, nodeId) = queue.Min;
+                queue.Remove(queue.Min);
+
+                if (currentDist > distances[nodeId])
+                    continue;
+
+                var node = _nodes[nodeId];
+
+                foreach (var edge in node.Edges)
+                {
+                    var newDist = currentDist + edge.Weight;
+                    if (newDist < distances[edge.TargetId])
+                    {
+                        distances[edge.TargetId] = newDist;
+                        queue.Add((newDist, edge.TargetId));
+                    }
+                }
+            }
+
+            return distances;
+        }
+
+        #endregion
+    }
 }

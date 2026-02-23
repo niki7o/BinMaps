@@ -5,20 +5,29 @@ namespace BinMaps.Data.Entities
 {
     public sealed class Report
     {
+        #region Identity
+
         [Key]
         public int Id { get; set; }
+
+        #endregion
+
+        #region Relations
+
+        [Required]
+        public string UserId { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(256)]
+        public string UserName { get; set; } = string.Empty;
 
         [ForeignKey(nameof(TrashContainer))]
         public int? TrashContainerId { get; set; }
         public TrashContainer? TrashContainer { get; set; }
 
-        [Required]
-        [MaxLength(450)]
-        public string UserId { get; set; } = string.Empty;
+        #endregion
 
-        [Required]
-        [MaxLength(100)]
-        public string UserName { get; set; } = string.Empty;
+        #region Classification
 
         [Required]
         public ReportType ReportType { get; set; }
@@ -26,26 +35,30 @@ namespace BinMaps.Data.Entities
         [MaxLength(500)]
         public string? Description { get; set; }
 
+        [MaxLength(500)]
+        public string? PhotoURL { get; set; }
+
+        #endregion
+
+        #region Scoring
+
         [Range(0, 100)]
         public double AI_Score { get; set; }
 
-        [Range(0, int.MaxValue)]
         public int UserReputationOnSubmit { get; set; }
-
-        public bool IsApproved { get; set; } 
 
         [Range(0, 100)]
         public double FinalConfidence { get; set; }
 
-        [MaxLength(500)]
-        public string? PhotoURL { get; set; }
+        #endregion
+
+        #region Status
+
+        public bool IsApproved { get; set; } 
 
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public DateTime? ReviewedAt { get; set; }
-
-        [MaxLength(450)]
-        public string? ReviewedByUserId { get; set; }
+        #endregion
     }
 }

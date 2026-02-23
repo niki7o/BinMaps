@@ -2,6 +2,7 @@
 using BinMaps.Shared.DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -9,35 +10,63 @@ namespace BinMaps.Infrastructure.Services;
 
 public sealed class AIService : IAIService
 {
-    private readonly HttpClient _httpClient;
-    private readonly string _endpoint;
+    private readonly HttpClient _http;
+    private readonly IConfiguration _config;
+    private readonly ILogger<AIService> _logger;
 
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
-
-    public AIService(IHttpClientFactory factory, IConfiguration config)
+    public AIService(HttpClient http, IConfiguration config, ILogger<AIService> logger)
     {
-        _httpClient = factory.CreateClient("AIClient");
-        _endpoint = config["AISettings:Endpoint"]
-            ?? throw new InvalidOperationException("AISettings:Endpoint is not configured.");
+        _http = http;
+        _config = config;
+        _logger = logger;
     }
-    #region Analyze
+
+    #region Public
+
     public async Task<AIResultDto?> AnalyzeAsync(IFormFile photo)
     {
-        if (photo is null || photo.Length == 0)
+        var endpoint = _config["AISettings:Endpoint"];
+        if (string.IsNullOrWhiteSpace(endpoint))
+        {
+            _logger.LogWarning("AI endpoint not configured.");
             return null;
+        }
 
-        using var form = new MultipartFormDataContent();
-        await using var stream = photo.OpenReadStream();
-        var fileContent = new StreamContent(stream);
-        fileContent.Headers.ContentType = new MediaTypeHeaderValue(photo.ContentType);
-        form.Add(fileContent, "photo", photo.FileName);
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            await using var stream = photo.OpenReadStream();
+            var fileContent = new StreamContent(stream);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(photo.ContentType);
+            content.Add(fileContent, "file", photo.FileName);
 
-        var response = await _httpClient.PostAsync(_endpoint, form);
-        if (!response.IsSuccessStatusCode) 
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            var response = await _http.PostAsync(endpoint, content, cts.Token);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("AI service returned {StatusCode}.", response.StatusCode);
+                return null;
+            }
+
+            var json = await response.Content.ReadAsStringAsync(cts.Token);
+
+            return JsonSerializer.Deserialize<AIResultDto>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogError("AI service timed out.");
             return null;
-
-        var json = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<AIResultDto>(json, JsonOptions);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "AI service call failed.");
+            return null;
+        }
     }
+
     #endregion
 }

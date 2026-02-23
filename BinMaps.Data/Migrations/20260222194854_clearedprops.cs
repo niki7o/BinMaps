@@ -25,7 +25,7 @@ namespace BinMaps.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Areas", x => x.Id);
-                });
+                }); 
 
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",

@@ -1,113 +1,148 @@
 ﻿using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
 using BinMaps.Infrastructure.Repository;
+using BinMaps.Shared.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-namespace BinMaps.API.Controllers
+namespace BinMaps.API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+[Produces("application/json")]
+public sealed class TrashContainersController : ControllerBase
 {
-    [ApiController]
-    [Route("api/containers")]
-    public class TrashContainersController : Controller
+    private readonly IRepository<TrashContainer, int> _containerRepo;
+
+    public TrashContainersController(IRepository<TrashContainer, int> containerRepo)
     {
-        private readonly IRepository<TrashContainer, int> _repo;
-        private readonly Random random = new();
-        public TrashContainersController(IRepository<TrashContainer, int> repo, Random random)
-        {
-            _repo = repo;
-            this.random = random;
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
-        {
-            var containers = await _repo.GetAllAsync();
-
-            return Ok(containers.Select(c => new
-            {
-                c.Id,
-
-                c.LocationX,
-                c.LocationY,
-                c.TrashType,
-                c.HasSensor,
-                c.FillPercentage,
-                c.Status,
-                c.AreaId
-            }));
-        }
-        [HttpPut("{id}/empty")]
-        public async Task<IActionResult> EmptyContainer(int id)
-        {
-            var container = await _repo.GetByIdAsync(id);
-            if (container == null)
-                return NotFound(new { error = "Контейнер не е намерен" });
-
-           
-            container.FillPercentage = random.Next(2, 8);
-
-
-            if (container.HasSensor)
-            {
-                container.Temperature = 15;
-            }
-
-            await _repo.UpdateAsync(container);
-
-            return Ok(new
-            {
-                message = "Контейнерът е изпразнен",
-                containerId = id,
-                newFillPercentage = 0
-            });
-        }
-
-
-        [HttpPut("{id}/update-from-report")]
-        public async Task<IActionResult> UpdateFromReport(int id, [FromBody] ReportUpdateDto dto)
-        {
-            var container = await _repo.GetByIdAsync(id);
-            if (container == null)
-                return NotFound();
-
-           
-            switch (dto.ReportType)
-            {
-                case "Full":
-                    container.FillPercentage = Math.Max(container.FillPercentage, 90);
-                    break;
-                case "Fire":
-                    container.Status = TrashContainerStatus.Fire;
-                    if (container.HasSensor)
-                        container.Temperature = 60;
-                    break;
-                case "SensorBroken":
-                    container.HasSensor = false;
-                    container.Temperature = null;
-                    break;
-                case "ContainerDamage":
-                    container.Status = TrashContainerStatus.Offline;
-                    break;
-            }
-
-            await _repo.UpdateAsync(container);
-
-            return Ok(new
-            {
-                message = "Контейнерът е актуализиран",
-                container = new
-                {
-                    container.Id,
-                    container.FillPercentage,
-                    container.Status,
-                    container.Temperature
-                }
-            });
-        }
-
-       
-        public class ReportUpdateDto
-        {
-            public string ReportType { get; set; }
-        }
+        _containerRepo = containerRepo;
     }
+
+    #region Read
+
+    [HttpGet]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll(
+        [FromQuery] string? areaId,
+        [FromQuery] TrashType? trashType,
+        [FromQuery] TrashContainerStatus? status)
+    {
+        var query = _containerRepo
+            .GetAllAttached()
+            .AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(areaId))
+            query = query.Where(c => c.AreaId == areaId);
+
+        if (trashType.HasValue)
+            query = query.Where(c => c.TrashType == trashType.Value);
+
+        if (status.HasValue)
+            query = query.Where(c => c.Status == status.Value);
+
+        var result = await query.Select(c => new
+        {
+            c.Id,
+            c.AreaId,
+            c.FillPercentage,
+            c.Capacity,
+            c.LocationX,
+            c.LocationY,
+            TrashType = c.TrashType.ToString(),
+            Status = c.Status.ToString(),
+            c.HasSensor,
+            c.Temperature,
+            c.BatteryPercentage
+        }).ToListAsync();
+
+        return Ok(result);
+    }
+
+    [HttpGet("{id:int}")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById([FromRoute] int id)
+    {
+        var container = await _containerRepo.GetByIdAsync(id);
+        if (container is null)
+            return NotFound();
+
+        return Ok(new
+        {
+            container.Id,
+            container.AreaId,
+            container.FillPercentage,
+            container.Capacity,
+            container.LocationX,
+            container.LocationY,
+            TrashType = container.TrashType.ToString(),
+            Status = container.Status.ToString(),
+            container.HasSensor,
+            container.Temperature,
+            container.BatteryPercentage
+        });
+    }
+
+    #endregion
+
+    #region Write
+
+    [HttpPut("{id:int}/empty")]
+    [Authorize(Roles = "Driver,Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> EmptyContainer([FromRoute] int id)
+    {
+        var container = await _containerRepo.GetByIdAsync(id);
+        if (container is null)
+            return NotFound();
+
+        container.FillPercentage = 0;
+        container.Status = TrashContainerStatus.Active;
+        await _containerRepo.UpdateAsync(container);
+
+        return NoContent();
+    }
+
+    [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Update([FromRoute] int id, [FromBody] UpdateContainerDTO dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var container = await _containerRepo.GetByIdAsync(id);
+        if (container is null)
+            return NotFound();
+
+        container.FillPercentage = dto.FillPercentage;
+        container.Status = dto.Status;
+        container.HasSensor = dto.HasSensor;
+        await _containerRepo.UpdateAsync(container);
+
+        return NoContent();
+    }
+
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete([FromRoute] int id)
+    {
+        var container = await _containerRepo.GetByIdAsync(id);
+        if (container is null)
+            return NotFound();
+
+        await _containerRepo.DeleteAsync(container);
+        return NoContent();
+    }
+
+    #endregion
 }

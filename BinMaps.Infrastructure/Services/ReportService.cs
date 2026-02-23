@@ -3,104 +3,104 @@ using BinMaps.Data.Entities.Enums;
 using BinMaps.Infrastructure.Repository;
 using BinMaps.Infrastructure.Services.Interfaces;
 using BinMaps.Shared.DTOs;
-using Microsoft.AspNetCore.Identity;
 
 namespace BinMaps.Infrastructure.Services;
 
 public sealed class ReportService : IReportService
 {
+    private const double AiWeight = 0.6;
+    private const double ReputationWeight = 0.4;
+    private const double AutoApproveThreshold = 80.0;
+
     private readonly IRepository<Report, int> _reportRepo;
     private readonly IAIService _aiService;
     private readonly IReputationService _reputationService;
     private readonly IContainerUpdateService _containerUpdateService;
-    private readonly UserManager<User> _userManager;
-
-    private static readonly ReportType[] DriverOnlyTypes =
-        { ReportType.TruckProblem, ReportType.ContainerDamage };
 
     public ReportService(
         IRepository<Report, int> reportRepo,
         IAIService aiService,
         IReputationService reputationService,
-        IContainerUpdateService containerUpdateService,
-        UserManager<User> userManager)
+        IContainerUpdateService containerUpdateService)
     {
         _reportRepo = reportRepo;
         _aiService = aiService;
         _reputationService = reputationService;
         _containerUpdateService = containerUpdateService;
-        _userManager = userManager;
     }
 
     #region Public
 
-    public async Task<int> CreateAsync(CreateReportDTO dto, string userId, string userName, string role)
+    public async Task<ReportResponseDto> CreateAsync(
+        CreateReportDTO dto,
+        string userId,
+        string userName,
+        string role)
     {
-        ValidateRole(dto.ReportType, role);
+        AIResultDto? aiResult = null;
+        if (dto.Photo is not null)
+            aiResult = await _aiService.AnalyzeAsync(dto.Photo);
 
-        var user = await _userManager.FindByIdAsync(userId);
-        var reputation = user?.Reputation ?? 50;
-
-        var aiResult = dto.Photo is not null
-            ? await _aiService.AnalyzeAsync(dto.Photo)
-            : null;
-
-        var finalConfidence = CalculateFinalConfidence(aiResult, reputation);
-        var isAutoApproved = finalConfidence >= 80 || dto.ReportType == ReportType.Fire;
+        var userReputation = GetReputationFromRole(role);
+        var aiScore = aiResult?.Confidence ?? 0.0;
+        var finalConfidence = CalculateConfidence(aiScore, userReputation);
+        var autoApprove = finalConfidence >= AutoApproveThreshold
+                            || dto.ReportType == ReportType.Fire;
 
         var report = new Report
         {
-            TrashContainerId = dto.TrashContainerId,
             UserId = userId,
             UserName = userName,
-            Description = dto.Description ?? BuildDefaultDescription(dto.ReportType),
+            TrashContainerId = dto.TrashContainerId,
             ReportType = dto.ReportType,
-            AI_Score = aiResult?.Confidence ?? 0,
-            UserReputationOnSubmit = reputation,
+            Description = dto.Description,
+            AI_Score = aiScore,
+            UserReputationOnSubmit = userReputation,
             FinalConfidence = finalConfidence,
-            IsApproved = isAutoApproved 
+            IsApproved = autoApprove
         };
 
         await _reportRepo.AddAsync(report);
 
-        if (isAutoApproved && dto.TrashContainerId>0)
+        if (autoApprove)
+        {
             await _containerUpdateService.ApplyReportEffectAsync(dto.TrashContainerId, dto.ReportType);
+            await _reputationService.IncrementAsync(userId);
+        }
 
-        return report.Id;
+        return new ReportResponseDto
+        {
+            ReportId = report.Id,
+            FinalConfidence = finalConfidence,
+            IsApproved = report.IsApproved,
+            AiScore = aiScore,
+            UserReputation = userReputation,
+            Message = autoApprove ? "Докладът е автоматично одобрен." : "Докладът е изпратен за модерация."
+        };
     }
 
-    public async Task ApproveAsync(int reportId, string reviewerUserId)
+    public async Task ApproveAsync(int reportId)
     {
         var report = await _reportRepo.GetByIdAsync(reportId)
-            ?? throw new KeyNotFoundException($"Доклад #{reportId} не е намерен.");
-
-        if (report.IsApproved)
-            throw new InvalidOperationException("Докладът вече е прегледан.");
+            ?? throw new InvalidOperationException($"Report {reportId} not found.");
 
         report.IsApproved = true;
-        report.ReviewedAt = DateTime.UtcNow;
-        report.ReviewedByUserId = reviewerUserId;
-
         await _reportRepo.UpdateAsync(report);
-        await _reputationService.IncrementAsync(report.UserId);
 
         if (report.TrashContainerId.HasValue)
             await _containerUpdateService.ApplyReportEffectAsync(report.TrashContainerId.Value, report.ReportType);
+
+        await _reputationService.IncrementAsync(report.UserId);
     }
 
-    public async Task RejectAsync(int reportId, string reviewerUserId)
+    public async Task RejectAsync(int reportId)
     {
         var report = await _reportRepo.GetByIdAsync(reportId)
-            ?? throw new KeyNotFoundException($"Доклад #{reportId} не е намерен.");
-
-        if (report.IsApproved)
-            throw new InvalidOperationException("Докладът вече е прегледан.");
+            ?? throw new InvalidOperationException($"Report {reportId} not found.");
 
         report.IsApproved = false;
-        report.ReviewedAt = DateTime.UtcNow;
-        report.ReviewedByUserId = reviewerUserId;
-
         await _reportRepo.UpdateAsync(report);
+
         await _reputationService.DecrementAsync(report.UserId);
     }
 
@@ -108,26 +108,19 @@ public sealed class ReportService : IReportService
 
     #region Private
 
-    private static void ValidateRole(ReportType type, string role)
+    private static double CalculateConfidence(double aiScore, int reputation)
     {
-        if (DriverOnlyTypes.Contains(type) && role is not ("Driver" or "Admin"))
-            throw new UnauthorizedAccessException("Нямаш право за този тип доклад.");
+        if (aiScore <= 0)
+            return reputation * ReputationWeight;
+
+        return Math.Round((aiScore * AiWeight) + (reputation * ReputationWeight), 2);
     }
 
-    private static double CalculateFinalConfidence(AIResultDto? ai, int reputation)
+    private static int GetReputationFromRole(string role) => role switch
     {
-        if (ai is null) return reputation * 0.4;
-        return (ai.Confidence * 0.6) + (reputation * 0.4);
-    }
-
-    private static string BuildDefaultDescription(ReportType reportType) => reportType switch
-    {
-        ReportType.Full => "Контейнерът е препълнен",
-        ReportType.Fire => "Пожар в контейнер",
-        ReportType.SensorBroken => "Повреден сензор",
-        ReportType.TruckProblem => "Проблем с камиона",
-        ReportType.ContainerDamage => "Повреден контейнер",
-        _ => "Докладване на проблем"
+        "Admin" => 100,
+        "Driver" => 75,
+        _ => 50
     };
 
     #endregion

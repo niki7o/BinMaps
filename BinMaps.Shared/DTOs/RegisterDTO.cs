@@ -13,7 +13,6 @@ public sealed class RegisterDTO
     public string Email { get; set; } = string.Empty;
 
     [Phone]
-    [StringLength(13, MinimumLength = 7)]
     public string? PhoneNumber { get; set; }
 
     [Required]
@@ -21,5 +20,6 @@ public sealed class RegisterDTO
     public string Password { get; set; } = string.Empty;
 
     [Required]
+    [Range(typeof(bool), "true", "true", ErrorMessage = "Трябва да приемете условията.")]
     public bool AcceptTerms { get; set; }
 }

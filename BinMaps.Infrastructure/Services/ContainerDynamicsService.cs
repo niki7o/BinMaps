@@ -1,138 +1,146 @@
 ﻿using BinMaps.Data;
 using BinMaps.Data.Entities;
+using BinMaps.Data.Entities.Enums;
 using BinMaps.Infrastructure.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-
 namespace BinMaps.Infrastructure.Services;
 
 public sealed class ContainerDynamicsService : BackgroundService
 {
-    private readonly IServiceProvider _serviceProvider;
-    private readonly IHubContext<ContainerHub> _hubContext;
-    private readonly FillageSimulator _simulator;
-    private readonly ILogger<ContainerDynamicsService> _logger;
-    private readonly Random _random = new();
-
-    private const int CycleMs = 10_000;
+    private const int UpdateIntervalSeconds = 10;
     private const int BatchSize = 50;
+    private const double BaseFillIncrement = 0.8;
+
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IHubContext<ContainerHub> _hubContext;
+    private readonly ILogger<ContainerDynamicsService> _logger;
 
     public ContainerDynamicsService(
-        IServiceProvider serviceProvider,
+        IServiceScopeFactory scopeFactory,
         IHubContext<ContainerHub> hubContext,
         ILogger<ContainerDynamicsService> logger)
     {
-        _serviceProvider = serviceProvider;
+        _scopeFactory = scopeFactory;
         _hubContext = hubContext;
         _logger = logger;
-        _simulator = new FillageSimulator();
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await Task.Delay(2_000, stoppingToken);
-
         while (!stoppingToken.IsCancellationRequested)
         {
-            try
-            {
-                await RunCycleAsync(stoppingToken);
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "ContainerDynamicsService cycle faulted.");
-            }
-
-            await Task.Delay(CycleMs, stoppingToken);
+            await RunUpdateCycleAsync(stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(UpdateIntervalSeconds), stoppingToken);
         }
     }
 
-    private async Task RunCycleAsync(CancellationToken ct)
+    private async Task RunUpdateCycleAsync(CancellationToken token)
     {
-        using var scope = _serviceProvider.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<BinMapsDbContext>();
-
-        var containers = await context.TrashContainers
-            .Include(tc => tc.Area)
-            .AsNoTracking()
-            .ToListAsync(ct);
-
-        if (containers.Count == 0) return;
-
-        foreach (var container in containers)
-            ApplyDynamics(container);
-
-        await SaveInBatchesAsync(context, containers, ct);
-
-        var payload = containers.Select(c => new
+        try
         {
-            c.Id,
-            c.AreaId,
-            c.FillPercentage,
-            c.Temperature,
-            c.BatteryPercentage,
-            Status = c.Status.ToString()
-        });
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<BinMapsDbContext>();
 
-        await _hubContext.Clients.All.SendAsync("ContainersUpdated", payload, ct);
+            var containers = await context.TrashContainers
+                .Include(c => c.Area)
+                .ToListAsync(token);
 
-        _logger.LogDebug(
-            "Cycle: {Count} containers updated, avg fill {Avg:F1}%",
-            containers.Count,
-            containers.Average(c => c.FillPercentage));
+            foreach (var container in containers)
+            {
+                UpdateFill(container);
+                UpdateTemperature(container);
+                UpdateBattery(container);
+                UpdateStatus(container);
+            }
+
+            await context.SaveChangesAsync(token);
+
+            var payload = containers.Select(c => new
+            {
+                c.Id,
+                c.FillPercentage,
+                c.Temperature,
+                c.BatteryPercentage,
+                Status = c.Status.ToString()
+            });
+
+            await _hubContext.Clients.All.SendAsync(
+                "ContainersUpdated",
+                payload,
+                token);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Container dynamics update failed");
+        }
     }
 
-    private void ApplyDynamics(TrashContainer container)
+    private static void UpdateFill(TrashContainer container)
     {
-        var zoneMultiplier = container.Area?.ZoneMultiplier ?? 1.0;
+        var zoneMultiplier = container.Area?.FillMultiplier ?? 1.0;
 
-        if (container.FillPercentage >= 100)
+        var slowdown = container.FillPercentage switch
         {
-            container.FillPercentage = _simulator.GetEmptyFillLevel();
-            container.LastEmptiedAt = DateTime.UtcNow;
-            if (container.HasSensor) container.Temperature = 15 + _random.NextDouble() * 5;
-        }
-        else
-        {
-            container.FillPercentage = Math.Min(99.9,
-                container.FillPercentage + _simulator.CalculateFillIncrement(container, zoneMultiplier));
-        }
+            > 85 => 0.4,
+            > 65 => 0.7,
+            _ => 1.0
+        };
 
-        if (container.HasSensor)
-        {
-            container.Temperature = _simulator.SimulateTemperature(container);
-            container.LastSensorReadAt = DateTime.UtcNow;
+        var random = 0.8 + Random.Shared.NextDouble() * 0.4;
 
-            if (container.BatteryPercentage.HasValue)
-                container.BatteryPercentage = Math.Max(0,
-                    container.BatteryPercentage.Value - _simulator.CalculateBatteryDrain(container));
-        }
+        var increment = BaseFillIncrement *
+                        zoneMultiplier *
+                        slowdown *
+                        random;
 
-        container.Status = FillageSimulator.DetermineStatus(container);
+        container.FillPercentage =
+            Math.Clamp(container.FillPercentage + increment, 0, 100);
     }
 
-    private static async Task SaveInBatchesAsync(BinMapsDbContext context, List<TrashContainer> containers, CancellationToken ct)
+    private static void UpdateTemperature(TrashContainer container)
     {
-        var batches = (int)Math.Ceiling(containers.Count / (double)BatchSize);
+        var ambient = 15 + Random.Shared.NextDouble() * 10;
+        var organic = container.TrashType == TrashType.Mixed
+            ? container.FillPercentage * 0.15
+            : 0;
 
-        for (var i = 0; i < batches; i++)
+        var variance = (Random.Shared.NextDouble() * 4) - 2;
+
+        container.Temperature =
+            Math.Clamp(ambient + organic + variance, 10, 60);
+    }
+
+    private static void UpdateBattery(TrashContainer container)
+    {
+        if (!container.HasSensor || container.BatteryPercentage is null)
+            return;
+
+        container.BatteryPercentage =
+            Math.Max(0, container.BatteryPercentage.Value - 0.002);
+    }
+
+    private static void UpdateStatus(TrashContainer container)
+    {
+        if (container.Temperature > 55 && container.FillPercentage > 70)
         {
-            var batch = containers.Skip(i * BatchSize).Take(BatchSize).ToList();
+            container.Status = TrashContainerStatus.Fire;
+            return;
+        }
 
-            foreach (var c in batch)
-                context.Entry(c).State = EntityState.Modified;
+        if (container.HasSensor && container.BatteryPercentage < 10)
+        {
+            container.Status = TrashContainerStatus.SensorBroken;
+            return;
+        }
 
-            await context.SaveChangesAsync(ct);
-
-            foreach (var c in batch)
-                context.Entry(c).State = EntityState.Detached;
+        if (container.Status is TrashContainerStatus.Fire
+            or TrashContainerStatus.SensorBroken)
+        {
+            container.Status = TrashContainerStatus.Active;
         }
     }
 }
