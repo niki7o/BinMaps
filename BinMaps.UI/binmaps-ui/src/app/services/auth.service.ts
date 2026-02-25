@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, distinctUntilChanged, tap } from 'rxjs';
-import { AuthUser, LoginResponse } from './auth.models';
+import { AuthUser, LoginResponse, RegisterRequest } from './auth.models';
 import { AuthStorageService } from './auth-storage.service';
 
 @Injectable({ providedIn: 'root' })
@@ -42,11 +42,15 @@ export class AuthService {
       .pipe(tap(r => this.applyResponse(r, email)));
   }
 
+  register(data: RegisterRequest): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${AuthService.API}/auth/register`, data);
+  }
+
   logout(): void {
     this.storage.clear();
     this._state$.next(null);
   }
- 
+
   private applyResponse(r: LoginResponse, email: string): void {
     if (!r?.token) return;
     const user: AuthUser = {
@@ -59,5 +63,4 @@ export class AuthService {
     this.storage.save(user);
     this._state$.next(user);
   }
- 
 }

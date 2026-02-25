@@ -1,19 +1,34 @@
-<div class="register-container">
-  <main class="main-content">
-    <div class="register-card">
-      <div class="card-header">
-        <h1 class="title">Създай профил</h1>
-        <p class="subtitle">Присъедини се към BinMaps и помогни за по-чист град</p>
+<div class="auth-page">
+  <div class="auth-bg">
+    <div class="auth-orb auth-orb--1"></div>
+    <div class="auth-orb auth-orb--2"></div>
+    <div class="auth-grid"></div>
+  </div>
+
+  <div class="auth-wrap">
+    <div class="auth-card animate-slide-up">
+
+      <div class="auth-brand">
+        <div class="auth-brand__logo">
+          <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
+            <path d="M14 2L24 8V20L14 26L4 20V8L14 2Z" stroke="#10b981" stroke-width="1.5" fill="none"/>
+            <circle cx="14" cy="14" r="3" fill="#10b981"/>
+          </svg>
+        </div>
+        <span class="auth-brand__name">Bin<span>Maps</span></span>
       </div>
 
-      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
-        
-        <div class="form-group">
-          <label for="userName" class="form-label">
-            Потребителско име <span class="required">*</span>
-          </label>
-          <div class="input-wrapper">
-            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <div class="auth-header">
+        <h1 class="auth-title">Създай профил</h1>
+        <p class="auth-subtitle">Присъедини се към BinMaps и помогни за по-чист град</p>
+      </div>
+
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form">
+
+        <div class="auth-field">
+          <label for="userName" class="auth-label">Потребителско име</label>
+          <div class="auth-input-group">
+            <svg class="auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
               <circle cx="12" cy="7" r="4"/>
             </svg>
@@ -21,24 +36,22 @@
               id="userName"
               type="text"
               formControlName="userName"
-              class="form-input"
-              [class.error]="userNameControl?.invalid && userNameControl?.touched"
+              class="auth-input"
+              [class.auth-input--error]="userNameControl?.invalid && userNameControl?.touched"
               placeholder="Потребителско име"
             />
           </div>
-          <div class="error-message" *ngIf="userNameControl?.invalid && userNameControl?.touched">
+          <div class="auth-field-error" *ngIf="userNameControl?.invalid && userNameControl?.touched">
             <span *ngIf="userNameControl?.errors?.['required']">Потребителското име е задължително</span>
             <span *ngIf="userNameControl?.errors?.['minlength']">Минимум 3 символа</span>
             <span *ngIf="userNameControl?.errors?.['serverError']">{{ userNameControl?.errors?.['serverError'] }}</span>
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="email" class="form-label">
-            Имейл адрес <span class="required">*</span>
-          </label>
-          <div class="input-wrapper">
-            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <div class="auth-field">
+          <label for="email" class="auth-label">Имейл адрес</label>
+          <div class="auth-input-group">
+            <svg class="auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
               <polyline points="22,6 12,13 2,6"/>
             </svg>
@@ -46,127 +59,142 @@
               id="email"
               type="email"
               formControlName="email"
-              class="form-input"
-              [class.error]="emailControl?.invalid && emailControl?.touched"
+              class="auth-input"
+              [class.auth-input--error]="emailControl?.invalid && emailControl?.touched"
               placeholder="example@mail.com"
             />
           </div>
-          <div class="error-message" *ngIf="emailControl?.invalid && emailControl?.touched">
+          <div class="auth-field-error" *ngIf="emailControl?.invalid && emailControl?.touched">
             <span *ngIf="emailControl?.errors?.['required']">Имейлът е задължителен</span>
             <span *ngIf="emailControl?.errors?.['email']">Невалиден имейл адрес</span>
             <span *ngIf="emailControl?.errors?.['serverError']">{{ emailControl?.errors?.['serverError'] }}</span>
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="phoneNumber" class="form-label">
-            Телефонен номер <span class="optional">(незадължително)</span>
+        <div class="auth-field">
+          <label for="phoneNumber" class="auth-label">
+            Телефонен номер
+            <span class="auth-optional">(незадължително)</span>
           </label>
-          <div class="input-wrapper">
-            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <div class="auth-input-group">
+            <svg class="auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/>
             </svg>
             <input
               id="phoneNumber"
               type="tel"
               formControlName="phoneNumber"
-              class="form-input"
-              [class.error]="phoneNumberControl?.invalid && phoneNumberControl?.touched"
+              class="auth-input"
+              [class.auth-input--error]="phoneNumberControl?.invalid && phoneNumberControl?.touched"
               placeholder="+359 888 123 456"
             />
           </div>
-          <div class="error-message" *ngIf="phoneNumberControl?.invalid && phoneNumberControl?.touched">
+          <div class="auth-field-error" *ngIf="phoneNumberControl?.invalid && phoneNumberControl?.touched">
             <span *ngIf="phoneNumberControl?.errors?.['pattern']">Невалиден формат на номера</span>
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="password" class="form-label">Парола <span class="required">*</span></label>
-            <div class="input-wrapper">
+        <div class="auth-row">
+          <div class="auth-field">
+            <label for="password" class="auth-label">Парола</label>
+            <div class="auth-input-group">
+              <svg class="auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
               <input
                 id="password"
                 [type]="showPassword ? 'text' : 'password'"
                 formControlName="password"
-                class="form-input"
-                [class.error]="passwordControl?.invalid && passwordControl?.touched"
+                class="auth-input"
+                [class.auth-input--error]="passwordControl?.invalid && passwordControl?.touched"
                 placeholder="••••••••"
               />
-              <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
-                <svg *ngIf="!showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              <button type="button" class="auth-eye" (click)="togglePasswordVisibility()">
+                <svg *ngIf="!showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
                 </svg>
-                <svg *ngIf="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20">
-                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>
+                <svg *ngIf="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
                 </svg>
               </button>
             </div>
-            <div class="error-message" *ngIf="passwordControl?.invalid && passwordControl?.touched">
+            <div class="auth-field-error" *ngIf="passwordControl?.invalid && passwordControl?.touched">
               <span *ngIf="passwordControl?.errors?.['required']">Паролата е задължителна</span>
               <span *ngIf="passwordControl?.errors?.['minlength']">Минимум 6 символа</span>
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="confirmPassword" class="form-label">Потвърди <span class="required">*</span></label>
-            <div class="input-wrapper">
+          <div class="auth-field">
+            <label for="confirmPassword" class="auth-label">Потвърди парола</label>
+            <div class="auth-input-group">
+              <svg class="auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+              </svg>
               <input
                 id="confirmPassword"
                 [type]="showPassword ? 'text' : 'password'"
                 formControlName="confirmPassword"
-                class="form-input"
-                [class.error]="(confirmPasswordControl?.invalid && confirmPasswordControl?.touched) || (registerForm.errors?.['passwordMismatch'] && confirmPasswordControl?.touched)"
+                class="auth-input"
+                [class.auth-input--error]="(confirmPasswordControl?.invalid && confirmPasswordControl?.touched) || (registerForm.errors?.['passwordMismatch'] && confirmPasswordControl?.touched)"
                 placeholder="••••••••"
               />
             </div>
-            <div class="error-message" *ngIf="confirmPasswordControl?.touched">
+            <div class="auth-field-error" *ngIf="confirmPasswordControl?.touched">
               <span *ngIf="confirmPasswordControl?.errors?.['required']">Полето е задължително</span>
               <span *ngIf="registerForm.errors?.['passwordMismatch'] && !confirmPasswordControl?.errors?.['required']">Паролите не съвпадат</span>
             </div>
           </div>
         </div>
 
-        <div class="form-group checkbox-group">
-          <label class="checkbox-label">
-            <input type="checkbox" formControlName="acceptTerms" class="checkbox-input" />
-            <span class="checkbox-custom"></span>
-            <span class="checkbox-text">
-              Приемам <a href="#" class="link">условията</a> и <a href="#" class="link">поверителността</a> <span class="required">*</span>
+        <div class="auth-checkbox">
+          <label class="auth-checkbox__label">
+            <input type="checkbox" formControlName="acceptTerms" class="auth-checkbox__input" />
+            <span class="auth-checkbox__box"></span>
+            <span class="auth-checkbox__text">
+              Приемам <a href="#" class="auth-link-inline">условията</a> и <a href="#" class="auth-link-inline">поверителността</a>
             </span>
           </label>
         </div>
 
-        <div class="alert alert-error" *ngIf="generalError">
-          <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        <div class="auth-error" *ngIf="generalError">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
           <span>{{ generalError }}</span>
         </div>
 
-        <div class="alert alert-success" *ngIf="successMessage">
-          <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        <div class="auth-success" *ngIf="successMessage">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
           </svg>
           <span>{{ successMessage }}</span>
         </div>
 
-        <button type="submit" class="btn btn-primary" [disabled]="isLoading || registerForm.invalid">
+        <button type="submit" class="btn btn--primary btn--lg auth-btn" [disabled]="isLoading || registerForm.invalid">
           <span *ngIf="!isLoading">Регистрация</span>
-          <span *ngIf="isLoading" class="loading-spinner">
-            <svg class="spinner" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+          <span *ngIf="isLoading" class="auth-loading">
+            <svg class="auth-spinner" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
+                stroke-dasharray="60" stroke-dashoffset="45" stroke-linecap="round"/>
             </svg>
             Зареждане...
           </span>
         </button>
 
-        <div class="form-footer">
-          <p class="login-text">
-            Вече имате акаунт?
-            <button type="button" class="link-button" (click)="navigateToLogin()">Влезте тук</button>
+        <div class="auth-footer">
+          <p>Вече имате акаунт?
+            <button type="button" class="auth-link" (click)="navigateToLogin()">Влезте тук</button>
           </p>
         </div>
+
       </form>
     </div>
-  </main>
+  </div>
 </div>

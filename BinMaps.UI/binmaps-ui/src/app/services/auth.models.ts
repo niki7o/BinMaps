@@ -19,3 +19,11 @@ export interface LoginResponse {
   role?:     string;
   token:     string;
 }
+
+export interface RegisterRequest {
+  userName:    string;
+  email:       string;
+  phoneNumber: string | null;
+  password:    string;
+  acceptTerms: boolean;
+}

@@ -534,6 +534,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   private getToken(): string | null {
-    return localStorage.getItem('token') || (JSON.parse(localStorage.getItem('user') || '{}').token ?? null);
+    return this.authService.getToken();
   }
 }

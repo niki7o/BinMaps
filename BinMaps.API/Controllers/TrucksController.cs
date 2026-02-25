@@ -21,7 +21,7 @@ public sealed class TrucksController : ControllerBase
 
     #region Endpoints
 
-    [HttpPost("generate-route")]
+    [HttpGet("route")]
     [ProducesResponseType(typeof(RouteResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
