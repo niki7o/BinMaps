@@ -36,5 +36,9 @@
 		
 		<ProjectReference Include="..\BinMaps.Shared\BinMaps.Shared.csproj" />
 	</ItemGroup>
+	
+	<ItemGroup>
+	  <Folder Include="wwwroot\uploads\profiles\" />
+	</ItemGroup>
 
 </Project>

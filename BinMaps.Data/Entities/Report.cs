@@ -42,7 +42,7 @@ namespace BinMaps.Data.Entities
 
         #region Scoring
 
-        [Range(0, 100)]
+        [Range(0.0, 100.0)]
         public double AI_Score { get; set; }
 
         public int UserReputationOnSubmit { get; set; }

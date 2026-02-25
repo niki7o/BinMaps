@@ -35,9 +35,11 @@ namespace BinMaps.Data.Migrations
                         .HasColumnType("nvarchar(7)");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<double>("FillMultiplier")
+                        .HasColumnType("float");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -48,6 +50,9 @@ namespace BinMaps.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<double>("TemperatureMultiplier")
+                        .HasColumnType("float");
 
                     b.Property<double>("ZoneMultiplier")
                         .HasColumnType("float");
@@ -89,13 +94,6 @@ namespace BinMaps.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("ReviewedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ReviewedByUserId")
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<int?>("TrashContainerId")
                         .HasColumnType("int");
 
@@ -106,8 +104,8 @@ namespace BinMaps.Data.Migrations
 
                     b.Property<string>("UserName")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<int>("UserReputationOnSubmit")
                         .HasColumnType("int");
@@ -211,6 +209,10 @@ namespace BinMaps.Data.Migrations
                     b.Property<double>("LocationY")
                         .HasColumnType("float");
 
+                    b.Property<string>("TrashType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AreaId")
@@ -227,10 +229,6 @@ namespace BinMaps.Data.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
-                    b.Property<string>("BanReason")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
@@ -244,12 +242,6 @@ namespace BinMaps.Data.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
-
-                    b.Property<bool>("IsBanned")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("LastLoginAt")
-                        .HasColumnType("datetime2");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");

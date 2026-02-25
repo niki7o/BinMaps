@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BinMaps.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/trucks")]
 [Authorize(Roles = "Driver,Admin")]
 [Produces("application/json")]
 public sealed class TrucksController : ControllerBase

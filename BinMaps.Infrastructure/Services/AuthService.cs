@@ -2,6 +2,7 @@
 using BinMaps.Infrastructure.Services.Interfaces;
 using BinMaps.Shared.DTOs;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -29,6 +30,7 @@ public sealed class AuthService : IAuthService
 
     #region Public
 
+
     public async Task<(bool Success, IEnumerable<string> Errors)> RegisterAsync(RegisterDTO dto)
     {
         if (!dto.AcceptTerms)
@@ -55,6 +57,8 @@ public sealed class AuthService : IAuthService
         await _userManager.AddToRoleAsync(user, "User");
         return (true, Enumerable.Empty<string>());
     }
+
+
 
     public async Task<(bool Success, AuthResultDto? Result)> LoginAsync(LoginDTO dto)
     {

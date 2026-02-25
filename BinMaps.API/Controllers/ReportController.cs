@@ -7,7 +7,7 @@ using System.Security.Claims;
 namespace BinMaps.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/reports")]
 [Authorize]
 [Produces("application/json")]
 public sealed class ReportsController : ControllerBase

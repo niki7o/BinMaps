@@ -1,9 +1,8 @@
 
-
-using BinMaps.API.Hubs;
 using BinMaps.API.Seed;
 using BinMaps.Data;
 using BinMaps.Data.Entities;
+using BinMaps.Infrastructure.Hubs;
 using BinMaps.Infrastructure.Repository;
 using BinMaps.Infrastructure.Services;
 using BinMaps.Infrastructure.Services.Interfaces;
@@ -101,9 +100,11 @@ namespace BinMaps.API
             {
                 var services = scope.ServiceProvider;
 
-                
-                var seeder = services.GetRequiredService<InitialStateSeeder>();
+                var db = services.GetRequiredService<BinMapsDbContext>();
 
+                await db.Database.MigrateAsync();   
+
+                var seeder = services.GetRequiredService<InitialStateSeeder>();
                 await seeder.SeedAllAsync();
             }
 

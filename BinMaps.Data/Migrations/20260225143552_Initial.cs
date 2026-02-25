@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace BinMaps.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class clearedprops : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,15 +17,17 @@ namespace BinMaps.Data.Migrations
                 {
                     Id = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     ZoneMultiplier = table.Column<double>(type: "float", nullable: false),
+                    FillMultiplier = table.Column<double>(type: "float", nullable: false),
+                    TemperatureMultiplier = table.Column<double>(type: "float", nullable: false),
                     RiskLevel = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Color = table.Column<string>(type: "nvarchar(7)", maxLength: 7, nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Areas", x => x.Id);
-                }); 
+                });
 
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",
@@ -48,10 +50,7 @@ namespace BinMaps.Data.Migrations
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Reputation = table.Column<int>(type: "int", nullable: false),
                     ProfilePicturePath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    IsBanned = table.Column<bool>(type: "bit", nullable: false),
-                    BanReason = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    LastLoginAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -78,15 +77,15 @@ namespace BinMaps.Data.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false),
                     AreaId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    LocationX = table.Column<double>(type: "float", nullable: false),
+                    LocationY = table.Column<double>(type: "float", nullable: false),
                     Capacity = table.Column<double>(type: "float", nullable: false),
                     TrashType = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    HasSensor = table.Column<bool>(type: "bit", nullable: false),
                     FillPercentage = table.Column<double>(type: "float", nullable: false),
                     Temperature = table.Column<double>(type: "float", nullable: true),
                     BatteryPercentage = table.Column<double>(type: "float", nullable: true),
-                    HasSensor = table.Column<bool>(type: "bit", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    LocationX = table.Column<double>(type: "float", nullable: false),
-                    LocationY = table.Column<double>(type: "float", nullable: false),
                     LastEmptiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     LastSensorReadAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
@@ -112,6 +111,7 @@ namespace BinMaps.Data.Migrations
                     LocationX = table.Column<double>(type: "float", nullable: false),
                     LocationY = table.Column<double>(type: "float", nullable: false),
                     LicensePlate = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    TrashType = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -237,19 +237,17 @@ namespace BinMaps.Data.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    TrashContainerId = table.Column<int>(type: "int", nullable: true),
                     UserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    UserName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    TrashContainerId = table.Column<int>(type: "int", nullable: true),
                     ReportType = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    PhotoURL = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     AI_Score = table.Column<double>(type: "float", nullable: false),
                     UserReputationOnSubmit = table.Column<int>(type: "int", nullable: false),
-                    IsApproved = table.Column<bool>(type: "bit", nullable: false),
                     FinalConfidence = table.Column<double>(type: "float", nullable: false),
-                    PhotoURL = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ReviewedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ReviewedByUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: true)
+                    IsApproved = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {

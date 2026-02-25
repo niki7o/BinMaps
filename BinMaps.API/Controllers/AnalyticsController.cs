@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace BinMaps.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/analytics")]
 [Authorize]
 [Produces("application/json")]
 public sealed class AnalyticsController : ControllerBase

@@ -12,18 +12,25 @@ import { AuthService } from '../services/auth.service';
   styleUrls:   ['./login.css']
 })
 export class LoginComponent {
-
-  
   readonly email    = signal('');
   readonly password = signal('');
   readonly error    = signal('');
   readonly loading  = signal(false);
+  readonly showPassword = signal(false);
  
   constructor(
     private readonly auth:   AuthService,
     private readonly router: Router
   ) {}
   
+  get isLoading(): boolean {
+    return this.loading();
+  }
+
+  get errorMessage(): string {
+    return this.error();
+  }
+
   submit(): void {
     if (!this.email() || !this.password()) {
       this.error.set('Въведете имейл и парола');
@@ -38,6 +45,14 @@ export class LoginComponent {
     });
   }
   
+  togglePasswordVisibility(): void {
+    this.showPassword.update(v => !v);
+  }
+
+  navigateToRegister(): void {
+    this.router.navigate(['/register']);
+  }
+
   private navigateByRole(): void {
     const destination = this.auth.hasRole('Admin') ? '/admin' : '/map';
     this.router.navigate([destination]);

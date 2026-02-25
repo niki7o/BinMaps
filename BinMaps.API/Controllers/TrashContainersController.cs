@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace BinMaps.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/containers")]
 [Authorize]
 [Produces("application/json")]
 public sealed class TrashContainersController : ControllerBase

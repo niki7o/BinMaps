@@ -1,24 +1,18 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, distinctUntilChanged, tap } from 'rxjs';
 import { AuthUser, LoginResponse } from './auth.models';
 import { AuthStorageService } from './auth-storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-
-  
   private static readonly API = 'https://localhost:7277/api';
-  
 
- 
   private readonly _state$: BehaviorSubject<AuthUser | null>;
-
   readonly currentUser$: Observable<AuthUser | null>;
 
-  
   constructor(
-    private readonly http:    HttpClient,
+    private readonly http: HttpClient,
     private readonly storage: AuthStorageService
   ) {
     this._state$ = new BehaviorSubject<AuthUser | null>(this.storage.load());
@@ -27,11 +21,21 @@ export class AuthService {
     );
   }
 
-  get currentUser(): AuthUser | null  { return this._state$.value; }
-  get isAuthenticated(): boolean      { return !!this._state$.value; }
-  getToken(): string | null           { return this._state$.value?.token ?? null; }
-  hasRole(role: string): boolean      { return this._state$.value?.role === role; }
-  
+  get currentUser(): AuthUser | null { return this._state$.value; }
+  get isAuthenticated(): boolean     { return !!this._state$.value; }
+  getToken(): string | null          { return this._state$.value?.token ?? null; }
+  hasRole(role: string): boolean     { return this._state$.value?.role === role; }
+
+  getAuthHeaders() {
+    const token = this.getToken();
+    if (!token) return {};
+    return {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      })
+    };
+  }
+
   login(email: string, password: string): Observable<LoginResponse> {
     return this.http
       .post<LoginResponse>(`${AuthService.API}/auth/login`, { email, password })

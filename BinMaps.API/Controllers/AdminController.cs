@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace BinMaps.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/admin")]
 [Authorize(Roles = "Admin")]
 [Produces("application/json")]
 public sealed class AdminController : ControllerBase

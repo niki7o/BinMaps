@@ -16,13 +16,15 @@ public sealed class TrashContainer
     #region Location
 
     [Required]
-    [MaxLength(100)]
+    [MaxLength(50)]
     public string AreaId { get; set; } = string.Empty;
 
     [Required]
+    [Range(-90, 90)]
     public double LocationX { get; set; }
 
     [Required]
+    [Range(-180, 180)]
     public double LocationY { get; set; }
 
     #endregion
@@ -54,6 +56,10 @@ public sealed class TrashContainer
 
     [Required]
     public TrashContainerStatus Status { get; set; } = TrashContainerStatus.Active;
+
+    public DateTime? LastEmptiedAt { get; set; }
+    
+    public DateTime? LastSensorReadAt { get; set; }
 
     #endregion
 

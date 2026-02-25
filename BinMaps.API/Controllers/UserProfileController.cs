@@ -11,7 +11,7 @@ using System.Security.Claims;
 namespace BinMaps.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/profile")]
 [Authorize]
 [Produces("application/json")]
 public sealed class UserProfileController : ControllerBase

@@ -7,7 +7,7 @@
         <p class="subtitle">Влезте в профила си за достъп до BinMaps</p>
       </div>
 
-      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <form (ngSubmit)="submit()" class="login-form">
         
        
         <div class="form-group">
@@ -23,17 +23,14 @@
             <input
               id="email"
               type="email"
-              formControlName="email"
               class="form-input"
-              [class.error]="email?.invalid && email?.touched"
+              [ngModel]="email()"
+              (ngModelChange)="email.set($event)"
               placeholder="example@mail.com"
               autocomplete="email"
             />
           </div>
-          <div class="error-message" *ngIf="email?.invalid && email?.touched">
-            <span *ngIf="email?.errors?.['required']">Имейлът е задължителен</span>
-            <span *ngIf="email?.errors?.['email']">Невалиден имейл адрес</span>
-          </div>
+          <div class="error-message"></div>
         </div>
 
        
@@ -49,10 +46,10 @@
             </svg>
             <input
               id="password"
-              [type]="showPassword ? 'text' : 'password'"
-              formControlName="password"
+              [type]="showPassword() ? 'text' : 'password'"
               class="form-input"
-              [class.error]="password?.invalid && password?.touched"
+              [ngModel]="password()"
+              (ngModelChange)="password.set($event)"
               placeholder="••••••••"
               autocomplete="current-password"
             />
@@ -62,20 +59,17 @@
               (click)="togglePasswordVisibility()"
               tabindex="-1"
             >
-              <svg *ngIf="!showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <svg *ngIf="!showPassword()" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                 <circle cx="12" cy="12" r="3"/>
               </svg>
-              <svg *ngIf="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <svg *ngIf="showPassword()" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
                 <line x1="1" y1="1" x2="23" y2="23"/>
               </svg>
             </button>
           </div>
-          <div class="error-message" *ngIf="password?.invalid && password?.touched">
-            <span *ngIf="password?.errors?.['required']">Паролата е задължителна</span>
-            <span *ngIf="password?.errors?.['minlength']">Паролата трябва да е поне 6 символа</span>
-          </div>
+          <div class="error-message"></div>
         </div>
 
         
