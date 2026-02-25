@@ -65,7 +65,7 @@ public sealed class ContainerDynamicsService : BackgroundService
                 c.FillPercentage,
                 c.Temperature,
                 c.BatteryPercentage,
-                Status = c.Status.ToString()
+                c.Status   // integer — matches frontend numeric check (status === 1 for Fire)
             });
 
             await _hubContext.Clients.All.SendAsync(

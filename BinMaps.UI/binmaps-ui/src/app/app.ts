@@ -22,4 +22,8 @@ export class App {
         this.isMapPage = event.url === '/map' || event.url.startsWith('/map?');
       });
   }
+
+  isMapRoute(): boolean {
+    return this.router.url === '/map' || this.router.url.startsWith('/map?') || this.router.url.startsWith('/map/');
+  }
 }

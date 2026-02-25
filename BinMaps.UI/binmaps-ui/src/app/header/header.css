@@ -118,6 +118,7 @@
   align-items: center;
   gap: 10px;
   margin-left: auto;
+  position: relative;
 }
 
 .navbar__notif {
@@ -164,16 +165,18 @@
 }
 
 .notif-panel {
-  position: absolute;
+  position: fixed !important;
   top: calc(var(--nav-height) + 8px);
-  right: 120px;
-  width: 320px;
+  right: 16px;
+  width: 300px;
   background: #0d1b2a;
   border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: 16px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
   overflow: hidden;
   z-index: 2100;
+  transform: none !important;
+  height: auto !important;
 }
 
 .notif-panel__header {
@@ -256,9 +259,9 @@
 .navbar__chevron.is-open { transform: rotate(180deg); }
 
 .user-menu {
-  position: absolute;
+  position: fixed;
   top: calc(var(--nav-height) + 8px);
-  right: 24px;
+  right: 16px;
   width: 210px;
   background: #0d1b2a;
   border: 1px solid rgba(148, 163, 184, 0.12);

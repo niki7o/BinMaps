@@ -75,6 +75,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   routeResult: RouteResult | null = null;
   routeActive    = false;
   navigationActive = false;
+  showReportPanel = true;
+  showRoutePanel  = true;
   currentStop    = 0;
   currentTruckLoad = 0;
 
@@ -208,6 +210,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.realRouteCoords = route.map(s => [s.locationY, s.locationX] as [number, number]);
     }
 
+    // Ensure smooth truck animation: if OSRM gave few points (or fallback), interpolate
+    if (this.realRouteCoords.length < 80) {
+      this.realRouteCoords = this.interpolateCoords(this.realRouteCoords, 60);
+    }
+
     const avg = route.reduce((s, r) => s + r.fillPercentage, 0) / route.length;
     this.routeLine = L.polyline(this.realRouteCoords, {
       color: this.routeColor(avg), weight: 5, opacity: 0.85, dashArray: '10,5'
@@ -241,14 +248,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const route = this.routeResult.route;
     this.truckMarker = L.marker(this.realRouteCoords[0], { icon: truckIcon }).addTo(this.map);
     let si = 0;
+    const token = this.getToken();
 
     for (let i = 0; i < this.realRouteCoords.length; i++) {
       if (!this.navigationActive) break;
       const coord = this.realRouteCoords[i];
       this.truckMarker.setLatLng(coord);
-      if (i % 8 === 0) this.map.panTo(coord, { animate: true, duration: 0.25, easeLinearity: 0.1 });
+      // No auto-pan — user controls the map view freely
 
-      while (si < route.length && this.dist(coord, [route[si].locationY, route[si].locationX]) < 0.08) {
+      while (si < route.length && this.dist(coord, [route[si].locationY, route[si].locationX]) < 0.20) {
         this.currentStop      = si + 1;
         this.currentTruckLoad += route[si].estimatedLoad;
         if (this.routeMarkers[si]) this.routeMarkers[si].setIcon(L.divIcon({
@@ -256,10 +264,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
           html: `<div class="stop-number">✓</div>`,
           iconSize: [32, 32], iconAnchor: [16, 16]
         }));
+        // Always update the bin visually immediately (regardless of API result)
+        const bin = this.allBins.find(b => b.id === route[si].id);
+        if (bin) { bin.fillPercentage = Math.random() * 6 + 2; this.renderBins(this.filtered()); }
+        // Send empty to backend with auth token
+        const stopId = route[si].id;
         try {
-          await this.http.put(`${this.API_URL}/containers/${route[si].id}/empty`, {}).toPromise();
-          const bin = this.allBins.find(b => b.id === route[si].id);
-          if (bin) { bin.fillPercentage = Math.random() * 6 + 2; this.renderBins(this.filtered()); }
+          await this.http.put(
+            `${this.API_URL}/containers/${stopId}/empty`, {},
+            token ? { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) } : {}
+          ).toPromise();
         } catch {}
         si++;
         await new Promise(r => setTimeout(r, 500));
@@ -273,10 +287,36 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.currentTruckLoad = 0;
   }
 
+  // Interpolate sparse coords so animation always has ≥ stepsPerSegment frames per leg
+  private interpolateCoords(coords: [number, number][], steps = 50): [number, number][] {
+    if (coords.length < 2) return coords;
+    const out: [number, number][] = [];
+    for (let i = 0; i < coords.length - 1; i++) {
+      const [la, lo] = coords[i], [lb, lb2] = coords[i + 1];
+      for (let t = 0; t < steps; t++) {
+        const r = t / steps;
+        out.push([la + (lb - la) * r, lo + (lb2 - lo) * r]);
+      }
+    }
+    out.push(coords[coords.length - 1]);
+    return out;
+  }
+
   private dist(a: [number, number], b: [number, number]): number {
     const R = 6371, dLat = (b[0] - a[0]) * Math.PI / 180, dLon = (b[1] - a[1]) * Math.PI / 180;
     const x = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * Math.PI / 180) * Math.cos(b[0] * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
     return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+  }
+
+  // ── Panel toggles (with map invalidateSize) ──────────────────────────────
+  toggleReportPanel(show: boolean) {
+    this.showReportPanel = show;
+    setTimeout(() => this.map?.invalidateSize(), 350);
+  }
+
+  toggleRoutePanel(show: boolean) {
+    this.showRoutePanel = show;
+    setTimeout(() => this.map?.invalidateSize(), 350);
   }
 
   stopRoute() {

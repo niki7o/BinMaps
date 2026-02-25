@@ -49,12 +49,13 @@ public sealed class TruckRouteService : ITruckRouteService
 
     private async Task<Truck> FindTruckAsync(string areaId, TrashType trashType)
     {
+        // Find truck by area (one truck per area covers all container types)
         var truck = await _truckRepo
             .GetAllAttached()
-            .FirstOrDefaultAsync(t => t.AreaId == areaId && t.TrashType == trashType);
+            .FirstOrDefaultAsync(t => t.AreaId == areaId);
 
         return truck ?? throw new InvalidOperationException(
-            $"No truck found for area '{areaId}' and type '{trashType}'.");
+            $"No truck found for area '{areaId}'.");
     }
 
     private async Task<List<TrashContainer>> GetCandidateContainersAsync(string areaId, TrashType trashType)
@@ -189,8 +190,8 @@ public sealed class TruckRouteService : ITruckRouteService
                 FillPercentage = c.FillPercentage,
                 LocationX = c.LocationX,
                 LocationY = c.LocationY,
-                DistanceFromPreviousKm = Math.Round(dist, 3),
-                EstimatedLoadKg = Math.Round(estLoad, 1),
+                DistanceFromPrevious = Math.Round(dist, 3),
+                EstimatedLoad = Math.Round(estLoad, 1),
                 TrashType = c.TrashType,
                 Status = c.Status
             });
@@ -209,10 +210,10 @@ public sealed class TruckRouteService : ITruckRouteService
             AreaId = areaId,
             TrashType = trashType,
             Route = stops,
-            TotalDistanceKm = Math.Round(total, 2),
-            TotalLoadKg = Math.Round(load, 1),
-            TruckCapacityKg = truck.Capacity,
-            CapacityUtilizationPercent = Math.Round(load / truck.Capacity * 100, 1),
+            TotalDistance = Math.Round(total, 2),
+            TotalLoad = Math.Round(load, 1),
+            TruckCapacity = truck.Capacity,
+            CapacityUtilization = Math.Round(load / truck.Capacity * 100, 1),
             ContainersCount = ordered.Count,
             EstimatedTimeMinutes = Math.Round(timeMinutes, 1),
             Message = $"Dijkstra TSP: {ordered.Count} контейнера, {Math.Round(total, 1)} км"

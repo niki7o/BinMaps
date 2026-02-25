@@ -43,7 +43,7 @@
 
 
 .map-page {
-  height: 100vh;
+  height: calc(100vh - 64px);
   width: 100%;
   overflow: hidden;
   background: var(--bg-primary);
@@ -55,7 +55,10 @@
   display: flex;
   height: 100%;
   position: relative;
+  overflow: hidden;
 }
+
+.map-layout > .edge-handle { }  /* direct flex children — stretch naturally */
 
 
 
@@ -1519,3 +1522,111 @@
   0%,100% { transform: translateY(0)   scale(1); }
   50%      { transform: translateY(-6px) scale(1.04); }
 }
+
+/* ── Panel close button ─────────────────────────────────────── */
+.panel-header {
+  position: relative;
+}
+
+.panel-close {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 8px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.panel-close:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+}
+
+.panel-close svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Sidebar edge handles (collapse / expand) ───────────────── */
+.edge-handle {
+  position: relative;
+  flex-shrink: 0;
+  width: 16px;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1001;
+  border: none;
+  background: transparent;
+  padding: 0;
+  transition: width 0.2s ease, background 0.2s ease;
+  color: rgba(148, 163, 184, 0.35);
+}
+
+.edge-handle::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.2s ease;
+  opacity: 0;
+}
+
+.edge-handle--left {
+  order: -1;     /* sits between left sidebar and map */
+  border-right: 1px solid rgba(16, 185, 129, 0.12);
+  background: linear-gradient(90deg,
+    rgba(30, 41, 59, 0.6) 0%,
+    rgba(15, 23, 42, 0.4) 100%);
+}
+
+.edge-handle--right {
+  order: 99;     /* sits between map and right sidebar */
+  border-left: 1px solid rgba(59, 130, 246, 0.12);
+  background: linear-gradient(90deg,
+    rgba(15, 23, 42, 0.4) 0%,
+    rgba(30, 41, 59, 0.6) 100%);
+}
+
+.edge-handle--left:hover {
+  width: 22px;
+  background: linear-gradient(90deg,
+    rgba(16, 185, 129, 0.08) 0%,
+    rgba(30, 41, 59, 0.6) 100%);
+  border-right-color: rgba(16, 185, 129, 0.35);
+  color: var(--primary-eco);
+}
+
+.edge-handle--right:hover {
+  width: 22px;
+  background: linear-gradient(90deg,
+    rgba(30, 41, 59, 0.6) 0%,
+    rgba(59, 130, 246, 0.08) 100%);
+  border-left-color: rgba(59, 130, 246, 0.35);
+  color: var(--primary-tech);
+}
+
+.edge-handle svg {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+  opacity: 0.5;
+}
+
+.edge-handle:hover svg {
+  opacity: 1;
+}
+
+/* When panel is OPEN: flip chevron to indicate "close" direction */
+.edge-handle--left.is-open svg  { transform: scaleX(-1); }
+.edge-handle--right.is-open svg { transform: scaleX(-1); }

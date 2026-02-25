@@ -1,14 +1,16 @@
 <div class="map-page">
   <div class="map-layout">
-    
-   
-    <aside class="map-sidebar left" *ngIf="(isUser || isDriver) && !routeActive">
+
+    <aside class="map-sidebar left" *ngIf="(isUser || isDriver) && !routeActive && showReportPanel">
       <div class="sidebar-panel">
         <div class="panel-header">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
           </svg>
           <h2>Докладване</h2>
+          <button class="panel-close" (click)="toggleReportPanel(false)" title="Затвори">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
 
         <div class="panel-content">
@@ -91,7 +93,7 @@
     </aside>
 
     
-    <aside class="map-sidebar right" *ngIf="isDriver">
+    <aside class="map-sidebar right" *ngIf="isDriver && showRoutePanel">
       <div class="sidebar-panel">
         <div class="panel-header">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -101,6 +103,9 @@
             <circle cx="18.5" cy="18.5" r="2.5"/>
           </svg>
           <h2>{{ routeActive ? 'Навигация' : 'Генериране на маршрут' }}</h2>
+          <button class="panel-close" (click)="toggleRoutePanel(false)" title="Затвори">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
 
      
@@ -204,7 +209,30 @@
       </div>
     </aside>
 
-    
+    <!-- Left edge handle: always visible when user/driver (outside routeActive) -->
+    <button
+      class="edge-handle edge-handle--left"
+      [class.is-open]="showReportPanel"
+      *ngIf="(isUser || isDriver) && !routeActive"
+      (click)="toggleReportPanel(!showReportPanel)"
+      [title]="showReportPanel ? 'Затвори' : 'Отвори докладване'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </button>
+
+    <!-- Right edge handle: always visible for drivers -->
+    <button
+      class="edge-handle edge-handle--right"
+      [class.is-open]="showRoutePanel"
+      *ngIf="isDriver"
+      (click)="toggleRoutePanel(!showRoutePanel)"
+      [title]="showRoutePanel ? 'Затвори' : 'Отвори маршрут'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
+
     <main class="map-container">
       <div class="map-style-switcher">
         <button 

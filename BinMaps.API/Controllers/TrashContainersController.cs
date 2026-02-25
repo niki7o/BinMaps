@@ -1,9 +1,11 @@
 ﻿using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
+using BinMaps.Infrastructure.Hubs;
 using BinMaps.Infrastructure.Repository;
 using BinMaps.Shared.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace BinMaps.API.Controllers;
@@ -52,8 +54,8 @@ public sealed class TrashContainersController : ControllerBase
             c.Capacity,
             c.LocationX,
             c.LocationY,
-            TrashType = c.TrashType.ToString(),
-            Status = c.Status.ToString(),
+            c.TrashType,
+            c.Status,
             c.HasSensor,
             c.Temperature,
             c.BatteryPercentage
@@ -80,8 +82,8 @@ public sealed class TrashContainersController : ControllerBase
             container.Capacity,
             container.LocationX,
             container.LocationY,
-            TrashType = container.TrashType.ToString(),
-            Status = container.Status.ToString(),
+            container.TrashType,
+            container.Status,
             container.HasSensor,
             container.Temperature,
             container.BatteryPercentage
@@ -96,7 +98,9 @@ public sealed class TrashContainersController : ControllerBase
     [Authorize(Roles = "Driver,Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> EmptyContainer([FromRoute] int id)
+    public async Task<IActionResult> EmptyContainer(
+        [FromRoute] int id,
+        [FromServices] IHubContext<ContainerHub> hubContext)
     {
         var container = await _containerRepo.GetByIdAsync(id);
         if (container is null)
@@ -105,6 +109,19 @@ public sealed class TrashContainersController : ControllerBase
         container.FillPercentage = 0;
         container.Status = TrashContainerStatus.Active;
         await _containerRepo.UpdateAsync(container);
+
+        // Notify all clients immediately via SignalR so the map updates instantly
+        await hubContext.Clients.All.SendAsync("ContainersUpdated", new[]
+        {
+            new
+            {
+                Id            = id,
+                FillPercentage = 0.0,
+                Temperature   = container.Temperature,
+                BatteryPercentage = container.BatteryPercentage,
+                Status        = (int)TrashContainerStatus.Active
+            }
+        });
 
         return NoContent();
     }

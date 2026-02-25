@@ -1,5 +1,47 @@
-<app-header></app-header>
+<div class="app-wrapper">
+  <app-header></app-header>
 
-<main class="app-content">
-  <router-outlet></router-outlet>
-</main>
+  <main class="app-content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="footer" *ngIf="!isMapRoute()">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-logo">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <path d="M14 2L24 8V20L14 26L4 20V8L14 2Z" stroke="#10b981" stroke-width="1.5" fill="none"/>
+              <circle cx="14" cy="14" r="3.5" fill="#10b981"/>
+              <circle cx="14" cy="14" r="1.5" fill="#0f172a"/>
+            </svg>
+            <span>Bin<span style="color:#10b981">Maps</span></span>
+          </div>
+          <p class="footer-desc">Интелигентна система за управление на отпадъци в реално време. Оптимизиране на маршрути, мониторинг на контейнери и екологична ефективност.</p>
+        </div>
+
+        <div class="footer-col">
+          <h4>Навигация</h4>
+          <ul>
+            <li><a routerLink="/">Начало</a></li>
+            <li><a routerLink="/map">Карта</a></li>
+            <li><a routerLink="/analytics">Анализ</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Акаунт</h4>
+          <ul>
+            <li><a routerLink="/login">Вход</a></li>
+            <li><a routerLink="/register">Регистрация</a></li>
+            <li><a routerLink="/profile">Профил</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2025 BinMaps — Умни решения за по-чист град</p>
+      </div>
+    </div>
+  </footer>
+</div>

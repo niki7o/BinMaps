@@ -12,8 +12,8 @@ namespace BinMaps.Shared.DTOs
         public double FillPercentage { get; set; }
         public double LocationX { get; set; }
         public double LocationY { get; set; }
-        public double DistanceFromPreviousKm { get; set; }
-        public double EstimatedLoadKg { get; set; }
+        public double DistanceFromPrevious { get; set; }
+        public double EstimatedLoad { get; set; }
         public TrashType TrashType { get; set; }
         public TrashContainerStatus Status { get; set; }
     }
