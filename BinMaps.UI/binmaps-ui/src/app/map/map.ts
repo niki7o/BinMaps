@@ -53,13 +53,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   });
 
   private allBins: Bin[]     = [];
-  private activeFilter       = { type: 'all', fill: 'all' };
+  private activeFilter       = { type: 'all', fill: 'all', zone: 'all' };
+  private filterEl?: HTMLElement;
   private routeLine?:          L.Polyline;
   private routeMarkers:        L.Marker[] = [];
   private truckMarker?:        L.Marker;
   private selectedBinForReport: Bin | null = null;
   private destroy$           = new Subject<void>();
   private realRouteCoords:     [number, number][] = [];
+  private searchMarker?:       L.Marker;
+  private searchCircles:       L.Circle[] = [];
 
   reportImagePreview: string | null = null;
   reportDescription  = '';
@@ -143,7 +146,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.baseLayers['dark']      = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png');
     this.baseLayers['terrain']   = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png');
     this.baseLayers['satellite'] = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
-    const saved = localStorage.getItem('mapStyle') || 'standard';
+    const saved = localStorage.getItem('mapStyle') || 'dark';
     this.currentMapStyle = saved;
     this.baseLayers[this.currentMapStyle].addTo(this.map);
     this.map.addLayer(this.cluster);
@@ -158,13 +161,18 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   private loadBins() {
     this.http.get<Bin[]>(`${this.API_URL}/containers`).subscribe({
-      next: bins => { this.allBins = bins; this.renderBins(bins); },
+      next: bins => {
+        this.allBins = bins;
+        this.renderBins(bins);
+        setTimeout(() => this.populateZoneFilter(bins), 250);
+      },
       error: e => console.error(e)
     });
   }
 
   private filtered(): Bin[] {
     let b = this.allBins;
+    if (this.activeFilter.zone !== 'all') b = b.filter(x => x.areaId === this.activeFilter.zone);
     if (this.activeFilter.type !== 'all') b = b.filter(x => x.trashType === +this.activeFilter.type);
     if (this.activeFilter.fill === 'low')    b = b.filter(x => x.fillPercentage < 40);
     if (this.activeFilter.fill === 'medium') b = b.filter(x => x.fillPercentage >= 40 && x.fillPercentage <= 70);
@@ -228,63 +236,199 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
           iconSize: [32, 32], iconAnchor: [16, 16]
         })
       }).addTo(this.map);
-      m.bindPopup(`<div class="route-popup"><strong>Спирка ${s.stopNumber}</strong><p>#${s.id} · ${s.fillPercentage.toFixed(0)}%</p><p>${s.estimatedLoad.toFixed(1)} л · ${s.distanceFromPrevious.toFixed(2)} км</p></div>`);
+      const fc = s.fillPercentage >= 85 ? '#ef4444' : s.fillPercentage >= 65 ? '#f97316' : s.fillPercentage >= 45 ? '#f59e0b' : '#10b981';
+      m.bindPopup(`
+        <div class="bpp">
+          <div class="bpp-head">
+            <div class="bpp-head-left">
+              <img src="${this.binIcon(s.trashType)}" width="20" height="20" alt="bin"/>
+              <span class="bpp-title">Спирка ${s.stopNumber}</span>
+            </div>
+            <span class="bpp-badge" style="background:rgba(59,130,246,0.18);color:#60a5fa;border:1px solid rgba(59,130,246,0.28)">#${s.id}</span>
+          </div>
+          <div class="bpp-fill">
+            <div class="bpp-fill-row">
+              <span class="bpp-lbl">Запълване</span>
+              <span class="bpp-fill-pct" style="color:${fc}">${s.fillPercentage.toFixed(0)}%</span>
+            </div>
+            <div class="bpp-track">
+              <div class="bpp-bar" style="width:${s.fillPercentage}%;background:${fc};box-shadow:0 0 8px ${fc}88"></div>
+            </div>
+          </div>
+          <div class="bpp-rows">
+            <div class="bpp-row"><span>📦</span><span>Товар</span><span style="color:#cbd5e1;font-weight:700">${s.estimatedLoad.toFixed(1)} л</span></div>
+            <div class="bpp-row"><span>📍</span><span>Разстояние</span><span style="color:#cbd5e1;font-weight:700">${s.distanceFromPrevious.toFixed(2)} км</span></div>
+          </div>
+        </div>`, { maxWidth: 280, className: 'bpp-container' });
       this.routeMarkers.push(m);
     });
     this.map.fitBounds(L.latLngBounds(route.map(s => [s.locationY, s.locationX] as [number, number])));
   }
 
   async startNavigation() {
-    if (!this.routeResult?.route.length || !this.realRouteCoords.length) { alert('Маршрутът не е готов'); return; }
+    if (!this.routeResult?.route.length || !this.realRouteCoords.length) {
+      alert('Маршрутът не е готов'); return;
+    }
     this.navigationActive = true; this.currentStop = 0; this.currentTruckLoad = 0;
-
-    // Use the real truck.svg asset
-    const truckIcon = L.divIcon({
-      className: 'truck-marker-active',
-      html: `<div class="truck-icon-wrap"><img src="${this.truckSvg}" width="40" height="40" /></div>`,
-      iconSize: [52, 52], iconAnchor: [26, 26]
-    });
-
     const route = this.routeResult.route;
-    this.truckMarker = L.marker(this.realRouteCoords[0], { icon: truckIcon }).addTo(this.map);
-    let si = 0;
     const token = this.getToken();
 
-    for (let i = 0; i < this.realRouteCoords.length; i++) {
-      if (!this.navigationActive) break;
-      const coord = this.realRouteCoords[i];
-      this.truckMarker.setLatLng(coord);
-      // No auto-pan — user controls the map view freely
+    // ── Detailed top-down garbage truck SVG ─────────────────────────────────
+    const truckHtml = `
+      <div class="truck-marker-wrap">
+        <div class="truck-marker-glow"></div>
+        <svg class="truck-svg" width="26" height="50" viewBox="0 0 26 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Cab front bumper -->
+          <rect x="3" y="0" width="20" height="3" rx="1.5" fill="#047857"/>
+          <!-- Cab body -->
+          <rect x="1" y="3" width="24" height="13" rx="2" fill="#059669"/>
+          <!-- Split windshield -->
+          <rect x="4" y="4.5" width="8" height="9" rx="1.5" fill="rgba(167,243,208,0.88)"/>
+          <rect x="14" y="4.5" width="8" height="9" rx="1.5" fill="rgba(167,243,208,0.88)"/>
+          <!-- Windshield divider -->
+          <rect x="12" y="4" width="2" height="10" rx="1" fill="#047857"/>
+          <!-- Cab/body separator -->
+          <rect x="0" y="16" width="26" height="2.5" fill="#047857"/>
+          <!-- Cargo body -->
+          <rect x="1" y="18.5" width="24" height="24" rx="1.5" fill="#10b981"/>
+          <!-- Cargo ribs -->
+          <rect x="1" y="24" width="24" height="1.5" fill="rgba(0,0,0,0.10)"/>
+          <rect x="1" y="29.5" width="24" height="1.5" fill="rgba(0,0,0,0.10)"/>
+          <rect x="1" y="35" width="24" height="1.5" fill="rgba(0,0,0,0.10)"/>
+          <!-- Rear compactor panel -->
+          <rect x="1" y="42.5" width="24" height="6.5" rx="1.5" fill="#047857"/>
+          <rect x="5" y="44" width="16" height="3.5" rx="1" fill="rgba(0,0,0,0.18)"/>
+          <rect x="8" y="44.5" width="4" height="2.5" rx="0.5" fill="rgba(255,255,255,0.12)"/>
+          <rect x="14" y="44.5" width="4" height="2.5" rx="0.5" fill="rgba(255,255,255,0.12)"/>
+          <!-- Front axle wheels -->
+          <rect x="-1" y="6" width="4" height="9" rx="2" fill="#0f172a"/>
+          <rect x="-0.5" y="7" width="3" height="7" rx="1.5" fill="#1e293b"/>
+          <rect x="23" y="6" width="4" height="9" rx="2" fill="#0f172a"/>
+          <rect x="23.5" y="7" width="3" height="7" rx="1.5" fill="#1e293b"/>
+          <!-- Rear dual-axle left -->
+          <rect x="-1" y="21" width="4" height="8" rx="2" fill="#0f172a"/>
+          <rect x="-0.5" y="22" width="3" height="6" rx="1.5" fill="#1e293b"/>
+          <rect x="-1" y="31.5" width="4" height="8" rx="2" fill="#0f172a"/>
+          <rect x="-0.5" y="32.5" width="3" height="6" rx="1.5" fill="#1e293b"/>
+          <!-- Rear dual-axle right -->
+          <rect x="23" y="21" width="4" height="8" rx="2" fill="#0f172a"/>
+          <rect x="23.5" y="22" width="3" height="6" rx="1.5" fill="#1e293b"/>
+          <rect x="23" y="31.5" width="4" height="8" rx="2" fill="#0f172a"/>
+          <rect x="23.5" y="32.5" width="3" height="6" rx="1.5" fill="#1e293b"/>
+        </svg>
+      </div>`;
 
-      while (si < route.length && this.dist(coord, [route[si].locationY, route[si].locationX]) < 0.20) {
+    const truckIcon = L.divIcon({ className: '', html: truckHtml, iconSize: [56, 56], iconAnchor: [28, 28] });
+
+    // ── Animate along the ALREADY-DRAWN route polyline ───────────────────────
+    // Compute distance-proportional frame count (70 frames/km, min 250)
+    const totalKm = this.realRouteCoords.reduce(
+      (acc, c, i) => i > 0 ? acc + this.dist(this.realRouteCoords[i - 1], c) : 0, 0);
+    const FRAMES = Math.max(250, Math.round(totalKm * 70));
+    const path = this.resamplePath(this.realRouteCoords, FRAMES);
+
+    // Nearest frame index for each stop → enforce strict order
+    const stopIndices: number[] = route.map(stop => {
+      let best = 0, bestD = Infinity;
+      path.forEach((coord, idx) => {
+        const d = this.dist(coord, [stop.locationY, stop.locationX]);
+        if (d < bestD) { bestD = d; best = idx; }
+      });
+      return best;
+    });
+    const stride = Math.max(1, Math.floor(FRAMES / (route.length + 1)));
+    for (let k = 1; k < stopIndices.length; k++) {
+      if (stopIndices[k] <= stopIndices[k - 1]) stopIndices[k] = stopIndices[k - 1] + stride;
+      if (stopIndices[k] >= FRAMES) stopIndices[k] = FRAMES - 1;
+    }
+
+    this.map.panTo(path[0], { animate: true, duration: 0.8 });
+    this.truckMarker = L.marker(path[0], { icon: truckIcon, zIndexOffset: 2000 }).addTo(this.map);
+
+    let si = 0;
+    for (let i = 0; i < FRAMES; i++) {
+      if (!this.navigationActive) break;
+
+      this.truckMarker.setLatLng(path[i]);
+
+      // Rotate to face direction of travel
+      if (i > 0) {
+        const deg = this.bearing(path[i - 1], path[i]);
+        const el  = this.truckMarker.getElement();
+        const wrap = el?.querySelector('.truck-marker-wrap') as HTMLElement | null;
+        if (wrap) wrap.style.transform = `rotate(${deg}deg)`;
+      }
+
+      // Pan map when truck nears viewport edge (25% threshold)
+      if (i % 20 === 0) {
+        const b = this.map.getBounds();
+        const [lat, lng] = path[i];
+        const latR = b.getNorth() - b.getSouth();
+        const lngR = b.getEast()  - b.getWest();
+        const p = 0.22;
+        if (lat < b.getSouth() + latR * p || lat > b.getNorth() - latR * p ||
+            lng < b.getWest()  + lngR * p || lng > b.getEast()  - lngR * p) {
+          this.map.panTo(path[i], { animate: true, duration: 0.45, easeLinearity: 1 });
+        }
+      }
+
+      // Collect all stops whose frame index we've reached
+      while (si < route.length && i >= stopIndices[si]) {
         this.currentStop      = si + 1;
         this.currentTruckLoad += route[si].estimatedLoad;
-        if (this.routeMarkers[si]) this.routeMarkers[si].setIcon(L.divIcon({
-          className: 'route-stop-marker-completed',
-          html: `<div class="stop-number">✓</div>`,
-          iconSize: [32, 32], iconAnchor: [16, 16]
-        }));
-        // Always update the bin visually immediately (regardless of API result)
+        if (this.routeMarkers[si]) {
+          this.routeMarkers[si].setIcon(L.divIcon({
+            className: 'route-stop-marker-completed',
+            html: `<div class="stop-number">✓</div>`,
+            iconSize: [32, 32], iconAnchor: [16, 16]
+          }));
+        }
         const bin = this.allBins.find(b => b.id === route[si].id);
         if (bin) { bin.fillPercentage = Math.random() * 6 + 2; this.renderBins(this.filtered()); }
-        // Send empty to backend with auth token
         const stopId = route[si].id;
-        try {
-          await this.http.put(
-            `${this.API_URL}/containers/${stopId}/empty`, {},
-            token ? { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) } : {}
-          ).toPromise();
-        } catch {}
         si++;
-        await new Promise(r => setTimeout(r, 500));
+        // Fire-and-forget API — don't block the animation loop
+        this.http.put(
+          `${this.API_URL}/containers/${stopId}/empty`, {},
+          token ? { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) } : {}
+        ).toPromise().catch(() => {});
       }
-      await new Promise(r => setTimeout(r, 40));
+
+      await new Promise(r => setTimeout(r, 22));
     }
 
     const load = this.currentTruckLoad;
     this.navigationActive = false;
     alert(`Маршрут завършен!\nСпирки: ${route.length}\nСъбран товар: ${load.toFixed(0)} л`);
     this.currentTruckLoad = 0;
+  }
+
+  // Resample a polyline to `count` equally-spaced points (constant visual speed).
+  private resamplePath(coords: [number, number][], count: number): [number, number][] {
+    if (coords.length < 2) return coords;
+    const cum = [0];
+    for (let i = 1; i < coords.length; i++) cum.push(cum[i - 1] + this.dist(coords[i - 1], coords[i]));
+    const total = cum[cum.length - 1];
+    if (total === 0) return coords;
+    const out: [number, number][] = [];
+    for (let k = 0; k < count; k++) {
+      const d = (k / (count - 1)) * total;
+      let lo = 0, hi = cum.length - 1;
+      while (lo < hi - 1) { const mid = (lo + hi) >> 1; if (cum[mid] <= d) lo = mid; else hi = mid; }
+      const t = (cum[hi] - cum[lo]) > 0 ? (d - cum[lo]) / (cum[hi] - cum[lo]) : 0;
+      const [la, ln] = coords[lo], [lb, ln2] = coords[hi];
+      out.push([la + (lb - la) * t, ln + (ln2 - ln) * t]);
+    }
+    return out;
+  }
+
+  // Compass bearing (degrees clockwise from North) between two [lat, lon] points.
+  private bearing(a: [number, number], b: [number, number]): number {
+    const [la, lo] = a.map(x => x * Math.PI / 180);
+    const [lb, lo2] = b.map(x => x * Math.PI / 180);
+    const y = Math.sin(lo2 - lo) * Math.cos(lb);
+    const x = Math.cos(la) * Math.sin(lb) - Math.sin(la) * Math.cos(lb) * Math.cos(lo2 - lo);
+    return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
   }
 
   // Interpolate sparse coords so animation always has ≥ stepsPerSegment frames per leg
@@ -331,6 +475,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     if (this.truckMarker)  { this.map.removeLayer(this.truckMarker);  this.truckMarker  = undefined; }
     this.routeMarkers.forEach(m => this.map.removeLayer(m));
     this.routeMarkers = []; this.realRouteCoords = [];
+    this.clearSearch();
   }
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -483,49 +628,277 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         const el = L.DomUtil.create('div', 'map-filter-control');
         L.DomEvent.disableClickPropagation(el);
         el.innerHTML = `
-          <div class="filter-header">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-            <span>Филтри</span>
-          </div>
-          <div class="filter-section">
-            <label class="filter-label">Тип отпадък</label>
-            <div class="filter-options">
-              <button class="filter-btn active" data-type="all">Всички</button>
-              <button class="filter-btn" data-type="1">Пластмаса</button>
-              <button class="filter-btn" data-type="2">Хартия</button>
-              <button class="filter-btn" data-type="3">Стъкло</button>
-              <button class="filter-btn" data-type="0">Смесен</button>
+          <div class="fc-wrap">
+
+            <!-- ① Search hero -->
+            <div class="fc-search">
+              <svg class="fc-search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input id="bin-search-input" type="text"
+                     placeholder="Адрес или #62…"
+                     class="fc-search-inp"/>
+              <button id="bin-search-btn" class="fc-search-go" title="Търси">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </button>
             </div>
-          </div>
-          <div class="filter-section">
-            <label class="filter-label">Запълване</label>
-            <div class="filter-options">
-              <button class="filter-btn active" data-fill="all">Всички</button>
-              <button class="filter-btn" data-fill="low">&lt;40%</button>
-              <button class="filter-btn" data-fill="medium">40–70%</button>
-              <button class="filter-btn" data-fill="high">&gt;70%</button>
+
+            <div class="fc-sep"></div>
+
+            <!-- ② Filter header + Reset -->
+            <div class="fc-hdr">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+              </svg>
+              <span>Филтри</span>
+              <button id="fc-reset" class="fc-reset-btn" style="display:none">↺ Изчисти</button>
             </div>
+
+            <!-- ③ Zone -->
+            <div class="fc-block">
+              <div class="fc-blk-lbl">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <span>Зона</span>
+              </div>
+              <select id="zone-filter" class="fc-select">
+                <option value="all">Всички зони</option>
+              </select>
+            </div>
+
+            <!-- ④ Trash type -->
+            <div class="fc-block">
+              <div class="fc-blk-lbl">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+                <span>Тип отпадък</span>
+              </div>
+              <div class="fc-pills">
+                <button class="fc-pill fc-pill--all active" data-type="all">Всички</button>
+                <button class="fc-pill fc-pill--t0" data-type="0">
+                  <span class="fc-dot" style="background:#94a3b8;box-shadow:0 0 4px #94a3b888"></span>Смесен
+                </button>
+                <button class="fc-pill fc-pill--t1" data-type="1">
+                  <span class="fc-dot" style="background:#f59e0b;box-shadow:0 0 4px #f59e0b88"></span>Пласт.
+                </button>
+                <button class="fc-pill fc-pill--t2" data-type="2">
+                  <span class="fc-dot" style="background:#60a5fa;box-shadow:0 0 4px #60a5fa88"></span>Хартия
+                </button>
+                <button class="fc-pill fc-pill--t3" data-type="3">
+                  <span class="fc-dot" style="background:#22d3ee;box-shadow:0 0 4px #22d3ee88"></span>Стъкло
+                </button>
+              </div>
+            </div>
+
+            <!-- ⑤ Fill level -->
+            <div class="fc-block fc-block--last">
+              <div class="fc-blk-lbl">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="20" x2="18" y2="10"/>
+                  <line x1="12" y1="20" x2="12" y2="4"/>
+                  <line x1="6" y1="20" x2="6" y2="14"/>
+                </svg>
+                <span>Запълване</span>
+              </div>
+              <div class="fc-pills fc-pills--fill">
+                <button class="fc-pill fc-pill--all active" data-fill="all">Всички</button>
+                <button class="fc-pill fc-pill--flow" data-fill="low">
+                  <span class="fc-fillbar" style="--fc-fill-w:28%;--fc-fill-c:#10b981"></span>&lt;40%
+                </button>
+                <button class="fc-pill fc-pill--fmed" data-fill="medium">
+                  <span class="fc-fillbar" style="--fc-fill-w:55%;--fc-fill-c:#f59e0b"></span>40–70%
+                </button>
+                <button class="fc-pill fc-pill--fhi" data-fill="high">
+                  <span class="fc-fillbar" style="--fc-fill-w:86%;--fc-fill-c:#ef4444"></span>&gt;70%
+                </button>
+              </div>
+            </div>
+
           </div>`;
+
+        self.filterEl = el;
+
         setTimeout(() => {
+          const resetBtn = el.querySelector('#fc-reset') as HTMLElement | null;
+
+          // Show/hide reset button based on active filters
+          const checkReset = () => {
+            if (!resetBtn) return;
+            const hasFilter = self.activeFilter.type !== 'all'
+              || self.activeFilter.fill !== 'all'
+              || self.activeFilter.zone !== 'all';
+            resetBtn.style.display = hasFilter ? '' : 'none';
+          };
+
+          // Reset all filters
+          const doReset = () => {
+            self.activeFilter = { type: 'all', fill: 'all', zone: 'all' };
+            el.querySelectorAll('[data-type]').forEach(x =>
+              x.classList.toggle('active', x.getAttribute('data-type') === 'all'));
+            el.querySelectorAll('[data-fill]').forEach(x =>
+              x.classList.toggle('active', x.getAttribute('data-fill') === 'all'));
+            const zSel = el.querySelector('#zone-filter') as HTMLSelectElement | null;
+            if (zSel) zSel.value = 'all';
+            if (resetBtn) resetBtn.style.display = 'none';
+            self.renderBins(self.filtered());
+          };
+
+          resetBtn?.addEventListener('click', doReset);
+
+          // Zone select
+          const zoneSelect = el.querySelector('#zone-filter') as HTMLSelectElement;
+          zoneSelect?.addEventListener('change', e => {
+            self.activeFilter.zone = (e.target as HTMLSelectElement).value;
+            self.renderBins(self.filtered());
+            checkReset();
+          });
+
+          // Type pills
           el.querySelectorAll('[data-type]').forEach(b => b.addEventListener('click', e => {
             const v = (e.currentTarget as HTMLElement).getAttribute('data-type')!;
             self.activeFilter.type = v;
             el.querySelectorAll('[data-type]').forEach(x => x.classList.remove('active'));
             (e.currentTarget as HTMLElement).classList.add('active');
             self.renderBins(self.filtered());
+            checkReset();
           }));
+
+          // Fill pills
           el.querySelectorAll('[data-fill]').forEach(b => b.addEventListener('click', e => {
             const v = (e.currentTarget as HTMLElement).getAttribute('data-fill')!;
             self.activeFilter.fill = v;
             el.querySelectorAll('[data-fill]').forEach(x => x.classList.remove('active'));
             (e.currentTarget as HTMLElement).classList.add('active');
             self.renderBins(self.filtered());
+            checkReset();
           }));
-        }, 100);
+
+          // Address / bin search
+          const searchInput = el.querySelector('#bin-search-input') as HTMLInputElement;
+          const searchBtn   = el.querySelector('#bin-search-btn')   as HTMLButtonElement;
+          const doSearch    = () => self.searchNearestBin(searchInput.value);
+          searchBtn?.addEventListener('click', doSearch);
+          searchInput?.addEventListener('keydown', (e: KeyboardEvent) => { if (e.key === 'Enter') doSearch(); });
+        }, 120);
+
         return el;
       }
     });
     new FC().addTo(this.map);
+  }
+
+  // Populate the zone <select> once bins are loaded
+  private populateZoneFilter(bins: Bin[]) {
+    if (!this.filterEl) return;
+    const select = this.filterEl.querySelector('#zone-filter') as HTMLSelectElement;
+    if (!select) return;
+    const zones = [...new Set(bins.map(b => b.areaId))].sort();
+    select.innerHTML = '<option value="all">Всички зони</option>';
+    zones.forEach(z => {
+      const opt = document.createElement('option');
+      opt.value = z; opt.textContent = z;
+      select.appendChild(opt);
+    });
+  }
+
+  // Geocode address → show pin + radius ring + highlight nearby bins with circles.
+  // #N shortcut → jump directly to bin N (no circles).
+  async searchNearestBin(query: string) {
+    if (!query.trim()) return;
+    const q = query.trim();
+    this.clearSearch();
+
+    // ── Direct bin-ID shortcut: #62 ──────────────────────────────────────
+    if (/^#\d+$/.test(q)) {
+      const bin = this.allBins.find(b => b.id === parseInt(q.slice(1), 10));
+      if (bin) { this.highlightBin(bin); return; }
+      alert(`Контейнер ${q} не е намерен`); return;
+    }
+
+    // ── Address geocoding (Nominatim, Sofia context) ──────────────────────
+    let lat: number, lon: number;
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q + ', София, България')}&format=json&limit=1&accept-language=bg`;
+      const res = await (await fetch(url)).json();
+      if (!res?.length) { alert('Адресът не е намерен'); return; }
+      lat = parseFloat(res[0].lat);
+      lon = parseFloat(res[0].lon);
+    } catch { alert('Грешка при геокодиране'); return; }
+
+    // Pin at geocoded address
+    this.searchMarker = L.marker([lat, lon], {
+      icon: L.divIcon({
+        className: '',
+        html: `<div class="search-pin">
+                 <div class="search-pin-ring"></div>
+                 <div class="search-pin-ring search-pin-ring--2"></div>
+                 <div class="search-pin-dot"></div>
+               </div>`,
+        iconSize: [40, 40], iconAnchor: [20, 20]
+      }),
+      zIndexOffset: 1500
+    }).addTo(this.map);
+
+    // Dashed radius circle (500 m)
+    const RADIUS_M = 500;
+    const radiusCircle = L.circle([lat, lon], {
+      radius: RADIUS_M,
+      color: '#3b82f6', weight: 1.5, opacity: 0.55,
+      fill: true, fillColor: '#3b82f6', fillOpacity: 0.04,
+      dashArray: '8 5'
+    } as any).addTo(this.map);
+    this.searchCircles.push(radiusCircle);
+
+    // Highlight every bin inside the radius
+    const nearby: Bin[] = [];
+    this.allBins.forEach(bin => {
+      const dm = this.dist([lat, lon], [bin.locationY, bin.locationX]) * 1000; // km → m
+      if (dm <= RADIUS_M) {
+        nearby.push(bin);
+        const c = L.circle([bin.locationY, bin.locationX], {
+          radius: 22,
+          color: '#f59e0b', weight: 2.5, opacity: 0.9,
+          fill: true, fillColor: '#f59e0b', fillOpacity: 0.18,
+          className: 'bin-nearby-circle'
+        } as any).addTo(this.map);
+        c.on('click', () => {
+          this.selectedBinForReport = bin;
+          const el = document.getElementById('selected-bin-id') as HTMLInputElement;
+          if (el) el.value = `Контейнер #${bin.id}`;
+        });
+        this.searchCircles.push(c);
+      }
+    });
+
+    // Fly to address, fit to show entire radius
+    this.map.flyToBounds(
+      L.latLngBounds([[lat - 0.006, lon - 0.008], [lat + 0.006, lon + 0.008]]),
+      { animate: true, duration: 0.9 }
+    );
+
+    // If there's exactly 1 nearby bin, auto-open its popup
+    if (nearby.length === 1) setTimeout(() => this.highlightBin(nearby[0]), 1100);
+  }
+
+  private clearSearch() {
+    if (this.searchMarker) { this.map.removeLayer(this.searchMarker); this.searchMarker = undefined; }
+    this.searchCircles.forEach(c => this.map.removeLayer(c));
+    this.searchCircles = [];
+  }
+
+  private highlightBin(bin: Bin) {
+    this.map.setView([bin.locationY, bin.locationX], 17, { animate: true, duration: 0.7 });
+    setTimeout(() => {
+      let found: any = null;
+      this.cluster.eachLayer((layer: any) => { if (layer.options?.binId === bin.id) found = layer; });
+      if (found) this.cluster.zoomToShowLayer(found, () => found.openPopup());
+    }, 850);
   }
 
   // ── Report ────────────────────────────────────────────────────────────────
