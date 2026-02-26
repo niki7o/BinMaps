@@ -299,10 +299,19 @@ code, pre {
   border-color: var(--border-eco-soft);
   box-shadow: var(--shadow-eco-sm), var(--shadow-lg);
 }
-
-.card--flat {
-  /* No hover lift — for static content cards */
+.hero__real-map {
+  height: 100%;
+  width: 100%;
+  z-index: 1;
 }
+
+.hero__map-body {
+  height: 280px;
+  position: relative;
+  overflow: hidden;
+  background: #0a1118;
+}
+
 .card--flat:hover {
   transform: none;
   box-shadow: var(--shadow-md);

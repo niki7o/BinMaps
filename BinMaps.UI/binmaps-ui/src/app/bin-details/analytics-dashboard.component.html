@@ -1,199 +1,339 @@
-<div class="analytics">
+<div class="an-root">
 
-  <!-- Header -->
-  <div class="analytics__header">
-    <div>
-      <p class="section-label">Табло</p>
-      <h1 class="analytics__title">Анализ и статистика</h1>
+  <!-- ═══ HEADER ═════════════════════════════════════════════════════════════ -->
+  <div class="an-header">
+    <div class="an-header__left">
+      <p class="an-eyebrow">BinMaps · Аналитика</p>
+      <h1 class="an-title">
+        Градска топлинна карта
+        <span class="an-title-accent">&amp; анализ</span>
+      </h1>
     </div>
-    <div class="analytics__header-actions">
-      <div class="analytics__live">
-        <div class="live-dot"></div>
-        <span>Обновява се автоматично</span>
+    <div class="an-header__right">
+      <div class="an-live-badge">
+        <div class="an-live-dot"></div>
+        <span>LIVE · {{ stats.lastUpdated }}</span>
       </div>
-      <select class="form-select" style="width:auto" [(ngModel)]="selectedZoneFilter">
-        <option value="">Всички зони</option>
-        <option *ngFor="let z of zoneStats" [value]="z.name">{{ z.name }}</option>
-      </select>
     </div>
   </div>
 
-  <!-- KPI Row -->
-  <div class="analytics__kpi-row">
+  <!-- ═══ KPI STRIP ══════════════════════════════════════════════════════════ -->
+  <div class="an-kpi-row">
 
-    <div class="kpi-card animate-slide-up" style="--i:0">
-      <div class="kpi-card__icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+    <div class="an-kpi" style="--acc:#10b981; --i:0">
+      <div class="an-kpi__ico" style="--ico:#10b981">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
       </div>
-      <div>
-        <p class="kpi-card__label">Контейнери</p>
-        <p class="kpi-card__value">{{ stats.totalBins }}</p>
-        <p class="kpi-card__trend">{{ stats.totalBins }} общо</p>
+      <div class="an-kpi__body">
+        <span class="an-kpi__lbl">Контейнери</span>
+        <strong class="an-kpi__val">{{ stats.totalBins }}</strong>
+        <span class="an-kpi__sub">в системата</span>
       </div>
     </div>
 
-    <div class="kpi-card kpi-card--warn animate-slide-up" style="--i:1">
-      <div class="kpi-card__icon" style="background:rgba(245,158,11,0.1); color:var(--status-warn); border-color:rgba(245,158,11,0.2)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <div class="an-kpi" style="--acc:#f59e0b; --i:1">
+      <div class="an-kpi__ico" style="--ico:#f59e0b">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
       </div>
-      <div>
-        <p class="kpi-card__label">Средно запълване</p>
-        <p class="kpi-card__value">{{ stats.avgFill }}%</p>
-      </div>
-    </div>
-
-    <div class="kpi-card kpi-card--danger animate-slide-up" style="--i:2">
-      <div class="kpi-card__icon" style="background:rgba(239,68,68,0.1); color:var(--status-critical); border-color:rgba(239,68,68,0.2)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      </div>
-      <div>
-        <p class="kpi-card__label">Критични</p>
-        <p class="kpi-card__value">{{ stats.criticalBins }}</p>
-        <p class="kpi-card__trend text-danger">Изискват внимание</p>
+      <div class="an-kpi__body">
+        <span class="an-kpi__lbl">Средно запълване</span>
+        <strong class="an-kpi__val">{{ stats.avgFill }}<span class="an-kpi__unit">%</span></strong>
+        <span class="an-kpi__sub">от капацитета</span>
       </div>
     </div>
 
-    <div class="kpi-card kpi-card--danger animate-slide-up" style="--i:3">
-      <div class="kpi-card__icon" style="background:rgba(239,68,68,0.1); color:#ef4444; border-color:rgba(239,68,68,0.2)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c0 0-5 6-5 11a5 5 0 0010 0c0-5-5-11-5-11z"/></svg>
+    <div class="an-kpi" style="--acc:#ef4444; --i:2">
+      <div class="an-kpi__ico" style="--ico:#ef4444">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
       </div>
-      <div>
-        <p class="kpi-card__label">Пожарна опасност</p>
-        <p class="kpi-card__value">{{ stats.onFireCount }}</p>
-        <p class="kpi-card__trend text-danger">Температура &gt;50°C</p>
+      <div class="an-kpi__body">
+        <span class="an-kpi__lbl">Критични</span>
+        <strong class="an-kpi__val" style="color:#ef4444">{{ stats.criticalBins }}</strong>
+        <span class="an-kpi__sub">над 80% запълване</span>
       </div>
     </div>
 
-    <div class="kpi-card kpi-card--cyan animate-slide-up" style="--i:4">
-      <div class="kpi-card__icon" style="background:rgba(6,182,212,0.1); color:var(--cyan); border-color:rgba(6,182,212,0.2)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+    <div class="an-kpi" style="--acc:#dc2626; --i:3">
+      <div class="an-kpi__ico" style="--ico:#dc2626">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+          <path d="M12 2S7 8 7 13a5 5 0 0010 0c0-5-5-11-5-11z"/>
+        </svg>
       </div>
-      <div>
-        <p class="kpi-card__label">IoT Покритие</p>
-        <p class="kpi-card__value">{{ stats.sensorCoverage }}%</p>
+      <div class="an-kpi__body">
+        <span class="an-kpi__lbl">Пожарна опасност</span>
+        <strong class="an-kpi__val" style="color:#dc2626">{{ stats.onFireCount }}</strong>
+        <span class="an-kpi__sub">температура &gt;50°C</span>
+      </div>
+    </div>
+
+    <div class="an-kpi" style="--acc:#06b6d4; --i:4">
+      <div class="an-kpi__ico" style="--ico:#06b6d4">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12.55a11 11 0 0114.08 0"/>
+          <path d="M1.42 9a16 16 0 0121.16 0"/>
+          <path d="M8.53 16.11a6 6 0 016.95 0"/>
+          <line x1="12" y1="20" x2="12.01" y2="20"/>
+        </svg>
+      </div>
+      <div class="an-kpi__body">
+        <span class="an-kpi__lbl">IoT Покритие</span>
+        <strong class="an-kpi__val" style="color:#06b6d4">{{ stats.sensorCoverage }}<span class="an-kpi__unit">%</span></strong>
+        <span class="an-kpi__sub">сензорни кофи</span>
+      </div>
+    </div>
+
+    <div class="an-kpi" style="--acc:#8b5cf6; --i:5">
+      <div class="an-kpi__ico" style="--ico:#8b5cf6">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 8 22 2 16 2"/><line x1="22" y1="2" x2="15" y2="9"/>
+          <path d="M9 9H2v13h13v-7"/>
+        </svg>
+      </div>
+      <div class="an-kpi__body">
+        <span class="an-kpi__lbl">Маршрути</span>
+        <strong class="an-kpi__val" style="color:#8b5cf6">{{ stats.estimatedRoutes }}</strong>
+        <span class="an-kpi__sub">прогнозирани</span>
       </div>
     </div>
 
   </div>
 
-  <!-- Zone Pills -->
-  <div class="analytics__zone-pills">
-    <button
-      *ngFor="let zone of zoneStats"
-      class="zone-pill"
-      [ngClass]="zone.loadScore >= 70 ? 'zone-pill--critical' : zone.loadScore >= 45 ? 'zone-pill--moderate' : 'zone-pill--normal'"
-      (click)="selectedZoneFilter = zone.name">
-      <span class="zone-pill__dot"></span>
-      {{ zone.name }}
-      <span class="zone-pill__load">{{ zone.loadScore | number:'1.0-0' }}</span>
-    </button>
-  </div>
+  <!-- ═══ MAIN AREA: HEATMAP + ROUTE PANEL ═══════════════════════════════════ -->
+  <div class="an-main-row">
 
-  <!-- Chart Grid -->
-  <div class="analytics__grid">
-
-    <div class="analytics__chart-card analytics__chart-card--wide">
-      <div class="chart-card__header">
+    <!-- Heatmap card -->
+    <div class="an-heat-card">
+      <div class="an-card-hdr">
         <div>
-          <h3 class="chart-card__title">Разпределение на запълване</h3>
-          <p class="chart-card__sub">Брой контейнери по ниво на запълване</p>
+          <h3 class="an-card-title">
+            <span class="an-card-title-ico">🗺</span>
+            Карта на запълване · Гъстота по зони
+          </h3>
+          <p class="an-card-sub">{{ clusters.length }} клъстера · цвят = средно запълване на района</p>
+        </div>
+        <div class="an-map-btns">
+          <button class="an-map-btn" [class.an-map-btn--on]="mapLayer==='all'"
+            (click)="setMapLayer('all')">
+            Всички
+          </button>
+          <button class="an-map-btn" [class.an-map-btn--on]="mapLayer==='critical'"
+            (click)="setMapLayer('critical')">
+            Критични
+          </button>
         </div>
       </div>
-      <div class="chart-placeholder">
+
+      <div class="an-heat-wrap">
+        <div id="hotspot-map"></div>
+        <div class="an-heat-legend">
+          <p class="an-hl-title">ЗАПЪЛВАНЕ</p>
+          <div class="an-hl-item"><div class="an-hl-dot" style="background:#10b981;box-shadow:0 0 6px #10b981"></div><span>&lt;20%&nbsp; Свободно</span></div>
+          <div class="an-hl-item"><div class="an-hl-dot" style="background:#84cc16;box-shadow:0 0 6px #84cc16"></div><span>20–38% Нормално</span></div>
+          <div class="an-hl-item"><div class="an-hl-dot" style="background:#f59e0b;box-shadow:0 0 6px #f59e0b"></div><span>38–57% Умерено</span></div>
+          <div class="an-hl-item"><div class="an-hl-dot" style="background:#f97316;box-shadow:0 0 6px #f97316"></div><span>57–73% Претоварено</span></div>
+          <div class="an-hl-item"><div class="an-hl-dot" style="background:#ef4444;box-shadow:0 0 6px #ef4444"></div><span>&gt;73%&nbsp; Критично</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Route efficiency panel -->
+    <div class="an-route-card">
+
+      <div class="an-card-hdr">
+        <div>
+          <h3 class="an-card-title">
+            <span class="an-card-title-ico">📍</span>
+            Ефективност на маршрута
+          </h3>
+          <p class="an-card-sub">Оптималност спрямо NN алгоритъм</p>
+        </div>
+      </div>
+
+      <!-- Gauge ring -->
+      <div class="an-gauge-wrap">
+        <svg class="an-gauge-svg" viewBox="0 0 120 120" aria-hidden="true">
+          <!-- track -->
+          <circle cx="60" cy="60" r="46" fill="none"
+            stroke="rgba(255,255,255,0.07)" stroke-width="13"/>
+          <!-- filled arc -->
+          <circle cx="60" cy="60" r="46" fill="none"
+            [attr.stroke]="routeEfficiencyColor"
+            stroke-width="13"
+            stroke-linecap="round"
+            transform="rotate(-90 60 60)"
+            [style.stroke-dasharray]="'289'"
+            [style.stroke-dashoffset]="getGaugeOffset()"
+            style="transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1), stroke .5s ease"/>
+          <!-- value -->
+          <text x="60" y="55" text-anchor="middle" font-family="Inter,sans-serif"
+            font-size="26" font-weight="800" fill="#f8fafc">{{ routeEfficiency }}</text>
+          <text x="60" y="73" text-anchor="middle" font-family="Inter,sans-serif"
+            font-size="11" fill="#64748b">% ефективност</text>
+        </svg>
+        <div class="an-gauge-lbl" [style.color]="routeEfficiencyColor">
+          {{ routeEfficiency >= 72 ? 'Отлична' : routeEfficiency >= 48 ? 'Добра' : 'Ниска' }}
+        </div>
+      </div>
+
+      <!-- Stats rows -->
+      <div class="an-rs-grid">
+        <div class="an-rs-row">
+          <span class="an-rs-lbl">Клъстери общо</span>
+          <span class="an-rs-val">{{ clusters.length }}</span>
+        </div>
+        <div class="an-rs-row">
+          <span class="an-rs-lbl">Критични клъстери</span>
+          <span class="an-rs-val" style="color:#ef4444">{{ criticalClusters.length }}</span>
+        </div>
+        <div class="an-rs-row">
+          <span class="an-rs-lbl">Маршрути</span>
+          <span class="an-rs-val">{{ stats.estimatedRoutes }}</span>
+        </div>
+        <div class="an-rs-row">
+          <span class="an-rs-lbl">Натоварена зона</span>
+          <span class="an-rs-val" style="color:#f59e0b">{{ stats.mostLoadedZone }}</span>
+        </div>
+      </div>
+
+      <!-- Critical cluster list -->
+      <div class="an-crit-list" *ngIf="criticalClusters.length > 0">
+        <p class="an-crit-title">ТОП КРИТИЧНИ КЛЪСТЕРИ</p>
+        <div class="an-crit-item" *ngFor="let c of criticalClusters.slice(0, 4)">
+          <div class="an-crit-dot"
+            [style.background]="getFillColor(c.avgFill)"
+            [style.box-shadow]="'0 0 8px ' + getFillColor(c.avgFill)"
+            [class.an-crit-dot--fire]="c.hasFire">
+          </div>
+          <div class="an-crit-info">
+            <span class="an-crit-name">Клъстер #{{ c.id + 1 }}</span>
+            <span class="an-crit-meta">{{ c.dominantZone }} · {{ c.bins.length }} кофи</span>
+          </div>
+          <strong class="an-crit-pct" [style.color]="getFillColor(c.avgFill)">
+            {{ c.avgFill | number:'1.0-0' }}%
+          </strong>
+        </div>
+      </div>
+      <div class="an-crit-empty" *ngIf="criticalClusters.length === 0">
+        <span>✅</span> Няма критични клъстери
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ═══ CHART ROW ═══════════════════════════════════════════════════════════ -->
+  <div class="an-charts-row">
+
+    <div class="an-chart-card an-chart-card--wide">
+      <div class="an-card-hdr">
+        <div>
+          <h3 class="an-card-title">Разпределение на запълване</h3>
+          <p class="an-card-sub">Брой контейнери по ниво на запълване</p>
+        </div>
+      </div>
+      <div class="an-chart-body">
         <canvas id="fillChart"></canvas>
       </div>
     </div>
 
-    <div class="analytics__chart-card">
-      <div class="chart-card__header">
+    <div class="an-chart-card">
+      <div class="an-card-hdr">
         <div>
-          <h3 class="chart-card__title">По тип отпадък</h3>
-          <p class="chart-card__sub">Средно запълване</p>
+          <h3 class="an-card-title">По тип отпадък</h3>
+          <p class="an-card-sub">Средно запълване</p>
         </div>
       </div>
-      <div class="chart-placeholder">
-        <canvas id="trashTypeChart"></canvas>
+      <div class="an-chart-body">
+        <canvas id="typeChart"></canvas>
       </div>
     </div>
 
-    <div class="analytics__chart-card">
-      <div class="chart-card__header">
+    <div class="an-chart-card">
+      <div class="an-card-hdr">
         <div>
-          <h3 class="chart-card__title">Зонова сравнение</h3>
-          <p class="chart-card__sub">Load score по зона</p>
+          <h3 class="an-card-title">Зонова сравнение</h3>
+          <p class="an-card-sub">Ср. запълване &amp; критични</p>
         </div>
       </div>
-      <div class="chart-placeholder">
+      <div class="an-chart-body">
         <canvas id="zoneChart"></canvas>
       </div>
     </div>
 
   </div>
 
-  <!-- Bottom Grid -->
-  <div class="analytics__bottom-grid">
-
-    <!-- Top 5 -->
-    
-    <!-- Zone Table -->
-    <div class="analytics__zone-table-card">
-      <div class="chart-card__header">
-        <h3 class="chart-card__title">Детайли по зони</h3>
-        <span class="analytics__live">
-          <div class="live-dot"></div>
-          <span>Live</span>
-        </span>
-      </div>
-      <div class="table-wrapper">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Зона</th>
-              <th>Контейнери</th>
-              <th>Ср. запълване</th>
-              <th>Критични</th>
-              <th>Пожар</th>
-              <th>Load Score</th>
-              <th>Статус</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let z of zoneStats">
-              <td class="font-semibold text-sm">{{ z.name }}</td>
-              <td class="text-mono">{{ z.total }}</td>
-              <td>
-                <div style="display:flex; align-items:center; gap:8px">
-                  <div class="progress" style="width:56px">
-                    <div class="progress__fill"
-                         [style.width]="z.avgFill + '%'"
-                         [style.background]="z.avgFill > 70 ? 'var(--status-critical)' : z.avgFill > 50 ? 'var(--status-warn)' : 'var(--eco-primary)'">
-                    </div>
-                  </div>
-                  <span class="text-mono text-xs">{{ z.avgFill }}%</span>
-                </div>
-              </td>
-              <td>
-                <span [class.text-danger]="z.critical > 0" class="text-mono font-semibold">{{ z.critical }}</span>
-              </td>
-              <td>
-                <span [class.text-danger]="z.onFire > 0" class="text-mono">
-                  {{ z.onFire > 0 ? '🔥 ' + z.onFire : '—' }}
-                </span>
-              </td>
-              <td class="text-mono">{{ z.loadScore | number:'1.0-0' }}</td>
-              <td>
-                <span class="badge"
-                  [class.badge--danger]="z.loadScore >= 70"
-                  [class.badge--warn]="z.loadScore >= 45 && z.loadScore < 70"
-                  [class.badge--eco]="z.loadScore < 45">
-                  {{ getRiskLabel(z.loadScore) }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+  <!-- ═══ ZONE TABLE ══════════════════════════════════════════════════════════ -->
+  <div class="an-table-card">
+    <div class="an-card-hdr">
+      <h3 class="an-card-title">
+        <span class="an-card-title-ico">📊</span>
+        Детайли по зони
+      </h3>
+      <div class="an-live-badge">
+        <div class="an-live-dot"></div>
+        <span>LIVE</span>
       </div>
     </div>
 
+    <div class="an-table-wrap">
+      <table class="an-table">
+        <thead>
+          <tr>
+            <th>Зона</th>
+            <th>Кофи</th>
+            <th>Ср. запълване</th>
+            <th>Критични</th>
+            <th>Пожар</th>
+            <th>Load Score</th>
+            <th>Статус</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let z of zoneStats"
+            [class.an-tr--fire]="z.onFire > 0"
+            [class.an-tr--crit]="z.loadScore >= 70 && z.onFire === 0">
+            <td class="an-td-zone">{{ z.name }}</td>
+            <td class="an-td-mono">{{ z.total }}</td>
+            <td>
+              <div class="an-fill-row">
+                <div class="an-fill-bar">
+                  <div class="an-fill-inner"
+                    [style.width.%]="z.avgFill"
+                    [style.background]="getFillColor(z.avgFill)">
+                  </div>
+                </div>
+                <span class="an-td-mono">{{ z.avgFill }}%</span>
+              </div>
+            </td>
+            <td>
+              <span class="an-td-mono" [class.an-danger]="z.critical > 0">{{ z.critical }}</span>
+            </td>
+            <td>
+              <span [class.an-danger]="z.onFire > 0">
+                {{ z.onFire > 0 ? '🔥 ' + z.onFire : '—' }}
+              </span>
+            </td>
+            <td class="an-td-mono">{{ z.loadScore }}</td>
+            <td>
+              <span class="an-badge"
+                [class.an-badge--danger]="z.loadScore >= 70"
+                [class.an-badge--warn]="z.loadScore >= 45 && z.loadScore < 70"
+                [class.an-badge--ok]="z.loadScore < 45">
+                {{ getRiskLabel(z.loadScore) }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
+
 </div>

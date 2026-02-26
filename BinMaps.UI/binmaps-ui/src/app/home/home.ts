@@ -1,8 +1,8 @@
-
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import L from 'leaflet';
 
 interface TickerItem {
   text: string;
@@ -42,9 +42,9 @@ interface HowItWorksStep {
   styleUrls: ['./home.css']
 })
 export class HomeComponent {
-  
   isLoggedIn = false;
   currentYear = new Date().getFullYear();
+  private map!: L.Map;
 
   tickerItems: TickerItem[] = [
     { text: '🌍 246 активни контейнери', color: 'green' },
@@ -63,59 +63,19 @@ export class HomeComponent {
   ];
 
   features: Feature[] = [
-    {
-      icon: 'map',
-      title: 'Real-time карта',
-      description: 'Интерактивна карта с live данни за всички контейнери в града'
-    },
-    {
-      icon: 'ai',
-      title: 'AI анализ',
-      description: 'Машинно самообучение за прогнозиране и оптимизация'
-    },
-    {
-      icon: 'route',
-      title: 'Smart маршрути',
-      description: 'Автоматично генериране на оптимални маршрути за камионите'
-    },
-    {
-      icon: 'sensor',
-      title: 'IoT сензори',
-      description: 'Автоматично измерване на запълване и температура'
-    },
-    {
-      icon: 'report',
-      title: 'Гражданско участие',
-      description: 'Репортване на проблеми директно от жителите'
-    },
-    {
-      icon: 'dashboard',
-      title: 'Analytics',
-      description: 'Детайлни статистики и визуализации на данните'
-    }
+    { icon: 'map', title: 'Real-time карта', description: 'Интерактивна карта с live данни за всички контейнери в града' },
+    { icon: 'ai', title: 'AI анализ', description: 'Машинно самообучение за прогнозиране и оптимизация' },
+    { icon: 'route', title: 'Smart маршрути', description: 'Автоматично генериране на оптимални маршрути за камионите' },
+    { icon: 'sensor', title: 'IoT сензори', description: 'Автоматично измерване на запълване и температура' },
+    { icon: 'report', title: 'Гражданско участие', description: 'Репортване на проблеми директно от жителите' },
+    { icon: 'dashboard', title: 'Analytics', description: 'Детайлни статистики и визуализации на данните' }
   ];
 
   howItWorks: HowItWorksStep[] = [
-    {
-      step: 1,
-      title: 'Събиране на данни',
-      description: 'IoT сензорите в контейнерите измерват запълване и температура на всеки 10 минути'
-    },
-    {
-      step: 2,
-      title: 'AI анализ',
-      description: 'Алгоритмите анализират данните и прогнозират кога ще се запълнят контейнерите'
-    },
-    {
-      step: 3,
-      title: 'Оптимизация',
-      description: 'Системата генерира оптимални маршрути използвайки TSP алгоритъм'
-    },
-    {
-      step: 4,
-      title: 'Изпълнение',
-      description: 'Камионите следват маршрута с real-time навигация и автоматично изпразване'
-    }
+    { step: 1, title: 'Събиране на данни', description: 'IoT сензорите в контейнерите измерват запълване и температура на всеки 10 минути' },
+    { step: 2, title: 'AI анализ', description: 'Алгоритмите анализират данните и прогнозират кога ще се запълнят контейнерите' },
+    { step: 3, title: 'Оптимизация', description: 'Системата генерира оптимални маршрути използвайки TSP алгоритъм' },
+    { step: 4, title: 'Изпълнение', description: 'Камионите следват маршрута с real-time навигация и автоматично изпразване' }
   ];
 
   zones: Zone[] = [
@@ -134,6 +94,22 @@ export class HomeComponent {
     this.authService.currentUser$.subscribe(user => {
       this.isLoggedIn = !!user;
     });
+  }
+
+  ngAfterViewInit(): void {
+    this.map = L.map('hero-map', {
+      zoomControl: false,
+      attributionControl: false,
+      dragging: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      boxZoom: false,
+      keyboard: false,
+      
+      touchZoom: false
+    }).setView([42.6977, 23.3219], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
   }
 
   navigateToMap() {
