@@ -120,7 +120,8 @@ namespace BinMaps.API
 
             app.UseCors("AllowAngular");
             app.UseStaticFiles();
-            app.UseHttpsRedirection();
+            if (!app.Environment.IsProduction())
+                app.UseHttpsRedirection();
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
