@@ -1,6 +1,14 @@
-﻿namespace BinMaps.API
-{
-    public class аppsettings
-    {
+﻿{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=db,1433;Database=BinMaps;User Id=sa;Password=BinMaps_Pass123!;TrustServerCertificate=True;"
+  },
+  "AISettings": {
+    "Endpoint": "http://ai:8000/analyze"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
     }
+  }
 }
