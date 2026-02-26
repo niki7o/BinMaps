@@ -4,7 +4,7 @@ WORKDIR /app
 
 
 COPY BinMaps.UI/binmaps-ui/package*.json ./
-RUN npm ci
+RUN npm install --legacy-peer-deps
 
 
 COPY BinMaps.UI/binmaps-ui/ .

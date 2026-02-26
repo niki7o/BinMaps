@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { environment } from '../../environments/environment';
 
 interface UserProfile {
   userId: string;
@@ -69,7 +70,7 @@ export class ProfileComponent implements OnInit {
   selectedFile: File | null = null;
   previewUrl: string | null = null;
 
-  private apiUrl = 'https://localhost:7277/api';
+  private apiUrl = environment.apiUrl;
 
   constructor(
     private http: HttpClient,

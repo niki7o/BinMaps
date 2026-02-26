@@ -77,11 +77,15 @@ namespace BinMaps.API
             builder.Services.AddHostedService<ContainerDynamicsService>();
             builder.Services.AddSignalR();
 
+            var allowedOrigins = builder.Configuration
+                .GetValue<string>("AllowedOrigins", "http://localhost:4200")!
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAngular", policy =>
                 {
-                    policy.WithOrigins("http://localhost:4200")
+                    policy.WithOrigins(allowedOrigins)
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();

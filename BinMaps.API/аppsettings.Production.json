@@ -5,6 +5,7 @@
   "AISettings": {
     "Endpoint": "http://ai:8000/analyze"
   },
+  "AllowedOrigins": "http://localhost",
   "Logging": {
     "LogLevel": {
       "Default": "Information",

@@ -3,10 +3,11 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, distinctUntilChanged, tap } from 'rxjs';
 import { AuthUser, LoginResponse, RegisterRequest } from './auth.models';
 import { AuthStorageService } from './auth-storage.service';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private static readonly API = 'https://localhost:7277/api';
+  private static readonly API = environment.apiUrl;
 
   private readonly _state$: BehaviorSubject<AuthUser | null>;
   readonly currentUser$: Observable<AuthUser | null>;

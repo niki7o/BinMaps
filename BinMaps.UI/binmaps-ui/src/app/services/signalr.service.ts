@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
 import { BehaviorSubject } from 'rxjs';
 import { ContainerUpdate } from '../services/container.models';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ContainerSignalRService {
 
-  
-  private static readonly HUB_URL      = 'https://localhost:7277/hubs/containers';
+
+  private static readonly HUB_URL      = environment.hubUrl;
   private static readonly RECONNECT_MS = [0, 2000, 5000, 10000, 30000] as const;
  
   private hub!: signalR.HubConnection;

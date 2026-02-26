@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { environment } from '../../environments/environment';
 
 interface Report {
   id: number;
@@ -75,7 +76,7 @@ type ActiveTab = 'reports' | 'containers' | 'trucks' | 'users';
   styleUrls: ['./admin-dashboard.css']
 })
 export class AdminDashboardComponent implements OnInit, OnDestroy {
-  private readonly API = 'https://localhost:7277/api';
+  private readonly API = environment.apiUrl;
   private readonly destroy$ = new Subject<void>();
 
   activeTab: ActiveTab = 'reports';

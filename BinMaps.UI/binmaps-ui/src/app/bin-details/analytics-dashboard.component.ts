@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { Chart, registerables } from 'chart.js';
 import * as L from 'leaflet';
+import { environment } from '../../environments/environment';
 
 Chart.register(...registerables);
 
@@ -129,7 +130,7 @@ export class AnalyticsDashboardComponent implements OnInit, AfterViewInit, OnDes
  
 
   private fetch() {
-    this.http.get<Bin[]>('https://localhost:7277/api/containers').subscribe({
+    this.http.get<Bin[]>(`${environment.apiUrl}/containers`).subscribe({
       next:  bins => this.process(bins),
       error: err  => console.error('[Analytics] fetch error:', err)
     });

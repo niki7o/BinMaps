@@ -1,0 +1,10 @@
+**/.vs
+**/.vscode
+**/.idea
+**/bin
+**/obj
+**/*.user
+**/NuGet.Config
+**/.git
+**/.gitignore
+**/node_modules

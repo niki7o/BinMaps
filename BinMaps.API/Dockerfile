@@ -1,4 +1,4 @@
-﻿# Build stage
+﻿
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
@@ -8,8 +8,9 @@ COPY BinMaps.Data/BinMaps.Data.csproj BinMaps.Data/
 COPY BinMaps.Infrastructure/BinMaps.Infrastructure.csproj BinMaps.Infrastructure/
 COPY BinMaps.Shared/BinMaps.Shared.csproj BinMaps.Shared/
 
-RUN dotnet restore BinMaps.API/BinMaps.API.csproj
+RUN dotnet nuget locals all --clear
 
+RUN dotnet restore BinMaps.API/BinMaps.API.csproj
 
 COPY BinMaps.API/ BinMaps.API/
 COPY BinMaps.Data/ BinMaps.Data/

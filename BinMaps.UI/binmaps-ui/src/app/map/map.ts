@@ -9,6 +9,7 @@ import { AuthUser } from '../services/auth.models';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
 import { ContainerSignalRService } from '../services/signalr.service';
+import { environment } from '../../environments/environment';
 
 interface Bin {
   id: number; areaId: string; trashType: number; fillPercentage: number;
@@ -37,7 +38,7 @@ interface RouteStop {
 })
 export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
-  private readonly API_URL   = 'https://localhost:7277/api';
+  private readonly API_URL   = environment.apiUrl;
   private readonly ICONS_DIR = 'assets/icons';
 
   private map!: L.Map;
