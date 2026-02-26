@@ -55,33 +55,34 @@ export class ProfileComponent implements OnInit {
   reports: Report[] = [];
   reputationInfo: ReputationInfo | null = null;
 
-  loading          = true;
-  editMode         = false;
+  loading = true;
+  editMode = false;
   uploadingPicture = false;
-  savingProfile    = false;
+  savingProfile = false;
 
   editForm = {
-    userName:    '',
-    email:       '',
+    userName: '',
+    email: '',
     phoneNumber: ''
   };
 
-  selectedFile: File | null   = null;
-  previewUrl:   string | null = null;
+  selectedFile: File | null = null;
+  previewUrl: string | null = null;
 
-  private readonly apiUrl = 'https://localhost:7277/api';
+  private apiUrl = 'https://localhost:7277/api';
 
   constructor(
-    private readonly http:        HttpClient,
-    private readonly router:      Router,
-    private readonly authService: AuthService
+    private http: HttpClient,
+    private router: Router,
+    private authService: AuthService
   ) {}
 
-  ngOnInit(): void {
+  ngOnInit() {
     if (!this.authService.getToken()) {
       this.router.navigate(['/login']);
       return;
     }
+
     this.loadProfile();
     this.loadReports();
     this.loadReputation();
@@ -89,25 +90,24 @@ export class ProfileComponent implements OnInit {
 
   private getAuthHeaders(): HttpHeaders {
     return new HttpHeaders({
-      'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.authService.getToken()}`
     });
   }
 
-  private loadProfile(): void {
+  private loadProfile() {
     this.http.get<UserProfile>(`${this.apiUrl}/UserProfile`, { headers: this.getAuthHeaders() }).subscribe({
       next: (profile) => {
-        this.profile  = profile;
+        this.profile = profile;
         this.editForm = {
-          userName:    profile.userName,
-          email:       profile.email,
+          userName: profile.userName,
+          email: profile.email,
           phoneNumber: profile.phoneNumber || ''
         };
         this.loading = false;
       },
       error: (err) => {
         this.loading = false;
-        if (err.status === 401) {
+        if (err.status === 401 || err.status === 403) {
           alert('Сесията ви е изтекла. Моля влезте отново.');
           this.authService.logout();
           this.router.navigate(['/login']);
@@ -116,11 +116,11 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  private loadReports(): void {
+  private loadReports() {
     this.http.get<Report[]>(`${this.apiUrl}/UserProfile/reports`, { headers: this.getAuthHeaders() }).subscribe({
-      next:  (reports) => { this.reports = reports; },
-      error: (err)     => {
-        if (err.status === 401) {
+      next: (reports) => this.reports = reports,
+      error: (err) => {
+        if (err.status === 401 || err.status === 403) {
           this.authService.logout();
           this.router.navigate(['/login']);
         }
@@ -128,11 +128,11 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  private loadReputation(): void {
+  private loadReputation() {
     this.http.get<ReputationInfo>(`${this.apiUrl}/UserProfile/reputation`, { headers: this.getAuthHeaders() }).subscribe({
-      next:  (info) => { this.reputationInfo = info; },
-      error: (err)  => {
-        if (err.status === 401) {
+      next: (info) => this.reputationInfo = info,
+      error: (err) => {
+        if (err.status === 401 || err.status === 403) {
           this.authService.logout();
           this.router.navigate(['/login']);
         }
@@ -140,29 +140,29 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  toggleEditMode(): void {
+  toggleEditMode() {
     this.editMode = !this.editMode;
     if (!this.editMode && this.profile) {
       this.editForm = {
-        userName:    this.profile.userName,
-        email:       this.profile.email,
+        userName: this.profile.userName,
+        email: this.profile.email,
         phoneNumber: this.profile.phoneNumber || ''
       };
     }
   }
 
-  saveProfile(): void {
+  saveProfile() {
     this.savingProfile = true;
     this.http.put(`${this.apiUrl}/UserProfile`, this.editForm, { headers: this.getAuthHeaders() }).subscribe({
       next: () => {
         this.loadProfile();
-        this.editMode      = false;
+        this.editMode = false;
         this.savingProfile = false;
         alert('Профилът е актуализиран успешно!');
       },
       error: (err) => {
         this.savingProfile = false;
-        if (err.status === 401) {
+        if (err.status === 401 || err.status === 403) {
           alert('Сесията ви е изтекла. Моля влезте отново.');
           this.authService.logout();
           this.router.navigate(['/login']);
@@ -173,32 +173,39 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  onFileSelected(event: Event): void {
+  onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (!input.files?.[0]) return;
-    this.selectedFile = input.files[0];
-    const reader = new FileReader();
-    reader.onload = (e: any) => { this.previewUrl = e.target.result; };
-    reader.readAsDataURL(this.selectedFile);
+    if (input.files && input.files[0]) {
+      this.selectedFile = input.files[0];
+      const reader = new FileReader();
+      reader.onload = (e: any) => this.previewUrl = e.target.result;
+      reader.readAsDataURL(this.selectedFile);
+    }
   }
 
-  uploadPicture(): void {
-    if (!this.selectedFile) { alert('Моля изберете файл'); return; }
+  uploadPicture() {
+    if (!this.selectedFile) {
+      alert('Моля изберете файл');
+      return;
+    }
+
     this.uploadingPicture = true;
     const formData = new FormData();
     formData.append('file', this.selectedFile);
-    const headers = new HttpHeaders({ 'Authorization': `Bearer ${this.authService.getToken()}` });
-    this.http.post<any>(`${this.apiUrl}/UserProfile/upload-picture`, formData, { headers }).subscribe({
+
+    this.http.post<any>(`${this.apiUrl}/UserProfile/upload-picture`, formData, { 
+      headers: new HttpHeaders({ 'Authorization': `Bearer ${this.authService.getToken()}` }) 
+    }).subscribe({
       next: () => {
         this.loadProfile();
-        this.selectedFile    = null;
-        this.previewUrl      = null;
+        this.selectedFile = null;
+        this.previewUrl = null;
         this.uploadingPicture = false;
         alert('Снимката е качена успешно!');
       },
       error: (err) => {
         this.uploadingPicture = false;
-        if (err.status === 401) {
+        if (err.status === 401 || err.status === 403) {
           alert('Сесията ви е изтекла. Моля влезте отново.');
           this.authService.logout();
           this.router.navigate(['/login']);
@@ -209,12 +216,15 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  deletePicture(): void {
+  deletePicture() {
     if (!confirm('Сигурни ли сте, че искате да изтриете профилната си снимка?')) return;
     this.http.delete(`${this.apiUrl}/UserProfile/picture`, { headers: this.getAuthHeaders() }).subscribe({
-      next:  ()    => { this.loadProfile(); alert('Снимката е изтрита'); },
+      next: () => {
+        this.loadProfile();
+        alert('Снимката е изтрита');
+      },
       error: (err) => {
-        if (err.status === 401) {
+        if (err.status === 401 || err.status === 403) {
           alert('Сесията ви е изтекла. Моля влезте отново.');
           this.authService.logout();
           this.router.navigate(['/login']);
@@ -225,9 +235,9 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  cancelPictureUpload(): void {
+  cancelPictureUpload() {
     this.selectedFile = null;
-    this.previewUrl   = null;
+    this.previewUrl = null;
   }
 
   getProfilePictureUrl(): string {
@@ -273,14 +283,6 @@ export class ProfileComponent implements OnInit {
     return Math.round((this.profile.approvedReports / this.profile.totalReports) * 100);
   }
 
-  getLevelColor(level: string): string {
-    const colors: Record<string, string> = {
-      'Легенда': '#8b5cf6', 'Експерт': '#f59e0b', 'Професионалист': '#3b82f6',
-      'Опитен': '#10b981',  'Активен': '#6ee7b7', 'Начинаещ': '#94a3b8'
-    };
-    return colors[level] || '#94a3b8';
-  }
-
   getRoleLabel(role: string): string {
     const roles: Record<string, string> = {
       'Admin': 'Администратор', 'Driver': 'Шофьор', 'User': 'Потребител'
@@ -288,9 +290,11 @@ export class ProfileComponent implements OnInit {
     return roles[role] || role;
   }
 
-  navigateToMap(): void { this.router.navigate(['/map']); }
+  navigateToMap() {
+    this.router.navigate(['/map']);
+  }
 
-  logout(): void {
+  logout() {
     this.authService.logout();
     this.router.navigate(['/']);
   }
