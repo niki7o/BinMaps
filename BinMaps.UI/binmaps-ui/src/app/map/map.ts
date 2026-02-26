@@ -92,19 +92,19 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     { key: 'satellite', label: 'Satellite' }
   ];
 
-  // asset paths
+  
   private binIcon(type: number) { return `${this.ICONS_DIR}/bin-${['mixed','plastic','paper','glass'][type] ?? 'mixed'}.svg`; }
   private get fireIcon()   { return `${this.ICONS_DIR}/bin-fire.svg`; }
   private get sensorIcon() { return `${this.ICONS_DIR}/sensor-dot.svg`; }
   private get truckSvg()   { return `${this.ICONS_DIR}/truck.svg`; }
 
-  // ── Lifecycle ────────────────────────────────────────────────────────────
+
   ngOnInit() {
     this.authService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe(u => {
       this.currentUser = u; this.syncRole();
     });
     this.signalR.start();
-    // FIX: full re-render on every SignalR batch so clustered markers update correctly
+
     this.signalR.containerUpdates$.subscribe((updates: any[]) => {
       if (!this.allBins.length) return;
       updates.forEach(u => {
@@ -136,7 +136,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
   }
 
-  // ── Map ──────────────────────────────────────────────────────────────────
+
   private initMap() {
     this.map = L.map('map', {
       center: [42.6977, 23.3219], zoom: 12, minZoom: 11, maxZoom: 18,
@@ -452,7 +452,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
   }
 
-  // ── Panel toggles (with map invalidateSize) ──────────────────────────────
   toggleReportPanel(show: boolean) {
     this.showReportPanel = show;
     setTimeout(() => this.map?.invalidateSize(), 350);

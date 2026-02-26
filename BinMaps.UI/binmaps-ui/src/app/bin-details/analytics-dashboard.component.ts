@@ -8,8 +8,6 @@ import * as L from 'leaflet';
 
 Chart.register(...registerables);
 
-// ─── Interfaces ───────────────────────────────────────────────────────────────
-
 interface Bin {
   id: number;
   areaId: string;
@@ -18,8 +16,8 @@ interface Bin {
   temperature: number | null;
   hasSensor: boolean;
   status: string | null;
-  locationX: number;  // longitude
-  locationY: number;  // latitude
+  locationX: number;  
+  locationY: number; 
 }
 
 interface Cluster {
@@ -39,13 +37,13 @@ interface ZoneStat {
   name: string;
   avgFill: number;
   total: number;
-  critical: number;   // bins > 80%
-  heavy: number;      // bins 60-80%
+  critical: number;   
+  heavy: number;      
   onFire: number;
-  loadScore: number;  // composite score 0-100
+  loadScore: number;  
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+
 
 @Component({
   selector: 'app-analytics-dashboard',
@@ -67,7 +65,7 @@ export class AnalyticsDashboardComponent implements OnInit, AfterViewInit, OnDes
   private typeChart?: Chart;
   private zoneChart?: Chart;
 
-  // ── State ─────────────────────────────────────────────────────────────────
+  
 
   mapLayer: 'all' | 'critical' = 'all';
   dataLoaded = false;
@@ -75,10 +73,10 @@ export class AnalyticsDashboardComponent implements OnInit, AfterViewInit, OnDes
   stats = {
     totalBins:      0,
     avgFill:        0,
-    criticalBins:   0,   // > 80%
-    heavyBins:      0,   // 60–80%
+    criticalBins:   0,   
+    heavyBins:      0,   
     onFireCount:    0,
-    sensorCoverage: 0,   // % bins with sensor
+    sensorCoverage: 0,   
     mostLoadedZone: '—',
     clusterCount:   0,
     lastUpdated:    '—'
@@ -99,9 +97,7 @@ export class AnalyticsDashboardComponent implements OnInit, AfterViewInit, OnDes
   /** Alias used by the route gauge SVG and label */
   get routeEfficiencyColor() { return this.gaugeColor; }
 
-  // ── Lifecycle ─────────────────────────────────────────────────────────────
-  // IMPORTANT: We init UI first (ngAfterViewInit), THEN fetch.
-  // This guarantees charts + map are always ready before data arrives.
+
 
   ngOnInit() {
     // Auto-refresh every 60s — only when UI is ready
@@ -126,11 +122,11 @@ export class AnalyticsDashboardComponent implements OnInit, AfterViewInit, OnDes
     this.fillChart?.destroy();
     this.typeChart?.destroy();
     this.zoneChart?.destroy();
-    // Remove injected styles
+   
     document.getElementById('an-injected-styles')?.remove();
   }
 
-  // ── Data pipeline ─────────────────────────────────────────────────────────
+ 
 
   private fetch() {
     this.http.get<Bin[]>('https://localhost:7277/api/containers').subscribe({
@@ -291,11 +287,6 @@ export class AnalyticsDashboardComponent implements OnInit, AfterViewInit, OnDes
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
-  // ── Route Efficiency ──────────────────────────────────────────────────────
-  // Compares the nearest-neighbor tour distance of critical bins
-  // vs the theoretical worst-case (bounding-box diagonal × count × factor).
-  // Result: 0–100% — higher = bins are more geographically clustered
-  // (garbage truck makes fewer detours).
 
   private computeRouteEfficiency(bins: Bin[]): number {
     const critical = bins.filter(b => b.fillPercentage > 60);
@@ -354,14 +345,14 @@ export class AnalyticsDashboardComponent implements OnInit, AfterViewInit, OnDes
       attributionControl: false
     });
 
-    // Normal (Voyager) map tiles — clean colourful style similar to Google Maps
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       opacity:    1,
       subdomains: 'abcd',
-      maxZoom:    19
+      maxZoom:    18
     }).addTo(this.hotspotMap);
 
-    // Give Leaflet time to measure the container, then mark ready
+  
     setTimeout(() => {
       this.hotspotMap.invalidateSize();
       this.mapReady = true;
