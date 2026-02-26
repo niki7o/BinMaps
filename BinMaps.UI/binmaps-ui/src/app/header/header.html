@@ -90,17 +90,23 @@
       </div>
 
       <div class="navbar__dropdown user-dropdown-wrapper" *ngIf="isLoggedIn()">
-        <div class="navbar__user" (click)="toggleUserMenu($event)">
-          <div class="navbar__avatar">{{ initials() }}</div>
-          <div class="navbar__user-info">
-            <span class="navbar__username">{{ currentUser()?.userName }}</span>
-            <span class="navbar__role">{{ currentUser()?.role }}</span>
-          </div>
-          <svg class="navbar__chevron" [class.is-open]="showUserMenu()"
-               width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="6 9 12 15 18 9"/>
-          </svg>
-        </div>
+       <div class="navbar__user" (click)="toggleUserMenu($event)">
+  <ng-container *ngIf="currentUser()?.profilePicturePath; else initials">
+    <img [src]="currentUser()!.profilePicturePath" alt="Profile" class="avatar-img" />
+  </ng-container>
+  <ng-template #initials>
+    <div class="avatar-initials">
+      {{ currentUser()?.userName?.slice(0,2)?.toUpperCase() || 'U' }}
+    </div>
+  </ng-template>
+  <div class="navbar__user-info">
+    <span class="navbar__username">{{ currentUser()?.userName }}</span>
+    <span class="navbar__role">{{ currentUser()?.role }}</span>
+  </div>
+  <svg class="navbar__chevron" [class.is-open]="showUserMenu()" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+    <polyline points="6 9 12 15 18 9"/>
+  </svg>
+</div>
 
         <div class="user-menu" *ngIf="showUserMenu()">
           <a class="user-menu__item" routerLink="/profile" (click)="showUserMenu.set(false)">

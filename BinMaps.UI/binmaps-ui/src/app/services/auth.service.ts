@@ -22,16 +22,21 @@ export class AuthService {
   }
 
   get currentUser(): AuthUser | null { return this._state$.value; }
-  get isAuthenticated(): boolean     { return !!this._state$.value; }
-  getToken(): string | null          { return this._state$.value?.token ?? null; }
-  hasRole(role: string): boolean     { return this._state$.value?.role === role; }
+  get isAuthenticated(): boolean { return !!this._state$.value; }
 
-  getAuthHeaders() {
+  getToken(): string | null {
+    return this._state$.value?.token ?? null;
+  }
+
+  hasRole(role: string): boolean {
+    return this._state$.value?.role === role;
+  }
+
+  getAuthHeaders(): { headers: HttpHeaders } {
     const token = this.getToken();
-    if (!token) return {};
     return {
       headers: new HttpHeaders({
-        Authorization: `Bearer ${token}`
+        Authorization: token ? `Bearer ${token}` : ''
       })
     };
   }
@@ -51,15 +56,32 @@ export class AuthService {
     this._state$.next(null);
   }
 
+  updateProfilePicture(path: string | null) {
+    const current = this.currentUser;
+    if (current) {
+      this._state$.next({
+        ...current,
+        profilePicturePath: path
+      });
+      const stored = this.storage.load();
+      if (stored) {
+        this.storage.save({ ...stored, profilePicturePath: path });
+      }
+    }
+  }
+
   private applyResponse(r: LoginResponse, email: string): void {
     if (!r?.token) return;
+
     const user: AuthUser = {
-      id:       r.id       ?? '',
+      id: r.id ?? '',
       userName: r.userName ?? r.username ?? email.split('@')[0],
-      email:    r.email    ?? email,
-      role:     r.role     ?? 'User',
-      token:    r.token
+      email: r.email ?? email,
+      role: r.role ?? 'User',
+      token: r.token,
+      profilePicturePath: null
     };
+
     this.storage.save(user);
     this._state$.next(user);
   }

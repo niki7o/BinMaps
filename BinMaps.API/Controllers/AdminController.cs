@@ -24,9 +24,7 @@ public sealed class AdminController : ControllerBase
     }
 
     #region Stats
-
     [HttpGet("stats")]
-    [ProducesResponseType(typeof(AdminStatsDTO), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStats()
     {
         var containers = await _context.TrashContainers.AsNoTracking().ToListAsync();
@@ -46,13 +44,54 @@ public sealed class AdminController : ControllerBase
                 : 0
         });
     }
-
     #endregion
 
-    #region User Management
+    #region Containers (for Admin Dashboard)
+    [HttpGet("containers")]
+    public async Task<IActionResult> GetContainers()
+    {
+        var containers = await _context.TrashContainers
+            .AsNoTracking()
+            .Select(c => new
+            {
+                c.Id,
+                c.AreaId,
+                c.TrashType,
+                c.FillPercentage,
+                c.Status,
+                c.HasSensor,
+                c.Temperature,
+                c.BatteryPercentage
+            })
+            .ToListAsync();
 
+        return Ok(containers);
+    }
+    #endregion
+
+    #region Trucks (for Admin Dashboard)
+    [HttpGet("trucks")]
+    public async Task<IActionResult> GetTrucks()
+    {
+        var trucks = await _context.Trucks
+            .AsNoTracking()
+            .Select(t => new
+            {
+                t.Id,
+                t.AreaId,
+                t.TrashType,
+                t.Capacity,
+                t.LocationX,
+                t.LocationY
+            })
+            .ToListAsync();
+
+        return Ok(trucks);
+    }
+    #endregion
+
+    #region Users
     [HttpGet("users")]
-    [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUsers()
     {
         var users = await _userManager.Users.AsNoTracking().ToListAsync();
@@ -76,13 +115,10 @@ public sealed class AdminController : ControllerBase
     }
 
     [HttpPut("users/{id}/role")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ChangeRole([FromRoute] string id, [FromBody] string newRole)
     {
         var user = await _userManager.FindByIdAsync(id);
-        if (user is null)
-            return NotFound();
+        if (user is null) return NotFound();
 
         var currentRoles = await _userManager.GetRolesAsync(user);
         await _userManager.RemoveFromRolesAsync(user, currentRoles);
@@ -91,30 +127,36 @@ public sealed class AdminController : ControllerBase
         return NoContent();
     }
 
+    [HttpPut("users/{id}/reputation")]  
+    public async Task<IActionResult> SetReputation([FromRoute] string id, [FromBody] int value)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user is null) return NotFound();
+
+        user.Reputation = Math.Clamp(value, 0, 100);
+        await _userManager.UpdateAsync(user);
+
+        return NoContent();
+    }
+
     [HttpDelete("users/{id}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteUser([FromRoute] string id)
     {
         var user = await _userManager.FindByIdAsync(id);
-        if (user is null)
-            return NotFound();
+        if (user is null) return NotFound();
 
         await _userManager.DeleteAsync(user);
         return NoContent();
     }
-
     #endregion
 
     #region Pending Reports
-
     [HttpGet("reports/pending")]
-    [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPendingReports()
     {
         var pending = await _context.Reports
             .AsNoTracking()
-            .Where(r => r.IsApproved == null)
+           .Where(r => !r.IsApproved)
             .OrderByDescending(r => r.FinalConfidence)
             .Select(r => new
             {
@@ -133,6 +175,5 @@ public sealed class AdminController : ControllerBase
 
         return Ok(pending);
     }
-
     #endregion
 }

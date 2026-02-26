@@ -93,14 +93,14 @@
     <div class="an-kpi" style="--acc:#8b5cf6; --i:5">
       <div class="an-kpi__ico" style="--ico:#8b5cf6">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="22 8 22 2 16 2"/><line x1="22" y1="2" x2="15" y2="9"/>
-          <path d="M9 9H2v13h13v-7"/>
+          <circle cx="12" cy="12" r="3"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/>
+          <line x1="12" y1="9" x2="19" y2="7"/><line x1="12" y1="15" x2="5" y2="17"/>
         </svg>
       </div>
       <div class="an-kpi__body">
-        <span class="an-kpi__lbl">Маршрути</span>
-        <strong class="an-kpi__val" style="color:#8b5cf6">{{ stats.estimatedRoutes }}</strong>
-        <span class="an-kpi__sub">прогнозирани</span>
+        <span class="an-kpi__lbl">Клъстери</span>
+        <strong class="an-kpi__val" style="color:#8b5cf6">{{ stats.clusterCount }}</strong>
+        <span class="an-kpi__sub">зони за събиране</span>
       </div>
     </div>
 
@@ -117,7 +117,7 @@
             <span class="an-card-title-ico">🗺</span>
             Карта на запълване · Гъстота по зони
           </h3>
-          <p class="an-card-sub">{{ clusters.length }} клъстера · цвят = средно запълване на района</p>
+          <p class="an-card-sub">{{ stats.clusterCount }} зони · {{ stats.criticalBins }} кофи над 80% · цвят = средно запълване</p>
         </div>
         <div class="an-map-btns">
           <button class="an-map-btn" [class.an-map-btn--on]="mapLayer==='all'"
@@ -192,10 +192,6 @@
         <div class="an-rs-row">
           <span class="an-rs-lbl">Критични клъстери</span>
           <span class="an-rs-val" style="color:#ef4444">{{ criticalClusters.length }}</span>
-        </div>
-        <div class="an-rs-row">
-          <span class="an-rs-lbl">Маршрути</span>
-          <span class="an-rs-val">{{ stats.estimatedRoutes }}</span>
         </div>
         <div class="an-rs-row">
           <span class="an-rs-lbl">Натоварена зона</span>

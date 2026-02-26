@@ -1,4 +1,5 @@
 ﻿using BinMaps.Data;
+using BinMaps.Data.Entities.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -33,8 +34,8 @@ public sealed class AnalyticsController : ControllerBase
                 TotalContainers = g.Count(),
                 AverageFill = Math.Round(g.Average(c => c.FillPercentage), 1),
                 CriticalContainers = g.Count(c => c.FillPercentage >= 80),
-                FireContainers = g.Count(c => c.Status.ToString() == "Fire"),
-                OfflineContainers = g.Count(c => c.Status.ToString() == "Offline")
+                FireContainers = g.Count(c => c.Status == TrashContainerStatus.Fire),
+                OfflineContainers = g.Count(c => c.Status == TrashContainerStatus.Offline)
             })
             .OrderBy(x => x.AreaId)
             .ToListAsync();
@@ -46,6 +47,8 @@ public sealed class AnalyticsController : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<object>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTopCritical([FromQuery] int count = 5)
     {
+        count = Math.Clamp(count, 1, 50);
+
         var top = await _context.TrashContainers
             .AsNoTracking()
             .OrderByDescending(c => c.FillPercentage)
@@ -56,7 +59,7 @@ public sealed class AnalyticsController : ControllerBase
                 c.AreaId,
                 c.FillPercentage,
                 TrashType = c.TrashType.ToString(),
-                Status = c.Status.ToString()
+                Status = c.Status == null ? "Active" : c.Status.ToString()
             })
             .ToListAsync();
 

@@ -580,7 +580,26 @@
 .btn--primary:active {
   transform: translateY(0);
 }
+.avatar-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--eco);
+}
 
+.avatar-initials {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--eco);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+}
 @media (max-width: 768px) {
   .navbar__links {
     display: none;

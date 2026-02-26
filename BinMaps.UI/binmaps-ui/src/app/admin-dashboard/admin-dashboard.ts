@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 interface Report {
@@ -13,7 +14,9 @@ interface Report {
   ai_Score: number;
   userReputationOnSubmit: number;
   finalConfidence: number;
-  isApproved: boolean;
+  isApproved: boolean | null;
+  photoURL: string | null;
+  description: string | null;
   createdAt: string;
 }
 
@@ -41,9 +44,28 @@ interface User {
   id: string;
   userName: string;
   email: string;
-  roles: string[];
+  role: string;
   reputation: number;
+  createdAt?: string;
 }
+
+interface AdminStats {
+  totalContainers: number;
+  criticalContainers: number;
+  totalUsers: number;
+  pendingReports: number;
+  approvedReports: number;
+  rejectedReports: number;
+  averageFillPercent: number;
+}
+
+interface Toast {
+  id: number;
+  type: 'success' | 'error' | 'info';
+  message: string;
+}
+
+type ActiveTab = 'reports' | 'containers' | 'trucks' | 'users';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -52,281 +74,433 @@ interface User {
   templateUrl: './admin-dashboard.html',
   styleUrls: ['./admin-dashboard.css']
 })
-export class AdminDashboardComponent implements OnInit {
-  activeTab: 'reports' | 'containers' | 'trucks' | 'users' = 'reports';
+export class AdminDashboardComponent implements OnInit, OnDestroy {
+  private readonly API = 'https://localhost:7277/api';
+  private readonly destroy$ = new Subject<void>();
+
+  activeTab: ActiveTab = 'reports';
 
   reports: Report[] = [];
   filteredReports: Report[] = [];
   containers: Container[] = [];
+  filteredContainers: Container[] = [];
   trucks: Truck[] = [];
   users: User[] = [];
-  stats: any = {};
-  userCount = 0;
-  userReportCounts: { [key: string]: number } = {};
-
-  reportFilter = {
-    status: '',
-    reportType: '',
-    fromDate: '',
-    toDate: ''
+  filteredUsers: User[] = [];
+  stats: AdminStats = {
+    totalContainers: 0,
+    criticalContainers: 0,
+    totalUsers: 0,
+    pendingReports: 0,
+    approvedReports: 0,
+    rejectedReports: 0,
+    averageFillPercent: 0
   };
 
+  userReportCounts: Record<string, number> = {};
+
+  reportSearch = '';
+  reportFilter = { status: '', reportType: '' };
+
+  containerSearch = '';
+  userSearch = '';
+
   selectedReport: Report | null = null;
-  selectedReportPhoto: string | null = null;
   editingContainer: Container | null = null;
+  reputationModal: { user: User; value: number } | null = null;
 
-  constructor(private http: HttpClient, private authService: AuthService) {}
+  toasts: Toast[] = [];
+  private toastCounter = 0;
 
-  ngOnInit() {
-    this.authService.currentUser$.subscribe(user => {
-      if (user && user.role === 'Admin') {
-        this.loadData();
-      }
-    });
+  isLoading = false;
+
+  constructor(
+    private readonly http: HttpClient,
+    private readonly authService: AuthService
+  ) {}
+
+  ngOnInit(): void {
+    this.authService.currentUser$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(user => {
+        if (user?.role === 'Admin') {
+          this.loadStats();
+          this.loadReports();
+        }
+      });
   }
 
-  private getAuthHeaders() {
-  return this.authService.getAuthHeaders();
-}
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
-  setActiveTab(tab: 'reports' | 'containers' | 'trucks' | 'users') {
+  setActiveTab(tab: ActiveTab): void {
     this.activeTab = tab;
-    if (tab === 'reports') this.loadReports();
-    if (tab === 'containers') this.loadContainers();
-    if (tab === 'trucks') this.loadTrucks();
-    if (tab === 'users') this.loadUsers();
+    const loaders: Record<ActiveTab, () => void> = {
+      reports: () => this.loadReports(),
+      containers: () => this.loadContainers(),
+      trucks: () => this.loadTrucks(),
+      users: () => this.loadUsers()
+    };
+    loaders[tab]();
   }
 
-  loadData() {
-    this.loadStats();
-    this.loadReports();
+  loadStats(): void {
+    this.http.get<AdminStats>(`${this.API}/admin/stats`, this.authHeaders())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: data => { this.stats = data; },
+        error: () => this.showToast('Грешка при зареждане на статистики', 'error')
+      });
   }
 
-  loadStats() {
-    this.http.get('https://localhost:7277/api/admin/stats', this.getAuthHeaders()).subscribe({
-      next: (data: any) => (this.stats = data),
-      error: err => console.error('Error loading stats:', err)
-    });
+  loadReports(): void {
+    this.isLoading = true;
+    this.http.get<Report[]>(`${this.API}/admin/reports/pending`, this.authHeaders())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: data => {
+          this.reports = data;
+          this.applyReportFilters();
+          this.buildUserReportCounts();
+          this.isLoading = false;
+        },
+        error: () => {
+          this.showToast('Грешка при зареждане на сигнали', 'error');
+          this.isLoading = false;
+        }
+      });
   }
 
-  loadReports() {
-    this.http.get<Report[]>('https://localhost:7277/api/admin/reports', this.getAuthHeaders()).subscribe({
-      next: data => {
-        this.reports = data;
-        this.filteredReports = [...data];
-        this.calculateUserReportCounts();
-      },
-      error: err => console.error('Error loading reports:', err)
-    });
+  loadContainers(): void {
+    this.isLoading = true;
+    this.http.get<Container[]>(`${this.API}/admin/containers`, this.authHeaders())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: data => {
+          this.containers = data;
+          this.filteredContainers = [...data];
+          this.isLoading = false;
+        },
+        error: () => {
+          this.showToast('Грешка при зареждане на контейнери', 'error');
+          this.isLoading = false;
+        }
+      });
   }
 
-  loadContainers() {
-    this.http.get<Container[]>('https://localhost:7277/api/admin/containers', this.getAuthHeaders()).subscribe({
-      next: data => (this.containers = data),
-      error: err => console.error('Error loading containers:', err)
-    });
+  loadTrucks(): void {
+    this.isLoading = true;
+    this.http.get<Truck[]>(`${this.API}/admin/trucks`, this.authHeaders())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: data => { this.trucks = data; this.isLoading = false; },
+        error: () => {
+          this.showToast('Грешка при зареждане на камиони', 'error');
+          this.isLoading = false;
+        }
+      });
   }
 
-  loadTrucks() {
-    this.http.get<Truck[]>('https://localhost:7277/api/admin/trucks', this.getAuthHeaders()).subscribe({
-      next: data => (this.trucks = data),
-      error: err => console.error('Error loading trucks:', err)
-    });
+  loadUsers(): void {
+    this.isLoading = true;
+    this.http.get<User[]>(`${this.API}/admin/users`, this.authHeaders())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: data => {
+          this.users = data;
+          this.filteredUsers = [...data];
+          this.isLoading = false;
+        },
+        error: () => {
+          this.showToast('Грешка при зареждане на потребители', 'error');
+          this.isLoading = false;
+        }
+      });
   }
 
-  loadUsers() {
-    this.http.get<User[]>('https://localhost:7277/api/admin/users', this.getAuthHeaders()).subscribe({
-      next: data => {
-        this.users = data;
-        this.userCount = data.length;
-      },
-      error: err => console.error('Error loading users:', err)
-    });
-  }
+  applyReportFilters(): void {
+    let result = [...this.reports];
 
-  calculateUserReportCounts() {
-    this.userReportCounts = {};
-    this.reports.forEach(report => {
-      if (report.userId) {
-        this.userReportCounts[report.userId] = (this.userReportCounts[report.userId] || 0) + 1;
-      }
-    });
-  }
-
-  filterReports() {
-    let filtered = [...this.reports];
-    if (this.reportFilter.status === 'pending') filtered = filtered.filter(r => !r.isApproved);
-    if (this.reportFilter.status === 'approved') filtered = filtered.filter(r => r.isApproved);
-    if (this.reportFilter.reportType) filtered = filtered.filter(r => r.reportType === this.reportFilter.reportType);
-    if (this.reportFilter.fromDate) {
-      const from = new Date(this.reportFilter.fromDate);
-      filtered = filtered.filter(r => new Date(r.createdAt) >= from);
+    if (this.reportSearch.trim()) {
+      const q = this.reportSearch.toLowerCase();
+      result = result.filter(r =>
+        r.userName.toLowerCase().includes(q) ||
+        r.trashContainerId.toString().includes(q) ||
+        r.id.toString().includes(q)
+      );
     }
-    if (this.reportFilter.toDate) {
-      const to = new Date(this.reportFilter.toDate);
-      to.setHours(23, 59, 59, 999);
-      filtered = filtered.filter(r => new Date(r.createdAt) <= to);
+
+    const statusFilter = this.reportFilter.status;
+    if (statusFilter === 'pending') result = result.filter(r => r.isApproved === null);
+    else if (statusFilter === 'approved') result = result.filter(r => r.isApproved === true);
+    else if (statusFilter === 'rejected') result = result.filter(r => r.isApproved === false);
+
+    if (this.reportFilter.reportType) {
+      result = result.filter(r => r.reportType === this.reportFilter.reportType);
     }
-    this.filteredReports = filtered;
+
+    this.filteredReports = result;
   }
 
-  approveReport(reportId: number) {
-    if (!confirm('Сигурни ли сте, че искате да одобрите този репорт?')) return;
-    this.http.post(`https://localhost:7277/api/admin/reports/${reportId}/approve`, {}, this.getAuthHeaders()).subscribe({
-      next: () => {
-        alert('Репортът е одобрен');
-        this.loadReports();
-        this.closeModal();
-      },
-      error: err => {
-        console.error('Error approving report:', err);
-        alert('Грешка при одобряване на репорт');
-      }
-    });
+  applyContainerSearch(): void {
+    if (!this.containerSearch.trim()) {
+      this.filteredContainers = [...this.containers];
+      return;
+    }
+    const q = this.containerSearch.toLowerCase();
+    this.filteredContainers = this.containers.filter(c =>
+      c.areaId.toLowerCase().includes(q) ||
+      c.id.toString().includes(q)
+    );
   }
 
-  rejectReport(reportId: number) {
-    if (!confirm('Сигурни ли сте, че искате да отхвърлите този репорт?')) return;
-    this.http.post(`https://localhost:7277/api/admin/reports/${reportId}/reject`, {}, this.getAuthHeaders()).subscribe({
-      next: () => {
-        alert('Репортът е отхвърлен');
-        this.loadReports();
-        this.closeModal();
-      },
-      error: err => {
-        console.error('Error rejecting report:', err);
-        alert('Грешка при отхвърляне на репорт');
-      }
-    });
+  applyUserSearch(): void {
+    if (!this.userSearch.trim()) {
+      this.filteredUsers = [...this.users];
+      return;
+    }
+    const q = this.userSearch.toLowerCase();
+    this.filteredUsers = this.users.filter(u =>
+      u.userName.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q)
+    );
   }
 
-  viewReportDetails(report: Report) {
+  get pendingCount(): number {
+    return this.reports.filter(r => r.isApproved === null).length;
+  }
+
+  approveReport(reportId: number): void {
+    this.http.post(`${this.API}/reports/${reportId}/approve`, {}, this.authHeaders())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.showToast('Сигналът е одобрен успешно');
+          this.selectedReport = null;
+          this.loadReports();
+          this.loadStats();
+        },
+        error: () => this.showToast('Грешка при одобряване', 'error')
+      });
+  }
+
+  rejectReport(reportId: number): void {
+    this.http.post(`${this.API}/reports/${reportId}/reject`, {}, this.authHeaders())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.showToast('Сигналът е отхвърлен');
+          this.selectedReport = null;
+          this.loadReports();
+          this.loadStats();
+        },
+        error: () => this.showToast('Грешка при отхвърляне', 'error')
+      });
+  }
+
+  openReportModal(report: Report): void {
     this.selectedReport = report;
   }
 
-  closeModal() {
+  closeReportModal(): void {
     this.selectedReport = null;
-    this.selectedReportPhoto = null;
   }
 
-  editContainer(container: Container) {
+  openEditContainer(container: Container): void {
     this.editingContainer = { ...container };
   }
 
-  saveContainer() {
+  saveContainer(): void {
     if (!this.editingContainer) return;
-    this.http.put(`https://localhost:7277/api/admin/containers/${this.editingContainer.id}`, {
-      fillPercentage: this.editingContainer.fillPercentage,
-      status: this.editingContainer.status,
-      hasSensor: this.editingContainer.hasSensor
-    }, this.getAuthHeaders()).subscribe({
-      next: () => {
-        alert('Кофата е обновена');
-        this.loadContainers();
-        this.closeContainerModal();
+
+    this.http.put(
+      `${this.API}/containers/${this.editingContainer.id}`,
+      {
+        fillPercentage: this.editingContainer.fillPercentage,
+        status: this.editingContainer.status,
+        hasSensor: this.editingContainer.hasSensor
       },
-      error: err => {
-        console.error('Error updating container:', err);
-        alert('Грешка при обновяване на кофа');
-      }
-    });
+      this.authHeaders()
+    ).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.showToast('Контейнерът е обновен');
+          this.editingContainer = null;
+          this.loadContainers();
+        },
+        error: () => this.showToast('Грешка при обновяване', 'error')
+      });
   }
 
-  closeContainerModal() {
+  closeContainerModal(): void {
     this.editingContainer = null;
   }
 
-  viewTruckRoute(truckId: number) {
-    window.open(`/map?truck=${truckId}`, '_blank');
+  emptyContainer(containerId: number): void {
+    this.http.put(`${this.API}/containers/${containerId}/empty`, {}, this.authHeaders())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.showToast('Контейнерът е изпразнен');
+          this.loadContainers();
+        },
+        error: () => this.showToast('Грешка при изпразване', 'error')
+      });
   }
 
-  viewUserReports(userId: string) {
-    this.activeTab = 'reports';
-    this.reportFilter = { status: '', reportType: '', fromDate: '', toDate: '' };
-    this.filteredReports = this.reports.filter(r => r.userId === userId);
-  }
+  changeUserRole(user: User, newRole: string): void {
+    const headers = this.authHeaders().headers
+      .set('Content-Type', 'application/json');
 
-  emptyContainer(containerId: number) {
-    if (!confirm('Сигурни ли сте, че искате да изпразните този контейнер?')) return;
-    this.http.put(`https://localhost:7277/api/containers/${containerId}/empty`, {}, this.getAuthHeaders()).subscribe({
+    this.http.put(
+      `${this.API}/admin/users/${user.id}/role`,
+      JSON.stringify(newRole),
+      { headers }
+    )
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
       next: () => {
-        alert('Контейнерът е изпразнен');
-        this.loadContainers();
+        this.showToast(`Ролята на ${user.userName} е сменена на ${newRole}`);
+        this.loadUsers();
       },
-      error: err => {
-        console.error('Error emptying container:', err);
-        alert('Грешка при изпразване на контейнер');
-      }
+      error: () => this.showToast('Грешка при смяна на роля', 'error')
     });
   }
 
-  adjustUserReputation(user: User) {
-    const newRep = prompt(`Въведете нова репутация за ${user.userName} (0-100):`, user.reputation.toString());
-    if (newRep !== null) {
-      const rep = parseInt(newRep);
-      if (!isNaN(rep) && rep >= 0 && rep <= 100) {
-        alert(`Репутацията на ${user.userName} е променена на ${rep}`);
-      } else alert('Невалидна стойност за репутация');
-    }
+  openReputationModal(user: User): void {
+    this.reputationModal = {
+      user: { ...user },
+      value: user.reputation
+    };
   }
 
-  getReportTypeText(type: string) {
-    const types: { [key: string]: string } = { 'Full': 'Препълнена', 'Fire': 'Пожар', 'SensorBroken': 'Повреден сензор' };
-    return types[type] || type;
+  closeReputationModal(): void {
+    this.reputationModal = null;
   }
 
-  getReportTypeClass(type: string) {
-    if (type === 'Fire') return 'fire';
-    if (type === 'Full') return 'full';
-    return 'sensor';
+  saveReputation(): void {
+    if (!this.reputationModal) return;
+
+    const user = this.reputationModal.user;
+    const value = this.reputationModal.value;
+
+    const headers = this.authHeaders().headers
+      .set('Content-Type', 'application/json');
+
+    this.http.put(
+      `${this.API}/admin/users/${user.id}/reputation`,
+      JSON.stringify(value),
+      { headers }
+    ).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.showToast(`Репутацията на ${user.userName} е обновена на ${value}`);
+          const updatedUser = { ...user, reputation: value };
+          this.users = this.users.map(u => u.id === user.id ? updatedUser : u);
+          this.filteredUsers = this.filteredUsers.map(u => u.id === user.id ? updatedUser : u);
+          this.reputationModal = null;
+        },
+        error: () => this.showToast('Грешка при обновяване на репутация', 'error')
+      });
   }
 
-  getTrashTypeText(type: number) {
-    const types = ['Смесен', 'Пластмаса', 'Хартия', 'Стъкло'];
-    return types[type] || 'Неизвестен';
+  viewUserReports(userId: string): void {
+    this.activeTab = 'reports';
+    this.reportSearch = userId;
+    this.applyReportFilters();
   }
 
-  getTrashTypeClass(type: number) {
-    const classes = ['mixed', 'plastic', 'paper', 'glass'];
-    return classes[type] || '';
+  buildUserReportCounts(): void {
+    this.userReportCounts = this.reports.reduce((acc, r) => {
+      acc[r.userId] = (acc[r.userId] ?? 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
   }
 
-  getStatusText(status: number | null) {
-    if (status === null || status === undefined) return 'Нормален';
-    const statuses = ['Активен', 'Пожар', 'Повреден', 'Извън линия'];
-    return statuses[status] || 'Неизвестен';
+  getReportTypeText(type: string): string {
+    const map: Record<string, string> = {
+      Full: 'Пълен',
+      Fire: 'Пожар',
+      SensorBroken: 'Повреден сензор'
+    };
+    return map[type] ?? type;
   }
 
-  getStatusClass(status: number | null) {
-    if (status === null || status === undefined) return 'normal';
-    if (status === 1) return 'fire';
-    if (status === 2) return 'damaged';
-    if (status === 3) return 'offline';
-    return 'active';
+  getReportTypeClass(type: string): string {
+    if (type === 'Fire') return 'badge--danger';
+    if (type === 'Full') return 'badge--warn';
+    return 'badge--offline';
   }
 
-  formatDate(dateString: string) {
-    return new Date(dateString).toLocaleDateString('bg-BG', {
-      day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-    });
+  getTrashTypeText(type: number): string {
+    return ['Смесен', 'Пластмаса', 'Хартия', 'Стъкло'][type] ?? 'Неизвестен';
   }
 
+  getStatusText(status: number | null): string {
+    if (status === null || status === undefined) return 'Активен';
+    return (['Активен', 'Пожар', 'Повреден', 'Извън линия'][status]) ?? 'Неизвестен';
+  }
+
+  getStatusClass(status: number | null): string {
+    if (!status) return 'badge--eco';
+    return (['badge--eco', 'badge--danger', 'badge--warn', 'badge--offline'])[status] ?? '';
+  }
 
   getInitials(name: string): string {
     if (!name) return 'U';
-    const parts = name.split(' ').filter(p => p.length > 0);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
     return name.substring(0, 2).toUpperCase();
   }
 
-  getRoleText(role: string): string {
-    const roleLabels: { [key: string]: string } = {
-      'Admin': 'Администратор',
-      'Driver': 'Шофьор',
-      'User': 'Потребител'
-    };
-    return roleLabels[role] || 'Потребител';
+  formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('bg-BG', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  navigateToTruckRoute(id: number, areaId: string): void {
+    this.showToast(`Преглед на маршрут за камион #${id} в зона ${areaId}`, 'info');
+  }
+
+  exportReports(): void {
+    const headers = ['ID', 'Тип', 'Контейнер', 'Потребител', 'Репутация', 'AI', 'Увереност', 'Дата', 'Статус'];
+    const rows = this.filteredReports.map(r => [
+      r.id,
+      this.getReportTypeText(r.reportType),
+      r.trashContainerId,
+      r.userName,
+      r.userReputationOnSubmit,
+      r.ai_Score,
+      r.finalConfidence,
+      this.formatDate(r.createdAt),
+      r.isApproved === null ? 'Чакащ' : r.isApproved ? 'Одобрен' : 'Отхвърлен'
+    ]);
+
+    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `binmaps-reports-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  showToast(message: string, type: 'success' | 'error' | 'info' = 'success'): void {
+    const id = ++this.toastCounter;
+    this.toasts.push({ id, type, message });
+    setTimeout(() => this.dismissToast(id), 3500);
+  }
+
+  dismissToast(id: number): void {
+    this.toasts = this.toasts.filter(t => t.id !== id);
+  }
+
+  private authHeaders(): { headers: HttpHeaders } {
+    return this.authService.getAuthHeaders();
   }
 }
