@@ -1,16 +1,35 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { provideZoneChangeDetection } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { AdminDashboardComponent } from './admin-dashboard';
+import { AuthService } from '../services/auth.service';
+import { of } from 'rxjs';
 
-describe('AdminDashboard', () => {
+describe('AdminDashboardComponent', () => {
   let component: AdminDashboardComponent;
   let fixture: ComponentFixture<AdminDashboardComponent>;
 
   beforeEach(async () => {
+    const mockAuthService = jasmine.createSpyObj('AuthService', ['getAuthHeaders', 'hasRole'], {
+      currentUser$: of(null),
+      currentUser: null,
+      isAuthenticated: false
+    });
+    mockAuthService.getAuthHeaders.and.returnValue({ headers: {} as any });
+    mockAuthService.hasRole.and.returnValue(false);
+
     await TestBed.configureTestingModule({
-      imports: [AdminDashboardComponent]
-    })
-    .compileComponents();
+      imports: [AdminDashboardComponent],
+      providers: [
+        provideZoneChangeDetection({ eventCoalescing: true }),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: AuthService, useValue: mockAuthService }
+      ]
+    }).compileComponents();
 
     fixture = TestBed.createComponent(AdminDashboardComponent);
     component = fixture.componentInstance;

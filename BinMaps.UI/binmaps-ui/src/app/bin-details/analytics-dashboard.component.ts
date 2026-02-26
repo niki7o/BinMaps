@@ -96,6 +96,9 @@ export class AnalyticsDashboardComponent implements OnInit, AfterViewInit, OnDes
     return '#ef4444';
   }
 
+  /** Alias used by the route gauge SVG and label */
+  get routeEfficiencyColor() { return this.gaugeColor; }
+
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   // IMPORTANT: We init UI first (ngAfterViewInit), THEN fetch.
   // This guarantees charts + map are always ready before data arrives.

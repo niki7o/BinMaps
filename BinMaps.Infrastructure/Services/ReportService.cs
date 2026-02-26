@@ -101,7 +101,7 @@ public sealed class ReportService : IReportService
         report.IsApproved = false;
         await _reportRepo.UpdateAsync(report);
 
-        await _reputationService.DecrementAsync(report.UserId);
+      
     }
 
     #endregion
@@ -110,18 +110,21 @@ public sealed class ReportService : IReportService
 
     private static double CalculateConfidence(double aiScore, int reputation)
     {
+  
         if (aiScore <= 0)
-            return reputation * ReputationWeight;
+        {
+            return (double)reputation;
+        }
 
+       
         return Math.Round((aiScore * AiWeight) + (reputation * ReputationWeight), 2);
     }
 
     private static int GetReputationFromRole(string role) => role switch
     {
         "Admin" => 100,
-        "Driver" => 75,
+        "Driver" => 80, 
         _ => 50
     };
-
     #endregion
 }
