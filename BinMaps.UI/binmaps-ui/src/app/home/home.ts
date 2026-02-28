@@ -64,8 +64,10 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   fillClass(fill: number): string {
-    if (fill >= 80) return 'progress__fill--danger';
-    if (fill >= 60) return 'progress__fill--warn';
+    if (fill >= 80)
+       return 'progress__fill--danger';
+    if (fill >= 60)
+       return 'progress__fill--warn';
     return 'progress__fill--ok';
   }
 

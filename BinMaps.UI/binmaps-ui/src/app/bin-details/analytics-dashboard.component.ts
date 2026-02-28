@@ -347,11 +347,9 @@ export class AnalyticsDashboardComponent implements OnInit, AfterViewInit, OnDes
     });
 
     
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      opacity:    1,
-      subdomains: 'abcd',
-      maxZoom:    18
-    }).addTo(this.hotspotMap);
+  L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
+    
+  }).addTo(this.hotspotMap);
 
   
     setTimeout(() => {
