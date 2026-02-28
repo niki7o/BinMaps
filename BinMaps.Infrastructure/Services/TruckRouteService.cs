@@ -120,6 +120,9 @@ public sealed class TruckRouteService : ITruckRouteService
             if (nearest is null)
                 break;
 
+            if (!visited.Add(nearest.Id))
+                break;
+
             ordered.Add(nearest);
             visited.Add(nearest.Id);
             current = nearest.Id;
@@ -283,6 +286,10 @@ public sealed class TruckRouteService : ITruckRouteService
         public Dictionary<int, double> Dijkstra(int startId)
         {
             var distances = _nodes.Keys.ToDictionary(k => k, _ => double.MaxValue);
+
+            if (!distances.ContainsKey(startId))
+                return distances;
+
             distances[startId] = 0;
 
             var queue = new SortedSet<(double Distance, int Id)>(

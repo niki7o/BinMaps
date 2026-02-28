@@ -26,7 +26,7 @@ export class Header implements OnInit, OnDestroy {
   readonly isAdmin    = computed(() => this.currentUser()?.role === 'Admin');
   readonly isDriver   = computed(() => this.currentUser()?.role === 'Driver');
   readonly initials   = computed(() =>
-    (this.currentUser()?.userName ?? '').slice(0, 2).toUpperCase() || 'U'
+    (this.currentUser()?.userName ?? '').slice(0, 2).toUpperCase() || 'Ме'
   );
 
   get notifications() { return this.notifService.notifications(); }

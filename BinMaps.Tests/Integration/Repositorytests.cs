@@ -1,10 +1,14 @@
-﻿using Xunit;
-using FluentAssertions;
-using BinMaps.Data;
+﻿using BinMaps.Data;
 using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
 using BinMaps.Infrastructure.Repository;
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace BinMaps.Tests.Integration
 {
@@ -22,7 +26,7 @@ namespace BinMaps.Tests.Integration
         public RepositoryTests()
         {
             var options = new DbContextOptionsBuilder<BinMapsDbContext>()
-                .UseInMemoryDatabase(databaseName: $"TestDb_{Guid.NewGuid()}")
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
 
             _context = new BinMapsDbContext(options);
@@ -36,16 +40,7 @@ namespace BinMaps.Tests.Integration
         [Fact]
         public async Task AddAsync_ValidEntity_AddsToDatabase()
         {
-            var container = new TrashContainer
-            {
-                AreaId = "Зона 1 - Надежда север",
-                TrashType = TrashType.Mixed,
-                FillPercentage = 50,
-                Capacity = 1100,
-                LocationX = 42.7,
-                LocationY = 23.3,
-                Status = TrashContainerStatus.Active
-            };
+            var container = CreateContainer("Зона 1 - Надежда север", TrashType.Mixed, 50);
 
             await _repository.AddAsync(container);
             _context.ChangeTracker.Clear();
@@ -60,8 +55,8 @@ namespace BinMaps.Tests.Integration
         {
             var containers = new[]
             {
-                new TrashContainer { AreaId = "Zone1", TrashType = TrashType.Mixed, FillPercentage = 50, Capacity = 1100, LocationX = 42.7, LocationY = 23.3, Status = TrashContainerStatus.Active },
-                new TrashContainer { AreaId = "Zone2", TrashType = TrashType.Plastic, FillPercentage = 60, Capacity = 1100, LocationX = 42.71, LocationY = 23.31, Status = TrashContainerStatus.Active }
+                CreateContainer("Zone1", TrashType.Mixed, 50),
+                CreateContainer("Zone2", TrashType.Plastic, 60)
             };
 
             await _repository.AddRangeAsync(containers);
@@ -77,16 +72,7 @@ namespace BinMaps.Tests.Integration
         [Fact]
         public async Task GetByIdAsync_ExistingEntity_ReturnsEntity()
         {
-            var container = new TrashContainer
-            {
-                AreaId = "Test Zone",
-                TrashType = TrashType.Mixed,
-                FillPercentage = 75,
-                Capacity = 1100,
-                LocationX = 42.7,
-                LocationY = 23.3,
-                Status = TrashContainerStatus.Active
-            };
+            var container = CreateContainer("Test Zone", TrashType.Mixed, 75);
             await _repository.AddAsync(container);
 
             var retrieved = await _repository.GetByIdAsync(container.Id);
@@ -100,7 +86,6 @@ namespace BinMaps.Tests.Integration
         public async Task GetByIdAsync_NonExistent_ReturnsNull()
         {
             var result = await _repository.GetByIdAsync(999);
-
             result.Should().BeNull();
         }
 
@@ -109,14 +94,13 @@ namespace BinMaps.Tests.Integration
         {
             var containers = new[]
             {
-                new TrashContainer { AreaId = "Zone1", TrashType = TrashType.Mixed, FillPercentage = 50, Capacity = 1100, LocationX = 42.7, LocationY = 23.3, Status = TrashContainerStatus.Active },
-                new TrashContainer { AreaId = "Zone2", TrashType = TrashType.Plastic, FillPercentage = 60, Capacity = 1100, LocationX = 42.71, LocationY = 23.31, Status = TrashContainerStatus.Active },
-                new TrashContainer { AreaId = "Zone3", TrashType = TrashType.Paper, FillPercentage = 70, Capacity = 1100, LocationX = 42.72, LocationY = 23.32, Status = TrashContainerStatus.Active }
+                CreateContainer("Zone1", TrashType.Mixed, 50),
+                CreateContainer("Zone2", TrashType.Plastic, 60),
+                CreateContainer("Zone3", TrashType.Paper, 70)
             };
             await _repository.AddRangeAsync(containers);
 
             var all = await _repository.GetAllAsync();
-
             all.Should().HaveCount(3);
         }
 
@@ -125,8 +109,8 @@ namespace BinMaps.Tests.Integration
         {
             var containers = new[]
             {
-                new TrashContainer { AreaId = "Zone1", TrashType = TrashType.Mixed, FillPercentage = 50, Capacity = 1100, LocationX = 42.7, LocationY = 23.3, Status = TrashContainerStatus.Active },
-                new TrashContainer { AreaId = "Zone2", TrashType = TrashType.Plastic, FillPercentage = 85, Capacity = 1100, LocationX = 42.71, LocationY = 23.31, Status = TrashContainerStatus.Active }
+                CreateContainer("Zone1", TrashType.Mixed, 50),
+                CreateContainer("Zone2", TrashType.Plastic, 85)
             };
             await _repository.AddRangeAsync(containers);
 
@@ -139,20 +123,9 @@ namespace BinMaps.Tests.Integration
         [Fact]
         public async Task FirstOrDefaultAsync_NoMatch_ReturnsNull()
         {
-            var container = new TrashContainer
-            {
-                AreaId = "Zone1",
-                TrashType = TrashType.Mixed,
-                FillPercentage = 50,
-                Capacity = 1100,
-                LocationX = 42.7,
-                LocationY = 23.3,
-                Status = TrashContainerStatus.Active
-            };
-            await _repository.AddAsync(container);
+            await _repository.AddAsync(CreateContainer("Zone1", TrashType.Mixed, 50));
 
             var result = await _repository.FirstOrDefaultAsync(c => c.FillPercentage > 90);
-
             result.Should().BeNull();
         }
 
@@ -163,16 +136,7 @@ namespace BinMaps.Tests.Integration
         [Fact]
         public async Task UpdateAsync_ExistingEntity_UpdatesSuccessfully()
         {
-            var container = new TrashContainer
-            {
-                AreaId = "Zone1",
-                TrashType = TrashType.Mixed,
-                FillPercentage = 50,
-                Capacity = 1100,
-                LocationX = 42.7,
-                LocationY = 23.3,
-                Status = TrashContainerStatus.Active
-            };
+            var container = CreateContainer("Zone1", TrashType.Mixed, 50);
             await _repository.AddAsync(container);
 
             container.FillPercentage = 80;
@@ -186,18 +150,9 @@ namespace BinMaps.Tests.Integration
         [Fact]
         public async Task UpdateAsync_MultipleProperties_AllUpdated()
         {
-            var container = new TrashContainer
-            {
-                AreaId = "Zone1",
-                TrashType = TrashType.Mixed,
-                FillPercentage = 50,
-                Capacity = 1100,
-                LocationX = 42.7,
-                LocationY = 23.3,
-                Status = TrashContainerStatus.Active,
-                Temperature = 20,
-                HasSensor = true
-            };
+            var container = CreateContainer("Zone1", TrashType.Mixed, 50);
+            container.Temperature = 20;
+            container.HasSensor = true;
             await _repository.AddAsync(container);
 
             container.FillPercentage = 90;
@@ -218,16 +173,7 @@ namespace BinMaps.Tests.Integration
         [Fact]
         public async Task DeleteAsync_ExistingEntity_RemovesFromDatabase()
         {
-            var container = new TrashContainer
-            {
-                AreaId = "Zone1",
-                TrashType = TrashType.Mixed,
-                FillPercentage = 50,
-                Capacity = 1100,
-                LocationX = 42.7,
-                LocationY = 23.3,
-                Status = TrashContainerStatus.Active
-            };
+            var container = CreateContainer("Zone1", TrashType.Mixed, 50);
             await _repository.AddAsync(container);
             var id = container.Id;
 
@@ -243,8 +189,8 @@ namespace BinMaps.Tests.Integration
         {
             var containers = new[]
             {
-                new TrashContainer { AreaId = "Zone1", TrashType = TrashType.Mixed, FillPercentage = 50, Capacity = 1100, LocationX = 42.7, LocationY = 23.3, Status = TrashContainerStatus.Active },
-                new TrashContainer { AreaId = "Zone2", TrashType = TrashType.Plastic, FillPercentage = 60, Capacity = 1100, LocationX = 42.71, LocationY = 23.31, Status = TrashContainerStatus.Active }
+                CreateContainer("Zone1", TrashType.Mixed, 50),
+                CreateContainer("Zone2", TrashType.Plastic, 60)
             };
             await _repository.AddRangeAsync(containers);
 
@@ -262,7 +208,6 @@ namespace BinMaps.Tests.Integration
         public void GetAllAttached_ReturnsQueryable()
         {
             var queryable = _repository.GetAllAttached();
-
             queryable.Should().BeAssignableTo<IQueryable<TrashContainer>>();
         }
 
@@ -271,8 +216,8 @@ namespace BinMaps.Tests.Integration
         {
             var containers = new[]
             {
-                new TrashContainer { AreaId = "Zone1", TrashType = TrashType.Mixed, FillPercentage = 50, Capacity = 1100, LocationX = 42.7, LocationY = 23.3, Status = TrashContainerStatus.Active },
-                new TrashContainer { AreaId = "Zone2", TrashType = TrashType.Plastic, FillPercentage = 85, Capacity = 1100, LocationX = 42.71, LocationY = 23.31, Status = TrashContainerStatus.Active }
+                CreateContainer("Zone1", TrashType.Mixed, 50),
+                CreateContainer("Zone2", TrashType.Plastic, 85)
             };
             await _repository.AddRangeAsync(containers);
 
@@ -290,9 +235,27 @@ namespace BinMaps.Tests.Integration
 
         public void Dispose()
         {
-            _context.Database.EnsureDeleted();
             _context.Dispose();
         }
+
+        #endregion
+
+        #region Helpers
+
+        private static int _idSeed = 1;
+
+        private static TrashContainer CreateContainer(string areaId, TrashType type, double fill) =>
+            new TrashContainer
+            {
+                Id = _idSeed++,
+                AreaId = areaId,
+                TrashType = type,
+                FillPercentage = fill,
+                Capacity = 1100,
+                LocationX = 42.7,
+                LocationY = 23.3,
+                Status = TrashContainerStatus.Active
+            };
 
         #endregion
     }

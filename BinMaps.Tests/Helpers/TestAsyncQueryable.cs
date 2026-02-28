@@ -30,10 +30,9 @@ namespace BinMaps.Tests.Helpers
 
         public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken = default)
         {
-            // TResult is Task<TActualResult> — execute synchronously and wrap
+            
             var resultType = typeof(TResult).GetGenericArguments()[0];
 
-            // Find generic Execute<TResult> method via reflection
             var genericExecute = typeof(IQueryProvider)
                 .GetMethods()
                 .First(m => m.Name == nameof(IQueryProvider.Execute) && m.IsGenericMethod)
@@ -51,12 +50,17 @@ namespace BinMaps.Tests.Helpers
 
     internal class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
     {
-        internal TestAsyncEnumerable(IEnumerable<T> enumerable) : base(enumerable) { }
-        internal TestAsyncEnumerable(Expression expression) : base(expression) { }
+        private readonly IQueryProvider _provider;
+
+        internal TestAsyncEnumerable(IEnumerable<T> enumerable) : base(enumerable)
+            => _provider = new TestAsyncQueryProvider<T>(new EnumerableQuery<T>(enumerable).AsQueryable().Provider);
+
+        internal TestAsyncEnumerable(Expression expression) : base(expression)
+            => _provider = new TestAsyncQueryProvider<T>(new EnumerableQuery<T>(expression).AsQueryable().Provider);
 
         public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
             => new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
 
-        IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(((IQueryable)this).Provider);
+        IQueryProvider IQueryable.Provider => _provider;
     }
 }

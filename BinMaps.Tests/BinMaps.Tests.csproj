@@ -8,12 +8,15 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		
+		<PackageReference Include="Microsoft.Data.Sqlite.Core" Version="10.0.3" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.11" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
 		<PackageReference Include="xunit" Version="2.9.3" />
 		<PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
 		<PackageReference Include="FluentAssertions" Version="8.8.0" />
 		<PackageReference Include="Moq" Version="4.20.72" />
+		
 	</ItemGroup>
 
 	<ItemGroup>
@@ -21,6 +24,7 @@
 		<ProjectReference Include="..\BinMaps.Data\BinMaps.Data.csproj" />
 		<ProjectReference Include="..\BinMaps.Infrastructure\BinMaps.Infrastructure.csproj" />
 		<ProjectReference Include="..\BinMaps.Shared\BinMaps.Shared.csproj" />
+		
 	</ItemGroup>
 
 </Project>

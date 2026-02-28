@@ -22,30 +22,16 @@
         <p class="profile__email">{{ profile?.email }}</p>
         <p class="profile__since">Потребител от {{ formatMemberSince(profile?.memberSince ?? '') }}</p>
       </div>
-    </div>
-      <div class="profile__header-stat-div"></div>
-      <div class="profile__header-stat">
-        <span class="profile__header-stat-val text-eco">{{ getAccuracyRate() }}%</span>
-        <span class="profile__header-stat-label">Одобрени</span>
-      </div>
-      <ng-container *ngIf="profile?.role === 'User'">
-        <div class="profile__header-stat-div"></div>
-        <div class="profile__header-stat">
-          <span class="profile__header-stat-val">{{ profile?.reputation ?? 0 | number:'1.0-0' }}</span>
-          <span class="profile__header-stat-label">Репутация</span>
-        </div>
-      </ng-container>
-    </div>
+   
   </div>
 
-  <!-- Loading -->
+ 
   <div class="profile__loading" *ngIf="loading">
     <div class="skeleton skeleton--xl"></div>
   </div>
 
   <div class="profile__body" *ngIf="!loading && profile">
 
-    <!-- Sidebar -->
     <div class="profile__sidebar">
 
       <!-- Navigation -->
