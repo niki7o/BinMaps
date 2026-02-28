@@ -122,10 +122,59 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   isLoading = false;
 
-  // Pagination
   currentPage = 1;
-  pageSize = 20;
+  pageSize = 10;
   totalReports = 0;
+
+  containerPage = 1;
+  readonly containerPageSize = 10;
+
+  get pagedContainers(): Container[] {
+    const start = (this.containerPage - 1) * this.containerPageSize;
+    return this.filteredContainers.slice(start, start + this.containerPageSize);
+  }
+
+  get containerTotalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredContainers.length / this.containerPageSize));
+  }
+
+  get containerPageNumbers(): number[] {
+    const pages: number[] = [];
+    const start = Math.max(1, this.containerPage - 2);
+    const end = Math.min(this.containerTotalPages, this.containerPage + 2);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
+
+  goToContainerPage(page: number): void {
+    if (page < 1 || page > this.containerTotalPages) return;
+    this.containerPage = page;
+  }
+
+  userPage = 1;
+  readonly userPageSize = 10;
+
+  get pagedUsers(): User[] {
+    const start = (this.userPage - 1) * this.userPageSize;
+    return this.filteredUsers.slice(start, start + this.userPageSize);
+  }
+
+  get userTotalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredUsers.length / this.userPageSize));
+  }
+
+  get userPageNumbers(): number[] {
+    const pages: number[] = [];
+    const start = Math.max(1, this.userPage - 2);
+    const end = Math.min(this.userTotalPages, this.userPage + 2);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
+
+  goToUserPage(page: number): void {
+    if (page < 1 || page > this.userTotalPages) return;
+    this.userPage = page;
+  }
 
   get totalPages(): number {
     return Math.max(1, Math.ceil(this.totalReports / this.pageSize));
@@ -256,8 +305,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   applyReportFilters(): void {
-    // Status and type filters are applied server-side via loadReports()
-    // Only client-side text search is applied here
     if (!this.reportSearch.trim()) {
       this.filteredReports = [...this.reports];
       return;
@@ -278,25 +325,27 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   applyContainerSearch(): void {
     if (!this.containerSearch.trim()) {
       this.filteredContainers = [...this.containers];
-      return;
+    } else {
+      const q = this.containerSearch.toLowerCase();
+      this.filteredContainers = this.containers.filter(c =>
+        c.areaId.toLowerCase().includes(q) ||
+        c.id.toString().includes(q)
+      );
     }
-    const q = this.containerSearch.toLowerCase();
-    this.filteredContainers = this.containers.filter(c =>
-      c.areaId.toLowerCase().includes(q) ||
-      c.id.toString().includes(q)
-    );
+    this.containerPage = 1;
   }
 
   applyUserSearch(): void {
     if (!this.userSearch.trim()) {
       this.filteredUsers = [...this.users];
-      return;
+    } else {
+      const q = this.userSearch.toLowerCase();
+      this.filteredUsers = this.users.filter(u =>
+        u.userName.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q)
+      );
     }
-    const q = this.userSearch.toLowerCase();
-    this.filteredUsers = this.users.filter(u =>
-      u.userName.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q)
-    );
+    this.userPage = 1;
   }
 
   get pendingCount(): number {
@@ -473,7 +522,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     return ['Смесен', 'Пластмаса', 'Хартия', 'Стъкло'][type] ?? 'Неизвестен';
   }
 
-  // Backend enum: Active=0, Offline=1, Fire=2, SensorBroken=3
   getStatusText(status: number | null): string {
     if (status === null || status === undefined) return 'Активен';
     return (['Активен', 'Извън линия', 'Пожар', 'Повреден сензор'][status]) ?? 'Неизвестен';
@@ -481,7 +529,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   getStatusClass(status: number | null): string {
     if (status === null || status === 0) return 'badge--eco';
-    // 1=Offline, 2=Fire, 3=SensorBroken
     return (['badge--eco', 'badge--offline', 'badge--danger', 'badge--warn'])[status] ?? '';
   }
 
@@ -497,6 +544,25 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       day: '2-digit', month: '2-digit', year: 'numeric',
       hour: '2-digit', minute: '2-digit'
     });
+  }
+
+  getPhotoFullUrl(photoURL: string | null): string | null {
+    if (!photoURL) return null;
+    const base = this.API.replace(/\/api$/, '');
+    return `${base}${photoURL}`;
+  }
+
+  deleteUser(user: User): void {
+    if (!confirm(`Изтриване на профила на ${user.userName}?`)) return;
+    this.http.delete(`${this.API}/admin/users/${user.id}`, this.authHeaders())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.showToast(`Профилът на ${user.userName} е изтрит`);
+          this.loadUsers();
+        },
+        error: () => this.showToast('Грешка при изтриване', 'error')
+      });
   }
 
   navigateToTruckRoute(id: number, areaId: string): void {

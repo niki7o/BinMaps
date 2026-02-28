@@ -24,16 +24,12 @@ interface Report {
   id: number;
   reportType: number;
   description: string;
+  photoURL: string | null;
   createdAt: string;
   isApproved: boolean | null;
   ai_Score: number;
   finalConfidence: number;
   containerId: number | null;
-  container: {
-    id: number;
-    areaId: string;
-    trashType: number;
-  } | null;
 }
 
 interface ReputationInfo {
@@ -58,6 +54,31 @@ export class ProfileComponent implements OnInit {
   unlockedBadgeIds = new Set<string>();
 
   loading = true;
+
+  reportPage = 1;
+  readonly reportPageSize = 5;
+
+  get pagedReports(): Report[] {
+    const start = (this.reportPage - 1) * this.reportPageSize;
+    return this.reports.slice(start, start + this.reportPageSize);
+  }
+
+  get reportTotalPages(): number {
+    return Math.max(1, Math.ceil(this.reports.length / this.reportPageSize));
+  }
+
+  get reportPageNumbers(): number[] {
+    const pages: number[] = [];
+    const start = Math.max(1, this.reportPage - 2);
+    const end = Math.min(this.reportTotalPages, this.reportPage + 2);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
+
+  goToReportPage(page: number): void {
+    if (page < 1 || page > this.reportTotalPages) return;
+    this.reportPage = page;
+  }
   editMode = false;
   uploadingPicture = false;
   savingProfile = false;

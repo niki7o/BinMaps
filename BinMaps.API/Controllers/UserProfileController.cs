@@ -1,4 +1,4 @@
-﻿using BinMaps.Data;
+using BinMaps.Data;
 using BinMaps.Data.Entities;
 using BinMaps.Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -181,25 +181,24 @@ public sealed class UserProfileController : ControllerBase
         if (string.IsNullOrEmpty(userId))
             return Unauthorized();
 
-        var reports = await _context.Reports
+        var raw = await _context.Reports
             .AsNoTracking()
             .Where(r => r.UserId == userId)
             .OrderByDescending(r => r.CreatedAt)
-            .Select(r => new
-            {
-                r.Id,
-                ReportType = (int)r.ReportType,
-                r.Description,
-                r.CreatedAt,
-                r.IsApproved,
-                r.AI_Score,
-                r.FinalConfidence,
-                ContainerId = r.TrashContainerId,
-                Container = r.TrashContainer != null
-                    ? new { r.TrashContainer.Id, r.TrashContainer.AreaId, TrashType = (int)r.TrashContainer.TrashType }
-                    : null
-            })
             .ToListAsync();
+
+        var reports = raw.Select(r => new
+        {
+            r.Id,
+            ReportType      = (int)r.ReportType,
+            r.Description,
+            r.PhotoURL,
+            r.CreatedAt,
+            r.IsApproved,
+            ai_Score        = r.AI_Score,
+            r.FinalConfidence,
+            ContainerId     = r.TrashContainerId
+        });
 
         return Ok(reports);
     }

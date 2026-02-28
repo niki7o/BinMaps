@@ -1,37 +1,42 @@
-﻿using BinMaps.Data.Entities;
+using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
+using BinMaps.Infrastructure.Hubs;
 using BinMaps.Infrastructure.Repository;
 using BinMaps.Infrastructure.Services.Interfaces;
 using BinMaps.Shared.DTOs;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 
 namespace BinMaps.Infrastructure.Services;
 
 public sealed class ReportService : IReportService
 {
-    private const double AiWeight = 0.6;
-    private const double ReputationWeight = 0.4;
-    private const double AutoApproveThreshold = 80.0;
-    private const int AutoRejectBelowReputation = 20;
+    private const double AiWeight                  = 0.6;
+    private const double ReputationWeight          = 0.4;
+    private const double AutoApproveThreshold      = 85.0;
+    private const int    AutoRejectBelowReputation = 25;
 
-    private readonly IRepository<Report, int> _reportRepo;
-    private readonly IAIService _aiService;
-    private readonly IReputationService _reputationService;
-    private readonly IContainerUpdateService _containerUpdateService;
-    private readonly UserManager<User> _userManager;
+    private readonly IRepository<Report, int>  _reportRepo;
+    private readonly IAIService                _aiService;
+    private readonly IReputationService        _reputationService;
+    private readonly IContainerUpdateService   _containerUpdateService;
+    private readonly UserManager<User>         _userManager;
+    private readonly IHubContext<ContainerHub> _hub;
 
     public ReportService(
-        IRepository<Report, int> reportRepo,
-        IAIService aiService,
-        IReputationService reputationService,
-        IContainerUpdateService containerUpdateService,
-        UserManager<User> userManager)
+        IRepository<Report, int>  reportRepo,
+        IAIService                aiService,
+        IReputationService        reputationService,
+        IContainerUpdateService   containerUpdateService,
+        UserManager<User>         userManager,
+        IHubContext<ContainerHub> hub)
     {
-        _reportRepo = reportRepo;
-        _aiService = aiService;
-        _reputationService = reputationService;
+        _reportRepo             = reportRepo;
+        _aiService              = aiService;
+        _reputationService      = reputationService;
         _containerUpdateService = containerUpdateService;
-        _userManager = userManager;
+        _userManager            = userManager;
+        _hub                    = hub;
     }
 
     #region Public
@@ -42,33 +47,43 @@ public sealed class ReportService : IReportService
         string userName,
         string role)
     {
-        // Use the user's actual DB reputation for scoring
-        var dbUser = await _userManager.FindByIdAsync(userId);
+        var dbUser         = await _userManager.FindByIdAsync(userId);
         var userReputation = dbUser?.Reputation ?? GetReputationFromRole(role);
 
+        var hasPhoto      = dto.Photo is not null;
+        var isAdmin       = role == "Admin";
+        var isDriver      = role == "Driver";
+        var isTruckReport = dto.ReportType == ReportType.TruckProblem;
+
         AIResultDto? aiResult = null;
-        if (dto.Photo is not null)
-            aiResult = await _aiService.AnalyzeAsync(dto.Photo);
+        if (hasPhoto)
+            aiResult = await _aiService.AnalyzeAsync(dto.Photo!);
 
-        var aiScore = aiResult?.Confidence ?? 0.0;
-        var finalConfidence = CalculateConfidence(aiScore, userReputation);
+        var aiScore         = aiResult?.Confidence ?? 0.0;
+        var finalConfidence = CalculateConfidence(aiScore, userReputation, hasPhoto);
 
-        // Auto-reject if user reputation is too low (and it's not a fire report)
-        var autoReject = userReputation < AutoRejectBelowReputation && dto.ReportType != ReportType.Fire;
-        var autoApprove = !autoReject && (finalConfidence >= AutoApproveThreshold
-                            || dto.ReportType == ReportType.Fire);
+        var autoReject  = !isAdmin && userReputation < AutoRejectBelowReputation && dto.ReportType != ReportType.Fire;
+
+        bool autoApprove;
+        if (isAdmin)
+            autoApprove = true;
+        else if (isDriver && isTruckReport)
+            autoApprove = true;
+        else
+            autoApprove = false;
 
         var report = new Report
         {
-            UserId = userId,
-            UserName = userName,
-            TrashContainerId = dto.TrashContainerId > 0 ? dto.TrashContainerId : null,
-            ReportType = dto.ReportType,
-            Description = dto.Description,
-            AI_Score = aiScore,
+            UserId                 = userId,
+            UserName               = userName,
+            TrashContainerId       = dto.TrashContainerId > 0 ? dto.TrashContainerId : null,
+            ReportType             = dto.ReportType,
+            Description            = dto.Description,
+            PhotoURL               = dto.PhotoURL,
+            AI_Score               = aiScore,
             UserReputationOnSubmit = userReputation,
-            FinalConfidence = finalConfidence,
-            IsApproved = autoReject ? false : (autoApprove ? true : null)
+            FinalConfidence        = finalConfidence,
+            IsApproved             = autoReject ? false : (autoApprove ? true : null)
         };
 
         await _reportRepo.AddAsync(report);
@@ -84,20 +99,32 @@ public sealed class ReportService : IReportService
             await _reputationService.DecrementAsync(userId);
         }
 
+        if (isTruckReport)
+        {
+            await _hub.Clients.All.SendAsync("TruckProblemReported", new
+            {
+                ReportId    = report.Id,
+                ContainerId = dto.TrashContainerId > 0 ? dto.TrashContainerId : (int?)null,
+                Reporter    = userName,
+                Description = dto.Description ?? string.Empty,
+                CreatedAt   = report.CreatedAt
+            });
+        }
+
         string message = autoReject
             ? "Сигналът е автоматично отхвърлен поради ниска репутация."
             : autoApprove
-                ? "Докладът е автоматично одобрен."
-                : "Докладът е изпратен за модерация.";
+                ? "Сигналът е автоматично одобрен."
+                : "Сигналът е изпратен за модерация.";
 
         return new ReportResponseDto
         {
-            ReportId = report.Id,
+            ReportId        = report.Id,
             FinalConfidence = finalConfidence,
-            IsApproved = report.IsApproved,
-            AiScore = aiScore,
-            UserReputation = userReputation,
-            Message = message
+            IsApproved      = report.IsApproved,
+            AiScore         = aiScore,
+            UserReputation  = userReputation,
+            Message         = message
         };
     }
 
@@ -130,23 +157,23 @@ public sealed class ReportService : IReportService
 
     #region Private
 
-    private static double CalculateConfidence(double aiScore, int reputation)
+    private static double CalculateConfidence(double aiScore, int reputation, bool hasPhoto)
     {
-  
-        if (aiScore <= 0)
-        {
-            return (double)reputation;
-        }
+        if (!hasPhoto)
+            return reputation * ReputationWeight;
 
-       
+        if (aiScore <= 0)
+            return reputation;
+
         return Math.Round((aiScore * AiWeight) + (reputation * ReputationWeight), 2);
     }
 
     private static int GetReputationFromRole(string role) => role switch
     {
-        "Admin" => 100,
-        "Driver" => 80, 
-        _ => 50
+        "Admin"  => 100,
+        "Driver" => 80,
+        _        => 50
     };
+
     #endregion
 }

@@ -13,10 +13,12 @@ namespace BinMaps.API.Controllers;
 public sealed class ReportsController : ControllerBase
 {
     private readonly IReportService _reportService;
+    private readonly IWebHostEnvironment _environment;
 
-    public ReportsController(IReportService reportService)
+    public ReportsController(IReportService reportService, IWebHostEnvironment environment)
     {
         _reportService = reportService;
+        _environment = environment;
     }
 
     #region Endpoints
@@ -28,6 +30,22 @@ public sealed class ReportsController : ControllerBase
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
+
+        if (dto.Photo is not null)
+        {
+            var webRoot = _environment.WebRootPath
+                ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var uploadsDir = Path.Combine(webRoot, "uploads", "reports");
+            Directory.CreateDirectory(uploadsDir);
+
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(dto.Photo.FileName)}";
+            var fullPath = Path.Combine(uploadsDir, fileName);
+
+            await using var stream = new FileStream(fullPath, FileMode.Create);
+            await dto.Photo.CopyToAsync(stream);
+
+            dto.PhotoURL = $"/uploads/reports/{fileName}";
+        }
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var userName = User.FindFirstValue(ClaimTypes.Name)!;

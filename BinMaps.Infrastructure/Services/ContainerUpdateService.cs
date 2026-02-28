@@ -1,17 +1,23 @@
-﻿using BinMaps.Data.Entities.Enums;
+using BinMaps.Data.Entities;
+using BinMaps.Data.Entities.Enums;
+using BinMaps.Infrastructure.Hubs;
 using BinMaps.Infrastructure.Repository;
 using BinMaps.Infrastructure.Services.Interfaces;
-using BinMaps.Data.Entities;
+using Microsoft.AspNetCore.SignalR;
 
 namespace BinMaps.Infrastructure.Services;
 
 public sealed class ContainerUpdateService : IContainerUpdateService
 {
     private readonly IRepository<TrashContainer, int> _containerRepo;
+    private readonly IHubContext<ContainerHub> _hub;
 
-    public ContainerUpdateService(IRepository<TrashContainer, int> containerRepo)
+    public ContainerUpdateService(
+        IRepository<TrashContainer, int> containerRepo,
+        IHubContext<ContainerHub> hub)
     {
         _containerRepo = containerRepo;
+        _hub = hub;
     }
 
     #region Public
@@ -23,6 +29,18 @@ public sealed class ContainerUpdateService : IContainerUpdateService
 
         ApplyEffect(container, reportType);
         await _containerRepo.UpdateAsync(container);
+
+        await _hub.Clients.All.SendAsync("ContainersUpdated", new[]
+        {
+            new
+            {
+                Id                = containerId,
+                FillPercentage    = container.FillPercentage,
+                Temperature       = container.Temperature,
+                BatteryPercentage = container.BatteryPercentage,
+                Status            = (int)container.Status
+            }
+        });
     }
 
     #endregion
@@ -33,11 +51,10 @@ public sealed class ContainerUpdateService : IContainerUpdateService
     {
         container.Status = reportType switch
         {
-            ReportType.Fire => TrashContainerStatus.Fire,
-            ReportType.SensorBroken => TrashContainerStatus.SensorBroken,
+            ReportType.Fire            => TrashContainerStatus.Fire,
+            ReportType.SensorBroken    => TrashContainerStatus.SensorBroken,
             ReportType.ContainerDamage => TrashContainerStatus.Offline,
-            ReportType.Full => container.Status,
-            _ => container.Status
+            _                          => container.Status
         };
 
         if (reportType == ReportType.Full)

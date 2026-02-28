@@ -16,4 +16,7 @@ public sealed class CreateReportDTO
 
     [MaxLength(500)]
     public string? Description { get; set; }
+
+    [MaxLength(500)]
+    public string? PhotoURL { get; set; }
 }

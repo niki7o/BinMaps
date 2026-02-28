@@ -70,6 +70,7 @@ public sealed class AuthService : IAuthService
         if (!signIn.Succeeded)
             return (false, null);
 
+
         var roles = await _userManager.GetRolesAsync(user);
         var role = roles.FirstOrDefault() ?? "User";
         var token = GenerateJwtToken(user, role);

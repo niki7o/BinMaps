@@ -110,16 +110,15 @@ public sealed class TrashContainersController : ControllerBase
         container.Status = TrashContainerStatus.Active;
         await _containerRepo.UpdateAsync(container);
 
-        // Notify all clients immediately via SignalR so the map updates instantly
         await hubContext.Clients.All.SendAsync("ContainersUpdated", new[]
         {
             new
             {
-                Id            = id,
-                FillPercentage = 0.0,
-                Temperature   = container.Temperature,
+                Id                = id,
+                FillPercentage    = 0.0,
+                Temperature       = container.Temperature,
                 BatteryPercentage = container.BatteryPercentage,
-                Status        = (int)TrashContainerStatus.Active
+                Status            = (int)TrashContainerStatus.Active
             }
         });
 
@@ -130,7 +129,10 @@ public sealed class TrashContainersController : ControllerBase
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update([FromRoute] int id, [FromBody] UpdateContainerDTO dto)
+    public async Task<IActionResult> Update(
+        [FromRoute] int id,
+        [FromBody] UpdateContainerDTO dto,
+        [FromServices] IHubContext<ContainerHub> hubContext)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
@@ -143,6 +145,18 @@ public sealed class TrashContainersController : ControllerBase
         container.Status = dto.Status;
         container.HasSensor = dto.HasSensor;
         await _containerRepo.UpdateAsync(container);
+
+        await hubContext.Clients.All.SendAsync("ContainersUpdated", new[]
+        {
+            new
+            {
+                Id                = id,
+                FillPercentage    = dto.FillPercentage,
+                Temperature       = container.Temperature,
+                BatteryPercentage = container.BatteryPercentage,
+                Status            = (int)dto.Status
+            }
+        });
 
         return NoContent();
     }

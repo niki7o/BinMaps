@@ -49,7 +49,6 @@ public sealed class TruckRouteService : ITruckRouteService
 
     private async Task<Truck> FindTruckAsync(string areaId, TrashType trashType)
     {
-        // Find truck by area (one truck per area covers all container types)
         var truck = await _truckRepo
             .GetAllAttached()
             .FirstOrDefaultAsync(t => t.AreaId == areaId);

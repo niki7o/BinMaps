@@ -128,7 +128,7 @@ public sealed class AdminController : ControllerBase
         return NoContent();
     }
 
-    [HttpPut("users/{id}/reputation")]  
+    [HttpPut("users/{id}/reputation")]
     public async Task<IActionResult> SetReputation([FromRoute] string id, [FromBody] int value)
     {
         var user = await _userManager.FindByIdAsync(id);
@@ -164,12 +164,10 @@ public sealed class AdminController : ControllerBase
 
         var query = _context.Reports.AsNoTracking().AsQueryable();
 
-        // Status filter
         if (status == "pending")  query = query.Where(r => r.IsApproved == null);
         else if (status == "approved") query = query.Where(r => r.IsApproved == true);
         else if (status == "rejected") query = query.Where(r => r.IsApproved == false);
 
-        // Report type filter
         if (!string.IsNullOrEmpty(reportType) && Enum.TryParse<ReportType>(reportType, out var rt))
             query = query.Where(r => r.ReportType == rt);
 

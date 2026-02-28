@@ -16,7 +16,7 @@ public sealed class ReputationService : IReputationService
 
     #region Mutation
 
-    public async Task IncrementAsync(string userId, int delta = 10)
+    public async Task IncrementAsync(string userId, int delta = 5)
     {
         var user = await _userManager.FindByIdAsync(userId)
             ?? throw new InvalidOperationException($"User {userId} not found.");
@@ -25,7 +25,7 @@ public sealed class ReputationService : IReputationService
         await _userManager.UpdateAsync(user);
     }
 
-    public async Task DecrementAsync(string userId, int delta = 5)
+    public async Task DecrementAsync(string userId, int delta = 10)
     {
         var user = await _userManager.FindByIdAsync(userId)
             ?? throw new InvalidOperationException($"User {userId} not found.");

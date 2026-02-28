@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { AuthUser } from '../services/auth.models';
+import { NotificationService } from '../services/notification.service';
 
 @Component({
   selector: 'app-header',
@@ -20,7 +21,6 @@ export class Header implements OnInit, OnDestroy {
   readonly showUserMenu   = signal(false);
   readonly showNotifPanel = signal(false);
   readonly currentUser    = signal<AuthUser | null>(null);
-  readonly unreadCount    = signal(0);
 
   readonly isLoggedIn = computed(() => !!this.currentUser());
   readonly isAdmin    = computed(() => this.currentUser()?.role === 'Admin');
@@ -29,33 +29,13 @@ export class Header implements OnInit, OnDestroy {
     (this.currentUser()?.userName ?? '').slice(0, 2).toUpperCase() || 'U'
   );
 
-  notifications: any[] = [
-    {
-      type: 'report',
-      title: 'Нов сигнал в зона Център',
-      message: 'Препълнен контейнер #45 – 94%',
-      time: 'преди 8 мин',
-      unread: true
-    },
-    {
-      type: 'route',
-      title: 'Маршрутът е генериран',
-      message: '8 спирки · 12.4 km · приоритет критични',
-      time: 'преди 32 мин',
-      unread: false
-    },
-    {
-      type: 'alert',
-      title: 'Температурна аномалия',
-      message: 'Контейнер #19 – +48°C – риск от запалване',
-      time: 'преди 1 час',
-      unread: true
-    }
-  ];
+  get notifications() { return this.notifService.notifications(); }
+  get unreadCount()   { return this.notifService.unreadCount;     }
 
   constructor(
     private readonly authService: AuthService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly notifService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -97,6 +77,14 @@ export class Header implements OnInit, OnDestroy {
     e.stopPropagation();
     this.showNotifPanel.update(v => !v);
     this.showUserMenu.set(false);
+  }
+
+  markAllRead(): void {
+    this.notifService.markAllRead();
+  }
+
+  markRead(id: string): void {
+    this.notifService.markRead(id);
   }
 
   logout(): void {

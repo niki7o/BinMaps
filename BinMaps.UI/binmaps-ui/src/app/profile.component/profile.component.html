@@ -23,22 +23,18 @@
         <p class="profile__since">Потребител от {{ formatMemberSince(profile?.memberSince ?? '') }}</p>
       </div>
     </div>
-
-    <div class="profile__header-meta">
-      <div class="profile__header-stat">
-        <span class="profile__header-stat-val">{{ profile?.totalReports ?? 0 }}</span>
-        <span class="profile__header-stat-label">Сигнали</span>
-      </div>
       <div class="profile__header-stat-div"></div>
       <div class="profile__header-stat">
         <span class="profile__header-stat-val text-eco">{{ getAccuracyRate() }}%</span>
         <span class="profile__header-stat-label">Одобрени</span>
       </div>
-      <div class="profile__header-stat-div"></div>
-      <div class="profile__header-stat">
-        <span class="profile__header-stat-val">{{ profile?.reputation ?? 0 | number:'1.0-0' }}</span>
-        <span class="profile__header-stat-label">Репутация</span>
-      </div>
+      <ng-container *ngIf="profile?.role === 'User'">
+        <div class="profile__header-stat-div"></div>
+        <div class="profile__header-stat">
+          <span class="profile__header-stat-val">{{ profile?.reputation ?? 0 | number:'1.0-0' }}</span>
+          <span class="profile__header-stat-label">Репутация</span>
+        </div>
+      </ng-container>
     </div>
   </div>
 
@@ -131,7 +127,7 @@
         </div>
 
         <!-- Badges -->
-        <div class="profile__badges-section">
+        <div class="profile__badges-section" *ngIf="profile?.role === 'User'">
           <h3 class="profile__section-title">Значки</h3>
           <div class="badges-grid">
 
@@ -332,9 +328,11 @@
           </div>
         </div>
 
-        <!-- Reports table -->
         <div class="profile__activity">
-          <h3 class="profile__section-title">Последни сигнали</h3>
+          <div class="profile__activity-header">
+            <h3 class="profile__section-title">Сигнали</h3>
+            <span class="text-muted text-xs" *ngIf="reports.length > 0">{{ reports.length }} общо</span>
+          </div>
           <div class="table-wrapper" *ngIf="reports.length > 0">
             <table class="table">
               <thead>
@@ -348,7 +346,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let r of reports">
+                <tr *ngFor="let r of pagedReports">
                   <td>
                     <span class="badge" [ngClass]="getReportTypeClass(r.reportType)">
                       {{ getReportTypeLabel(r.reportType) }}
@@ -384,6 +382,21 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <div class="admin__pagination" *ngIf="reportTotalPages > 1">
+            <button class="btn btn--ghost btn--sm" [disabled]="reportPage <= 1" (click)="goToReportPage(reportPage - 1)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button *ngFor="let p of reportPageNumbers"
+              class="btn btn--sm"
+              [class.btn--primary]="p === reportPage"
+              [class.btn--ghost]="p !== reportPage"
+              (click)="goToReportPage(p)">{{ p }}</button>
+            <button class="btn btn--ghost btn--sm" [disabled]="reportPage >= reportTotalPages" (click)="goToReportPage(reportPage + 1)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <span class="text-muted text-xs" style="margin-left:8px">{{ reportPage }} / {{ reportTotalPages }}</span>
           </div>
 
           <div class="profile__empty" *ngIf="reports.length === 0">
