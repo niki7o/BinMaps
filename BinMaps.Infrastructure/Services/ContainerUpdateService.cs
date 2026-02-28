@@ -35,6 +35,7 @@ public sealed class ContainerUpdateService : IContainerUpdateService
         {
             ReportType.Fire => TrashContainerStatus.Fire,
             ReportType.SensorBroken => TrashContainerStatus.SensorBroken,
+            ReportType.ContainerDamage => TrashContainerStatus.Offline,
             ReportType.Full => container.Status,
             _ => container.Status
         };

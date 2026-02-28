@@ -61,19 +61,20 @@
       <div class="admin__toolbar">
         <div class="admin__toolbar-filters">
           <select class="form-select" style="width:auto"
-            [(ngModel)]="reportFilter.status" (change)="applyReportFilters()">
+            [(ngModel)]="reportFilter.status" (change)="onFilterChange()">
             <option value="">Всички статуси</option>
             <option value="pending">Чакащи</option>
             <option value="approved">Одобрени</option>
             <option value="rejected">Отхвърлени</option>
           </select>
           <select class="form-select" style="width:auto"
-            [(ngModel)]="reportFilter.reportType" (change)="applyReportFilters()">
+            [(ngModel)]="reportFilter.reportType" (change)="onFilterChange()">
             <option value="">Всички типове</option>
             <option value="Full">Пълен контейнер</option>
             <option value="Fire">Пожарна опасност</option>
             <option value="SensorBroken">Повреден сензор</option>
             <option value="TruckProblem">Проблем с камион</option>
+            <option value="ContainerDamage">Повреден контейнер</option>
           </select>
           <div class="admin__search">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -82,7 +83,7 @@
           </div>
         </div>
         <div class="admin__toolbar-actions">
-          <span class="text-muted text-xs" *ngIf="filteredReports.length > 0">{{ filteredReports.length }} резултата</span>
+          <span class="text-muted text-xs" *ngIf="totalReports > 0">{{ totalReports }} резултата</span>
           <button class="btn btn--ghost btn--sm" (click)="exportReports()" [disabled]="filteredReports.length === 0">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Експорт CSV
@@ -197,6 +198,21 @@
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="admin__pagination" *ngIf="totalPages > 1">
+        <button class="btn btn--ghost btn--sm" [disabled]="currentPage <= 1" (click)="goToPage(currentPage - 1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button *ngFor="let p of pageNumbers"
+          class="btn btn--sm"
+          [class.btn--primary]="p === currentPage"
+          [class.btn--ghost]="p !== currentPage"
+          (click)="goToPage(p)">{{ p }}</button>
+        <button class="btn btn--ghost btn--sm" [disabled]="currentPage >= totalPages" (click)="goToPage(currentPage + 1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <span class="text-muted text-xs" style="margin-left:8px">Страница {{ currentPage }} от {{ totalPages }}</span>
       </div>
     </div>
 
@@ -540,9 +556,9 @@
         <label class="form-label">Статус</label>
         <select class="form-select" [(ngModel)]="editingContainer.status">
           <option [ngValue]="0">Активен</option>
-          <option [ngValue]="1">Пожар</option>
-          <option [ngValue]="2">Повреден сензор</option>
-          <option [ngValue]="3">Извън линия</option>
+          <option [ngValue]="1">Извън линия</option>
+          <option [ngValue]="2">Пожар</option>
+          <option [ngValue]="3">Повреден сензор</option>
         </select>
       </div>
       <div class="form-group form-group--row">

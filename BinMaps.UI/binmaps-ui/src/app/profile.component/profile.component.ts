@@ -25,7 +25,7 @@ interface Report {
   reportType: number;
   description: string;
   createdAt: string;
-  isApproved: boolean;
+  isApproved: boolean | null;
   ai_Score: number;
   finalConfidence: number;
   containerId: number | null;
@@ -55,6 +55,7 @@ export class ProfileComponent implements OnInit {
   profile: UserProfile | null = null;
   reports: Report[] = [];
   reputationInfo: ReputationInfo | null = null;
+  unlockedBadgeIds = new Set<string>();
 
   loading = true;
   editMode = false;
@@ -95,6 +96,22 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  private computeBadges(): void {
+    const ids = new Set<string>();
+    const total = this.profile?.totalReports ?? 0;
+    const hasFireReport = this.reports.some(r => r.reportType === 1);
+    const hasBrokenReport = this.reports.some(r => r.reportType === 4 || r.reportType === 2);
+    const rep = this.reputationInfo?.reputation ?? 0;
+    if (total >= 1)      ids.add('first-step');
+    if (total >= 5)      ids.add('observer');
+    if (total >= 20)     ids.add('reporter');
+    if (hasFireReport)   ids.add('firefighter');
+    if (hasBrokenReport) ids.add('detective');
+    if (total >= 50)     ids.add('guardian');
+    if (rep >= 95)       ids.add('legend');
+    this.unlockedBadgeIds = ids;
+  }
+
   private loadProfile() {
     this.http.get<UserProfile>(`${this.apiUrl}/UserProfile`, { headers: this.getAuthHeaders() }).subscribe({
       next: (profile) => {
@@ -105,6 +122,7 @@ export class ProfileComponent implements OnInit {
           phoneNumber: profile.phoneNumber || ''
         };
         this.loading = false;
+        this.computeBadges();
       },
       error: (err) => {
         this.loading = false;
@@ -119,7 +137,7 @@ export class ProfileComponent implements OnInit {
 
   private loadReports() {
     this.http.get<Report[]>(`${this.apiUrl}/UserProfile/reports`, { headers: this.getAuthHeaders() }).subscribe({
-      next: (reports) => this.reports = reports,
+      next: (reports) => { this.reports = reports; this.computeBadges(); },
       error: (err) => {
         if (err.status === 401 || err.status === 403) {
           this.authService.logout();
@@ -131,7 +149,7 @@ export class ProfileComponent implements OnInit {
 
   private loadReputation() {
     this.http.get<ReputationInfo>(`${this.apiUrl}/UserProfile/reputation`, { headers: this.getAuthHeaders() }).subscribe({
-      next: (info) => this.reputationInfo = info,
+      next: (info) => { this.reputationInfo = info; this.computeBadges(); },
       error: (err) => {
         if (err.status === 401 || err.status === 403) {
           this.authService.logout();

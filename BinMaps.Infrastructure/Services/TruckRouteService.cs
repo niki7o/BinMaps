@@ -67,7 +67,8 @@ public sealed class TruckRouteService : ITruckRouteService
                 c.TrashType == trashType &&
                 c.FillPercentage >= MinFillPercentForCollection &&
                 c.Status != TrashContainerStatus.Fire &&
-                c.Status != TrashContainerStatus.Offline)
+                c.Status != TrashContainerStatus.Offline &&
+                c.Status != TrashContainerStatus.SensorBroken)
             .OrderByDescending(c => c.FillPercentage)
             .ToListAsync();
     }

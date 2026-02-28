@@ -30,9 +30,10 @@
         <div class="hero__ctas">
           <a routerLink="/map" class="btn btn--primary btn--lg">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg>
-            Виж картата
+            Разгледай картата
           </a>
-          <a routerLink="/register" class="btn btn--secondary btn--lg">Създай акаунт</a>
+          <a *ngIf="!isLoggedIn" routerLink="/register" class="btn btn--secondary btn--lg">Създай акаунт</a>
+          <a *ngIf="isLoggedIn" routerLink="/profile" class="btn btn--secondary btn--lg">Моят профил</a>
         </div>
 
         <div class="hero__stats">
@@ -62,9 +63,7 @@
       <div class="hero__visual animate-fade-in">
         <div class="hero__map-preview">
           <div class="hero__map-header">
-            <div class="hero__map-dots">
-              <span></span><span></span><span></span>
-            </div>
+            <div class="hero__map-dots"><span></span><span></span><span></span></div>
             <span class="hero__map-label">
               <div class="live-dot"></div>
               Live — Зона 1 Надежда
@@ -72,29 +71,12 @@
           </div>
           <div class="map-overlay"></div>
           <div class="hero__map-body">
-  <div id="hero-map" class="hero__real-map"></div>
-             
-
-            <div class="hero__map-pin hero__map-pin--ok"       style="left:28%; top:38%">
-              <div class="pin-ring"></div><div class="pin-dot"></div>
-              <div class="pin-label">32%</div>
-            </div>
-            <div class="hero__map-pin hero__map-pin--warn"     style="left:55%; top:25%">
-              <div class="pin-ring"></div><div class="pin-dot"></div>
-              <div class="pin-label">58%</div>
-            </div>
-            <div class="hero__map-pin hero__map-pin--high"     style="left:40%; top:60%">
-              <div class="pin-ring"></div><div class="pin-dot"></div>
-              <div class="pin-label">74%</div>
-            </div>
-            <div class="hero__map-pin hero__map-pin--critical" style="left:70%; top:55%">
-              <div class="pin-ring pin-ring--pulse"></div><div class="pin-dot"></div>
-              <div class="pin-label">91%</div>
-            </div>
-            <div class="hero__map-pin hero__map-pin--ok"       style="left:18%; top:65%">
-              <div class="pin-ring"></div><div class="pin-dot"></div>
-              <div class="pin-label">21%</div>
-            </div>
+            <div id="hero-map" class="hero__real-map"></div>
+            <div class="hero__map-pin hero__map-pin--ok"       style="left:28%; top:38%"><div class="pin-ring"></div><div class="pin-dot"></div><div class="pin-label">32%</div></div>
+            <div class="hero__map-pin hero__map-pin--warn"     style="left:55%; top:25%"><div class="pin-ring"></div><div class="pin-dot"></div><div class="pin-label">58%</div></div>
+            <div class="hero__map-pin hero__map-pin--high"     style="left:40%; top:60%"><div class="pin-ring"></div><div class="pin-dot"></div><div class="pin-label">74%</div></div>
+            <div class="hero__map-pin hero__map-pin--critical" style="left:70%; top:55%"><div class="pin-ring pin-ring--pulse"></div><div class="pin-dot"></div><div class="pin-label">91%</div></div>
+            <div class="hero__map-pin hero__map-pin--ok"       style="left:18%; top:65%"><div class="pin-ring"></div><div class="pin-dot"></div><div class="pin-label">21%</div></div>
           </div>
           <div class="hero__map-footer">
             <div class="hero__map-legend">
@@ -108,39 +90,14 @@
             </div>
           </div>
         </div>
-
-        <!-- Floating Cards -->
         <div class="hero__card hero__card--tl animate-float" style="animation-delay:0.2s">
           <div class="live-dot live-dot--danger"></div>
-          <div>
-            <p class="hero__card-title">Критичен контейнер</p>
-            <p class="hero__card-desc">Зона 3 — 91% запълнен</p>
-          </div>
+          <div><p class="hero__card-title">Критичен контейнер</p><p class="hero__card-desc">Зона 2 — 91% запълнен</p></div>
         </div>
-
         <div class="hero__card hero__card--br animate-float" style="animation-delay:0.8s">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          <div>
-            <p class="hero__card-title">Маршрут генериран</p>
-            <p class="hero__card-desc">8 спирки · 12.4 km</p>
-          </div>
+          <div><p class="hero__card-title">Маршрут генериран</p><p class="hero__card-desc">8 спирки · 12.4 km</p></div>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ── Ticker ─────────────────────────────────── -->
-  <section class="ticker">
-    <div class="ticker__inner">
-      <div class="ticker__track">
-        <span *ngFor="let item of tickerItems" class="ticker__item">
-          <span class="ticker__dot" [ngClass]="'ticker__dot--' + item.color"></span>
-          {{ item.text }}
-        </span>
-        <span *ngFor="let item of tickerItems" class="ticker__item" aria-hidden="true">
-          <span class="ticker__dot" [ngClass]="'ticker__dot--' + item.color"></span>
-          {{ item.text }}
-        </span>
       </div>
     </div>
   </section>
@@ -150,10 +107,8 @@
     <div class="container">
       <div class="features__header">
         <div class="section-label">Функционалности</div>
-        <h2 class="features__title">Всичко, от което<br>един умен град се нуждае</h2>
-        <p class="features__subtitle">
-          Пълен стек от инструменти — от IoT мониторинг до AI-базирана оценка на сигнали.
-        </p>
+        <h2 class="features__title">Технологията зад<br>умния град</h2>
+        <p class="features__subtitle">Шест взаимосвързани модула, изградени върху реални алгоритми и данни.</p>
       </div>
 
       <div class="features__grid">
@@ -163,14 +118,39 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg>
           </div>
           <h3 class="feature-card__title">Карта в реално време</h3>
-          <p class="feature-card__desc">Визуализация на всички 246 контейнера с актуален процент на запълване, цветова индикация и IoT бейджове. Обновява се на всеки 10 секунди чрез SignalR.</p>
+          <p class="feature-card__desc">Leaflet карта с всички контейнери в Sofia, цветово кодирани по запълване — зелено, жълто или червено. Позициите се обновяват автоматично в реално време чрез WebSocket връзка.</p>
           <div class="feature-card__demo">
             <div class="mini-bins">
-              <div class="mini-bin" style="--fill:30%; --color:var(--status-ok)"><div class="mini-bin__fill"></div></div>
-              <div class="mini-bin" style="--fill:55%; --color:var(--status-warn)"><div class="mini-bin__fill"></div></div>
-              <div class="mini-bin" style="--fill:72%; --color:var(--status-high)"><div class="mini-bin__fill"></div></div>
-              <div class="mini-bin" style="--fill:94%; --color:var(--status-critical)"><div class="mini-bin__fill"></div></div>
-              <div class="mini-bin" style="--fill:18%; --color:var(--status-ok)"><div class="mini-bin__fill"></div></div>
+              <div class="mini-bin">
+                <div class="mini-bin__body">
+                  <div class="mini-bin__fill" style="height:21%; background:#10b981"></div>
+                </div>
+                <span class="mini-bin__pct" style="color:#10b981">21%</span>
+              </div>
+              <div class="mini-bin">
+                <div class="mini-bin__body">
+                  <div class="mini-bin__fill" style="height:58%; background:#f59e0b"></div>
+                </div>
+                <span class="mini-bin__pct" style="color:#f59e0b">58%</span>
+              </div>
+              <div class="mini-bin">
+                <div class="mini-bin__body">
+                  <div class="mini-bin__fill" style="height:74%; background:#f97316"></div>
+                </div>
+                <span class="mini-bin__pct" style="color:#f97316">74%</span>
+              </div>
+              <div class="mini-bin">
+                <div class="mini-bin__body">
+                  <div class="mini-bin__fill" style="height:91%; background:#ef4444"></div>
+                </div>
+                <span class="mini-bin__pct" style="color:#ef4444">91%</span>
+              </div>
+              <div class="mini-bin">
+                <div class="mini-bin__body">
+                  <div class="mini-bin__fill" style="height:32%; background:#10b981"></div>
+                </div>
+                <span class="mini-bin__pct" style="color:#10b981">32%</span>
+              </div>
             </div>
           </div>
         </div>
@@ -179,44 +159,39 @@
           <div class="feature-card__icon feature-card__icon--blue">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           </div>
-          <h3 class="feature-card__title">TSP Оптимизация</h3>
-          <p class="feature-card__desc">Алгоритъм за оптимален маршрут минимизира изминатото разстояние и приоритизира критичните контейнери.</p>
-          <div class="feature-card__tag">Dijkstra · OSRM</div>
+          <h3 class="feature-card__title">TSP маршрутизация</h3>
+          <p class="feature-card__desc">Алгоритъмът на Дейкстра изгражда граф на пътната мрежа и генерира оптимален маршрут за всеки камион по зона и тип отпадък. Приоритизират се контейнерите над 80%.</p>
+          <div class="feature-card__tag">Dijkstra · Graph алгоритъм</div>
         </div>
 
         <div class="feature-card">
           <div class="feature-card__icon feature-card__icon--cyan">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
           </div>
-          <h3 class="feature-card__title">AI Анализ на сигнали</h3>
-          <p class="feature-card__desc">Снимките се обработват автоматично. AI оценява достоверността заедно с репутацията на потребителя.</p>
-          <div class="feature-card__tag">CV · Confidence Score</div>
+          <h3 class="feature-card__title">AI анализ на снимки</h3>
+          <p class="feature-card__desc">PyTorch CNN класифицира снимки в 5 категории: чист, умерен, пълен, пожар, повреден. Confidence Score се претегля спрямо репутацията на подателя за крайна оценка.</p>
+          <div class="feature-card__tag">PyTorch CNN · Confidence Score</div>
         </div>
 
         <div class="feature-card">
           <div class="feature-card__icon feature-card__icon--warn">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           </div>
-          <h3 class="feature-card__title">IoT Мониторинг</h3>
-          <p class="feature-card__desc">Сензорни данни в реално време — ниво на запълване, температура и заряд на батерията за ~60% от контейнерите.</p>
-          <div class="feature-card__tag">SignalR · WebSockets</div>
+          <h3 class="feature-card__title">Аналитичен панел</h3>
+          <p class="feature-card__desc">Интерактивни графики за запълване по зони, тип отпадък и период. Проследявай тенденциите и виждай кои райони имат нужда от по-чести обслужвания.</p>
+          <div class="feature-card__tag">Графики · Статистики</div>
         </div>
 
         <div class="feature-card feature-card--wide feature-card--dark">
           <div class="feature-card__icon feature-card__icon--eco">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
           </div>
-          <h3 class="feature-card__title">Гражданска платформа</h3>
-          <p class="feature-card__desc">Всеки гражданин може да подаде сигнал. Система от репутация насърчава качествените доклади и активното участие.</p>
+          <h3 class="feature-card__title">Гражданска платформа с репутация</h3>
+          <p class="feature-card__desc">Гражданите подават сигнали със снимки директно от приложението. Репутационната система определя тежестта на всеки доклад — по-активните и верифицирани потребители имат по-голямо влияние.</p>
           <div class="feature-card__reputation">
             <div class="rep-bar">
-              <div class="rep-bar__label">
-                <span>Репутация</span>
-                <span class="text-eco">87 / 100</span>
-              </div>
-              <div class="progress">
-                <div class="progress__fill progress__fill--ok" style="width:87%"></div>
-              </div>
+              <div class="rep-bar__label"><span>Репутация</span><span class="text-eco">87 / 100</span></div>
+              <div class="progress"><div class="progress__fill progress__fill--ok" style="width:87%"></div></div>
             </div>
             <div class="rep-badges">
               <span class="badge badge--eco">Активен</span>
@@ -229,17 +204,52 @@
     </div>
   </section>
 
+  <!-- ── How it works (citizen-friendly) ───────── -->
+  <section class="how-it-works">
+    <div class="container">
+      <div class="features__header">
+        <div class="section-label">За граждани</div>
+        <h2 class="features__title">Толкова е просто</h2>
+        <p class="features__subtitle">Три стъпки — и помагаш за по-чиста София.</p>
+      </div>
+      <div class="hiw-steps">
+        <div class="hiw-step">
+          <div class="hiw-step__icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
+          <h4>Снимай проблема</h4>
+          <p>Виждаш препълнена или наранена кофа? Снимай я и изпрати сигнал директно от приложението.</p>
+        </div>
+        <div class="hiw-connector"></div>
+        <div class="hiw-step">
+          <div class="hiw-step__icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h4>AI го проверява</h4>
+          <p>Системата анализира снимката автоматично и оценява ситуацията. По-надеждните потребители имат по-голямо влияние.</p>
+        </div>
+        <div class="hiw-connector"></div>
+        <div class="hiw-step">
+          <div class="hiw-step__icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          </div>
+          <h4>Камионът идва</h4>
+          <p>Системата генерира оптимален маршрут и изпраща камиона точно там, където трябва — без излишни обиколки.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ── Zones ──────────────────────────────────── -->
   <section class="zones">
     <div class="container">
       <div class="zones__header">
         <div class="section-label">Покритие</div>
         <h2 class="zones__title">6 зони в София</h2>
+        <p class="zones__sub">Текущо средно запълване по зони.</p>
       </div>
       <div class="zones__grid">
-        <div *ngFor="let zone of zones; let i = index"
-             class="zone-card"
-             [style.animation-delay]="(i * 60) + 'ms'">
+        <div *ngFor="let zone of zones; let i = index" class="zone-card" [style.animation-delay]="(i * 60) + 'ms'">
           <div class="zone-card__number">{{ i + 1 }}</div>
           <div class="zone-card__info">
             <p class="zone-card__name">{{ zone.name }}</p>
@@ -255,24 +265,5 @@
       </div>
     </div>
   </section>
-
-  <!-- ── CTA ────────────────────────────────────── -->
-  <section class="cta-section">
-    <div class="container">
-      <div class="cta-inner">
-        <div class="cta-inner__bg"></div>
-        <div class="cta-inner__content">
-          <h2 class="cta-inner__title">Готов да докладваш?</h2>
-          <p class="cta-inner__desc">Създай безплатен акаунт и помогни за по-чиста София.</p>
-          <div class="hero__ctas">
-            <a routerLink="/register" class="btn btn--primary btn--lg">Започни сега</a>
-            <a routerLink="/map" class="btn btn--ghost btn--lg">Разгледай картата</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  
 
 </div>

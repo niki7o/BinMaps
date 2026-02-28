@@ -83,7 +83,7 @@ namespace BinMaps.Data.Migrations
                     b.Property<double>("FinalConfidence")
                         .HasColumnType("float");
 
-                    b.Property<bool>("IsApproved")
+                    b.Property<bool?>("IsApproved")
                         .HasColumnType("bit");
 
                     b.Property<string>("PhotoURL")

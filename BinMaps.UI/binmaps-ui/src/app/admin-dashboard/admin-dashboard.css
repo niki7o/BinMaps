@@ -1,3 +1,14 @@
+/* ─── Pagination ────────────────────────────────────── */
+.admin__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 0 8px;
+  flex-wrap: wrap;
+}
+
+/* ─── Admin ────────────────────────────────────────── */
 .admin {
   padding: var(--space-8) var(--content-padding) var(--space-12);
   max-width: var(--max-content-width);

@@ -1,5 +1,6 @@
 ﻿using BinMaps.Data;
 using BinMaps.Data.Entities;
+using BinMaps.Data.Entities.Enums;
 using BinMaps.Shared.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -150,23 +151,73 @@ public sealed class AdminController : ControllerBase
     }
     #endregion
 
-    #region Pending Reports
-    [HttpGet("reports/pending")]
-    public async Task<IActionResult> GetPendingReports()
+    #region Reports
+    [HttpGet("reports")]
+    public async Task<IActionResult> GetAllReports(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? status = null,
+        [FromQuery] string? reportType = null)
     {
-        var pending = await _context.Reports
-            .AsNoTracking()
-           .Where(r => !r.IsApproved)
-            .OrderByDescending(r => r.FinalConfidence)
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var query = _context.Reports.AsNoTracking().AsQueryable();
+
+        // Status filter
+        if (status == "pending")  query = query.Where(r => r.IsApproved == null);
+        else if (status == "approved") query = query.Where(r => r.IsApproved == true);
+        else if (status == "rejected") query = query.Where(r => r.IsApproved == false);
+
+        // Report type filter
+        if (!string.IsNullOrEmpty(reportType) && Enum.TryParse<ReportType>(reportType, out var rt))
+            query = query.Where(r => r.ReportType == rt);
+
+        query = query.OrderByDescending(r => r.CreatedAt);
+
+        var total = await query.CountAsync();
+
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(r => new
             {
                 r.Id,
+                r.UserId,
                 r.UserName,
                 r.TrashContainerId,
                 ReportType = r.ReportType.ToString(),
                 r.FinalConfidence,
                 r.AI_Score,
                 r.UserReputationOnSubmit,
+                r.IsApproved,
+                r.PhotoURL,
+                r.Description,
+                r.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(new { total, page, pageSize, items });
+    }
+
+    [HttpGet("reports/pending")]
+    public async Task<IActionResult> GetPendingReports()
+    {
+        var pending = await _context.Reports
+            .AsNoTracking()
+            .Where(r => r.IsApproved == null)
+            .OrderByDescending(r => r.FinalConfidence)
+            .Select(r => new
+            {
+                r.Id,
+                r.UserId,
+                r.UserName,
+                r.TrashContainerId,
+                ReportType = r.ReportType.ToString(),
+                r.FinalConfidence,
+                r.AI_Score,
+                r.UserReputationOnSubmit,
+                r.IsApproved,
                 r.PhotoURL,
                 r.Description,
                 r.CreatedAt

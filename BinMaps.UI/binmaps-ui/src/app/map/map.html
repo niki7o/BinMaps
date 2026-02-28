@@ -56,10 +56,10 @@
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
               </svg>
               <select class="form-select" [(ngModel)]="selectedTrashType">
-                <option [value]="0">⬜ Смесен</option>
-                <option [value]="1">🟡 Пластмаса</option>
-                <option [value]="2">🔵 Хартия</option>
-                <option [value]="3">🩵 Стъкло</option>
+                <option [value]="0">Смесен отпадък</option>
+                <option [value]="1">Пластмаса</option>
+                <option [value]="2">Хартия и картон</option>
+                <option [value]="3">Стъкло</option>
               </select>
             </div>
           </div>
@@ -151,7 +151,7 @@
 
       <div id="map"></div>
 
-      <div class="map-legend">
+      <div class="map-legend map-legend--br">
         <!-- Header -->
         <div class="leg-hdr">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -162,49 +162,76 @@
           <span>Легенда</span>
         </div>
 
-        <!-- Fill level section -->
+        <!-- Bin types section -->
         <div class="leg-section">
+          <div class="leg-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+            <span>Видове кофи</span>
+          </div>
+          <div class="leg-bin-row">
+            <div class="leg-bin-icon" style="background:#475569"><img src="assets/icons/bin-mixed.svg" width="16" height="16" alt="mixed"/></div>
+            <span class="leg-bin-label">Смесен отпадък</span>
+          </div>
+          <div class="leg-bin-row">
+            <div class="leg-bin-icon" style="background:#92400e"><img src="assets/icons/bin-plastic.svg" width="16" height="16" alt="plastic"/></div>
+            <span class="leg-bin-label">Пластмаса</span>
+          </div>
+          <div class="leg-bin-row">
+            <div class="leg-bin-icon" style="background:#1e3a8a"><img src="assets/icons/bin-paper.svg" width="16" height="16" alt="paper"/></div>
+            <span class="leg-bin-label">Хартия и картон</span>
+          </div>
+          <div class="leg-bin-row">
+            <div class="leg-bin-icon" style="background:#164e63"><img src="assets/icons/bin-glass.svg" width="16" height="16" alt="glass"/></div>
+            <span class="leg-bin-label">Стъкло</span>
+          </div>
+        </div>
+
+        <!-- Status section -->
+        <div class="leg-section">
+          <div class="leg-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>Специален статус</span>
+          </div>
+          <div class="leg-bin-row">
+            <div class="leg-bin-icon" style="background:#7f1d1d"><img src="assets/icons/bin-burning.svg" width="16" height="16" alt="fire"/></div>
+            <span class="leg-bin-label" style="color:#f97316">Риск от пожар</span>
+          </div>
+          <div class="leg-bin-row">
+            <div class="leg-bin-icon" style="background:#1e293b"><img src="assets/icons/bin-broken.svg" width="16" height="16" alt="broken"/></div>
+            <span class="leg-bin-label" style="color:#94a3b8">Повреда / авария</span>
+          </div>
+        </div>
+
+        <!-- Fill level section -->
+        <div class="leg-section" style="padding-bottom:10px">
           <div class="leg-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="20" x2="18" y2="10"/>
               <line x1="12" y1="20" x2="12" y2="4"/>
               <line x1="6" y1="20" x2="6" y2="14"/>
             </svg>
-            <span>Запълване</span>
+            <span>Ниво на запълване</span>
           </div>
           <div class="leg-fill-row">
             <div class="leg-fill-bar"><div class="leg-fill-inner" style="width:92%;background:#ef4444;box-shadow:0 0 5px rgba(239,68,68,0.7)"></div></div>
-            <span class="leg-fill-label" style="color:#ef4444">&gt;80% Критично</span>
+            <span class="leg-fill-label" style="color:#ef4444">&gt;85% Критично</span>
           </div>
           <div class="leg-fill-row">
             <div class="leg-fill-bar"><div class="leg-fill-inner" style="width:70%;background:#f97316;box-shadow:0 0 5px rgba(249,115,22,0.7)"></div></div>
-            <span class="leg-fill-label" style="color:#f97316">60–80% Високо</span>
+            <span class="leg-fill-label" style="color:#f97316">65–85% Високо</span>
           </div>
           <div class="leg-fill-row">
             <div class="leg-fill-bar"><div class="leg-fill-inner" style="width:50%;background:#f59e0b;box-shadow:0 0 5px rgba(245,158,11,0.7)"></div></div>
-            <span class="leg-fill-label" style="color:#f59e0b">40–60% Средно</span>
+            <span class="leg-fill-label" style="color:#f59e0b">45–65% Средно</span>
           </div>
           <div class="leg-fill-row">
             <div class="leg-fill-bar"><div class="leg-fill-inner" style="width:25%;background:#10b981;box-shadow:0 0 5px rgba(16,185,129,0.7)"></div></div>
-            <span class="leg-fill-label" style="color:#10b981">&lt;40% Нормално</span>
-          </div>
-        </div>
-
-        <!-- Status section -->
-        <div class="leg-section" style="padding-bottom:10px">
-          <div class="leg-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-            <span>Статус</span>
-          </div>
-          <div class="leg-status-row">
-            <span class="leg-icon-badge leg-icon-badge--fire">🔥</span>
-            <span>Риск от пожар</span>
-          </div>
-          <div class="leg-status-row">
-            <span class="leg-icon-badge leg-icon-badge--sensor">📡</span>
-            <span>IoT сензор</span>
+            <span class="leg-fill-label" style="color:#10b981">&lt;45% Нормално</span>
           </div>
         </div>
       </div>
@@ -242,18 +269,73 @@
       <div class="sidebar-panel">
         <div class="panel-header">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
           </svg>
           <h2>Докладване</h2>
         </div>
 
         <div class="panel-content">
 
+          <!-- Report type first so we can conditionally show bin field -->
           <div class="form-group">
             <label class="form-label">
               <svg class="form-label-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                <circle cx="12" cy="10" r="3"/>
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              Тип проблем
+            </label>
+            <div class="form-field-wrap">
+              <svg class="form-field-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              <select class="form-select" id="report-type" [(ngModel)]="selectedReportType">
+                <option value="Full" *ngIf="isUser">Препълнен контейнер</option>
+                <option value="Fire">Риск от пожар</option>
+                <option value="SensorBroken" *ngIf="selectedBinHasSensor">Повреден сензор</option>
+                <option value="TruckProblem" *ngIf="isDriver">Проблем с камиона</option>
+                <option value="ContainerDamage" *ngIf="isDriver">Повреден контейнер</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Report type severity chip -->
+          <div class="rp-type-chip"
+               [class.rp-type-chip--green]="selectedReportType === 'Full'"
+               [class.rp-type-chip--red]="selectedReportType === 'Fire'"
+               [class.rp-type-chip--orange]="selectedReportType === 'ContainerDamage'"
+               [class.rp-type-chip--cyan]="selectedReportType === 'SensorBroken'"
+               [class.rp-type-chip--blue]="selectedReportType === 'TruckProblem'">
+            <span class="rp-type-dot"></span>
+            <span *ngIf="selectedReportType === 'Full'">Нормален приоритет — контейнерът е препълнен</span>
+            <span *ngIf="selectedReportType === 'Fire'">Висок приоритет — риск от пожар</span>
+            <span *ngIf="selectedReportType === 'SensorBroken'">Среден приоритет — сензорна повреда</span>
+            <span *ngIf="selectedReportType === 'TruckProblem'">Вътрешно докладване — камион</span>
+            <span *ngIf="selectedReportType === 'ContainerDamage'">Среден приоритет — физическа повреда</span>
+          </div>
+
+          <!-- Truck-problem notice: no bin required -->
+          <div class="rp-truck-notice" *ngIf="selectedReportType === 'TruckProblem'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="3" width="15" height="13"/>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+              <circle cx="5.5" cy="18.5" r="2.5"/>
+              <circle cx="18.5" cy="18.5" r="2.5"/>
+            </svg>
+            <span>Докладване за камион — контейнерът е <strong>незадължителен</strong></span>
+          </div>
+
+          <!-- Bin selector (hidden for TruckProblem) -->
+          <div class="form-group" *ngIf="selectedReportType !== 'TruckProblem'">
+            <label class="form-label">
+              <svg class="form-label-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
               </svg>
               Избран контейнер
             </label>
@@ -270,35 +352,10 @@
           <div class="form-group">
             <label class="form-label">
               <svg class="form-label-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              Тип проблем
-            </label>
-            <div class="form-field-wrap">
-              <svg class="form-field-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-              <select class="form-select" id="report-type">
-                <option value="Full" *ngIf="isUser">♻ Препълнен</option>
-                <option value="Fire">🔥 Пожар</option>
-                <option value="SensorBroken">📡 Повреден сензор</option>
-                <option value="TruckProblem" *ngIf="isDriver">🚛 Проблем с камиона</option>
-                <option value="ContainerDamage" *ngIf="isDriver">🗑 Повреден контейнер</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">
-              <svg class="form-label-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
               </svg>
-              Описание
+              Описание <span class="form-label-opt">(опционално)</span>
             </label>
             <textarea class="form-textarea" id="report-description" rows="3"
                       placeholder="Опишете проблема…"
@@ -312,7 +369,7 @@
                 <circle cx="8.5" cy="8.5" r="1.5"/>
                 <polyline points="21 15 16 10 5 21"/>
               </svg>
-              Снимка <span style="font-weight:500;text-transform:none;letter-spacing:0;color:#2e4159;font-size:0.68rem">(опционално)</span>
+              Снимка <span class="form-label-opt">(опционално)</span>
             </label>
             <div class="image-preview" *ngIf="reportImagePreview">
               <img [src]="reportImagePreview" alt="Preview" />

@@ -130,6 +130,208 @@
           </div>
         </div>
 
+        <!-- Badges -->
+        <div class="profile__badges-section">
+          <h3 class="profile__section-title">Значки</h3>
+          <div class="badges-grid">
+
+            <!-- 1. Първа стъпка — green — rocket -->
+            <div class="ufo-badge" data-tier="green" [class.ufo-badge--locked]="!unlockedBadgeIds.has('first-step')">
+              <div class="ufo-badge__pod">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <!-- rocket body -->
+                  <path d="M12 2C9 5 8 9 8 14h8c0-5-1-9-4-12z" fill="currentColor" opacity=".25"/>
+                  <path d="M12 2C9 5 8 9 8 14h8c0-5-1-9-4-12z"/>
+                  <!-- porthole window -->
+                  <circle cx="12" cy="9" r="2" fill="currentColor" opacity=".5"/>
+                  <circle cx="12" cy="9" r="2"/>
+                  <!-- fins -->
+                  <path d="M8 14c-2 0-3 2-3 4l3-1z" fill="currentColor" opacity=".4"/>
+                  <path d="M8 14c-2 0-3 2-3 4l3-1z"/>
+                  <path d="M16 14c2 0 3 2 3 4l-3-1z" fill="currentColor" opacity=".4"/>
+                  <path d="M16 14c2 0 3 2 3 4l-3-1z"/>
+                  <!-- exhaust flame -->
+                  <path d="M10 17.5c0 2 .5 3.5 2 4.5 1.5-1 2-2.5 2-4.5z" fill="currentColor" opacity=".7" stroke="none"/>
+                  <path d="M11 19c0 1.5.3 2.5 1 3.5.7-1 1-2 1-3.5z" fill="white" opacity=".35" stroke="none"/>
+                </svg>
+                <div class="ufo-badge__shine"></div>
+              </div>
+              <div class="ufo-badge__saucer">
+                <span class="ufo-badge__light"></span>
+                <span class="ufo-badge__light"></span>
+                <span class="ufo-badge__light"></span>
+              </div>
+              <p class="ufo-badge__name">Първа стъпка</p>
+              <p class="ufo-badge__sub">{{ unlockedBadgeIds.has('first-step') ? 'Старт постигнат' : 'Подай 1 сигнал' }}</p>
+            </div>
+
+            <!-- 2. Наблюдател — blue — deep eye -->
+            <div class="ufo-badge" data-tier="blue" [class.ufo-badge--locked]="!unlockedBadgeIds.has('observer')">
+              <div class="ufo-badge__pod">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <!-- eyelid shape filled -->
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" fill="currentColor" opacity=".12"/>
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <!-- iris layers -->
+                  <circle cx="12" cy="12" r="4.5" fill="currentColor" opacity=".18" stroke="none"/>
+                  <circle cx="12" cy="12" r="3" fill="currentColor" opacity=".4" stroke="none"/>
+                  <circle cx="12" cy="12" r="1.8" fill="currentColor"/>
+                  <!-- pupil highlight -->
+                  <circle cx="13.1" cy="10.9" r=".7" fill="white" opacity=".85" stroke="none"/>
+                  <!-- lash hints -->
+                  <line x1="6" y1="7" x2="7" y2="6" stroke-width="1.2" opacity=".5"/>
+                  <line x1="12" y1="4.5" x2="12" y2="3.5" stroke-width="1.2" opacity=".5"/>
+                  <line x1="18" y1="7" x2="17" y2="6" stroke-width="1.2" opacity=".5"/>
+                </svg>
+                <div class="ufo-badge__shine"></div>
+              </div>
+              <div class="ufo-badge__saucer">
+                <span class="ufo-badge__light"></span>
+                <span class="ufo-badge__light"></span>
+                <span class="ufo-badge__light"></span>
+              </div>
+              <p class="ufo-badge__name">Наблюдател</p>
+              <p class="ufo-badge__sub">{{ unlockedBadgeIds.has('observer') ? 'Активно следиш' : '5 сигнала' }}</p>
+            </div>
+
+            <!-- 3. Репортер — purple — megaphone filled -->
+            <div class="ufo-badge" data-tier="purple" [class.ufo-badge--locked]="!unlockedBadgeIds.has('reporter')">
+              <div class="ufo-badge__pod">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <!-- megaphone body fill -->
+                  <path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor" opacity=".2" stroke="none"/>
+                  <path d="M3 9v6h4l5 4V5L7 9H3z"/>
+                  <!-- sound ring near (small) -->
+                  <path d="M15.5 9a4.5 4.5 0 0 1 0 6" stroke-linecap="round" stroke-width="1.7"/>
+                  <!-- sound ring far (large) -->
+                  <path d="M18.5 6a9 9 0 0 1 0 12" stroke-linecap="round" stroke-width="1.4" opacity=".6"/>
+                  <!-- small dot in horn -->
+                  <circle cx="5" cy="12" r="1" fill="currentColor" opacity=".5" stroke="none"/>
+                </svg>
+                <div class="ufo-badge__shine"></div>
+              </div>
+              <div class="ufo-badge__saucer">
+                <span class="ufo-badge__light"></span>
+                <span class="ufo-badge__light"></span>
+                <span class="ufo-badge__light"></span>
+              </div>
+              <p class="ufo-badge__name">Репортер</p>
+              <p class="ufo-badge__sub">{{ unlockedBadgeIds.has('reporter') ? 'Доверен глас' : '20 сигнала' }}</p>
+            </div>
+
+            <!-- 4. Огнеборец — fire — burning bin (bin bottom-half, 3 flames top-half) -->
+            <div class="ufo-badge" data-tier="fire" [class.ufo-badge--locked]="!unlockedBadgeIds.has('firefighter')">
+              <div class="ufo-badge__pod">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <!-- bin: handle, lid, body (lower half y≥12) -->
+                  <path d="M9 12h6"/>
+                  <line x1="4" y1="14" x2="20" y2="14"/>
+                  <path d="M6 14L7.5 23h9L18 14" fill="currentColor" opacity=".15"/>
+                  <path d="M6 14L7.5 23h9L18 14"/>
+                  <line x1="10" y1="16.5" x2="10.5" y2="21.5"/>
+                  <line x1="14" y1="16.5" x2="13.5" y2="21.5"/>
+                  <!-- center flame (tall, y=2.5→14) -->
+                  <path d="M12 14C10.5 11.5 10 9 11 6.5C11.5 8.5 12.5 9 13 8C13.5 6 14.5 3.5 15 2.5C16.5 5 15.5 8.5 17 11C17.5 12.5 16.5 14.5 12 14Z" fill="currentColor" stroke="none"/>
+                  <!-- inner flame highlight -->
+                  <path d="M12.5 13C12 11.5 12 9.5 12.5 8C13 9.5 13 11.5 12.5 13Z" fill="white" opacity=".3" stroke="none"/>
+                  <!-- left flame (shorter, y=7→14) -->
+                  <path d="M9 14C8.5 12.5 8.5 10.5 9.5 8.5C10 10 9.5 11.5 10.5 12.5C10 11 10 10 9.5 9C10.5 10.5 10.5 12.5 9 14Z" fill="currentColor" stroke="none"/>
+                </svg>
+                <div class="ufo-badge__shine"></div>
+              </div>
+              <div class="ufo-badge__saucer">
+                <span class="ufo-badge__light"></span>
+                <span class="ufo-badge__light"></span>
+                <span class="ufo-badge__light"></span>
+              </div>
+              <p class="ufo-badge__name">Огнеборец</p>
+              <p class="ufo-badge__sub">{{ unlockedBadgeIds.has('firefighter') ? 'Пожар засечен' : 'Докладвай пожар' }}</p>
+            </div>
+
+            <!-- 5. Детектив — silver — shattered bin -->
+            <div class="ufo-badge" data-tier="silver" [class.ufo-badge--locked]="!unlockedBadgeIds.has('detective')">
+              <div class="ufo-badge__pod">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <!-- bin outline -->
+                  <path d="M9 3h6"/>
+                  <line x1="4" y1="6" x2="20" y2="6"/>
+                  <path d="M6 6l1.5 15h9L18 6" fill="currentColor" opacity=".1"/>
+                  <path d="M6 6l1.5 15h9L18 6"/>
+                  <!-- MAIN CRACK: thick dramatic lightning bolt -->
+                  <polyline points="13.5,6 10.5,12.5 14.5,12.5 11,21" stroke-width="2.8" stroke-linejoin="round"/>
+                  <!-- crack radiating lines from junction -->
+                  <line x1="14.5" y1="12.5" x2="17.5" y2="15.5" stroke-width="1.6"/>
+                  <line x1="10.5" y1="12.5" x2="7.5" y2="15.5" stroke-width="1.6"/>
+                  <!-- upper crack fragment -->
+                  <line x1="10.5" y1="12.5" x2="10" y2="9.5" stroke-width="1.2" opacity=".6"/>
+                </svg>
+                <div class="ufo-badge__shine"></div>
+              </div>
+              <div class="ufo-badge__saucer">
+                <span class="ufo-badge__light"></span>
+                <span class="ufo-badge__light"></span>
+                <span class="ufo-badge__light"></span>
+              </div>
+              <p class="ufo-badge__name">Детектив</p>
+              <p class="ufo-badge__sub">{{ unlockedBadgeIds.has('detective') ? 'Повреда открита' : 'Докладвай повреда' }}</p>
+            </div>
+
+            <!-- 6. Пазач — gold — shield + 5-pointed star -->
+            <div class="ufo-badge" data-tier="gold" [class.ufo-badge--locked]="!unlockedBadgeIds.has('guardian')">
+              <div class="ufo-badge__pod">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <!-- shield fill + outline -->
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="currentColor" opacity=".2"/>
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  <!-- mathematically correct 5-star, center(12,14), r_out=4, r_in=1.7 -->
+                  <polygon points="12,10 13.1,12.4 15.8,12.8 13.9,14.7 14.4,17.4 12,16.1 9.6,17.4 10.1,14.7 8.2,12.8 10.9,12.4" fill="currentColor" stroke="none" opacity=".9"/>
+                </svg>
+                <div class="ufo-badge__shine"></div>
+              </div>
+              <div class="ufo-badge__saucer">
+                <span class="ufo-badge__light"></span>
+                <span class="ufo-badge__light"></span>
+                <span class="ufo-badge__light"></span>
+              </div>
+              <p class="ufo-badge__name">Пазач</p>
+              <p class="ufo-badge__sub">{{ unlockedBadgeIds.has('guardian') ? 'Стълб на общността' : '50 сигнала' }}</p>
+            </div>
+
+            <!-- 7. Легенда — legend — crown with gems -->
+            <div class="ufo-badge" data-tier="legend" [class.ufo-badge--locked]="!unlockedBadgeIds.has('legend')">
+              <div class="ufo-badge__pod">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <!-- crown base filled -->
+                  <path d="M2 18h20v3H2z" fill="currentColor" opacity=".3"/>
+                  <path d="M2 18h20v3H2z"/>
+                  <!-- crown peaks -->
+                  <path d="M2 18L5 8l4.5 5L12 5l2.5 8L19 8l3 10"/>
+                  <!-- gem jewels at each peak tip -->
+                  <circle cx="5" cy="8" r="1.8" fill="currentColor" opacity=".9" stroke="none"/>
+                  <circle cx="5" cy="8" r="1.8"/>
+                  <circle cx="12" cy="5" r="2.2" fill="currentColor" stroke="none"/>
+                  <circle cx="12" cy="5" r="2.2"/>
+                  <circle cx="19" cy="8" r="1.8" fill="currentColor" opacity=".9" stroke="none"/>
+                  <circle cx="19" cy="8" r="1.8"/>
+                  <!-- gem highlights -->
+                  <circle cx="12.6" cy="4.3" r=".7" fill="white" opacity=".7" stroke="none"/>
+                  <circle cx="5.5" cy="7.4" r=".55" fill="white" opacity=".6" stroke="none"/>
+                  <circle cx="19.5" cy="7.4" r=".55" fill="white" opacity=".6" stroke="none"/>
+                </svg>
+                <div class="ufo-badge__shine"></div>
+              </div>
+              <div class="ufo-badge__saucer">
+                <span class="ufo-badge__light"></span>
+                <span class="ufo-badge__light"></span>
+                <span class="ufo-badge__light"></span>
+              </div>
+              <p class="ufo-badge__name">Легенда</p>
+              <p class="ufo-badge__sub">{{ unlockedBadgeIds.has('legend') ? 'Максимална репутация' : 'Репутация 95+' }}</p>
+            </div>
+
+          </div>
+        </div>
+
         <!-- Reports table -->
         <div class="profile__activity">
           <h3 class="profile__section-title">Последни сигнали</h3>

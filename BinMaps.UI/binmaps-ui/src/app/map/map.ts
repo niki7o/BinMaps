@@ -67,6 +67,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   reportImagePreview: string | null = null;
   reportDescription  = '';
+  selectedReportType = 'Full';
+
+  /** True when the bin selected for reporting has an IoT sensor (needed to show SensorBroken option) */
+  get selectedBinHasSensor(): boolean {
+    return this.selectedBinForReport?.hasSensor ?? false;
+  }
 
   private http        = inject(HttpClient);
   private router      = inject(Router);
@@ -85,19 +91,21 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   currentTruckLoad = 0;
 
   private baseLayers: Record<string, L.TileLayer> = {};
-  currentMapStyle = 'standard';
+  currentMapStyle = localStorage.getItem('mapStyle') || 'standard';
   mapStyles = [
-    { key: 'standard',  label: 'Standard'  },
-    { key: 'dark',      label: 'Dark'      },
-    { key: 'terrain',   label: 'Terrain'   },
-    { key: 'satellite', label: 'Satellite' }
+    { key: 'standard',  label: 'Стандартна' },
+    { key: 'voyager',   label: 'Voyager'    },
+    { key: 'satellite', label: 'Сателит'    },
+    { key: 'light',     label: 'Светла'     }
   ];
 
   
   private binIcon(type: number) { return `${this.ICONS_DIR}/bin-${['mixed','plastic','paper','glass'][type] ?? 'mixed'}.svg`; }
-  private get fireIcon()   { return `${this.ICONS_DIR}/bin-fire.svg`; }
-  private get sensorIcon() { return `${this.ICONS_DIR}/sensor-dot.svg`; }
-  private get truckSvg()   { return `${this.ICONS_DIR}/truck.svg`; }
+  private get fireIcon()    { return `${this.ICONS_DIR}/bin-fire.svg`; }
+  private get burningIcon() { return `${this.ICONS_DIR}/bin-burning.svg`; }
+  private get brokenIcon()  { return `${this.ICONS_DIR}/bin-broken.svg`; }
+  private get sensorIcon()  { return `${this.ICONS_DIR}/sensor-dot.svg`; }
+  private get truckSvg()    { return `${this.ICONS_DIR}/truck.svg`; }
 
 
   ngOnInit() {
@@ -119,7 +127,20 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
-  ngAfterViewInit() { this.initMap(); this.loadBins(); this.initFilterControl(); }
+  ngAfterViewInit() {
+    this.initMap(); this.loadBins(); this.initFilterControl();
+    // Periodic refresh every 60 s — picks up status changes from approved reports
+    const refreshId = setInterval(() => {
+      if (this.navigationActive) return;
+      this.http.get<Bin[]>(`${this.API_URL}/containers`).subscribe({
+        next: bins => {
+          this.allBins = bins;
+          this.renderBins(this.filtered());
+        }
+      });
+    }, 60000);
+    this.destroy$.subscribe({ complete: () => clearInterval(refreshId) });
+  }
 
   ngOnDestroy() {
     this.destroy$.next(); this.destroy$.complete();
@@ -144,10 +165,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       maxBounds: [[42.55, 23.15], [42.85, 23.50]], maxBoundsViscosity: 0.8
     });
     this.baseLayers['standard']  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { className: 'map-tiles' });
-    this.baseLayers['dark']      = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png');
-    this.baseLayers['terrain']   = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png');
+    this.baseLayers['voyager']   = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png');
     this.baseLayers['satellite'] = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
-    const saved = localStorage.getItem('mapStyle') || 'dark';
+    this.baseLayers['light']     = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png');
+    const saved = localStorage.getItem('mapStyle') || 'standard';
     this.currentMapStyle = saved;
     this.baseLayers[this.currentMapStyle].addTo(this.map);
     this.map.addLayer(this.cluster);
@@ -192,6 +213,19 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         headers: new HttpHeaders({ Authorization: `Bearer ${token}` })
       }).toPromise();
       if (!res?.route?.length) { alert(res?.message || 'Няма контейнери за събиране'); return; }
+      // Recalculate estimatedLoad from actual fill percentage.
+      // Backend may return full capacity OR zero/null capacity — guard both.
+      const STD_CAP = 1100; // standard 1100-litre bin fallback
+      res.route.forEach(stop => {
+        const cap = (stop.capacity != null && stop.capacity > 0) ? stop.capacity : STD_CAP;
+        const fill = (stop.fillPercentage != null && isFinite(stop.fillPercentage))
+          ? Math.max(0, Math.min(100, stop.fillPercentage)) : 0;
+        stop.estimatedLoad = +(cap * fill / 100).toFixed(1);
+      });
+      res.totalLoad = +res.route.reduce((s, r) => s + r.estimatedLoad, 0).toFixed(1);
+      res.capacityUtilization = res.truckCapacity > 0
+        ? +(res.totalLoad / res.truckCapacity * 100).toFixed(1)
+        : 0;
       this.routeResult = res; this.routeActive = true;
       await this.visualizeRoute();
     } catch (e: any) {
@@ -257,8 +291,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
             </div>
           </div>
           <div class="bpp-rows">
-            <div class="bpp-row"><span>📦</span><span>Товар</span><span style="color:#cbd5e1;font-weight:700">${s.estimatedLoad.toFixed(1)} л</span></div>
-            <div class="bpp-row"><span>📍</span><span>Разстояние</span><span style="color:#cbd5e1;font-weight:700">${s.distanceFromPrevious.toFixed(2)} км</span></div>
+            <div class="bpp-row">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="color:#475569;flex-shrink:0"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              <span>Товар</span>
+              <span style="color:#cbd5e1;font-weight:700">${s.estimatedLoad.toFixed(1)} л</span>
+            </div>
+            <div class="bpp-row">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="color:#475569;flex-shrink:0"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              <span>Разстояние</span>
+              <span style="color:#cbd5e1;font-weight:700">${s.distanceFromPrevious.toFixed(2)} км</span>
+            </div>
           </div>
         </div>`, { maxWidth: 280, className: 'bpp-container' });
       this.routeMarkers.push(m);
@@ -346,6 +388,31 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.map.panTo(path[0], { animate: true, duration: 0.8 });
     this.truckMarker = L.marker(path[0], { icon: truckIcon, zIndexOffset: 2000 }).addTo(this.map);
 
+    // Helper: mark one stop as collected (shared by main loop + safety-net)
+    const collectStop = (idx: number) => {
+      this.currentStop      = idx + 1;
+      this.currentTruckLoad += isFinite(route[idx].estimatedLoad) ? route[idx].estimatedLoad : 0;
+      if (this.routeMarkers[idx]) {
+        this.routeMarkers[idx].setIcon(L.divIcon({
+          className: 'route-stop-marker-completed',
+          html: `<div class="stop-number">✓</div>`,
+          iconSize: [32, 32], iconAnchor: [16, 16]
+        }));
+      }
+      const bin = this.allBins.find(b => b.id === route[idx].id);
+      if (bin) {
+        bin.fillPercentage = Math.random() * 5 + 1;          // 1–6 %
+        // Cool the bin down after emptying (high temp was caused by fermentation)
+        if (bin.hasSensor && bin.temperature != null && bin.temperature > 32) {
+          bin.temperature = +(16 + Math.random() * 8).toFixed(1); // 16–24 °C
+        }
+      }
+      this.http.put(
+        `${this.API_URL}/containers/${route[idx].id}/empty`, {},
+        token ? { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) } : {}
+      ).toPromise().catch(() => {});
+    };
+
     let si = 0;
     for (let i = 0; i < FRAMES; i++) {
       if (!this.navigationActive) break;
@@ -360,7 +427,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         if (wrap) wrap.style.transform = `rotate(${deg}deg)`;
       }
 
-      // Pan map when truck nears viewport edge (25% threshold)
+      // Pan map when truck nears viewport edge (22 % threshold)
       if (i % 20 === 0) {
         const b = this.map.getBounds();
         const [lat, lng] = path[i];
@@ -374,28 +441,24 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       }
 
       // Collect all stops whose frame index we've reached
+      let needsRerender = false;
       while (si < route.length && i >= stopIndices[si]) {
-        this.currentStop      = si + 1;
-        this.currentTruckLoad += route[si].estimatedLoad;
-        if (this.routeMarkers[si]) {
-          this.routeMarkers[si].setIcon(L.divIcon({
-            className: 'route-stop-marker-completed',
-            html: `<div class="stop-number">✓</div>`,
-            iconSize: [32, 32], iconAnchor: [16, 16]
-          }));
-        }
-        const bin = this.allBins.find(b => b.id === route[si].id);
-        if (bin) { bin.fillPercentage = Math.random() * 6 + 2; this.renderBins(this.filtered()); }
-        const stopId = route[si].id;
+        collectStop(si);
+        needsRerender = true;
         si++;
-        // Fire-and-forget API — don't block the animation loop
-        this.http.put(
-          `${this.API_URL}/containers/${stopId}/empty`, {},
-          token ? { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) } : {}
-        ).toPromise().catch(() => {});
       }
+      // Re-render bins once per frame (not once per stop) to avoid cluster thrash
+      if (needsRerender) this.renderBins(this.filtered());
 
       await new Promise(r => setTimeout(r, 22));
+    }
+
+    // ── Safety net ────────────────────────────────────────────────────────────
+    // Guarantee every stop is collected even if the frame-based loop missed any
+    // (can happen when route is very short or OSRM geometry deviates from stops).
+    if (si < route.length) {
+      while (si < route.length) { collectStop(si); si++; }
+      this.renderBins(this.filtered());
     }
 
     const load = this.currentTruckLoad;
@@ -484,7 +547,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     bins.forEach(bin => {
       const m = L.marker([bin.locationY, bin.locationX], { icon: this.createBinIcon(bin), binId: bin.id } as any);
       m.bindPopup(this.createPopup(bin), { maxWidth: 280, className: 'bpp-container' });
-      if (this.isUser || this.isDriver) {
+      if ((this.isUser || this.isDriver) && !this.navigationActive) {
         m.on('click', () => {
           this.selectedBinForReport = bin;
           const el = document.getElementById('selected-bin-id') as HTMLInputElement;
@@ -497,19 +560,31 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   // ── Icon factory ─────────────────────────────────────────────────────────
   private createBinIcon(bin: Bin): L.DivIcon {
-    const f      = Math.round(bin.fillPercentage);
-    const temp   = bin.temperature ?? 0;
-    const isFire = bin.status === 1 || temp > 55;
-    const isWarm = temp > 44 && !isFire;
+    const f        = Math.round(bin.fillPercentage);
+    const temp     = bin.temperature ?? 0;
+    // Backend enum: Active=0, Offline=1, Fire=2, SensorBroken=3
+    const isFire   = bin.status === 2 || (temp > 55 && bin.fillPercentage > 70);
+    const isBroken = !isFire && (bin.status === 1 || bin.status === 3);
+    const isWarm   = temp > 44 && !isFire;
 
-    // Ring / glow colour
-    const ring = f >= 85 ? '#ef4444' : f >= 65 ? '#f97316' : f >= 45 ? '#f59e0b' : '#10b981';
-    const glow = f >= 85 ? 'rgba(239,68,68,0.65)'
-               : f >= 65 ? 'rgba(249,115,22,0.55)'
-               : f >= 45 ? 'rgba(245,158,11,0.50)'
-               :            'rgba(16,185,129,0.45)';
+    // ── Ring / glow colour (grey for broken bins) ──
+    const ring = isBroken ? '#94a3b8'
+               : f >= 85  ? '#ef4444'
+               : f >= 65  ? '#f97316'
+               : f >= 45  ? '#f59e0b'
+               :             '#10b981';
+    const glow = isBroken ? 'rgba(148,163,184,0.5)'
+               : f >= 85  ? 'rgba(239,68,68,0.65)'
+               : f >= 65  ? 'rgba(249,115,22,0.55)'
+               : f >= 45  ? 'rgba(245,158,11,0.50)'
+               :             'rgba(16,185,129,0.45)';
 
-    // Flames: 3 for fire, 1 for warm
+    // ── Inner icon: burning / broken / type-specific ──
+    const mainSrc = isFire   ? this.burningIcon
+                  : isBroken ? this.brokenIcon
+                  :             this.binIcon(bin.trashType);
+
+    // ── Flame overlays (only for fire/warm — not when broken) ──
     const flameCount = isFire ? 3 : isWarm ? 1 : 0;
     const flames     = Array.from({ length: flameCount }, (_, i) => `
       <img src="${this.fireIcon}"
@@ -517,31 +592,36 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
            alt="fire" draggable="false" />`
     ).join('');
 
-    // Sensor using the real sensor-dot.svg
+    // ── Sensor dot ──
     const sensor = bin.hasSensor
       ? `<img src="${this.sensorIcon}" class="bm-sensor" alt="sensor" draggable="false" />`
       : '';
 
-    // Temperature badge
+    // ── Temperature badge ──
     const tbadge = bin.hasSensor && bin.temperature !== null
       ? `<div class="bm-tbadge${isFire ? ' tbadge-fire' : isWarm ? ' tbadge-warm' : ''}">${Math.round(bin.temperature!)}°C</div>`
+      : '';
+
+    // ── Warning badge for broken bins ──
+    const brokenBadge = isBroken
+      ? `<div class="bm-broken-badge">!</div>`
       : '';
 
     return L.divIcon({
       className: 'bm-host',
       html: `
-        <div class="bm${f >= 85 ? ' bm-critical' : ''}${isFire ? ' bm-on-fire' : ''}">
+        <div class="bm${f >= 85 && !isBroken ? ' bm-critical' : ''}${isFire ? ' bm-on-fire' : ''}${isBroken ? ' bm-broken' : ''}">
           ${flames}
           <div class="bm-ring" style="
             background: conic-gradient(${ring} 0% ${f}%, rgba(255,255,255,0.07) ${f}% 100%);
             filter: drop-shadow(0 0 8px ${glow});">
             <div class="bm-inner">
-              <img src="${this.binIcon(bin.trashType)}"
-                   class="bm-binimg" alt="bin" draggable="false" />
+              <img src="${mainSrc}" class="bm-binimg" alt="bin" draggable="false" />
             </div>
           </div>
           ${sensor}
           ${tbadge}
+          ${brokenBadge}
           <div class="bm-id">#${bin.id}</div>
         </div>`,
       iconSize:   [54, 70],
@@ -553,7 +633,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private createPopup(bin: Bin): string {
     const f      = bin.fillPercentage;
     const temp   = bin.temperature;
-    const isFire = bin.status === 1 || (temp !== null && temp! > 55);
+    // Backend enum: Active=0, Offline=1, Fire=2, SensorBroken=3
+    const isFire = bin.status === 2 || (temp !== null && temp! > 55 && bin.fillPercentage > 70);
     const isWarm = temp !== null && temp! > 44 && !isFire;
     const ring   = f >= 85 ? '#ef4444' : f >= 65 ? '#f97316' : f >= 45 ? '#f59e0b' : '#10b981';
     const typeLbl  = ['Смесен', 'Пластмаса', 'Хартия', 'Стъкло'][bin.trashType] ?? '';
@@ -573,7 +654,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
           </div>
         </div>
         ${isFire
-          ? `<div class="bpp-warn bpp-warn--fire">⚠ Риск от пожар!</div>`
+          ? `<div class="bpp-warn bpp-warn--fire">Риск от пожар</div>`
           : isWarm
           ? `<div class="bpp-warn bpp-warn--warm">Повишена темп.</div>`
           : ''}
@@ -611,7 +692,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
             </span>
           </div>
           <div class="bpp-row">
-            <span>📍</span><span>Зона</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="color:#475569;flex-shrink:0"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Зона</span>
             <span style="color:#cbd5e1;font-weight:600;font-size:11px">${bin.areaId}</span>
           </div>
         </div>
@@ -671,7 +753,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
             </div>
 
             <!-- ④ Trash type -->
-            <div class="fc-block">
+            <div class="fc-block fc-block--last">
               <div class="fc-blk-lbl">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="3 6 5 6 21 6"/>
@@ -692,30 +774,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
                 </button>
                 <button class="fc-pill fc-pill--t3" data-type="3">
                   <span class="fc-dot" style="background:#22d3ee;box-shadow:0 0 4px #22d3ee88"></span>Стъкло
-                </button>
-              </div>
-            </div>
-
-            <!-- ⑤ Fill level -->
-            <div class="fc-block fc-block--last">
-              <div class="fc-blk-lbl">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="20" x2="18" y2="10"/>
-                  <line x1="12" y1="20" x2="12" y2="4"/>
-                  <line x1="6" y1="20" x2="6" y2="14"/>
-                </svg>
-                <span>Запълване</span>
-              </div>
-              <div class="fc-pills fc-pills--fill">
-                <button class="fc-pill fc-pill--all active" data-fill="all">Всички</button>
-                <button class="fc-pill fc-pill--flow" data-fill="low">
-                  <span class="fc-fillbar" style="--fc-fill-w:28%;--fc-fill-c:#10b981"></span>&lt;40%
-                </button>
-                <button class="fc-pill fc-pill--fmed" data-fill="medium">
-                  <span class="fc-fillbar" style="--fc-fill-w:55%;--fc-fill-c:#f59e0b"></span>40–70%
-                </button>
-                <button class="fc-pill fc-pill--fhi" data-fill="high">
-                  <span class="fc-fillbar" style="--fc-fill-w:86%;--fc-fill-c:#ef4444"></span>&gt;70%
                 </button>
               </div>
             </div>
@@ -919,14 +977,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   submitReport() {
     if (!this.currentUser) { alert('Влезте в системата'); this.router.navigate(['/login']); return; }
-    if (!this.selectedBinForReport) { alert('Изберете контейнер'); return; }
-    const ts   = document.getElementById('report-type')        as HTMLSelectElement;
     const img  = document.getElementById('report-image')       as HTMLInputElement;
     const desc = document.getElementById('report-description') as HTMLTextAreaElement;
+    const reportType = this.selectedReportType;
+    const isTruckProblem = reportType === 'TruckProblem';
+    if (!isTruckProblem && !this.selectedBinForReport) { alert('Изберете контейнер'); return; }
     const tm: Record<string, number> = { Full: 0, Fire: 1, SensorBroken: 2, TruckProblem: 3, ContainerDamage: 4 };
     const fd = new FormData();
-    fd.append('TrashContainerId', this.selectedBinForReport.id.toString());
-    fd.append('ReportType', (tm[ts.value] ?? 0).toString());
+    if (this.selectedBinForReport) fd.append('TrashContainerId', this.selectedBinForReport.id.toString());
+    else if (isTruckProblem)       fd.append('TrashContainerId', '0');
+    fd.append('ReportType', (tm[reportType] ?? 0).toString());
     if (desc?.value)       fd.append('Description', desc.value);
     if (img?.files?.[0])   fd.append('Photo', img.files[0]);
     const token = this.getToken();
@@ -935,9 +995,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       .subscribe({
         next: () => {
           alert('Докладването е изпратено!');
-          this.selectedBinForReport = null; this.reportImagePreview = null; this.reportDescription = '';
+          this.selectedBinForReport = null; this.reportImagePreview = null;
+          this.reportDescription = ''; this.selectedReportType = 'Full';
           const si = document.getElementById('selected-bin-id') as HTMLInputElement;
           if (si) si.value = ''; if (img) img.value = ''; if (desc) desc.value = '';
+          // Reload bins after a short delay so updated status icons appear
+          setTimeout(() => this.loadBins(), 800);
         },
         error: e => {
           if (e.status === 401) { alert('Сесията изтекла'); this.router.navigate(['/login']); }

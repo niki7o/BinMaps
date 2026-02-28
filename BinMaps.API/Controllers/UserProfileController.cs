@@ -188,7 +188,7 @@ public sealed class UserProfileController : ControllerBase
             .Select(r => new
             {
                 r.Id,
-                ReportType = r.ReportType.ToString(),
+                ReportType = (int)r.ReportType,
                 r.Description,
                 r.CreatedAt,
                 r.IsApproved,
@@ -196,7 +196,7 @@ public sealed class UserProfileController : ControllerBase
                 r.FinalConfidence,
                 ContainerId = r.TrashContainerId,
                 Container = r.TrashContainer != null
-                    ? new { r.TrashContainer.Id, r.TrashContainer.AreaId, TrashType = r.TrashContainer.TrashType.ToString() }
+                    ? new { r.TrashContainer.Id, r.TrashContainer.AreaId, TrashType = (int)r.TrashContainer.TrashType }
                     : null
             })
             .ToListAsync();

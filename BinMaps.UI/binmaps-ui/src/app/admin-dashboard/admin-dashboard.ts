@@ -8,7 +8,7 @@ import { environment } from '../../environments/environment';
 
 interface Report {
   id: number;
-  trashContainerId: number;
+  trashContainerId: number | null;
   userId: string;
   userName: string;
   reportType: string;
@@ -66,6 +66,13 @@ interface Toast {
   message: string;
 }
 
+interface PagedResponse {
+  total: number;
+  page: number;
+  pageSize: number;
+  items: Report[];
+}
+
 type ActiveTab = 'reports' | 'containers' | 'trucks' | 'users';
 
 @Component({
@@ -115,6 +122,23 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   isLoading = false;
 
+  // Pagination
+  currentPage = 1;
+  pageSize = 20;
+  totalReports = 0;
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.totalReports / this.pageSize));
+  }
+
+  get pageNumbers(): number[] {
+    const pages: number[] = [];
+    const start = Math.max(1, this.currentPage - 2);
+    const end = Math.min(this.totalPages, this.currentPage + 2);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
+
   constructor(
     private readonly http: HttpClient,
     private readonly authService: AuthService
@@ -156,13 +180,18 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
-  loadReports(): void {
+  loadReports(page = this.currentPage): void {
     this.isLoading = true;
-    this.http.get<Report[]>(`${this.API}/admin/reports/pending`, this.authHeaders())
+    const statusParam = this.reportFilter.status ? `&status=${this.reportFilter.status}` : '';
+    const typeParam = this.reportFilter.reportType ? `&reportType=${this.reportFilter.reportType}` : '';
+    const url = `${this.API}/admin/reports?page=${page}&pageSize=${this.pageSize}${statusParam}${typeParam}`;
+    this.http.get<PagedResponse>(url, this.authHeaders())
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: data => {
-          this.reports = data;
+        next: res => {
+          this.totalReports = res.total;
+          this.currentPage = res.page;
+          this.reports = res.items;
           this.applyReportFilters();
           this.buildUserReportCounts();
           this.isLoading = false;
@@ -172,6 +201,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           this.isLoading = false;
         }
       });
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.loadReports(page);
   }
 
   loadContainers(): void {
@@ -222,27 +256,23 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   applyReportFilters(): void {
-    let result = [...this.reports];
-
-    if (this.reportSearch.trim()) {
-      const q = this.reportSearch.toLowerCase();
-      result = result.filter(r =>
-        r.userName.toLowerCase().includes(q) ||
-        r.trashContainerId.toString().includes(q) ||
-        r.id.toString().includes(q)
-      );
+    // Status and type filters are applied server-side via loadReports()
+    // Only client-side text search is applied here
+    if (!this.reportSearch.trim()) {
+      this.filteredReports = [...this.reports];
+      return;
     }
+    const q = this.reportSearch.toLowerCase();
+    this.filteredReports = this.reports.filter(r =>
+      r.userName.toLowerCase().includes(q) ||
+      (r.trashContainerId?.toString() ?? '').includes(q) ||
+      r.id.toString().includes(q)
+    );
+  }
 
-    const statusFilter = this.reportFilter.status;
-    if (statusFilter === 'pending') result = result.filter(r => r.isApproved === null);
-    else if (statusFilter === 'approved') result = result.filter(r => r.isApproved === true);
-    else if (statusFilter === 'rejected') result = result.filter(r => r.isApproved === false);
-
-    if (this.reportFilter.reportType) {
-      result = result.filter(r => r.reportType === this.reportFilter.reportType);
-    }
-
-    this.filteredReports = result;
+  onFilterChange(): void {
+    this.currentPage = 1;
+    this.loadReports(1);
   }
 
   applyContainerSearch(): void {
@@ -270,11 +300,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   get pendingCount(): number {
-    return this.reports.filter(r => r.isApproved === null).length;
+    return this.stats.pendingReports ?? 0;
   }
 
   approveReport(reportId: number): void {
-    this.http.post(`${this.API}/reports/${reportId}/approve`, {}, this.authHeaders())
+    this.http.put(`${this.API}/reports/${reportId}/approve`, {}, this.authHeaders())
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -288,7 +318,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   rejectReport(reportId: number): void {
-    this.http.post(`${this.API}/reports/${reportId}/reject`, {}, this.authHeaders())
+    this.http.put(`${this.API}/reports/${reportId}/reject`, {}, this.authHeaders())
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -424,7 +454,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     const map: Record<string, string> = {
       Full: 'Пълен',
       Fire: 'Пожар',
-      SensorBroken: 'Повреден сензор'
+      SensorBroken: 'Повреден сензор',
+      TruckProblem: 'Проблем с камион',
+      ContainerDamage: 'Повреден контейнер'
     };
     return map[type] ?? type;
   }
@@ -432,6 +464,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   getReportTypeClass(type: string): string {
     if (type === 'Fire') return 'badge--danger';
     if (type === 'Full') return 'badge--warn';
+    if (type === 'ContainerDamage') return 'badge--offline';
+    if (type === 'TruckProblem') return 'badge--warn';
     return 'badge--offline';
   }
 
@@ -439,14 +473,16 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     return ['Смесен', 'Пластмаса', 'Хартия', 'Стъкло'][type] ?? 'Неизвестен';
   }
 
+  // Backend enum: Active=0, Offline=1, Fire=2, SensorBroken=3
   getStatusText(status: number | null): string {
     if (status === null || status === undefined) return 'Активен';
-    return (['Активен', 'Пожар', 'Повреден', 'Извън линия'][status]) ?? 'Неизвестен';
+    return (['Активен', 'Извън линия', 'Пожар', 'Повреден сензор'][status]) ?? 'Неизвестен';
   }
 
   getStatusClass(status: number | null): string {
-    if (!status) return 'badge--eco';
-    return (['badge--eco', 'badge--danger', 'badge--warn', 'badge--offline'])[status] ?? '';
+    if (status === null || status === 0) return 'badge--eco';
+    // 1=Offline, 2=Fire, 3=SensorBroken
+    return (['badge--eco', 'badge--offline', 'badge--danger', 'badge--warn'])[status] ?? '';
   }
 
   getInitials(name: string): string {

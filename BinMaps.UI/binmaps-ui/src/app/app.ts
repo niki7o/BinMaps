@@ -1,5 +1,5 @@
 import { Component, signal } from '@angular/core';
-import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { RouterOutlet, RouterModule, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
 import { Header } from './header/header';
@@ -7,7 +7,7 @@ import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Header, CommonModule],
+  imports: [RouterOutlet, RouterModule, Header, CommonModule],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
