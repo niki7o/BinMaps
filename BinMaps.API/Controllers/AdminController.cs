@@ -37,9 +37,9 @@ public sealed class AdminController : ControllerBase
             TotalContainers = containers.Count,
             CriticalContainers = containers.Count(c => c.FillPercentage >= 80),
             TotalUsers = userCount,
-            PendingReports = reports.Count(r => r.IsApproved == null),
-            ApprovedReports = reports.Count(r => r.IsApproved == true),
-            RejectedReports = reports.Count(r => r.IsApproved == false),
+            PendingReports = reports.Count(r => !r.IsApproved),
+            ApprovedReports = reports.Count(r => r.IsApproved),
+            RejectedReports = 0,
             AverageFillPercent = containers.Count > 0
                 ? Math.Round(containers.Average(c => c.FillPercentage), 1)
                 : 0
@@ -164,9 +164,9 @@ public sealed class AdminController : ControllerBase
 
         var query = _context.Reports.AsNoTracking().AsQueryable();
 
-        if (status == "pending")  query = query.Where(r => r.IsApproved == null);
-        else if (status == "approved") query = query.Where(r => r.IsApproved == true);
-        else if (status == "rejected") query = query.Where(r => r.IsApproved == false);
+        if (status == "pending")  query = query.Where(r => !r.IsApproved);
+        else if (status == "approved") query = query.Where(r => r.IsApproved);
+        else if (status == "rejected") query = query.Where(r => !r.IsApproved);
 
         if (!string.IsNullOrEmpty(reportType) && Enum.TryParse<ReportType>(reportType, out var rt))
             query = query.Where(r => r.ReportType == rt);
@@ -203,7 +203,7 @@ public sealed class AdminController : ControllerBase
     {
         var pending = await _context.Reports
             .AsNoTracking()
-            .Where(r => r.IsApproved == null)
+            .Where(r => !r.IsApproved)
             .OrderByDescending(r => r.FinalConfidence)
             .Select(r => new
             {

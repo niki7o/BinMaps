@@ -1,4 +1,4 @@
-﻿using BinMaps.Data.Entities;
+using BinMaps.Data.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -10,10 +10,16 @@ namespace BinMaps.Data
     {
         public BinMapsDbContext(DbContextOptions<BinMapsDbContext> options) : base(options) { }
 
+        #region DbSets
+
         public DbSet<Area> Areas => Set<Area>();
         public DbSet<TrashContainer> TrashContainers => Set<TrashContainer>();
         public DbSet<Truck> Trucks => Set<Truck>();
         public DbSet<Report> Reports => Set<Report>();
+
+        #endregion
+
+        #region Model Configuration
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -22,6 +28,18 @@ namespace BinMaps.Data
 
             modelBuilder.Entity<IdentityUserRole<string>>().HasKey(r => new { r.UserId, r.RoleId });
 
+            ConfigureTrashContainer(modelBuilder);
+            ConfigureReport(modelBuilder);
+            ConfigureTruck(modelBuilder);
+            ConfigureUser(modelBuilder);
+        }
+
+        #endregion
+
+        #region Entity Configuration Methods
+
+        private static void ConfigureTrashContainer(ModelBuilder modelBuilder)
+        {
             modelBuilder.Entity<TrashContainer>(entity =>
             {
                 entity.Property(tc => tc.Id).ValueGeneratedNever();
@@ -39,12 +57,14 @@ namespace BinMaps.Data
                 entity.HasIndex(tc => new { tc.LocationX, tc.LocationY })
                     .HasDatabaseName("IX_Containers_Location");
             });
+        }
 
+        private static void ConfigureReport(ModelBuilder modelBuilder)
+        {
             modelBuilder.Entity<Report>(entity =>
             {
                 entity.Property(r => r.ReportType).HasConversion<string>();
                 entity.Property(r => r.AI_Score).HasColumnType("float");
-                
 
                 entity.Property(r => r.UserId)
                     .HasMaxLength(450)
@@ -61,7 +81,10 @@ namespace BinMaps.Data
                 entity.HasIndex(r => r.UserId)
                     .HasDatabaseName("IX_Reports_UserId");
             });
+        }
 
+        private static void ConfigureTruck(ModelBuilder modelBuilder)
+        {
             modelBuilder.Entity<Truck>(entity =>
             {
                 entity.Property(t => t.TrashType).HasConversion<string>();
@@ -74,7 +97,10 @@ namespace BinMaps.Data
                 entity.HasIndex(t => t.AreaId)
                     .HasDatabaseName("IX_Trucks_AreaId");
             });
+        }
 
+        private static void ConfigureUser(ModelBuilder modelBuilder)
+        {
             modelBuilder.Entity<User>(entity =>
             {
                 entity.HasMany(u => u.Reports)
@@ -83,7 +109,7 @@ namespace BinMaps.Data
                     .OnDelete(DeleteBehavior.Cascade);
             });
         }
-    }
 
-   
+        #endregion
+    }
 }

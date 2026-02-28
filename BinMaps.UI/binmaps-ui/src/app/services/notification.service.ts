@@ -47,6 +47,11 @@ export class NotificationService {
     this.recalcUnread();
   }
 
+  remove(id: string): void {
+    this._notifications.update(list => list.filter(n => n.id !== id));
+    this.recalcUnread();
+  }
+
   forFilter(filter: string): Notification[] {
     const all = this._notifications().filter(n =>
       n.forRoles.includes(this.currentRole)

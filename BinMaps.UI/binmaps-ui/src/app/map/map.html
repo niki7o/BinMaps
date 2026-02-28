@@ -236,7 +236,7 @@
         </div>
       </div>
 
-      <div class="map-overlay-info" *ngIf="isGuest">
+      <div class="map-overlay-info" *ngIf="isGuest && guestBannerVisible">
         <div class="guest-banner">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
@@ -248,6 +248,11 @@
             <p>Влезте в системата за да докладвате проблеми и да използвате пълния функционалитет</p>
           </div>
           <button class="btn-primary" routerLink="/login">Вход</button>
+          <button class="guest-banner-close" (click)="guestBannerVisible = false" title="Затвори">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
         </div>
       </div>
     </main>

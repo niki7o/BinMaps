@@ -1,4 +1,3 @@
-
 using BinMaps.API.Seed;
 using BinMaps.Data;
 using BinMaps.Data.Entities;
@@ -20,6 +19,8 @@ namespace BinMaps.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            #region Database & Identity Configuration
+
             builder.Services.AddDbContext<BinMapsDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -36,6 +37,10 @@ namespace BinMaps.API
             })
             .AddEntityFrameworkStores<BinMapsDbContext>()
             .AddDefaultTokenProviders();
+
+            #endregion
+
+            #region Authentication & JWT Configuration
 
             var jwtSettings = builder.Configuration.GetSection("Jwt");
             var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
@@ -58,6 +63,11 @@ namespace BinMaps.API
                     IssuerSigningKey = new SymmetricSecurityKey(key)
                 };
             });
+
+            #endregion
+
+            #region Service Registration
+
             builder.Services.AddSingleton<Random>();
             builder.Services.AddHttpClient();
             builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
@@ -67,15 +77,13 @@ namespace BinMaps.API
             builder.Services.AddScoped<IAIService, AIService>();
             builder.Services.AddScoped<IReputationService, ReputationService>();
             builder.Services.AddScoped<IContainerUpdateService, ContainerUpdateService>();
-           
-
-
-
-
             builder.Services.AddScoped<InitialStateSeeder>();
-
             builder.Services.AddHostedService<ContainerDynamicsService>();
             builder.Services.AddSignalR();
+
+            #endregion
+
+            #region CORS Configuration
 
             var allowedOrigins = builder.Configuration
                 .GetValue<string>("AllowedOrigins", "http://localhost:4200")!
@@ -92,25 +100,32 @@ namespace BinMaps.API
                 });
             });
 
+            #endregion
+
+            #region API & Swagger Configuration
+
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            #endregion
+
             var app = builder.Build();
 
-
+            #region Database Migration & Seeding
 
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
-
                 var db = services.GetRequiredService<BinMapsDbContext>();
-
-                await db.Database.MigrateAsync();   
-
+                await db.Database.MigrateAsync();
                 var seeder = services.GetRequiredService<InitialStateSeeder>();
                 await seeder.SeedAllAsync();
             }
+
+            #endregion
+
+            #region Middleware & Request Pipeline
 
             if (app.Environment.IsDevelopment())
             {
@@ -129,8 +144,8 @@ namespace BinMaps.API
             app.MapControllers();
 
             await app.RunAsync();
-        }
 
-       
+            #endregion
+        }
     }
 }

@@ -47,7 +47,7 @@ public sealed class AuthService : IAuthService
             UserName = dto.UserName,
             Email = dto.Email,
             PhoneNumber = dto.PhoneNumber,
-            Reputation = 50
+            Reputation = 0
         };
 
         var result = await _userManager.CreateAsync(user, dto.Password);

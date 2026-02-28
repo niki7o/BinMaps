@@ -83,9 +83,8 @@ export class Header implements OnInit, OnDestroy {
     this.notifService.markAllRead();
   }
 
-  markRead(id: string): void {
-    this.notifService.markRead(id);
-  }
+  markRead(id: string): void { this.notifService.markRead(id); }
+  removeNotif(id: string): void { this.notifService.remove(id); }
 
   logout(): void {
     this.authService.logout();

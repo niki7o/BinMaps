@@ -64,6 +64,7 @@ export class RegisterComponent {
       next: (response) => {
         this.isLoading      = false;
         this.successMessage = response.message || 'Успешна регистрация! Пренасочване към входа...';
+        sessionStorage.setItem('welcomeUser', '1');
         setTimeout(() => this.router.navigate(['/login']), 2000);
       },
       error: (err) => {

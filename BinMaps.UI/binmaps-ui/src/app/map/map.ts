@@ -54,7 +54,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   });
 
   private allBins: Bin[]     = [];
-  private activeFilter       = { type: 'all', fill: 'all', zone: 'all' };
+  private activeFilter       = { type: 'all', fill: 'all', zone: 'all', sort: 'none' };
   private filterEl?: HTMLElement;
   private routeLine?:          L.Polyline;
   private routeMarkers:        L.Marker[] = [];
@@ -81,6 +81,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   currentUser: AuthUser | null = null;
   isAdmin = false; isDriver = false; isUser = false; isGuest = true;
+  guestBannerVisible = true;
   selectedAreaId = ''; selectedTrashType = 0;
   routeResult: RouteResult | null = null;
   routeActive    = false;
@@ -199,6 +200,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     if (this.activeFilter.fill === 'low')    b = b.filter(x => x.fillPercentage < 40);
     if (this.activeFilter.fill === 'medium') b = b.filter(x => x.fillPercentage >= 40 && x.fillPercentage <= 70);
     if (this.activeFilter.fill === 'high')   b = b.filter(x => x.fillPercentage > 70);
+    // Sorting affects render order — markers added last appear on top in clusters
+    if (this.activeFilter.sort === 'asc')  b = [...b].sort((a, z) => a.fillPercentage - z.fillPercentage);
+    if (this.activeFilter.sort === 'desc') b = [...b].sort((a, z) => z.fillPercentage - a.fillPercentage);
     return b;
   }
 
@@ -546,7 +550,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.cluster.clearLayers();
     bins.forEach(bin => {
       const m = L.marker([bin.locationY, bin.locationX], { icon: this.createBinIcon(bin), binId: bin.id } as any);
-      m.bindPopup(this.createPopup(bin), { maxWidth: 280, className: 'bpp-container' });
+      if (!this.isGuest) {
+        m.bindPopup(this.createPopup(bin), { maxWidth: 280, className: 'bpp-container' });
+      }
       if ((this.isUser || this.isDriver) && !this.navigationActive) {
         m.on('click', () => {
           this.selectedBinForReport = bin;
@@ -632,6 +638,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   // ── Popup ─────────────────────────────────────────────────────────────────
   private createPopup(bin: Bin): string {
     const f      = bin.fillPercentage;
+    const liters = Math.round(f / 100 * 1100);
     const temp   = bin.temperature;
     // Backend enum: Active=0, Offline=1, Fire=2, SensorBroken=3
     const isFire = bin.status === 2 || (temp !== null && temp! > 55 && bin.fillPercentage > 70);
@@ -674,7 +681,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         <div class="bpp-fill">
           <div class="bpp-fill-row">
             <span class="bpp-lbl">Запълване</span>
-            <span class="bpp-fill-pct" style="color:${ring}">${f.toFixed(0)}%</span>
+            <span class="bpp-fill-pct" style="color:${ring}">${f.toFixed(0)}% · ${liters} л</span>
           </div>
           <div class="bpp-track">
             <div class="bpp-bar" style="width:${f}%;background:${ring};box-shadow:0 0 10px ${ring}77"></div>
@@ -711,6 +718,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         L.DomEvent.disableClickPropagation(el);
         el.innerHTML = `
           <div class="fc-wrap">
+
+            <!-- Toggle collapse -->
+            <button id="fc-toggle" class="fc-toggle" title="Скрий/покажи филтри">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+              </svg>
+              <span>Филтри</span>
+            </button>
+
+            <div id="fc-body" class="fc-body">
 
             <!-- ① Search hero -->
             <div class="fc-search">
@@ -753,7 +770,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
             </div>
 
             <!-- ④ Trash type -->
-            <div class="fc-block fc-block--last">
+            <div class="fc-block">
               <div class="fc-blk-lbl">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="3 6 5 6 21 6"/>
@@ -778,11 +795,72 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
               </div>
             </div>
 
+            <!-- ⑤ Fill level filter -->
+            <div class="fc-block">
+              <div class="fc-blk-lbl">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <line x1="3" y1="17" x2="21" y2="17"/>
+                  <line x1="3" y1="12" x2="21" y2="12"/>
+                </svg>
+                <span>Запълване</span>
+              </div>
+              <div class="fc-pills">
+                <button class="fc-pill fc-pill--fall active" data-fill="all">Всички</button>
+                <button class="fc-pill fc-pill--flow" data-fill="low">
+                  <span class="fc-fillbar" style="--fc-fill-w:30%;--fc-fill-c:#10b981"></span>0–39%
+                </button>
+                <button class="fc-pill fc-pill--fmed" data-fill="medium">
+                  <span class="fc-fillbar" style="--fc-fill-w:60%;--fc-fill-c:#f59e0b"></span>40–70%
+                </button>
+                <button class="fc-pill fc-pill--fhi" data-fill="high">
+                  <span class="fc-fillbar" style="--fc-fill-w:90%;--fc-fill-c:#ef4444"></span>71–100%
+                </button>
+              </div>
+            </div>
+
+            <!-- ⑥ Sort by fill -->
+            <div class="fc-block fc-block--last">
+              <div class="fc-blk-lbl">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="4" y1="6" x2="11" y2="6"/>
+                  <line x1="4" y1="12" x2="11" y2="12"/>
+                  <line x1="4" y1="18" x2="13" y2="18"/>
+                  <polyline points="15 9 18 6 21 9"/>
+                  <line x1="18" y1="6" x2="18" y2="18"/>
+                </svg>
+                <span>Сортиране по запълване</span>
+              </div>
+              <div class="fc-pills">
+                <button class="fc-pill fc-pill--snone active" data-sort="none">По подразбиране</button>
+                <button class="fc-pill fc-pill--sasc" data-sort="asc">
+                  <svg class="fc-sort-ico" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="7 11 7 3"/><polyline points="4 6 7 3 10 6"/>
+                  </svg>Ниско→Високо
+                </button>
+                <button class="fc-pill fc-pill--sdesc" data-sort="desc">
+                  <svg class="fc-sort-ico" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="7 3 7 11"/><polyline points="4 8 7 11 10 8"/>
+                  </svg>Високо→Ниско
+                </button>
+              </div>
+            </div>
+
+            </div><!-- /fc-body -->
           </div>`;
 
         self.filterEl = el;
 
         setTimeout(() => {
+          const toggleBtn = el.querySelector('#fc-toggle') as HTMLButtonElement | null;
+          const fcBody    = el.querySelector('#fc-body') as HTMLElement | null;
+          let collapsed = false;
+          toggleBtn?.addEventListener('click', () => {
+            collapsed = !collapsed;
+            if (fcBody) fcBody.style.display = collapsed ? 'none' : '';
+            if (toggleBtn) toggleBtn.classList.toggle('fc-toggle--collapsed', collapsed);
+          });
+
           const resetBtn = el.querySelector('#fc-reset') as HTMLElement | null;
 
           // Show/hide reset button based on active filters
@@ -790,17 +868,20 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
             if (!resetBtn) return;
             const hasFilter = self.activeFilter.type !== 'all'
               || self.activeFilter.fill !== 'all'
-              || self.activeFilter.zone !== 'all';
+              || self.activeFilter.zone !== 'all'
+              || self.activeFilter.sort !== 'none';
             resetBtn.style.display = hasFilter ? '' : 'none';
           };
 
           // Reset all filters
           const doReset = () => {
-            self.activeFilter = { type: 'all', fill: 'all', zone: 'all' };
+            self.activeFilter = { type: 'all', fill: 'all', zone: 'all', sort: 'none' };
             el.querySelectorAll('[data-type]').forEach(x =>
               x.classList.toggle('active', x.getAttribute('data-type') === 'all'));
             el.querySelectorAll('[data-fill]').forEach(x =>
               x.classList.toggle('active', x.getAttribute('data-fill') === 'all'));
+            el.querySelectorAll('[data-sort]').forEach(x =>
+              x.classList.toggle('active', x.getAttribute('data-sort') === 'none'));
             const zSel = el.querySelector('#zone-filter') as HTMLSelectElement | null;
             if (zSel) zSel.value = 'all';
             if (resetBtn) resetBtn.style.display = 'none';
@@ -832,6 +913,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
             const v = (e.currentTarget as HTMLElement).getAttribute('data-fill')!;
             self.activeFilter.fill = v;
             el.querySelectorAll('[data-fill]').forEach(x => x.classList.remove('active'));
+            (e.currentTarget as HTMLElement).classList.add('active');
+            self.renderBins(self.filtered());
+            checkReset();
+          }));
+
+          // Sort pills
+          el.querySelectorAll('[data-sort]').forEach(b => b.addEventListener('click', e => {
+            const v = (e.currentTarget as HTMLElement).getAttribute('data-sort')!;
+            self.activeFilter.sort = v;
+            el.querySelectorAll('[data-sort]').forEach(x => x.classList.remove('active'));
             (e.currentTarget as HTMLElement).classList.add('active');
             self.renderBins(self.filtered());
             checkReset();

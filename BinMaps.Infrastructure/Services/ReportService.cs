@@ -83,7 +83,7 @@ public sealed class ReportService : IReportService
             AI_Score               = aiScore,
             UserReputationOnSubmit = userReputation,
             FinalConfidence        = finalConfidence,
-            IsApproved             = autoReject ? false : (autoApprove ? true : null)
+            IsApproved             = !autoReject && autoApprove
         };
 
         await _reportRepo.AddAsync(report);

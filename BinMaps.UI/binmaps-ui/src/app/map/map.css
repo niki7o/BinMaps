@@ -1,5 +1,3 @@
-
-
 :root {
 
   --primary-eco: #10b981;
@@ -998,6 +996,26 @@
   line-height: 1.6;
 }
 
+.guest-banner-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.06);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+.guest-banner-close:hover {
+  background: rgba(239,68,68,0.15);
+  color: #ef4444;
+}
 
 .marker-cluster {
   background: linear-gradient(135deg, var(--primary-eco), #059669);
@@ -1327,6 +1345,28 @@
   box-shadow: none !important;
   padding: 0 !important;
 }
+
+/* ── Filter toggle button ─────────────────────────────────────── */
+.fc-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+.fc-toggle:hover { color: #10b981; background: rgba(16,185,129,0.05); }
+.fc-toggle--collapsed { border-bottom-color: transparent; }
+.fc-toggle svg { opacity: 0.7; flex-shrink: 0; }
+.fc-body { overflow: hidden; }
 
 /* ── Outer glass card ─────────────────────────────────────────── */
 .fc-wrap {
@@ -2380,4 +2420,269 @@
 @keyframes nearbyCirclePulse {
   0%, 100% { opacity: 0.7; }
   50%       { opacity: 1;   }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FILL FILTER PILLS — active states
+   ══════════════════════════════════════════════════════════════ */
+
+/* "All fill" active — matches the "All type" green pill */
+.fc-pill--fall.active {
+  background: linear-gradient(135deg,
+    rgba(16, 185, 129, 0.20) 0%,
+    rgba(59, 130, 246, 0.15) 100%);
+  border-color: rgba(16, 185, 129, 0.38);
+  color: #6ee7b7;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.14);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SORT PILLS — active states
+   ══════════════════════════════════════════════════════════════ */
+
+/* Sort icon inside pills */
+.fc-sort-ico {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* Sort: no sort (default) */
+.fc-pill--snone.active {
+  background: linear-gradient(135deg,
+    rgba(16, 185, 129, 0.20) 0%,
+    rgba(59, 130, 246, 0.15) 100%);
+  border-color: rgba(16, 185, 129, 0.38);
+  color: #6ee7b7;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.14);
+}
+
+/* Sort: ascending (low → high) */
+.fc-pill--sasc.active {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(16, 185, 129, 0.38);
+  color: #6ee7b7;
+  box-shadow: 0 1px 6px rgba(16, 185, 129, 0.18);
+}
+.fc-pill--sasc.active .fc-sort-ico { opacity: 1; color: #6ee7b7; }
+
+/* Sort: descending (high → low) — danger red tint for urgency */
+.fc-pill--sdesc.active {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.36);
+  color: #fca5a5;
+  box-shadow: 0 1px 6px rgba(239, 68, 68, 0.18);
+}
+.fc-pill--sdesc.active .fc-sort-ico { opacity: 1; color: #fca5a5; }
+
+/* ══════════════════════════════════════════════════════════════
+   PREMIUM DESIGN POLISH — Competition-Grade Upgrades
+   ══════════════════════════════════════════════════════════════ */
+
+/* 1. Sidebar: animated gradient border on hover */
+.map-sidebar.left {
+  transition: box-shadow 0.35s ease;
+}
+.map-sidebar.right {
+  transition: box-shadow 0.35s ease;
+}
+
+/* 2. Filter control: richer glass card */
+.map-filter-control {
+  filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.55));
+}
+.fc-wrap {
+  transition: box-shadow 0.25s ease;
+}
+.fc-wrap:hover {
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.12),
+    0 12px 40px rgba(0, 0, 0, 0.65);
+}
+
+/* 3. fc-block hover highlight */
+.fc-block {
+  transition: background 0.18s ease;
+  border-radius: 6px;
+}
+.fc-block:hover {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+/* 4. Better fill bar — taller and rounded with glow */
+.fc-fillbar {
+  height: 5px;
+  border-radius: 4px;
+  transition: filter 0.18s ease;
+}
+.fc-pill:hover .fc-fillbar,
+.fc-pill.active .fc-fillbar {
+  filter: brightness(1.3);
+}
+
+/* 5. Glowing count badge on reset button when active */
+.fc-reset-btn:not([style*="display: none"]) {
+  animation: resetPulse 2.5s ease-in-out infinite;
+}
+@keyframes resetPulse {
+  0%, 100% { box-shadow: none; }
+  50% { box-shadow: 0 0 8px rgba(248, 113, 113, 0.35); border-color: rgba(248, 113, 113, 0.28); color: #f87171; }
+}
+
+/* 6. Stat cards: number counter glow on render */
+.stat-card {
+  animation: statFadeIn 0.4s ease both;
+}
+@keyframes statFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 7. Panel header: thicker glowing underline accent */
+.panel-header::after {
+  height: 2px;
+  width: 80px;
+  background: linear-gradient(90deg, var(--primary-eco), rgba(16, 185, 129, 0));
+  animation: panelAccentSlide 4s ease-in-out infinite;
+}
+@keyframes panelAccentSlide {
+  0%, 100% { transform: translateX(0); opacity: 0.9; }
+  50% { transform: translateX(120px); opacity: 0.4; }
+}
+
+/* 8. Buttons: micro shimmer width fix for stop button */
+.btn-stop::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  transition: left 0.5s ease;
+}
+.btn-stop:hover::before { left: 100%; }
+
+/* 9. Better progress fill gradient */
+.progress-fill {
+  background: linear-gradient(90deg,
+    #10b981 0%, #34d399 50%, #6ee7b7 100%);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.6), 0 0 4px rgba(16, 185, 129, 1);
+}
+
+/* 10. File upload zone: premium drag target */
+.file-input-label {
+  background: linear-gradient(145deg,
+    rgba(16, 185, 129, 0.04) 0%,
+    rgba(51, 65, 85, 0.25) 100%);
+  border: 2px dashed rgba(16, 185, 129, 0.22);
+  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+.file-input-label::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%,
+    rgba(16, 185, 129, 0.08) 0%, transparent 65%);
+  pointer-events: none;
+}
+.file-input-label:hover {
+  background: linear-gradient(145deg,
+    rgba(16, 185, 129, 0.10) 0%,
+    rgba(51, 65, 85, 0.35) 100%);
+  border-color: rgba(16, 185, 129, 0.52);
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.12), inset 0 0 18px rgba(16, 185, 129, 0.06);
+  transform: translateY(-1px);
+}
+
+/* 11. Guest banner: richer animated border */
+.guest-banner {
+  background: linear-gradient(135deg,
+    rgba(15, 26, 48, 0.97) 0%,
+    rgba(10, 16, 32, 0.99) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.65),
+    0 0 80px rgba(16, 185, 129, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+.guest-banner::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.04), transparent);
+  animation: guestBannerSheen 4s ease-in-out infinite;
+}
+@keyframes guestBannerSheen {
+  0% { left: -100%; }
+  100% { left: 150%; }
+}
+
+/* 12. Map style switcher: tighter active pill */
+.map-style-switcher button.active {
+  background: linear-gradient(135deg,
+    rgba(16, 185, 129, 0.28) 0%,
+    rgba(5, 150, 105, 0.20) 100%);
+  color: #86efca;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  box-shadow:
+    0 0 12px rgba(16, 185, 129, 0.22),
+    inset 0 1px 0 rgba(16, 185, 129, 0.12);
+}
+
+/* 13. Navigation progress: glowing step counter */
+.progress-header {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.navigation-progress {
+  background: linear-gradient(135deg,
+    rgba(16, 185, 129, 0.09) 0%,
+    rgba(6, 182, 212, 0.06) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.18);
+  box-shadow: inset 0 0 16px rgba(16, 185, 129, 0.04);
+}
+
+/* 14. Report type chip: micro animation on selection */
+.rp-type-chip {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 15. Popup: add a subtle top accent gradient line */
+.bpp-container .leaflet-popup-content-wrapper::before {
+  content: '';
+  display: block;
+  height: 2px;
+  background: linear-gradient(90deg,
+    #10b981 0%, #3b82f6 50%, #06b6d4 100%);
+  border-radius: 18px 18px 0 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ACTIVE FILTER BADGE — shows active sort mode in filter header
+   ══════════════════════════════════════════════════════════════ */
+.fc-active-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  color: #fca5a5;
+  white-space: nowrap;
+  animation: badgePop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes badgePop {
+  from { transform: scale(0.7); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
 }

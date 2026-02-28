@@ -22,10 +22,9 @@
         <p class="profile__email">{{ profile?.email }}</p>
         <p class="profile__since">Потребител от {{ formatMemberSince(profile?.memberSince ?? '') }}</p>
       </div>
-   
+    </div>
   </div>
 
- 
   <div class="profile__loading" *ngIf="loading">
     <div class="skeleton skeleton--xl"></div>
   </div>

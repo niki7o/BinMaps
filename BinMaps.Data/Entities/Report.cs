@@ -54,7 +54,7 @@ namespace BinMaps.Data.Entities
 
         #region Status
 
-        public bool? IsApproved { get; set; }
+        public bool IsApproved { get; set; }
 
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

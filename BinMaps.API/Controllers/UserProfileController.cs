@@ -213,8 +213,8 @@ public sealed class UserProfileController : ControllerBase
             return Unauthorized();
 
         var totalReports = await _context.Reports.CountAsync(r => r.UserId == userId);
-        var approvedReports = await _context.Reports.CountAsync(r => r.UserId == userId && r.IsApproved == true);
-        var pendingReports = await _context.Reports.CountAsync(r => r.UserId == userId && r.IsApproved == null);
+        var approvedReports = await _context.Reports.CountAsync(r => r.UserId == userId && r.IsApproved);
+        var pendingReports = await _context.Reports.CountAsync(r => r.UserId == userId && !r.IsApproved);
 
         var recentReports = await _context.Reports
             .AsNoTracking()
@@ -279,7 +279,7 @@ public sealed class UserProfileController : ControllerBase
         var level = _reputationService.GetLevel(user.Reputation);
 
         var totalReports = await _context.Reports.CountAsync(r => r.UserId == userId);
-        var approvedReports = await _context.Reports.CountAsync(r => r.UserId == userId && r.IsApproved == true);
+        var approvedReports = await _context.Reports.CountAsync(r => r.UserId == userId && r.IsApproved);
 
         return Ok(new
         {

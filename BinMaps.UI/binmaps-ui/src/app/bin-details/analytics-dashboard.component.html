@@ -32,6 +32,10 @@
         <strong class="an-kpi__val">{{ stats.totalBins }}</strong>
         <span class="an-kpi__sub">в системата</span>
       </div>
+      <div class="an-kpi__aside">
+        <span class="an-kpi__aside-num">{{ stats.clusterCount }}</span>
+        <span class="an-kpi__aside-lbl">клъстера</span>
+      </div>
     </div>
 
     <div class="an-kpi" style="--acc:#f59e0b; --i:1">
@@ -45,6 +49,14 @@
         <strong class="an-kpi__val">{{ stats.avgFill }}<span class="an-kpi__unit">%</span></strong>
         <span class="an-kpi__sub">от капацитета</span>
       </div>
+      <svg class="an-kpi__ring" viewBox="0 0 36 36" aria-hidden="true">
+        <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="3.5"/>
+        <circle cx="18" cy="18" r="15.9" fill="none"
+          stroke="#f59e0b" stroke-width="3.5" stroke-linecap="round"
+          transform="rotate(-90 18 18)"
+          [attr.stroke-dasharray]="stats.avgFill + ' 100'"
+          style="transition: stroke-dasharray 1.2s cubic-bezier(.4,0,.2,1)"/>
+      </svg>
     </div>
 
     <div class="an-kpi" style="--acc:#ef4444; --i:2">
@@ -59,9 +71,13 @@
         <strong class="an-kpi__val" style="color:#ef4444">{{ stats.criticalBins }}</strong>
         <span class="an-kpi__sub">над 80% запълване</span>
       </div>
+      <div class="an-kpi__aside" style="--sacc:#ef4444">
+        <span class="an-kpi__aside-num">{{ stats.heavyBins }}</span>
+        <span class="an-kpi__aside-lbl">тежки</span>
+      </div>
     </div>
 
-    <div class="an-kpi" style="--acc:#dc2626; --i:3">
+    <div class="an-kpi" [class.an-kpi--alert]="stats.onFireCount > 0" style="--acc:#dc2626; --i:3">
       <div class="an-kpi__ico" style="--ico:#dc2626">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
           <path d="M12 2S7 8 7 13a5 5 0 0010 0c0-5-5-11-5-11z"/>
@@ -72,6 +88,7 @@
         <strong class="an-kpi__val" style="color:#dc2626">{{ stats.onFireCount }}</strong>
         <span class="an-kpi__sub">температура &gt;50°C</span>
       </div>
+      <div class="an-kpi__alert-ring" *ngIf="stats.onFireCount > 0"></div>
     </div>
 
     <div class="an-kpi" style="--acc:#06b6d4; --i:4">
@@ -88,6 +105,14 @@
         <strong class="an-kpi__val" style="color:#06b6d4">{{ stats.sensorCoverage }}<span class="an-kpi__unit">%</span></strong>
         <span class="an-kpi__sub">сензорни кофи</span>
       </div>
+      <svg class="an-kpi__ring" viewBox="0 0 36 36" aria-hidden="true">
+        <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="3.5"/>
+        <circle cx="18" cy="18" r="15.9" fill="none"
+          stroke="#06b6d4" stroke-width="3.5" stroke-linecap="round"
+          transform="rotate(-90 18 18)"
+          [attr.stroke-dasharray]="stats.sensorCoverage + ' 100'"
+          style="transition: stroke-dasharray 1.2s cubic-bezier(.4,0,.2,1)"/>
+      </svg>
     </div>
 
     <div class="an-kpi" style="--acc:#8b5cf6; --i:5">
@@ -101,6 +126,10 @@
         <span class="an-kpi__lbl">Клъстери</span>
         <strong class="an-kpi__val" style="color:#8b5cf6">{{ stats.clusterCount }}</strong>
         <span class="an-kpi__sub">зони за събиране</span>
+      </div>
+      <div class="an-kpi__aside" style="--sacc:#ef4444">
+        <span class="an-kpi__aside-num">{{ criticalClusters.length }}</span>
+        <span class="an-kpi__aside-lbl">критични</span>
       </div>
     </div>
 
@@ -202,7 +231,8 @@
       <!-- Critical cluster list -->
       <div class="an-crit-list" *ngIf="criticalClusters.length > 0">
         <p class="an-crit-title">ТОП КРИТИЧНИ КЛЪСТЕРИ</p>
-        <div class="an-crit-item" *ngFor="let c of criticalClusters.slice(0, 4)">
+        <div class="an-crit-item" *ngFor="let c of criticalClusters.slice(0, 4); let idx = index">
+          <div class="an-crit-rank">#{{ idx + 1 }}</div>
           <div class="an-crit-dot"
             [style.background]="getFillColor(c.avgFill)"
             [style.box-shadow]="'0 0 8px ' + getFillColor(c.avgFill)"
@@ -317,7 +347,17 @@
                 {{ z.onFire > 0 ? '🔥 ' + z.onFire : '—' }}
               </span>
             </td>
-            <td class="an-td-mono">{{ z.loadScore }}</td>
+            <td>
+              <div class="an-ls-wrap">
+                <div class="an-ls-track">
+                  <div class="an-ls-bar"
+                       [style.width.%]="z.loadScore"
+                       [style.background]="z.loadScore >= 70 ? '#ef4444' : z.loadScore >= 45 ? '#f59e0b' : '#10b981'">
+                  </div>
+                </div>
+                <span class="an-td-mono an-ls-num">{{ z.loadScore }}</span>
+              </div>
+            </td>
             <td>
               <span class="an-badge"
                 [class.an-badge--danger]="z.loadScore >= 70"

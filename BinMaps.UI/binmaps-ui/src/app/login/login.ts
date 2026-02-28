@@ -3,6 +3,7 @@ import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth.service';
+import { NotificationService } from '../services/notification.service';
 
 @Component({
   selector:    'app-login',
@@ -19,8 +20,9 @@ export class LoginComponent {
   readonly showPassword = signal(false);
  
   constructor(
-    private readonly auth:   AuthService,
-    private readonly router: Router
+    private readonly auth:         AuthService,
+    private readonly router:       Router,
+    private readonly notifService: NotificationService
   ) {}
   
   get isLoading(): boolean {
@@ -55,6 +57,19 @@ export class LoginComponent {
 
   private navigateByRole(): void {
     const destination = this.auth.hasRole('Admin') ? '/admin' : '/map';
+    if (sessionStorage.getItem('welcomeUser') === '1') {
+      sessionStorage.removeItem('welcomeUser');
+      this.notifService.push({
+        type:        'report',
+        severity:    'info',
+        iconType:    'eco',
+        title:       'Добре дошъл!',
+        description: 'Регистрацията е успешна. Добре дошъл в BinMaps!',
+        timeAgo:     'Сега',
+        filter:      'all',
+        forRoles:    ['User']
+      });
+    }
     this.router.navigate([destination]);
   }
 

@@ -11,7 +11,7 @@ namespace BinMaps.Data.Entities
         #region Profile
 
         [Range(0, 100)]
-        public int Reputation { get; set; } = 50;
+        public int Reputation { get; set; } = 0;
 
         [MaxLength(500)]
         public string? ProfilePicturePath { get; set; }
