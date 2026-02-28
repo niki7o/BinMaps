@@ -123,13 +123,13 @@ export class ProfileComponent implements OnInit {
     const hasFireReport = this.reports.some(r => r.reportType === 1);
     const hasBrokenReport = this.reports.some(r => r.reportType === 4 || r.reportType === 2);
     const rep = this.reputationInfo?.reputation ?? 0;
-    if (total >= 1)      ids.add('first-step');
-    if (total >= 5)      ids.add('observer');
-    if (total >= 20)     ids.add('reporter');
-    if (hasFireReport)   ids.add('firefighter');
-    if (hasBrokenReport) ids.add('detective');
-    if (total >= 50)     ids.add('guardian');
-    if (rep >= 95)       ids.add('legend');
+    if (total >= 1) ids.add('first-step');
+    if (total >= 5)  ids.add('observer');
+    if (total >= 20) ids.add('reporter');
+    if (hasFireReport)ids.add('firefighter');
+    if (hasBrokenReport)ids.add('detective');
+    if (total >= 50)  ids.add('guardian');
+    if (rep >= 95)   ids.add('legend');
     this.unlockedBadgeIds = ids;
   }
 
