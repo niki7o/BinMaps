@@ -4,8 +4,13 @@
   <div class="profile__header">
     <div class="profile__hero">
       <div class="profile__avatar-wrap">
-        <div class="profile__avatar">{{ profile?.userName?.slice(0,2)?.toUpperCase() ?? 'U' }}</div>
-        <button class="profile__avatar-edit" title="Смени снимката">
+        <ng-container *ngIf="profile?.profilePicturePath; else profileInitials">
+          <img [src]="getProfilePictureUrl()" alt="Profile" class="profile__avatar profile__avatar--img" />
+        </ng-container>
+        <ng-template #profileInitials>
+          <div class="profile__avatar">{{ profile?.userName?.slice(0,2)?.toUpperCase() ?? 'U' }}</div>
+        </ng-template>
+        <button class="profile__avatar-edit" (click)="editMode = true" title="Смени снимката">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
       </div>

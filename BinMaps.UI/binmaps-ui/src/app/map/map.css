@@ -2246,6 +2246,13 @@
     transparent 100%);
 }
 
+/* When route panel is open, the thin handle strip should be invisible */
+.edge-handle--left.is-open {
+  background: transparent;
+  border-right-color: transparent;
+  box-shadow: none;
+}
+
 /* Collapsed: route panel hidden → expand + reveal label */
 .edge-handle--left:not(.is-open) {
   width: 44px;
@@ -2685,4 +2692,256 @@
 @keyframes badgePop {
   from { transform: scale(0.7); opacity: 0; }
   to   { transform: scale(1);   opacity: 1; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   REPORT TYPE GRID — tap-friendly buttons replacing select
+   ══════════════════════════════════════════════════════════════ */
+/* ── Report-type selector — single-column list ────────────────────── */
+.rp-type-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+.rp-type-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+.rp-type-btn:hover { background: rgba(255,255,255,0.08); }
+
+/* Colored dot indicator */
+.rp-type-indicator {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+}
+.rp-type-label { flex: 1; }
+
+/* Per-color overrides */
+.rp-type-btn--green  { border-color: rgba(16,185,129,0.20);  color: #6ee7b7; }
+.rp-type-btn--red    { border-color: rgba(239,68,68,0.20);   color: #fca5a5; }
+.rp-type-btn--orange { border-color: rgba(249,115,22,0.20);  color: #fdba74; }
+.rp-type-btn--cyan   { border-color: rgba(6,182,212,0.20);   color: #67e8f9; }
+.rp-type-btn--blue   { border-color: rgba(59,130,246,0.20);  color: #93c5fd; }
+
+/* Active states — solid border + glow + indicator fully opaque */
+.rp-type-btn--green.rp-type-btn--active  {
+  background: rgba(16,185,129,0.12);
+  border-color: rgba(16,185,129,0.65);
+  box-shadow: 0 0 0 1px rgba(16,185,129,0.12) inset;
+}
+.rp-type-btn--red.rp-type-btn--active    {
+  background: rgba(239,68,68,0.12);
+  border-color: rgba(239,68,68,0.65);
+  box-shadow: 0 0 0 1px rgba(239,68,68,0.12) inset;
+}
+.rp-type-btn--orange.rp-type-btn--active {
+  background: rgba(249,115,22,0.12);
+  border-color: rgba(249,115,22,0.65);
+  box-shadow: 0 0 0 1px rgba(249,115,22,0.12) inset;
+}
+.rp-type-btn--cyan.rp-type-btn--active   {
+  background: rgba(6,182,212,0.12);
+  border-color: rgba(6,182,212,0.65);
+  box-shadow: 0 0 0 1px rgba(6,182,212,0.12) inset;
+}
+.rp-type-btn--blue.rp-type-btn--active   {
+  background: rgba(59,130,246,0.12);
+  border-color: rgba(59,130,246,0.65);
+  box-shadow: 0 0 0 1px rgba(59,130,246,0.12) inset;
+}
+.rp-type-btn--active .rp-type-indicator { opacity: 1; }
+
+/* ══════════════════════════════════════════════════════════════
+   REPORT RESULT CARD  — shown after submitReport() succeeds
+   ══════════════════════════════════════════════════════════════ */
+.rp-result {
+  margin-top: 14px;
+  padding: 14px 14px 12px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg,
+    rgba(15, 23, 42, 0.95) 0%,
+    rgba(30, 41, 59, 0.90) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: rprSlideIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes rprSlideIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+/* Status badge */
+.rp-result__status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 7px;
+  letter-spacing: 0.02em;
+}
+.rp-result__status--approved {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #6ee7b7;
+}
+.rp-result__status--pending {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: #fcd34d;
+}
+.rp-result__status--rejected {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+}
+
+/* AI row */
+/* AI block (new layout) */
+.rp-result__ai-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rp-result__ai-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+}
+.rp-result__ai-title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.rp-result__ai-class {
+  margin-left: auto;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #a5b4fc;
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.25);
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+.rp-result__ai-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Legacy row (no-photo notice etc.) */
+.rp-result__ai-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+.rp-result__ai-row--nophoto {
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+.rp-result__ai-icon { font-size: 0.9rem; }
+.rp-result__ai-score {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+}
+.rp-result__ai-bar-track {
+  flex: 1;
+  height: 5px;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.07);
+  overflow: hidden;
+}
+.rp-result__ai-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.rp-result__ai-bar-fill--high { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,0.5); }
+.rp-result__ai-bar-fill--med  { background: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,0.5); }
+.rp-result__ai-bar-fill--low  { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.5);  }
+.rp-result__ai-pct {
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  min-width: 32px;
+  text-align: right;
+}
+.rp-result__ai-na {
+  color: var(--text-tertiary);
+  font-style: italic;
+  font-size: 0.73rem;
+}
+
+/* Final confidence */
+.rp-result__conf-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.73rem;
+  color: var(--text-tertiary);
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 8px;
+}
+.rp-result__conf-label { font-weight: 500; }
+.rp-result__conf-val {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* Status message */
+.rp-result__msg {
+  font-size: 0.73rem;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+/* New report button */
+.rp-result__new-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(99, 102, 241, 0.28);
+  background: rgba(99, 102, 241, 0.08);
+  color: #a5b4fc;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.rp-result__new-btn:hover {
+  background: rgba(99, 102, 241, 0.16);
+  border-color: rgba(99, 102, 241, 0.45);
+  color: #c7d2fe;
 }

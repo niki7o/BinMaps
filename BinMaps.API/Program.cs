@@ -134,7 +134,17 @@ namespace BinMaps.API
             }
 
             app.UseCors("AllowAngular");
-            app.UseStaticFiles();
+
+            
+            var webRoot = app.Environment.WebRootPath
+                ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            Directory.CreateDirectory(Path.Combine(webRoot, "uploads", "reports"));
+            Directory.CreateDirectory(Path.Combine(webRoot, "uploads", "profiles"));
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(webRoot)
+            });
             if (!app.Environment.IsProduction())
                 app.UseHttpsRedirection();
             app.UseRouting();
@@ -142,6 +152,7 @@ namespace BinMaps.API
             app.UseAuthorization();
             app.MapHub<ContainerHub>("/hubs/containers");
             app.MapControllers();
+            app.MapFallbackToFile("index.html");
 
             await app.RunAsync();
 

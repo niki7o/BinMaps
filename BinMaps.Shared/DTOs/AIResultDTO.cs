@@ -12,4 +12,7 @@ public sealed class AIResultDto
 
     [JsonPropertyName("confidence")]
     public double Confidence { get; set; }
+
+    [JsonPropertyName("detected_class")]
+    public string DetectedClass { get; set; } = string.Empty;
 }

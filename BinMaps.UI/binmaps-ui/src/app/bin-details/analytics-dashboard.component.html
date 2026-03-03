@@ -1,6 +1,6 @@
 <div class="an-root">
 
-  <!-- ═══ HEADER ═════════════════════════════════════════════════════════════ -->
+  
   <div class="an-header">
     <div class="an-header__left">
       <p class="an-eyebrow">BinMaps · Аналитика</p>
@@ -17,7 +17,7 @@
     </div>
   </div>
 
-  <!-- ═══ KPI STRIP ══════════════════════════════════════════════════════════ -->
+  
   <div class="an-kpi-row">
 
     <div class="an-kpi" style="--acc:#10b981; --i:0">
@@ -32,10 +32,7 @@
         <strong class="an-kpi__val">{{ stats.totalBins }}</strong>
         <span class="an-kpi__sub">в системата</span>
       </div>
-      <div class="an-kpi__aside">
-        <span class="an-kpi__aside-num">{{ stats.clusterCount }}</span>
-        <span class="an-kpi__aside-lbl">клъстера</span>
-      </div>
+      
     </div>
 
     <div class="an-kpi" style="--acc:#f59e0b; --i:1">
@@ -71,10 +68,7 @@
         <strong class="an-kpi__val" style="color:#ef4444">{{ stats.criticalBins }}</strong>
         <span class="an-kpi__sub">над 80% запълване</span>
       </div>
-      <div class="an-kpi__aside" style="--sacc:#ef4444">
-        <span class="an-kpi__aside-num">{{ stats.heavyBins }}</span>
-        <span class="an-kpi__aside-lbl">тежки</span>
-      </div>
+      
     </div>
 
     <div class="an-kpi" [class.an-kpi--alert]="stats.onFireCount > 0" style="--acc:#dc2626; --i:3">
@@ -127,18 +121,15 @@
         <strong class="an-kpi__val" style="color:#8b5cf6">{{ stats.clusterCount }}</strong>
         <span class="an-kpi__sub">зони за събиране</span>
       </div>
-      <div class="an-kpi__aside" style="--sacc:#ef4444">
-        <span class="an-kpi__aside-num">{{ criticalClusters.length }}</span>
-        <span class="an-kpi__aside-lbl">критични</span>
-      </div>
+      
     </div>
 
   </div>
 
-  <!-- ═══ MAIN AREA: HEATMAP + ROUTE PANEL ═══════════════════════════════════ -->
+  
   <div class="an-main-row">
 
-    <!-- Heatmap card -->
+    
     <div class="an-heat-card">
       <div class="an-card-hdr">
         <div>
@@ -173,7 +164,7 @@
       </div>
     </div>
 
-    <!-- Route efficiency panel -->
+    
     <div class="an-route-card">
 
       <div class="an-card-hdr">
@@ -186,13 +177,13 @@
         </div>
       </div>
 
-      <!-- Gauge ring -->
+      
       <div class="an-gauge-wrap">
-        <svg class="an-gauge-svg" viewBox="0 0 120 120" aria-hidden="true">
-          <!-- track -->
+        <svg class="an-gauge-svg" viewBox="0 0 120 120" overflow="visible">
+         
           <circle cx="60" cy="60" r="46" fill="none"
             stroke="rgba(255,255,255,0.07)" stroke-width="13"/>
-          <!-- filled arc -->
+          
           <circle cx="60" cy="60" r="46" fill="none"
             [attr.stroke]="routeEfficiencyColor"
             stroke-width="13"
@@ -201,18 +192,18 @@
             [style.stroke-dasharray]="'289'"
             [style.stroke-dashoffset]="getGaugeOffset()"
             style="transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1), stroke .5s ease"/>
-          <!-- value -->
+       
           <text x="60" y="55" text-anchor="middle" font-family="Inter,sans-serif"
-            font-size="26" font-weight="800" fill="#f8fafc">{{ routeEfficiency }}</text>
+            font-size="26" font-weight="800" style="fill: #f8fafc">{{ routeEfficiency }}</text>
           <text x="60" y="73" text-anchor="middle" font-family="Inter,sans-serif"
-            font-size="11" fill="#64748b">% ефективност</text>
+            font-size="11" style="fill: #94a3b8">% ефективност</text>
         </svg>
         <div class="an-gauge-lbl" [style.color]="routeEfficiencyColor">
           {{ routeEfficiency >= 72 ? 'Отлична' : routeEfficiency >= 48 ? 'Добра' : 'Ниска' }}
         </div>
       </div>
 
-      <!-- Stats rows -->
+     
       <div class="an-rs-grid">
         <div class="an-rs-row">
           <span class="an-rs-lbl">Клъстери общо</span>
@@ -228,7 +219,7 @@
         </div>
       </div>
 
-      <!-- Critical cluster list -->
+      
       <div class="an-crit-list" *ngIf="criticalClusters.length > 0">
         <p class="an-crit-title">ТОП КРИТИЧНИ КЛЪСТЕРИ</p>
         <div class="an-crit-item" *ngFor="let c of criticalClusters.slice(0, 4); let idx = index">

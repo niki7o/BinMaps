@@ -113,7 +113,8 @@ public sealed class UserProfileController : ControllerBase
         if (file.Length > 5 * 1024 * 1024)
             return BadRequest("Снимката е твърде голяма (макс. 5MB).");
 
-        var webRoot = _environment.WebRootPath;
+        var webRoot = _environment.WebRootPath
+                      ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
         var uploadsDir = Path.Combine(webRoot, "uploads", "profiles");
         Directory.CreateDirectory(uploadsDir);
 
@@ -213,8 +214,8 @@ public sealed class UserProfileController : ControllerBase
             return Unauthorized();
 
         var totalReports = await _context.Reports.CountAsync(r => r.UserId == userId);
-        var approvedReports = await _context.Reports.CountAsync(r => r.UserId == userId && r.IsApproved);
-        var pendingReports = await _context.Reports.CountAsync(r => r.UserId == userId && !r.IsApproved);
+        var approvedReports = await _context.Reports.CountAsync(r => r.UserId == userId && r.IsApproved == true);
+        var pendingReports = await _context.Reports.CountAsync(r => r.UserId == userId && r.IsApproved == null);
 
         var recentReports = await _context.Reports
             .AsNoTracking()
@@ -279,7 +280,7 @@ public sealed class UserProfileController : ControllerBase
         var level = _reputationService.GetLevel(user.Reputation);
 
         var totalReports = await _context.Reports.CountAsync(r => r.UserId == userId);
-        var approvedReports = await _context.Reports.CountAsync(r => r.UserId == userId && r.IsApproved);
+        var approvedReports = await _context.Reports.CountAsync(r => r.UserId == userId && r.IsApproved == true);
 
         return Ok(new
         {

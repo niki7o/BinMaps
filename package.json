@@ -19,6 +19,8 @@
     "chartjs-gauge": "^0.3.0",
     "ng2-charts": "^8.0.0",
     "rxjs": "^7.8.2",
-    "zone.js": "^0.15.1"
+    "zone.js": "^0.15.1",
+    "leaflet": "^1.9.4",
+    "leaflet.markercluster": "^1.5.3"
   }
 }

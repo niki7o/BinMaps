@@ -1,18 +1,27 @@
-
+# ---------- Stage 1: Build Angular ----------
 FROM node:20-alpine AS build
+
 WORKDIR /app
 
+# Copy only package files first (for Docker cache)
+COPY binmaps-ui/package*.json ./
 
-COPY BinMaps.UI/binmaps-ui/package*.json ./
-RUN npm install --legacy-peer-deps
+# Install Linux-compatible dependencies
+RUN npm ci --legacy-peer-deps
+
+# Copy rest of project
+COPY binmaps-ui/ .
+
+# Build Angular
+RUN npm run build -- --configuration=production
 
 
-COPY BinMaps.UI/binmaps-ui/ .
-RUN npm run build -- --configuration production
 
+FROM nginx:alpine
 
-FROM nginx:alpine AS runtime
 COPY --from=build /app/dist/binmaps-ui/browser /usr/share/nginx/html
-COPY BinMaps.UI/nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

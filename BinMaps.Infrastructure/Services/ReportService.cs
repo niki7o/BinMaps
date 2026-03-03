@@ -45,24 +45,27 @@ public sealed class ReportService : IReportService
         CreateReportDTO dto,
         string userId,
         string userName,
-        string role)
+        string role,
+        AIResultDto? precomputedAiResult = null)
     {
         var dbUser         = await _userManager.FindByIdAsync(userId);
         var userReputation = dbUser?.Reputation ?? GetReputationFromRole(role);
 
-        var hasPhoto      = dto.Photo is not null;
+        var hasPhoto      = dto.Photo is not null || precomputedAiResult is not null;
         var isAdmin       = role == "Admin";
         var isDriver      = role == "Driver";
         var isTruckReport = dto.ReportType == ReportType.TruckProblem;
 
-        AIResultDto? aiResult = null;
-        if (hasPhoto)
+        // Use precomputed AI result from controller (photo stream was fresh there),
+        // or fall back to calling AI here if no precomputed result was supplied.
+        AIResultDto? aiResult = precomputedAiResult;
+        if (aiResult is null && dto.Photo is not null)
             aiResult = await _aiService.AnalyzeAsync(dto.Photo!);
 
         var aiScore         = aiResult?.Confidence ?? 0.0;
         var finalConfidence = CalculateConfidence(aiScore, userReputation, hasPhoto);
 
-        var autoReject  = !isAdmin && userReputation < AutoRejectBelowReputation && dto.ReportType != ReportType.Fire;
+        var autoReject  = false; // Reports always go to admin for manual review
 
         bool autoApprove;
         if (isAdmin)
@@ -83,7 +86,7 @@ public sealed class ReportService : IReportService
             AI_Score               = aiScore,
             UserReputationOnSubmit = userReputation,
             FinalConfidence        = finalConfidence,
-            IsApproved             = !autoReject && autoApprove
+            IsApproved             = autoApprove ? true : autoReject ? false : null
         };
 
         await _reportRepo.AddAsync(report);
@@ -123,6 +126,7 @@ public sealed class ReportService : IReportService
             FinalConfidence = finalConfidence,
             IsApproved      = report.IsApproved,
             AiScore         = aiScore,
+            AiDetectedClass = aiResult?.DetectedClass ?? string.Empty,
             UserReputation  = userReputation,
             Message         = message
         };

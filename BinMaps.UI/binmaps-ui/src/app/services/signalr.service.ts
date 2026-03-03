@@ -37,25 +37,52 @@ export class ContainerSignalRService {
   constructor(private readonly notifService: NotificationService) {}
 
   start(): void {
-    if (this.hub) return;
-    this.hub = this.buildHub();
-    this.registerHandlers();
-    this.hub.start().catch(console.error);
+  if (this.hub) return;
+
+  this.hub = this.buildHub();
+  this.registerHandlers();
+
+  this.hub.onclose(async () => {
+    console.warn('SignalR disconnected. Reconnecting...');
+
+    await this.reconnectLoop();
+  });
+
+  this.hub.start().catch(err => {
+    console.error('SignalR start error', err);
+    this.reconnectLoop();
+  });
+}
+
+
+private async reconnectLoop(): Promise<void> {
+  let attempts = 0;
+
+  while (attempts < 10) {
+    try {
+      await new Promise(r => setTimeout(r, 3000));
+      await this.hub.start();
+      console.log('SignalR reconnected');
+      return;
+    } catch {
+      attempts++;
+    }
   }
+}
 
   stop(): void { this.hub?.stop(); }
 
-  private buildHub(): signalR.HubConnection {
-    return new signalR.HubConnectionBuilder()
-      .withUrl(ContainerSignalRService.HUB_URL, {
-        skipNegotiation: true,
-        transport:       signalR.HttpTransportType.WebSockets
-      })
-      .withAutomaticReconnect([...ContainerSignalRService.RECONNECT_MS])
-      .configureLogging(signalR.LogLevel.Warning)
-      .build();
-  }
-
+ private buildHub(): signalR.HubConnection {
+  return new signalR.HubConnectionBuilder()
+    .withUrl(environment.hubUrl, {
+      transport:
+        signalR.HttpTransportType.WebSockets |
+        signalR.HttpTransportType.LongPolling
+    })
+    .withAutomaticReconnect([...ContainerSignalRService.RECONNECT_MS])
+    .configureLogging(signalR.LogLevel.Warning)
+    .build();
+}
   private registerHandlers(): void {
     this.hub.on('ContainersUpdated', (updates: ContainerUpdate[]) => {
       this._updates$.next(updates);

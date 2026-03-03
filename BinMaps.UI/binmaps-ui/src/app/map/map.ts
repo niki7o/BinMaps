@@ -6,10 +6,9 @@ import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { AuthUser } from '../services/auth.models';
-import * as L from 'leaflet';
-import 'leaflet.markercluster'; 
 import { ContainerSignalRService } from '../services/signalr.service';
 import { environment } from '../../environments/environment';
+
 
 interface Bin {
   id: number; areaId: string; trashType: number; fillPercentage: number;
@@ -42,17 +41,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private readonly ICONS_DIR = 'assets/icons';
 
   private map!: L.Map;
-  private cluster = L.markerClusterGroup({
-    maxClusterRadius: 60, spiderfyOnMaxZoom: true,
-    showCoverageOnHover: true, zoomToBoundsOnClick: true,
-    disableClusteringAtZoom: 15, chunkedLoading: true,
-    iconCreateFunction: (c) => {
-      const n = c.getChildCount();
-      const s = n < 10 ? 'small' : n < 50 ? 'medium' : 'large';
-      return L.divIcon({ html: `<div><span>${n}</span></div>`, className: `marker-cluster marker-cluster-${s}`, iconSize: L.point(40, 40) });
-    }
-  });
-
+  
+ private cluster!: any;
   private allBins: Bin[]     = [];
   private activeFilter       = { type: 'all', fill: 'all', zone: 'all', sort: 'none' };
   private filterEl?: HTMLElement;
@@ -68,6 +58,17 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   reportImagePreview: string | null = null;
   reportDescription  = '';
   selectedReportType = 'Full';
+  reportSubmitting   = false;
+  reportResult: {
+    reportId: number;
+    finalConfidence: number;
+    isApproved: boolean | null;
+    aiScore: number;
+    aiDetectedClass: string;
+    userReputation: number;
+    message: string;
+    hadPhoto: boolean;
+  } | null = null;
 
   /** True when the bin selected for reporting has an IoT sensor (needed to show SensorBroken option) */
   get selectedBinHasSensor(): boolean {
@@ -161,19 +162,29 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
 
   private initMap() {
-    this.map = L.map('map', {
-      center: [42.6977, 23.3219], zoom: 12, minZoom: 11, maxZoom: 18,
-      maxBounds: [[42.55, 23.15], [42.85, 23.50]], maxBoundsViscosity: 0.8
-    });
-    this.baseLayers['standard']  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { className: 'map-tiles' });
-    this.baseLayers['voyager']   = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png');
-    this.baseLayers['satellite'] = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
-    this.baseLayers['light']     = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png');
-    const saved = localStorage.getItem('mapStyle') || 'standard';
-    this.currentMapStyle = saved;
-    this.baseLayers[this.currentMapStyle].addTo(this.map);
-    this.map.addLayer(this.cluster);
-  }
+  this.cluster = L.markerClusterGroup({
+    maxClusterRadius: 60, spiderfyOnMaxZoom: true,
+    showCoverageOnHover: true, zoomToBoundsOnClick: true,
+    disableClusteringAtZoom: 15, chunkedLoading: true,
+    iconCreateFunction: (c: any) => {
+      const n = c.getChildCount();
+      const s = n < 10 ? 'small' : n < 50 ? 'medium' : 'large';
+      return L.divIcon({ html: `<div><span>${n}</span></div>`, className: `marker-cluster marker-cluster-${s}`, iconSize: L.point(40, 40) });
+    }
+  });
+  this.map = L.map('map', {
+    center: [42.6977, 23.3219], zoom: 12, minZoom: 11, maxZoom: 18,
+    maxBounds: [[42.55, 23.15], [42.85, 23.50]], maxBoundsViscosity: 0.8
+  });
+  this.baseLayers['standard']  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { className: 'map-tiles' });
+  this.baseLayers['voyager']   = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png');
+  this.baseLayers['satellite'] = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+  this.baseLayers['light']     = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png');
+  const saved = localStorage.getItem('mapStyle') || 'standard';
+  this.currentMapStyle = saved;
+  this.baseLayers[this.currentMapStyle].addTo(this.map);
+  this.map.addLayer(this.cluster);
+}
 
   changeMapStyle(key: string) {
     if (this.currentMapStyle === key) return;
@@ -556,6 +567,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       if ((this.isUser || this.isDriver) && !this.navigationActive) {
         m.on('click', () => {
           this.selectedBinForReport = bin;
+          // Clear previous submit result so form is ready for a new report
+          this.reportResult = null;
+          this.reportSubmitting = false;
           const el = document.getElementById('selected-bin-id') as HTMLInputElement;
           if (el) el.value = `Контейнер #${bin.id}`;
         });
@@ -681,7 +695,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         <div class="bpp-fill">
           <div class="bpp-fill-row">
             <span class="bpp-lbl">Запълване</span>
-            <span class="bpp-fill-pct" style="color:${ring}">${f.toFixed(0)}% · ${liters} л</span>
+            <span class="bpp-fill-pct" style="color:${ring};white-space:nowrap">${f.toFixed(0)}% · ${liters} л</span>
           </div>
           <div class="bpp-track">
             <div class="bpp-bar" style="width:${f}%;background:${ring};box-shadow:0 0 10px ${ring}77"></div>
@@ -1082,10 +1096,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     if (img?.files?.[0])   fd.append('Photo', img.files[0]);
     const token = this.getToken();
     if (!token) { alert('Сесията ви е изтекла'); this.router.navigate(['/login']); return; }
-    this.http.post(`${this.API_URL}/reports`, fd, { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) })
+    const hadPhoto = !!(img?.files?.[0]);
+    this.reportSubmitting = true;
+    this.http.post<any>(`${this.API_URL}/reports`, fd, { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) })
       .subscribe({
-        next: () => {
-          alert('Докладването е изпратено!');
+        next: (res) => {
+          this.reportSubmitting = false;
+          this.reportResult = { ...res, hadPhoto };
           this.selectedBinForReport = null; this.reportImagePreview = null;
           this.reportDescription = ''; this.selectedReportType = 'Full';
           const si = document.getElementById('selected-bin-id') as HTMLInputElement;
@@ -1094,10 +1111,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
           setTimeout(() => this.loadBins(), 800);
         },
         error: e => {
+          this.reportSubmitting = false;
           if (e.status === 401) { alert('Сесията изтекла'); this.router.navigate(['/login']); }
           else alert('Грешка при изпращане');
         }
       });
+  }
+
+  clearReportResult() {
+    this.reportResult = null;
   }
 
   private getToken(): string | null {

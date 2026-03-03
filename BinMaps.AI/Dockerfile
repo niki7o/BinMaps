@@ -1,6 +1,6 @@
 FROM python:3.11-slim
-WORKDIR /app
 
+WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
@@ -9,12 +9,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY BinMaps.AI/requirements.txt .
 
+
 RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY BinMaps.AI/ .
 
 EXPOSE 8000
-ENV MODEL_PATH=/app/bin_fill_model.pth
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+ENV MODEL_PATH=/app/bin_fill_model.pth
+ENV PYTHONUNBUFFERED=1
+
+CMD ["uvicorn","app:app","--host","0.0.0.0","--port","8000"]

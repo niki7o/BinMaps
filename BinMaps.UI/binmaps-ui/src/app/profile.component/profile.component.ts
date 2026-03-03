@@ -233,10 +233,11 @@ export class ProfileComponent implements OnInit {
     const formData = new FormData();
     formData.append('file', this.selectedFile);
 
-    this.http.post<any>(`${this.apiUrl}/UserProfile/upload-picture`, formData, { 
-      headers: new HttpHeaders({ 'Authorization': `Bearer ${this.authService.getToken()}` }) 
+    this.http.post<any>(`${this.apiUrl}/UserProfile/upload-picture`, formData, {
+      headers: new HttpHeaders({ 'Authorization': `Bearer ${this.authService.getToken()}` })
     }).subscribe({
-      next: () => {
+      next: (response) => {
+        this.authService.updateProfilePicture(response?.profilePicturePath ?? null);
         this.loadProfile();
         this.selectedFile = null;
         this.previewUrl = null;
@@ -260,6 +261,7 @@ export class ProfileComponent implements OnInit {
     if (!confirm('Сигурни ли сте, че искате да изтриете профилната си снимка?')) return;
     this.http.delete(`${this.apiUrl}/UserProfile/picture`, { headers: this.getAuthHeaders() }).subscribe({
       next: () => {
+        this.authService.updateProfilePicture(null);
         this.loadProfile();
         alert('Снимката е изтрита');
       },

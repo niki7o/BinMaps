@@ -2,35 +2,66 @@ version: "3.9"
 
 services:
 
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: "BinMaps123!"
+      ACCEPT_EULA: "Y"
+    volumes:
+      - sql_data:/var/opt/mssql
+    networks:
+      - binmapsnet
+    restart: unless-stopped
+    healthcheck:
+      test: >
+        /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa
+        -P 'BinMaps123!' -C -Q 'SELECT 1' || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
   ai:
     build:
       context: .
       dockerfile: BinMaps.AI/Dockerfile
-    ports:
-      - "8000:8000"
+    networks:
+      - binmapsnet
     restart: unless-stopped
 
   api:
     build:
       context: .
       dockerfile: BinMaps.API/Dockerfile
-    ports:
-      - "8080:8080"
-    environment:
-      ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__DefaultConnection: "Server=169.197.183.12;Database=kzpmg_binmaps;User Id=binmapsUser;Password=ТУК_ПАРОЛАТА;TrustServerCertificate=true;Trusted_Connection=False;"
-      AISettings__Endpoint: "http://ai:8000/analyze"
-      AllowedOrigins: "http://binmaps.kzpmg.com/"
+    networks:
+      - binmapsnet
     depends_on:
-      - ai
+      db:
+        condition: service_healthy   # чака базата да е готова
+      ai:
+        condition: service_started
     restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=db;Database=BinMaps;User Id=sa;Password=BinMaps123!;TrustServerCertificate=True;"
+      AISettings__Endpoint: "http://ai:8000/analyze"
+      # API calls вървят през nginx proxy, origin е localhost:4300
+      AllowedOrigins: "http://localhost:4300"
 
   frontend:
     build:
       context: .
       dockerfile: BinMaps.UI/Dockerfile
     ports:
-      - "80:80"
+      - "4300:80"
+    networks:
+      - binmapsnet
     depends_on:
       - api
     restart: unless-stopped
+
+volumes:
+  sql_data:
+
+networks:
+  binmapsnet:
