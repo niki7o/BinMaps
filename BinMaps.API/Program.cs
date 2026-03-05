@@ -1,162 +1,215 @@
 using BinMaps.API.Seed;
 using BinMaps.Data;
 using BinMaps.Data.Entities;
+using BinMaps.Infrastructure;
 using BinMaps.Infrastructure.Hubs;
 using BinMaps.Infrastructure.Repository;
 using BinMaps.Infrastructure.Services;
 using BinMaps.Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
 
-namespace BinMaps.API
+namespace BinMaps.API;
+
+public sealed class Program
 {
-    public class Program
+    public static async Task Main(string[] args)
     {
-        public static async Task Main(string[] args)
+        var builder = WebApplication.CreateBuilder(args);
+
+        #region Database & Identity
+
+        builder.Services.AddDbContext<BinMapsDbContext>(o =>
+            o.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+        builder.Services.AddIdentity<User, IdentityRole>(o =>
         {
-            var builder = WebApplication.CreateBuilder(args);
+            o.Password.RequireDigit = true;
+            o.Password.RequireLowercase = true;
+            o.Password.RequireUppercase = true;
+            o.Password.RequireNonAlphanumeric = false;
+            o.Password.RequiredLength = 6;
+            o.User.RequireUniqueEmail = true;
+            o.User.AllowedUserNameCharacters =
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+ ";
+        })
+        .AddEntityFrameworkStores<BinMapsDbContext>()
+        .AddDefaultTokenProviders();
 
-            #region Database & Identity Configuration
+        #endregion
 
-            builder.Services.AddDbContext<BinMapsDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+        #region JWT Authentication
 
-            builder.Services.AddIdentity<User, IdentityRole>(options =>
+        var jwtSection = builder.Configuration.GetSection("Jwt");
+        var jwtKey = Encoding.UTF8.GetBytes(
+            jwtSection["Key"] ?? throw new InvalidOperationException("Jwt:Key not configured."));
+
+        builder.Services
+            .AddAuthentication(o =>
             {
-                options.Password.RequireDigit = true;
-                options.Password.RequireLowercase = true;
-                options.Password.RequireUppercase = true;
-                options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequiredLength = 6;
-                options.User.RequireUniqueEmail = true;
-                options.User.AllowedUserNameCharacters =
-                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+ ";
+                o.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                o.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-            .AddEntityFrameworkStores<BinMapsDbContext>()
-            .AddDefaultTokenProviders();
-
-            #endregion
-
-            #region Authentication & JWT Configuration
-
-            var jwtSettings = builder.Configuration.GetSection("Jwt");
-            var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
-
-            builder.Services.AddAuthentication(options =>
+            .AddJwtBearer(o =>
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
+                o.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings["Issuer"],
-                    ValidAudience = jwtSettings["Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(key)
+                    ValidIssuer = jwtSection["Issuer"],
+                    ValidAudience = jwtSection["Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(jwtKey),
+                    ClockSkew = TimeSpan.Zero
+                };
+                o.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = ctx =>
+                    {
+                        var token = ctx.Request.Query["access_token"];
+                        if (!string.IsNullOrEmpty(token) &&
+                            ctx.HttpContext.Request.Path.StartsWithSegments("/hubs"))
+                            ctx.Token = token;
+                        return Task.CompletedTask;
+                    }
                 };
             });
 
-            #endregion
+        #endregion
 
-            #region Service Registration
+        #region Application Services
 
-            builder.Services.AddSingleton<Random>();
-            builder.Services.AddHttpClient();
-            builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
-            builder.Services.AddScoped<ITruckRouteService, TruckRouteService>();
-            builder.Services.AddScoped<IAuthService, AuthService>();
-            builder.Services.AddScoped<IReportService, ReportService>();
-            builder.Services.AddScoped<IAIService, AIService>();
-            builder.Services.AddScoped<IReputationService, ReputationService>();
-            builder.Services.AddScoped<IContainerUpdateService, ContainerUpdateService>();
-            builder.Services.AddScoped<InitialStateSeeder>();
-            builder.Services.AddHostedService<ContainerDynamicsService>();
-            builder.Services.AddSignalR();
+        builder.Services.AddMemoryCache();
+        builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
+        builder.Services.AddScoped<ITruckRouteService, TruckRouteService>();
+        builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<IReportService, ReportService>();
+        builder.Services.AddScoped<IAIService, AIService>();
+        builder.Services.AddScoped<IReputationService, ReputationService>();
+        builder.Services.AddScoped<IContainerUpdateService, ContainerUpdateService>();
+        builder.Services.AddScoped<FillageSimulator>();
+        builder.Services.AddScoped<InitialStateSeeder>();
+        builder.Services.AddHostedService<ContainerDynamicsService>();
+        builder.Services.AddSignalR();
 
-            #endregion
+        #endregion
 
-            #region CORS Configuration
+        #region External API Clients
 
-            var allowedOrigins = builder.Configuration
-                .GetValue<string>("AllowedOrigins", "http://localhost:4200")!
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        builder.Services.AddHttpClient<IExternalWeatherService, OpenWeatherService>();
+        builder.Services.AddHttpClient<IExternalRoutingService, TomTomRoutingService>();
 
-            builder.Services.AddCors(options =>
+        #endregion
+
+        #region CORS
+
+        var allowedOrigins = builder.Configuration
+            .GetValue<string>("AllowedOrigins", "http://localhost:4200")!
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        builder.Services.AddCors(o =>
+            o.AddPolicy("AllowAngular", p =>
+                p.WithOrigins(allowedOrigins)
+                 .AllowAnyHeader()
+                 .AllowAnyMethod()
+                 .AllowCredentials()));
+
+        #endregion
+
+        #region Swagger
+
+        builder.Services.AddControllers();
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen(o =>
+        {
+            o.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
-                options.AddPolicy("AllowAngular", policy =>
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                In = ParameterLocation.Header,
+                Description = "JWT Bearer token"
+            });
+            o.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
                 {
-                    policy.WithOrigins(allowedOrigins)
-                          .AllowAnyHeader()
-                          .AllowAnyMethod()
-                          .AllowCredentials();
-                });
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
             });
+        });
 
-            #endregion
+        #endregion
 
-            #region API & Swagger Configuration
+        var app = builder.Build();
 
-            builder.Services.AddControllers();
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+        #region Forwarded Headers
 
-            #endregion
+        app.UseForwardedHeaders(new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+        });
 
-            var app = builder.Build();
+        #endregion
 
-            #region Database Migration & Seeding
+        #region Migration & Seed
 
-            using (var scope = app.Services.CreateScope())
-            {
-                var services = scope.ServiceProvider;
-                var db = services.GetRequiredService<BinMapsDbContext>();
-                await db.Database.MigrateAsync();
-                var seeder = services.GetRequiredService<InitialStateSeeder>();
-                await seeder.SeedAllAsync();
-            }
-
-            #endregion
-
-            #region Middleware & Request Pipeline
-
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
-            app.UseCors("AllowAngular");
-
-            
-            var webRoot = app.Environment.WebRootPath
-                ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            Directory.CreateDirectory(Path.Combine(webRoot, "uploads", "reports"));
-            Directory.CreateDirectory(Path.Combine(webRoot, "uploads", "profiles"));
-
-            app.UseStaticFiles(new StaticFileOptions
-            {
-                FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(webRoot)
-            });
-            if (!app.Environment.IsProduction())
-                app.UseHttpsRedirection();
-            app.UseRouting();
-            app.UseAuthentication();
-            app.UseAuthorization();
-            app.MapHub<ContainerHub>("/hubs/containers");
-            app.MapControllers();
-            app.MapFallbackToFile("index.html");
-
-            await app.RunAsync();
-
-            #endregion
+        using (var scope = app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BinMapsDbContext>();
+            await db.Database.MigrateAsync();
+            var seeder = scope.ServiceProvider.GetRequiredService<InitialStateSeeder>();
+            await seeder.SeedAllAsync();
         }
+
+        #endregion
+
+        #region Middleware Pipeline
+
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+
+        app.UseCors("AllowAngular");
+
+        var webRoot = app.Environment.WebRootPath
+            ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+
+        Directory.CreateDirectory(Path.Combine(webRoot, "uploads", "reports"));
+        Directory.CreateDirectory(Path.Combine(webRoot, "uploads", "profiles"));
+
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(webRoot)
+        });
+
+        if (!app.Environment.IsProduction())
+            app.UseHttpsRedirection();
+
+        app.UseRouting();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.MapHub<ContainerHub>("/hubs/containers");
+        app.MapControllers();
+
+        await app.RunAsync();
+
+        #endregion
     }
 }

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace BinMaps.Shared.DTOs
 {
-    public sealed class ContainerStopDTO
+    public sealed class ContainerStopDto
     {
         public int Id { get; set; }
         public int StopNumber { get; set; }

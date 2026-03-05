@@ -5,7 +5,7 @@ import { AuthUser } from './auth.models';
 export class AuthStorageService {
 
   
-  private static readonly KEY         = 'binmaps_user';
+  private static readonly KEY   = 'binmaps_user';
   private static readonly LEGACY_KEYS = ['token', 'user'] as const;
  
   load(): AuthUser | null {
@@ -35,10 +35,10 @@ export class AuthStorageService {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
       return {
-        id:       payload.sub         ?? '',
+        id: payload.sub   ?? '',
         userName: payload.unique_name ?? payload.email ?? '',
-        email:    payload.email       ?? '',
-        role:     payload.role        ?? 'User',
+        email: payload.email  ?? '',
+        role:payload.role ?? 'User',
         token
       };
     } catch { return null; }

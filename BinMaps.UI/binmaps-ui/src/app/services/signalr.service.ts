@@ -23,7 +23,7 @@ export interface TruckProblemEvent {
 @Injectable({ providedIn: 'root' })
 export class ContainerSignalRService {
 
-  private static readonly HUB_URL      = environment.hubUrl;
+  
   private static readonly RECONNECT_MS = [0, 2000, 5000, 10000, 30000] as const;
 
   private hub!: signalR.HubConnection;
@@ -73,8 +73,9 @@ private async reconnectLoop(): Promise<void> {
   stop(): void { this.hub?.stop(); }
 
  private buildHub(): signalR.HubConnection {
+  const fullHubUrl = `${window.location.origin}${environment.hubUrl}`;
   return new signalR.HubConnectionBuilder()
-    .withUrl(environment.hubUrl, {
+    .withUrl(fullHubUrl, {
       transport:
         signalR.HttpTransportType.WebSockets |
         signalR.HttpTransportType.LongPolling

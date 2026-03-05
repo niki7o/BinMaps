@@ -40,7 +40,7 @@ public sealed class AIService : IAIService
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(photo.ContentType);
             content.Add(fileContent, "file", photo.FileName);
 
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(90));
             var response = await _http.PostAsync(endpoint, content, cts.Token);
 
             if (!response.IsSuccessStatusCode)
@@ -50,11 +50,16 @@ public sealed class AIService : IAIService
             }
 
             var json = await response.Content.ReadAsStringAsync(cts.Token);
+_logger.LogInformation("AI raw JSON: {Json}", json);
 
-            return JsonSerializer.Deserialize<AIResultDto>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+var result = JsonSerializer.Deserialize<AIResultDto>(json, new JsonSerializerOptions
+{
+    PropertyNameCaseInsensitive = true
+});
+_logger.LogInformation("AI deserialized → Confidence: {C}, Class: {Cls}", 
+    result?.Confidence, result?.DetectedClass);
+
+return result;
         }
         catch (OperationCanceledException)
         {

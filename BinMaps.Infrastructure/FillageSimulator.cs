@@ -5,22 +5,23 @@ namespace BinMaps.Infrastructure;
 
 public sealed class FillageSimulator
 {
-    private readonly Random _random = new();
-
     #region Fill
 
     public double CalculateFillIncrement(TrashContainer container, double zoneMultiplier)
     {
-        var increment = 0.8
+        var slowdown = container.FillPercentage switch
+        {
+            > 85 => 0.4,
+            > 65 => 0.7,
+            _ => 1.0
+        };
+
+        return 0.8
             * zoneMultiplier
             * GetTypeMultiplier(container.TrashType)
             * GetTimeMultiplier()
-            * (0.8 + _random.NextDouble() * 0.4);
-
-        if (container.FillPercentage > 85) increment *= 0.4;
-        else if (container.FillPercentage > 65) increment *= 0.7;
-
-        return increment;
+            * (0.8 + Random.Shared.NextDouble() * 0.4)
+            * slowdown;
     }
 
     private static double GetTypeMultiplier(TrashType type) => type switch
@@ -34,35 +35,32 @@ public sealed class FillageSimulator
 
     private static double GetTimeMultiplier()
     {
-        var hour = DateTime.Now.Hour;
-        if ((hour >= 8 && hour < 10) || (hour >= 12 && hour < 14) || (hour >= 18 && hour < 21)) return 1.5;
-        if (hour >= 22 || hour < 6) return 0.5;
-        return 1.0;
+        var h = DateTime.Now.Hour;
+        return h is (>= 8 and < 10) or (>= 12 and < 14) or (>= 18 and < 21) ? 1.5
+             : h >= 22 || h < 6 ? 0.5
+             : 1.0;
     }
 
     #endregion
 
     #region Temperature
 
-    public double SimulateTemperature(TrashContainer container)
+    public double SimulateTemperature(TrashContainer container, double ambientCelsius)
     {
-        var ambient = 15 + _random.NextDouble() * 10;
-        var organicHeat = container.TrashType == TrashType.Mixed ? container.FillPercentage * 0.15 : 0;
-        var seasonal = DateTime.Now.Month is >= 6 and <= 8 ? 5.0 : 0.0;
-        var variation = -2 + _random.NextDouble() * 4;
+        var organicHeat = container.TrashType == TrashType.Mixed
+            ? container.FillPercentage * 0.15
+            : 0;
 
-        return Math.Clamp(ambient + organicHeat + seasonal + variation, 10, 60);
+        var variation = (Random.Shared.NextDouble() * 4) - 2;
+        return Math.Clamp(ambientCelsius + organicHeat + variation, 10, 60);
     }
 
     #endregion
 
     #region Battery
 
-    public double CalculateBatteryDrain(TrashContainer container)
-    {
-        var tempFactor = container.Temperature > 30 ? 1.3 : 1.0;
-        return 0.002 * tempFactor;
-    }
+    public static double CalculateBatteryDrain(TrashContainer container)
+        => 0.002 * (container.Temperature > 30 ? 1.3 : 1.0);
 
     #endregion
 
@@ -81,5 +79,10 @@ public sealed class FillageSimulator
 
     #endregion
 
-    public double GetEmptyFillLevel() => 2.0 + _random.NextDouble() * 6.0;
+    #region Misc
+
+    public static double GetEmptyFillLevel()
+        => 2.0 + Random.Shared.NextDouble() * 6.0;
+
+    #endregion
 }

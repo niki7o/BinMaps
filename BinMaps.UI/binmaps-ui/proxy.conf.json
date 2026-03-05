@@ -1,0 +1,21 @@
+{
+  "/api": {
+    "target": "https://binmaps-b.bravewater-19dff4c0.westeurope.azurecontainerapps.io",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/hubs": {
+    "target": "https://binmaps-b.bravewater-19dff4c0.westeurope.azurecontainerapps.io",
+    "secure": true,
+    "changeOrigin": true,
+    "ws": true,
+    "logLevel": "debug"
+  },
+  "/uploads": {
+    "target": "https://binmaps-b.bravewater-19dff4c0.westeurope.azurecontainerapps.io",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  }
+}

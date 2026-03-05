@@ -20,7 +20,7 @@ public sealed class ContainerUpdateService : IContainerUpdateService
         _hub = hub;
     }
 
-    #region Public
+    #region IContainerUpdateService
 
     public async Task ApplyReportEffectAsync(int containerId, ReportType reportType)
     {
@@ -34,11 +34,11 @@ public sealed class ContainerUpdateService : IContainerUpdateService
         {
             new
             {
-                Id                = containerId,
-                FillPercentage    = container.FillPercentage,
-                Temperature       = container.Temperature,
-                BatteryPercentage = container.BatteryPercentage,
-                Status            = (int)container.Status
+                container.Id,
+                container.FillPercentage,
+                container.Temperature,
+                container.BatteryPercentage,
+                Status = (int?)container.Status
             }
         });
     }
@@ -51,10 +51,10 @@ public sealed class ContainerUpdateService : IContainerUpdateService
     {
         container.Status = reportType switch
         {
-            ReportType.Fire            => TrashContainerStatus.Fire,
-            ReportType.SensorBroken    => TrashContainerStatus.SensorBroken,
+            ReportType.Fire => TrashContainerStatus.Fire,
+            ReportType.SensorBroken => TrashContainerStatus.SensorBroken,
             ReportType.ContainerDamage => TrashContainerStatus.Offline,
-            _                          => container.Status
+            _ => container.Status
         };
 
         if (reportType == ReportType.Full)

@@ -2,18 +2,22 @@
 using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
 using BinMaps.Infrastructure.Hubs;
+using BinMaps.Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+
 namespace BinMaps.Infrastructure.Services;
 
 public sealed class ContainerDynamicsService : BackgroundService
 {
-    private const int UpdateIntervalSeconds = 10;
+    private static readonly TimeSpan UpdateInterval = TimeSpan.FromSeconds(10);
     private const int BatchSize = 50;
-    private const double BaseFillIncrement = 0.8;
+    private const double SofiaLat = 42.6977;
+    private const double SofiaLng = 23.3219;
+    private const double FallbackAmbient = 20.0;
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IHubContext<ContainerHub> _hubContext;
@@ -29,118 +33,114 @@ public sealed class ContainerDynamicsService : BackgroundService
         _logger = logger;
     }
 
+    #region BackgroundService
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await RunUpdateCycleAsync(stoppingToken);
-            await Task.Delay(TimeSpan.FromSeconds(UpdateIntervalSeconds), stoppingToken);
+            await RunCycleAsync(stoppingToken);
+            await Task.Delay(UpdateInterval, stoppingToken);
         }
     }
 
-    private async Task RunUpdateCycleAsync(CancellationToken token)
+    #endregion
+
+    #region Cycle
+
+    private async Task RunCycleAsync(CancellationToken token)
     {
         try
         {
             using var scope = _scopeFactory.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<BinMapsDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<BinMapsDbContext>();
+            var weather = scope.ServiceProvider.GetRequiredService<IExternalWeatherService>();
+            var simulator = scope.ServiceProvider.GetRequiredService<FillageSimulator>();
 
-            var containers = await context.TrashContainers
+            var ambientTemp = await ResolveAmbientAsync(weather);
+
+            var containers = await db.TrashContainers
                 .Include(c => c.Area)
                 .ToListAsync(token);
 
-            foreach (var container in containers)
-            {
-                UpdateFill(container);
-                UpdateTemperature(container);
-                UpdateBattery(container);
-                UpdateStatus(container);
-            }
+            foreach (var c in containers)
+                ApplyUpdates(c, simulator, ambientTemp);
 
-            await context.SaveChangesAsync(token);
-
-            var payload = containers.Select(c => new
-            {
-                c.Id,
-                c.FillPercentage,
-                c.Temperature,
-                c.BatteryPercentage,
-                c.Status   // integer — matches frontend numeric check (status === 1 for Fire)
-            });
-
-            await _hubContext.Clients.All.SendAsync(
-                "ContainersUpdated",
-                payload,
-                token);
+            await SaveBatchedAsync(db, containers, token);
+            await BroadcastAsync(containers, token);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Container dynamics update failed");
+            _logger.LogError(ex, "Container dynamics cycle failed.");
         }
     }
 
-    private static void UpdateFill(TrashContainer container)
+    private static async Task<double> ResolveAmbientAsync(IExternalWeatherService weather)
+    {
+        try
+        {
+            return await weather.GetAmbientTemperatureAsync(SofiaLat, SofiaLng) ?? FallbackAmbient;
+        }
+        catch
+        {
+            return FallbackAmbient;
+        }
+    }
+
+    private static void ApplyUpdates(TrashContainer container, FillageSimulator simulator, double ambientTemp)
     {
         var zoneMultiplier = container.Area?.FillMultiplier ?? 1.0;
 
-        var slowdown = container.FillPercentage switch
-        {
-            > 85 => 0.4,
-            > 65 => 0.7,
-            _ => 1.0
-        };
+        container.FillPercentage = Math.Clamp(
+            container.FillPercentage + simulator.CalculateFillIncrement(container, zoneMultiplier),
+            0, 100);
 
-        var random = 0.8 + Random.Shared.NextDouble() * 0.4;
+        container.Temperature = simulator.SimulateTemperature(container, ambientTemp);
 
-        var increment = BaseFillIncrement *
-                        zoneMultiplier *
-                        slowdown *
-                        random;
+        if (container.HasSensor && container.BatteryPercentage.HasValue)
+            container.BatteryPercentage = Math.Max(
+                0,
+                container.BatteryPercentage.Value - FillageSimulator.CalculateBatteryDrain(container));
 
-        container.FillPercentage =
-            Math.Clamp(container.FillPercentage + increment, 0, 100);
+        var newStatus = FillageSimulator.DetermineStatus(container);
+
+        container.Status = newStatus is not TrashContainerStatus.Fire
+                                     and not TrashContainerStatus.SensorBroken
+            && container.Status is TrashContainerStatus.Fire or TrashContainerStatus.SensorBroken
+            ? TrashContainerStatus.Active
+            : newStatus;
     }
 
-    private static void UpdateTemperature(TrashContainer container)
+    private static async Task SaveBatchedAsync(
+        BinMapsDbContext db, List<TrashContainer> containers, CancellationToken token)
     {
-        var ambient = 15 + Random.Shared.NextDouble() * 10;
-        var organic = container.TrashType == TrashType.Mixed
-            ? container.FillPercentage * 0.15
-            : 0;
-
-        var variance = (Random.Shared.NextDouble() * 4) - 2;
-
-        container.Temperature =
-            Math.Clamp(ambient + organic + variance, 10, 60);
-    }
-
-    private static void UpdateBattery(TrashContainer container)
-    {
-        if (!container.HasSensor || container.BatteryPercentage is null)
-            return;
-
-        container.BatteryPercentage =
-            Math.Max(0, container.BatteryPercentage.Value - 0.002);
-    }
-
-    private static void UpdateStatus(TrashContainer container)
-    {
-        if (container.Temperature > 55 && container.FillPercentage > 70)
+        for (int i = 0; i < containers.Count; i += BatchSize)
         {
-            container.Status = TrashContainerStatus.Fire;
-            return;
-        }
-
-        if (container.HasSensor && container.BatteryPercentage < 10)
-        {
-            container.Status = TrashContainerStatus.SensorBroken;
-            return;
-        }
-
-        if (container.Status is TrashContainerStatus.Fire
-            or TrashContainerStatus.SensorBroken)
-        {
-            container.Status = TrashContainerStatus.Active;
+            foreach (var c in containers.Skip(i).Take(BatchSize))
+            {
+                var entry = db.Entry(c);
+                entry.Property(x => x.FillPercentage).IsModified = true;
+                entry.Property(x => x.Temperature).IsModified = true;
+                entry.Property(x => x.BatteryPercentage).IsModified = true;
+                entry.Property(x => x.Status).IsModified = true;
+            }
+            await db.SaveChangesAsync(token);
         }
     }
+
+    private async Task BroadcastAsync(List<TrashContainer> containers, CancellationToken token)
+    {
+        var payload = containers.Select(c => new
+        {
+            c.Id,
+            c.FillPercentage,
+            c.Temperature,
+            c.BatteryPercentage,
+            Status = (int?)c.Status
+        });
+
+        await _hubContext.Clients.All.SendAsync("ContainersUpdated", payload, token);
+    }
+
+    #endregion
 }
