@@ -80,8 +80,7 @@ public sealed class ReportService : IReportService
         }
         else if (isDriver)
         {
-            // Drivers auto-approve everything EXCEPT when a photo was submitted,
-            // the AI responded, and the AI score is suspiciously very low (< 20).
+            
             bool aiVeryLow = hasPhoto && aiScore > 0 && aiScore < 20.0;
             autoApprove = !aiVeryLow;
         }

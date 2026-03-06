@@ -114,11 +114,19 @@ public sealed class ContainerDynamicsService : BackgroundService
             container.Temperature = null;
         }
 
+        // Offline is set only by approved ContainerDamage reports and cleared only by
+        // an explicit admin/driver action (e.g. emptying). Never auto-clear it.
+        if (container.Status == TrashContainerStatus.Offline)
+            return;
+
         var newStatus = FillageSimulator.DetermineStatus(container);
-        container.Status = newStatus is not TrashContainerStatus.Fire and not TrashContainerStatus.SensorBroken
-            && container.Status is TrashContainerStatus.Fire or TrashContainerStatus.SensorBroken
-            ? TrashContainerStatus.Active
-            : newStatus;
+
+        // Auto-set Fire/SensorBroken when sensors confirm the condition.
+        // Auto-clear Fire/SensorBroken ONLY when sensors confirm the condition has passed
+        // AND the status was sensor-detected (not manually approved via a report).
+        // To keep it simple: only clear if DetermineStatus explicitly says Active,
+        // meaning neither fire nor battery conditions are met.
+        container.Status = newStatus;
     }
 
     private static async Task SaveBatchedAsync(BinMapsDbContext db, List<TrashContainer> containers, CancellationToken token)
@@ -131,7 +139,10 @@ public sealed class ContainerDynamicsService : BackgroundService
                 entry.Property(x => x.FillPercentage).IsModified = true;
                 entry.Property(x => x.Temperature).IsModified = true;
                 entry.Property(x => x.BatteryPercentage).IsModified = true;
-                entry.Property(x => x.Status).IsModified = true;
+                // Only persist the status column for non-Offline containers.
+                // Offline is owned by report approval; the dynamics cycle must not touch it.
+                if (c.Status != TrashContainerStatus.Offline)
+                    entry.Property(x => x.Status).IsModified = true;
             }
             await db.SaveChangesAsync(token);
         }
