@@ -5,7 +5,8 @@
 #  2. docker-compose up --build
 #  3. Open http://localhost:4300
 #
-#  Docker Compose automatically reads variables from .env in this directory.
+#  env_file: .env passes variables directly to each container WITHOUT
+#  shell expansion, so special characters like $ in passwords are safe.
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
@@ -17,8 +18,7 @@ services:
       dockerfile: BinMaps.AI/Dockerfile
     ports:
       - "8000:8000"
-    environment:
-      ALLOWED_ORIGINS: "http://localhost:4300"
+    env_file: .env          # passes ALLOWED_ORIGINS to the Python app
     restart: unless-stopped
 
   # ── Backend (ASP.NET Core 8) ─────────────────────────────────────────────
@@ -28,19 +28,12 @@ services:
       dockerfile: BinMaps.API/Dockerfile
     ports:
       - "8080:8080"
+    env_file: .env          # passes ConnectionStrings__, Jwt__, ExternalAPIs__, AllowedOrigins
     environment:
+      # These two override whatever is in .env because they depend on the
+      # Docker-internal service name "ai", not on an external URL.
       ASPNETCORE_ENVIRONMENT: Production
-      # Secrets are read from .env by Docker Compose and injected here.
-      # ASP.NET Core maps  A__B  →  config["A:B"]
-      ConnectionStrings__DefaultConnection: ${DB_CONNECTION_STRING}
-      Jwt__Key:                             ${JWT_KEY}
-      Jwt__Issuer:                          ${JWT_ISSUER}
-      Jwt__Audience:                        ${JWT_AUDIENCE}
-      ExternalAPIs__OpenWeatherMap__ApiKey: ${OPENWEATHERMAP_API_KEY}
-      ExternalAPIs__TomTom__ApiKey:         ${TOMTOM_API_KEY}
-      # AI container is reachable by service name inside Docker network
-      AISettings__Endpoint:                 "http://ai:8000/analyze"
-      AllowedOrigins:                       ${ALLOWED_ORIGINS}
+      AISettings__Endpoint: http://ai:8000/analyze
     depends_on:
       - ai
     restart: unless-stopped
@@ -52,8 +45,8 @@ services:
       dockerfile: BinMaps.UI/Dockerfile
     ports:
       - "4300:80"
-    # Override the Azure-targeted nginx.conf with a local one that proxies
-    # to the api container instead of the Azure Container App URL.
+    # Override the Azure-targeted nginx.conf with the local one that proxies
+    # to the "api" container instead of the Azure Container App URL.
     volumes:
       - ./BinMaps.UI/nginx.local.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
