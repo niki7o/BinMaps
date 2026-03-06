@@ -166,25 +166,33 @@ public sealed class Program
 
         #endregion
 
-        #region Migration & Seed
+        #region Health & Readiness Endpoints
 
-        using (var scope = app.Services.CreateScope())
+        // /ping — responds immediately as soon as the port is bound
+        // Use this as the startup/liveness probe in Azure Container Apps
+        app.MapGet("/ping", () => Results.Ok("pong")).AllowAnonymous();
+
+        // /ready — checks DB connectivity; returns 503 until DB is reachable
+        app.MapGet("/ready", async (BinMapsDbContext db) =>
         {
-            var db = scope.ServiceProvider.GetRequiredService<BinMapsDbContext>();
-            await db.Database.MigrateAsync();
-            var seeder = scope.ServiceProvider.GetRequiredService<InitialStateSeeder>();
-            await seeder.SeedAllAsync();
-        }
+            try
+            {
+                var canConnect = await db.Database.CanConnectAsync();
+                return canConnect ? Results.Ok("ready") : Results.StatusCode(503);
+            }
+            catch
+            {
+                return Results.StatusCode(503);
+            }
+        }).AllowAnonymous();
 
         #endregion
 
         #region Middleware Pipeline
 
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseSwagger();
-            app.UseSwaggerUI();
-        }
+        // Swagger enabled in all environments so you can diagnose from Azure URL
+        app.UseSwagger();
+        app.UseSwaggerUI();
 
         app.UseCors("AllowAngular");
 
@@ -208,8 +216,48 @@ public sealed class Program
         app.MapHub<ContainerHub>("/hubs/containers");
         app.MapControllers();
 
-        await app.RunAsync();
+        #endregion
+
+        #region Migration & Seed (runs AFTER port is bound)
+
+        // Migrations run in the background after the app starts listening.
+        // This prevents the startup probe from timing out while EF runs migrations.
+        // Retries up to 5 times with 5s delay to handle Azure SQL cold-start latency.
+        app.Lifetime.ApplicationStarted.Register(() =>
+        {
+            _ = Task.Run(async () =>
+            {
+                var logger = app.Services.GetRequiredService<ILogger<Program>>();
+                for (int attempt = 1; attempt <= 5; attempt++)
+                {
+                    try
+                    {
+                        logger.LogInformation("Migration attempt {Attempt}/5 starting...", attempt);
+                        using var scope = app.Services.CreateScope();
+                        var db = scope.ServiceProvider.GetRequiredService<BinMapsDbContext>();
+                        await db.Database.MigrateAsync();
+                        var seeder = scope.ServiceProvider.GetRequiredService<InitialStateSeeder>();
+                        await seeder.SeedAllAsync();
+                        logger.LogInformation("Database migration and seed completed successfully.");
+                        return;
+                    }
+                    catch (Exception ex) when (attempt < 5)
+                    {
+                        logger.LogWarning(ex,
+                            "Migration attempt {Attempt}/5 failed. Retrying in 5s...", attempt);
+                        await Task.Delay(TimeSpan.FromSeconds(5));
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex,
+                            "Database migration failed after 5 attempts. App will continue running.");
+                    }
+                }
+            });
+        });
 
         #endregion
+
+        await app.RunAsync();
     }
 }
