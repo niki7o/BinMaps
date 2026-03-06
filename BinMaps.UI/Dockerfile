@@ -1,8 +1,8 @@
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY binmaps-ui/package*.json ./
+COPY BinMaps.UI/binmaps-ui/package*.json ./
 RUN npm ci --legacy-peer-deps
-COPY binmaps-ui/ .
+COPY BinMaps.UI/binmaps-ui/ .
 RUN npm run build -- --configuration=production
 
 FROM nginx:alpine
