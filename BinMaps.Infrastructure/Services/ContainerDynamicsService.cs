@@ -33,8 +33,6 @@ public sealed class ContainerDynamicsService : BackgroundService
         _logger = logger;
     }
 
-    #region BackgroundService
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
@@ -43,10 +41,6 @@ public sealed class ContainerDynamicsService : BackgroundService
             await Task.Delay(UpdateInterval, stoppingToken);
         }
     }
-
-    #endregion
-
-    #region Cycle
 
     private async Task RunCycleAsync(CancellationToken token)
     {
@@ -95,24 +89,39 @@ public sealed class ContainerDynamicsService : BackgroundService
             container.FillPercentage + simulator.CalculateFillIncrement(container, zoneMultiplier),
             0, 100);
 
-        container.Temperature = simulator.SimulateTemperature(container, ambientTemp);
+        if (container.HasSensor && container.Status != TrashContainerStatus.SensorBroken)
+        {
+            if (container.Temperature == null)
+            {
+                container.Temperature = ambientTemp;
+            }
+            else
+            {
+                container.Temperature = simulator.SimulateTemperature(container, ambientTemp);
+            }
 
-        if (container.HasSensor && container.BatteryPercentage.HasValue)
-            container.BatteryPercentage = Math.Max(
-                0,
-                container.BatteryPercentage.Value - FillageSimulator.CalculateBatteryDrain(container));
+            if (container.BatteryPercentage == null || container.BatteryPercentage == 0)
+            {
+                container.BatteryPercentage = 100;
+            }
+            else
+            {
+                container.BatteryPercentage = Math.Max(0, container.BatteryPercentage.Value - FillageSimulator.CalculateBatteryDrain(container));
+            }
+        }
+        else
+        {
+            container.Temperature = null;
+        }
 
         var newStatus = FillageSimulator.DetermineStatus(container);
-
-        container.Status = newStatus is not TrashContainerStatus.Fire
-                                     and not TrashContainerStatus.SensorBroken
+        container.Status = newStatus is not TrashContainerStatus.Fire and not TrashContainerStatus.SensorBroken
             && container.Status is TrashContainerStatus.Fire or TrashContainerStatus.SensorBroken
             ? TrashContainerStatus.Active
             : newStatus;
     }
 
-    private static async Task SaveBatchedAsync(
-        BinMapsDbContext db, List<TrashContainer> containers, CancellationToken token)
+    private static async Task SaveBatchedAsync(BinMapsDbContext db, List<TrashContainer> containers, CancellationToken token)
     {
         for (int i = 0; i < containers.Count; i += BatchSize)
         {
@@ -138,9 +147,6 @@ public sealed class ContainerDynamicsService : BackgroundService
             c.BatteryPercentage,
             Status = (int?)c.Status
         });
-
         await _hubContext.Clients.All.SendAsync("ContainersUpdated", payload, token);
     }
-
-    #endregion
 }

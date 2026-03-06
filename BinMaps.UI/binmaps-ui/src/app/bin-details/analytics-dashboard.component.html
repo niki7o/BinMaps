@@ -1,6 +1,5 @@
 <div class="an-root">
 
-  
   <div class="an-header">
     <div class="an-header__left">
       <p class="an-eyebrow">BinMaps · Аналитика</p>
@@ -12,16 +11,15 @@
     <div class="an-header__right">
       <div class="an-live-badge">
         <div class="an-live-dot"></div>
-        <span>LIVE · {{ stats.lastUpdated }}</span>
+        <span>НА ЖИВО · {{ stats.lastUpdated }}</span>
       </div>
     </div>
   </div>
 
-  
   <div class="an-kpi-row">
 
-    <div class="an-kpi" style="--acc:#10b981; --i:0">
-      <div class="an-kpi__ico" style="--ico:#10b981">
+    <div class="an-kpi" style="--acc:#10b981; --ico:#10b981; --i:0">
+      <div class="an-kpi__ico">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
           <polyline points="9 22 9 12 15 12 15 22"/>
@@ -32,11 +30,10 @@
         <strong class="an-kpi__val">{{ stats.totalBins }}</strong>
         <span class="an-kpi__sub">в системата</span>
       </div>
-      
     </div>
 
-    <div class="an-kpi" style="--acc:#f59e0b; --i:1">
-      <div class="an-kpi__ico" style="--ico:#f59e0b">
+    <div class="an-kpi an-kpi--ring" style="--acc:#f59e0b; --ico:#f59e0b; --i:1">
+      <div class="an-kpi__ico">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
         </svg>
@@ -56,8 +53,8 @@
       </svg>
     </div>
 
-    <div class="an-kpi" style="--acc:#ef4444; --i:2">
-      <div class="an-kpi__ico" style="--ico:#ef4444">
+    <div class="an-kpi" style="--acc:#ef4444; --ico:#ef4444; --i:2">
+      <div class="an-kpi__ico">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
           <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -68,11 +65,10 @@
         <strong class="an-kpi__val" style="color:#ef4444">{{ stats.criticalBins }}</strong>
         <span class="an-kpi__sub">над 80% запълване</span>
       </div>
-      
     </div>
 
-    <div class="an-kpi" [class.an-kpi--alert]="stats.onFireCount > 0" style="--acc:#dc2626; --i:3">
-      <div class="an-kpi__ico" style="--ico:#dc2626">
+    <div class="an-kpi" [class.an-kpi--alert]="stats.onFireCount > 0" style="--acc:#dc2626; --ico:#dc2626; --i:3">
+      <div class="an-kpi__ico">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
           <path d="M12 2S7 8 7 13a5 5 0 0010 0c0-5-5-11-5-11z"/>
         </svg>
@@ -85,8 +81,8 @@
       <div class="an-kpi__alert-ring" *ngIf="stats.onFireCount > 0"></div>
     </div>
 
-    <div class="an-kpi" style="--acc:#06b6d4; --i:4">
-      <div class="an-kpi__ico" style="--ico:#06b6d4">
+    <div class="an-kpi an-kpi--ring" style="--acc:#06b6d4; --ico:#06b6d4; --i:4">
+      <div class="an-kpi__ico">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M5 12.55a11 11 0 0114.08 0"/>
           <path d="M1.42 9a16 16 0 0121.16 0"/>
@@ -97,7 +93,7 @@
       <div class="an-kpi__body">
         <span class="an-kpi__lbl">IoT Покритие</span>
         <strong class="an-kpi__val" style="color:#06b6d4">{{ stats.sensorCoverage }}<span class="an-kpi__unit">%</span></strong>
-        <span class="an-kpi__sub">сензорни кофи</span>
+        <span class="an-kpi__sub">сензорни контейнери</span>
       </div>
       <svg class="an-kpi__ring" viewBox="0 0 36 36" aria-hidden="true">
         <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="3.5"/>
@@ -109,27 +105,24 @@
       </svg>
     </div>
 
-    <div class="an-kpi" style="--acc:#8b5cf6; --i:5">
-      <div class="an-kpi__ico" style="--ico:#8b5cf6">
+    <div class="an-kpi" style="--acc:#8b5cf6; --ico:#8b5cf6; --i:5">
+      <div class="an-kpi__ico">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/>
           <line x1="12" y1="9" x2="19" y2="7"/><line x1="12" y1="15" x2="5" y2="17"/>
         </svg>
       </div>
       <div class="an-kpi__body">
-        <span class="an-kpi__lbl">Клъстери</span>
+        <span class="an-kpi__lbl">Райони</span>
         <strong class="an-kpi__val" style="color:#8b5cf6">{{ stats.clusterCount }}</strong>
         <span class="an-kpi__sub">зони за събиране</span>
       </div>
-      
     </div>
 
   </div>
 
-  
   <div class="an-main-row">
 
-    
     <div class="an-heat-card">
       <div class="an-card-hdr">
         <div>
@@ -137,17 +130,11 @@
             <span class="an-card-title-ico">🗺</span>
             Карта на запълване · Гъстота по зони
           </h3>
-          <p class="an-card-sub">{{ stats.clusterCount }} зони · {{ stats.criticalBins }} кофи над 80% · цвят = средно запълване</p>
+          <p class="an-card-sub">{{ stats.clusterCount }} района · {{ stats.criticalBins }} контейнера над 80% · цвят = средно запълване</p>
         </div>
         <div class="an-map-btns">
-          <button class="an-map-btn" [class.an-map-btn--on]="mapLayer==='all'"
-            (click)="setMapLayer('all')">
-            Всички
-          </button>
-          <button class="an-map-btn" [class.an-map-btn--on]="mapLayer==='critical'"
-            (click)="setMapLayer('critical')">
-            Критични
-          </button>
+          <button class="an-map-btn" [class.an-map-btn--on]="mapLayer==='all'" (click)="setMapLayer('all')">Всички</button>
+          <button class="an-map-btn" [class.an-map-btn--on]="mapLayer==='critical'" (click)="setMapLayer('critical')">Критични</button>
         </div>
       </div>
 
@@ -155,16 +142,15 @@
         <div id="hotspot-map"></div>
         <div class="an-heat-legend">
           <p class="an-hl-title">ЗАПЪЛВАНЕ</p>
-          <div class="an-hl-item"><div class="an-hl-dot" style="background:#10b981;box-shadow:0 0 6px #10b981"></div><span>&lt;20%&nbsp; Свободно</span></div>
-          <div class="an-hl-item"><div class="an-hl-dot" style="background:#84cc16;box-shadow:0 0 6px #84cc16"></div><span>20–38% Нормално</span></div>
-          <div class="an-hl-item"><div class="an-hl-dot" style="background:#f59e0b;box-shadow:0 0 6px #f59e0b"></div><span>38–57% Умерено</span></div>
-          <div class="an-hl-item"><div class="an-hl-dot" style="background:#f97316;box-shadow:0 0 6px #f97316"></div><span>57–73% Претоварено</span></div>
-          <div class="an-hl-item"><div class="an-hl-dot" style="background:#ef4444;box-shadow:0 0 6px #ef4444"></div><span>&gt;73%&nbsp; Критично</span></div>
+          <div class="an-hl-item"><div class="an-hl-dot" style="background:#10b981;box-shadow:0 0 5px #10b981"></div><span>&lt;20%&nbsp; Свободно</span></div>
+          <div class="an-hl-item"><div class="an-hl-dot" style="background:#84cc16;box-shadow:0 0 5px #84cc16"></div><span>20–38% Нормално</span></div>
+          <div class="an-hl-item"><div class="an-hl-dot" style="background:#f59e0b;box-shadow:0 0 5px #f59e0b"></div><span>38–57% Умерено</span></div>
+          <div class="an-hl-item"><div class="an-hl-dot" style="background:#f97316;box-shadow:0 0 5px #f97316"></div><span>57–73% Претоварено</span></div>
+          <div class="an-hl-item"><div class="an-hl-dot" style="background:#ef4444;box-shadow:0 0 5px #ef4444"></div><span>&gt;73%&nbsp; Критично</span></div>
         </div>
       </div>
     </div>
 
-    
     <div class="an-route-card">
 
       <div class="an-card-hdr">
@@ -173,44 +159,40 @@
             <span class="an-card-title-ico">📍</span>
             Ефективност на маршрута
           </h3>
-          <p class="an-card-sub">Оптималност спрямо NN алгоритъм</p>
+          <p class="an-card-sub">Колко добре са покрити зоните в момента</p>
         </div>
       </div>
 
-      
       <div class="an-gauge-wrap">
-        <svg class="an-gauge-svg" viewBox="0 0 120 120" overflow="visible">
-         
-          <circle cx="60" cy="60" r="46" fill="none"
-            stroke="rgba(255,255,255,0.07)" stroke-width="13"/>
-          
-          <circle cx="60" cy="60" r="46" fill="none"
-            [attr.stroke]="routeEfficiencyColor"
-            stroke-width="13"
-            stroke-linecap="round"
-            transform="rotate(-90 60 60)"
-            [style.stroke-dasharray]="'289'"
-            [style.stroke-dashoffset]="getGaugeOffset()"
-            style="transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1), stroke .5s ease"/>
-       
-          <text x="60" y="55" text-anchor="middle" font-family="Inter,sans-serif"
-            font-size="26" font-weight="800" style="fill: #f8fafc">{{ routeEfficiency }}</text>
-          <text x="60" y="73" text-anchor="middle" font-family="Inter,sans-serif"
-            font-size="11" style="fill: #94a3b8">% ефективност</text>
-        </svg>
-        <div class="an-gauge-lbl" [style.color]="routeEfficiencyColor">
+        <div class="an-gauge-container">
+          <svg class="an-gauge-svg" viewBox="0 0 120 120" overflow="visible">
+            <circle cx="60" cy="60" r="46" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="12"/>
+            <circle cx="60" cy="60" r="46" fill="none"
+              [attr.stroke]="routeEfficiencyColor"
+              stroke-width="12"
+              stroke-linecap="round"
+              transform="rotate(-90 60 60)"
+              [style.stroke-dasharray]="'289'"
+              [style.stroke-dashoffset]="getGaugeOffset()"
+              style="transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1), stroke .5s ease"/>
+          </svg>
+          <div class="an-gauge-inner">
+            <span class="an-gauge-num" [style.color]="routeEfficiencyColor">{{ routeEfficiency }}</span>
+            <span class="an-gauge-sub">ефективност</span>
+          </div>
+        </div>
+        <div class="an-gauge-badge" [style.background]="routeEfficiencyColor + '22'" [style.color]="routeEfficiencyColor" [style.border-color]="routeEfficiencyColor + '44'">
           {{ routeEfficiency >= 72 ? 'Отлична' : routeEfficiency >= 48 ? 'Добра' : 'Ниска' }}
         </div>
       </div>
 
-     
       <div class="an-rs-grid">
         <div class="an-rs-row">
-          <span class="an-rs-lbl">Клъстери общо</span>
+          <span class="an-rs-lbl">Райони общо</span>
           <span class="an-rs-val">{{ clusters.length }}</span>
         </div>
         <div class="an-rs-row">
-          <span class="an-rs-lbl">Критични клъстери</span>
+          <span class="an-rs-lbl">Критични райони</span>
           <span class="an-rs-val" style="color:#ef4444">{{ criticalClusters.length }}</span>
         </div>
         <div class="an-rs-row">
@@ -219,34 +201,33 @@
         </div>
       </div>
 
-      
       <div class="an-crit-list" *ngIf="criticalClusters.length > 0">
-        <p class="an-crit-title">ТОП КРИТИЧНИ КЛЪСТЕРИ</p>
+        <p class="an-crit-title">ТОП КРИТИЧНИ РАЙОНИ</p>
         <div class="an-crit-item" *ngFor="let c of criticalClusters.slice(0, 4); let idx = index">
           <div class="an-crit-rank">#{{ idx + 1 }}</div>
           <div class="an-crit-dot"
             [style.background]="getFillColor(c.avgFill)"
-            [style.box-shadow]="'0 0 8px ' + getFillColor(c.avgFill)"
+            [style.box-shadow]="'0 0 7px ' + getFillColor(c.avgFill)"
             [class.an-crit-dot--fire]="c.hasFire">
           </div>
           <div class="an-crit-info">
-            <span class="an-crit-name">Клъстер #{{ c.id + 1 }}</span>
-            <span class="an-crit-meta">{{ c.dominantZone }} · {{ c.bins.length }} кофи</span>
+            <span class="an-crit-name">Район #{{ c.id + 1 }}</span>
+            <span class="an-crit-meta">{{ c.dominantZone }} · {{ c.bins.length }} контейнера</span>
           </div>
           <strong class="an-crit-pct" [style.color]="getFillColor(c.avgFill)">
             {{ c.avgFill | number:'1.0-0' }}%
           </strong>
         </div>
       </div>
+
       <div class="an-crit-empty" *ngIf="criticalClusters.length === 0">
-        <span>✅</span> Няма критични клъстери
+        <span>✅</span> Няма критични райони
       </div>
 
     </div>
 
   </div>
 
-  
   <div class="an-charts-row">
 
     <div class="an-chart-card an-chart-card--wide">
@@ -256,9 +237,7 @@
           <p class="an-card-sub">Брой контейнери по ниво на запълване</p>
         </div>
       </div>
-      <div class="an-chart-body">
-        <canvas id="fillChart"></canvas>
-      </div>
+      <div class="an-chart-body"><canvas id="fillChart"></canvas></div>
     </div>
 
     <div class="an-chart-card">
@@ -268,26 +247,21 @@
           <p class="an-card-sub">Средно запълване</p>
         </div>
       </div>
-      <div class="an-chart-body">
-        <canvas id="typeChart"></canvas>
-      </div>
+      <div class="an-chart-body"><canvas id="typeChart"></canvas></div>
     </div>
 
     <div class="an-chart-card">
       <div class="an-card-hdr">
         <div>
-          <h3 class="an-card-title">Зонова сравнение</h3>
+          <h3 class="an-card-title">Сравнение по зони</h3>
           <p class="an-card-sub">Ср. запълване &amp; критични</p>
         </div>
       </div>
-      <div class="an-chart-body">
-        <canvas id="zoneChart"></canvas>
-      </div>
+      <div class="an-chart-body"><canvas id="zoneChart"></canvas></div>
     </div>
 
   </div>
 
- 
   <div class="an-table-card">
     <div class="an-card-hdr">
       <h3 class="an-card-title">
@@ -296,7 +270,7 @@
       </h3>
       <div class="an-live-badge">
         <div class="an-live-dot"></div>
-        <span>LIVE</span>
+        <span>НА ЖИВО</span>
       </div>
     </div>
 
@@ -305,11 +279,11 @@
         <thead>
           <tr>
             <th>Зона</th>
-            <th>Кофи</th>
+            <th>Контейнери</th>
             <th>Ср. запълване</th>
             <th>Критични</th>
             <th>Пожар</th>
-            <th>Load Score</th>
+            <th>Натоварване</th>
             <th>Статус</th>
           </tr>
         </thead>
@@ -330,9 +304,7 @@
                 <span class="an-td-mono">{{ z.avgFill }}%</span>
               </div>
             </td>
-            <td>
-              <span class="an-td-mono" [class.an-danger]="z.critical > 0">{{ z.critical }}</span>
-            </td>
+            <td><span class="an-td-mono" [class.an-danger]="z.critical > 0">{{ z.critical }}</span></td>
             <td>
               <span [class.an-danger]="z.onFire > 0">
                 {{ z.onFire > 0 ? '🔥 ' + z.onFire : '—' }}
@@ -342,8 +314,8 @@
               <div class="an-ls-wrap">
                 <div class="an-ls-track">
                   <div class="an-ls-bar"
-                       [style.width.%]="z.loadScore"
-                       [style.background]="z.loadScore >= 70 ? '#ef4444' : z.loadScore >= 45 ? '#f59e0b' : '#10b981'">
+                    [style.width.%]="z.loadScore"
+                    [style.background]="z.loadScore >= 70 ? '#ef4444' : z.loadScore >= 45 ? '#f59e0b' : '#10b981'">
                   </div>
                 </div>
                 <span class="an-td-mono an-ls-num">{{ z.loadScore }}</span>
