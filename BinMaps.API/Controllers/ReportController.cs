@@ -36,6 +36,10 @@ public sealed class ReportsController : ControllerBase
 
         try
         {
+            // Security: PhotoURL is always assigned server-side after saving the file.
+            // Discard whatever the client sent so they cannot inject an arbitrary URL.
+            dto.PhotoURL = null;
+
             // ── Step 1: run AI on the FRESH stream BEFORE any disk I/O ──────────
             AIResultDto? aiResult = null;
             if (dto.Photo is not null)

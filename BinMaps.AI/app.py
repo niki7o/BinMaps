@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 import numpy as np
 import torch
 import torch.nn as nn
+import torchvision.models as tv_models
 import torchvision.transforms as transforms
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,33 +26,22 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 CLASSES = ["clean", "moderate", "full", "fire", "damaged"]
 
-class BinClassifier(nn.Module):
-    def __init__(self, num_classes: int = 5):
-        super().__init__()
-        self.features = nn.Sequential(
-            nn.Conv2d(3, 32, 3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Conv2d(32, 64, 3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Conv2d(64, 128, 3, padding=1),
-            nn.ReLU(),
-            nn.AdaptiveAvgPool2d(4),
-        )
-        self.classifier = nn.Sequential(
-            nn.Flatten(),
-            nn.Dropout(0.4),
-            nn.Linear(128 * 4 * 4, 256),
-            nn.ReLU(),
-            nn.Dropout(0.3),
-            nn.Linear(256, num_classes),
-        )
 
-    def forward(self, x):
-        return self.classifier(self.features(x))
+def _build_model(num_classes: int = 5) -> nn.Module:
+    """
+    MobileNetV2 with a custom classification head.
+    Using a pretrained ImageNet backbone means the model already understands
+    textures, shapes and colours — fine-tuning on our bin photos gives much
+    better results than training a small CNN from scratch.
+    weights=None at inference time because we load our own bin_fill_model.pth.
+    """
+    model = tv_models.mobilenet_v2(weights=None)
+    in_features = model.classifier[1].in_features   # 1280
+    model.classifier[1] = nn.Linear(in_features, num_classes)
+    return model
 
-_model: BinClassifier | None = None
+
+_model: nn.Module | None = None
 
 TRANSFORM = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -62,22 +52,43 @@ TRANSFORM = transforms.Compose([
     ),
 ])
 
-def load_model() -> BinClassifier:
-    model = BinClassifier(num_classes=len(CLASSES)).to(DEVICE)
-    if os.path.exists(MODEL_PATH):
-        logger.info(f"--- Loading model from {MODEL_PATH} ---")
-        try:
-            state_dict = torch.load(MODEL_PATH, map_location=DEVICE)
-            model_dict = model.state_dict()
-            filtered_dict = {k: v for k, v in state_dict.items() if k in model_dict}
-            model_dict.update(filtered_dict)
-            model.load_state_dict(model_dict, strict=False)
-            logger.info("--- Model loaded successfully ---")
-        except Exception as e:
-            logger.error(f"Error loading .pth file: {e}")
-    else:
+# Global flag — set to False when weights don't match the current architecture
+_weights_loaded: bool = False
+
+def load_model() -> nn.Module:
+    global _weights_loaded
+    model = _build_model(num_classes=len(CLASSES)).to(DEVICE)
+
+    if not os.path.exists(MODEL_PATH):
         logger.warning(f"--- WARNING: Model file NOT FOUND at {MODEL_PATH}. Using random weights! ---")
-    
+        model.eval()
+        return model
+
+    logger.info(f"--- Loading model from {MODEL_PATH} ---")
+    try:
+        state_dict  = torch.load(MODEL_PATH, map_location=DEVICE)
+        model_dict  = model.state_dict()
+        filtered    = {k: v for k, v in state_dict.items()
+                       if k in model_dict and v.shape == model_dict[k].shape}
+
+        if not filtered:
+            logger.error(
+                "ARCHITECTURE MISMATCH: the saved .pth was trained with a "
+                "different model (old regression BinFillCNN).  "
+                "Keys in file: %s  —  keys expected: %s  "
+                "Running with RANDOM weights — please retrain the model.",
+                list(state_dict.keys())[:4],
+                list(model_dict.keys())[:4],
+            )
+        else:
+            model_dict.update(filtered)
+            model.load_state_dict(model_dict, strict=False)
+            _weights_loaded = True
+            logger.info(f"--- Loaded {len(filtered)}/{len(model_dict)} weight tensors OK ---")
+
+    except Exception as e:
+        logger.error(f"Error loading .pth file: {e}")
+
     model.eval()
     return model
 
@@ -110,12 +121,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def _estimate_fill(cls: str, conf: float) -> float:
-    base = {
+def _estimate_fill(cls: str) -> float:
+    """Return a fixed fill estimate for each class.
+    We do NOT scale by confidence because a low-confidence prediction should
+    still report a meaningful fill value — the confidence score is shown
+    separately in the UI.
+    """
+    return {
         "clean": 10.0, "moderate": 50.0, "full": 90.0,
         "fire": 85.0, "damaged": 60.0
-    }
-    return round(base.get(cls, 50.0) * (conf / 100), 1)
+    }.get(cls, 50.0)
 
 def predict(image_bytes: bytes) -> dict:
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
@@ -127,16 +142,22 @@ def predict(image_bytes: bytes) -> dict:
         confidence = round(float(probs[best_idx]) * 100, 2)
         best_class = CLASSES[best_idx]
 
-    # If the model confidence is below 35%, the image likely does not contain
-    # a recognisable trash container.
-    container_detected = confidence >= 35.0
+    # A well-trained model should reach > 40 % confidence for a clear bin photo.
+    # If weights are incompatible (random init), all classes score ~20 % —
+    # in that case we optimistically report container_detected=True so the
+    # user is not blocked, and mark the result as untrusted via weights_loaded.
+    if _weights_loaded:
+        container_detected = confidence >= 35.0
+    else:
+        container_detected = True   # can't trust random-weight predictions
 
     return {
         "confidence": confidence,
         "detected_class": best_class,
         "fire_detected": best_class == "fire",
-        "fill_percentage": _estimate_fill(best_class, confidence),
+        "fill_percentage": _estimate_fill(best_class),
         "container_detected": container_detected,
+        "weights_loaded": _weights_loaded,   # False = model needs retraining
         "all_scores": {
             cls: round(float(probs[i]) * 100, 2)
             for i, cls in enumerate(CLASSES)
@@ -164,9 +185,10 @@ async def analyze(file: UploadFile = File(...)):
 @app.get("/health")
 async def health():
     return {
-        "status": "ready" if _model is not None else "loading",
-        "model_loaded": _model is not None,
-        "device": str(DEVICE),
-        "model_path": MODEL_PATH,
-        "file_exists": os.path.exists(MODEL_PATH)
+        "status":          "ready" if _model is not None else "loading",
+        "model_loaded":    _model is not None,
+        "weights_loaded":  _weights_loaded,    # False = architecture mismatch, needs retrain
+        "device":          str(DEVICE),
+        "model_path":      MODEL_PATH,
+        "file_exists":     os.path.exists(MODEL_PATH),
     }

@@ -56,28 +56,20 @@ public sealed class ReportService : IReportService
         var isDriver      = role == "Driver";
         var isTruckReport = dto.ReportType == ReportType.TruckProblem;
 
-        // Report types that the AI cannot meaningfully analyse from a photo
-        // (sensor issues, truck problems, physical damage) — these should be
-        // applied to the map immediately without AI gating.
-        var isNonPhotoVerifiable =
-            dto.ReportType == ReportType.SensorBroken ||
-            dto.ReportType == ReportType.TruckProblem ||
-            dto.ReportType == ReportType.ContainerDamage;
-
         // Use precomputed AI result from controller (photo stream was fresh there),
         // or fall back to calling AI here if no precomputed result was supplied.
         AIResultDto? aiResult = precomputedAiResult;
         if (aiResult is null && dto.Photo is not null)
             aiResult = await _aiService.AnalyzeAsync(dto.Photo!);
 
-        var aiScore            = aiResult?.Confidence       ?? 0.0;
-        var containerDetected  = aiResult?.ContainerDetected ?? true;  // true when no photo
+        var aiScore           = aiResult?.Confidence       ?? 0.0;
+        var containerDetected = aiResult?.ContainerDetected ?? true;  // true when no photo
 
         // Drivers do not participate in the reputation formula — their score is
         // determined by the AI alone.  Regular users keep the weighted blend.
         var finalConfidence = isDriver
-            ? aiScore                                                    // driver: AI only
-            : CalculateConfidence(aiScore, userReputation, hasPhoto);   // user: AI + rep
+            ? aiScore
+            : CalculateConfidence(aiScore, userReputation, hasPhoto);
 
         // ── Auto-approve rules ────────────────────────────────────────────────
         bool autoApprove;
@@ -88,21 +80,39 @@ public sealed class ReportService : IReportService
         }
         else if (isDriver)
         {
-            // Drivers auto-approve everything EXCEPT when:
-            //   - a photo was submitted, the AI responded, and AI score is very low (< 20).
+            // Drivers auto-approve everything EXCEPT when a photo was submitted,
+            // the AI responded, and the AI score is suspiciously very low (< 20).
             bool aiVeryLow = hasPhoto && aiScore > 0 && aiScore < 20.0;
             autoApprove = !aiVeryLow;
         }
         else
         {
-            // Regular users:
-            //   - Non-photo-verifiable types (sensor broken, container damage) are
-            //     auto-approved so they appear on the map immediately.
-            //   - All other types go to moderation.
-            //   - If the AI says no container was detected, force pending even for
-            //     types that would otherwise be auto-approved.
+            // Regular users — three distinct cases:
+            //
+            //   SensorBroken:    A broken sensor cannot be verified from a photo.
+            //                    Auto-approve immediately so the map reflects it.
+            //
+            //   Full / Fire:     Photo-verifiable. Auto-approve only when the combined
+            //                    AI + reputation confidence clears AutoApproveThreshold.
+            //                    This uses the constant that was previously defined
+            //                    but never wired up.
+            //
+            //   ContainerDamage: Driver-only in practice. Approving it auto-sets the
+            //                    container to Offline — too impactful for a regular user
+            //                    to trigger. Always send to moderation.
+            //
+            //   TruckProblem:    Driver-only. Always send to moderation.
+            //
+            //   No bin in photo: Force pending regardless of report type.
+
             bool photoPresentButNoBin = hasPhoto && aiResult is not null && !containerDetected;
-            autoApprove = isNonPhotoVerifiable && !photoPresentButNoBin;
+            bool isSensorBroken       = dto.ReportType == ReportType.SensorBroken;
+            bool isPhotoVerifiable    = dto.ReportType == ReportType.Full ||
+                                        dto.ReportType == ReportType.Fire;
+            bool highConfidence       = finalConfidence >= AutoApproveThreshold;
+
+            autoApprove = !photoPresentButNoBin &&
+                          (isSensorBroken || (isPhotoVerifiable && highConfidence));
         }
 
         var report = new Report
@@ -200,12 +210,18 @@ public sealed class ReportService : IReportService
 
     private static double CalculateConfidence(double aiScore, int reputation, bool hasPhoto)
     {
+        // No photo: confidence is reputation-only (max 40 when rep = 100).
         if (!hasPhoto)
-            return reputation * ReputationWeight;
+            return Math.Round(reputation * ReputationWeight, 2);
 
+        // Photo submitted but AI returned no usable score (service down, unreadable
+        // image, etc.).  Do NOT reward the user with their raw reputation — that would
+        // make an AI failure produce a *higher* score than a successful weighted blend.
+        // Treat it the same as no photo.
         if (aiScore <= 0)
-            return reputation;
+            return Math.Round(reputation * ReputationWeight, 2);
 
+        // Normal case: weighted blend — AI score (60 %) + reputation (40 %).
         return Math.Round((aiScore * AiWeight) + (reputation * ReputationWeight), 2);
     }
 

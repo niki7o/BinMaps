@@ -58,7 +58,7 @@ public sealed class ContainerUpdateService : IContainerUpdateService
         };
 
         if (reportType == ReportType.Full)
-            container.FillPercentage = Math.Min(container.FillPercentage, 95.0);
+            container.FillPercentage = Math.Max(container.FillPercentage, 95.0);
     }
 
     #endregion
