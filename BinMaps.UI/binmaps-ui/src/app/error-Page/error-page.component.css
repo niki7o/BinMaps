@@ -1,0 +1,113 @@
+.err-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #0f172a; /* Много тъмно синьо/черно */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  font-family: 'Inter', sans-serif;
+  color: white;
+  overflow: hidden;
+}
+
+.err-card {
+  text-align: center;
+  z-index: 10;
+  padding: 40px;
+}
+
+.err-number {
+  font-size: clamp(8rem, 15vw, 12rem);
+  font-weight: 900;
+  letter-spacing: -5px;
+  margin: 0;
+  line-height: 0.8;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.err-visual {
+  position: relative;
+  width: 200px;
+  margin: 0 auto 20px;
+}
+
+.modern-truck {
+  width: 100px;
+  height: 100px;
+  color: var(--eco-primary, #10b981);
+  animation: truck-float 4s ease-in-out infinite;
+}
+
+.scanner-line {
+  position: absolute;
+  bottom: 10px;
+  left: 25%;
+  width: 50%;
+  height: 2px;
+  background: var(--eco-primary, #10b981);
+  box-shadow: 0 0 15px var(--eco-primary);
+  animation: scan 2s linear infinite;
+}
+
+.err-message {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-top: -20px;
+}
+
+.err-text {
+  color: #94a3b8;
+  max-width: 400px;
+  margin: 20px auto 40px;
+  font-size: 1.1rem;
+}
+
+.btn-action {
+  background: white;
+  color: black;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 auto;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.btn-action:hover {
+  transform: translateY(-2px);
+  background: #e2e8f0;
+}
+
+/* Animations */
+@keyframes truck-float {
+  0%, 100% { transform: translateX(-20px); }
+  50% { transform: translateX(20px); }
+}
+
+@keyframes scan {
+  0%, 100% { opacity: 0; transform: scaleX(0.5); }
+  50% { opacity: 1; transform: scaleX(1.2); }
+}
+
+.bg-blur {
+  position: absolute;
+  width: 40vw;
+  height: 40vw;
+  background: var(--eco-primary, #10b981);
+  filter: blur(150px);
+  opacity: 0.1;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}

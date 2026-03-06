@@ -56,24 +56,54 @@ public sealed class ReportService : IReportService
         var isDriver      = role == "Driver";
         var isTruckReport = dto.ReportType == ReportType.TruckProblem;
 
+        // Report types that the AI cannot meaningfully analyse from a photo
+        // (sensor issues, truck problems, physical damage) — these should be
+        // applied to the map immediately without AI gating.
+        var isNonPhotoVerifiable =
+            dto.ReportType == ReportType.SensorBroken ||
+            dto.ReportType == ReportType.TruckProblem ||
+            dto.ReportType == ReportType.ContainerDamage;
+
         // Use precomputed AI result from controller (photo stream was fresh there),
         // or fall back to calling AI here if no precomputed result was supplied.
         AIResultDto? aiResult = precomputedAiResult;
         if (aiResult is null && dto.Photo is not null)
             aiResult = await _aiService.AnalyzeAsync(dto.Photo!);
 
-        var aiScore         = aiResult?.Confidence ?? 0.0;
-        var finalConfidence = CalculateConfidence(aiScore, userReputation, hasPhoto);
+        var aiScore            = aiResult?.Confidence       ?? 0.0;
+        var containerDetected  = aiResult?.ContainerDetected ?? true;  // true when no photo
 
-        var autoReject  = false; // Reports always go to admin for manual review
+        // Drivers do not participate in the reputation formula — their score is
+        // determined by the AI alone.  Regular users keep the weighted blend.
+        var finalConfidence = isDriver
+            ? aiScore                                                    // driver: AI only
+            : CalculateConfidence(aiScore, userReputation, hasPhoto);   // user: AI + rep
 
+        // ── Auto-approve rules ────────────────────────────────────────────────
         bool autoApprove;
         if (isAdmin)
+        {
+            // Admins always auto-approve.
             autoApprove = true;
-        else if (isDriver && isTruckReport)
-            autoApprove = true;
+        }
+        else if (isDriver)
+        {
+            // Drivers auto-approve everything EXCEPT when:
+            //   - a photo was submitted, the AI responded, and AI score is very low (< 20).
+            bool aiVeryLow = hasPhoto && aiScore > 0 && aiScore < 20.0;
+            autoApprove = !aiVeryLow;
+        }
         else
-            autoApprove = false;
+        {
+            // Regular users:
+            //   - Non-photo-verifiable types (sensor broken, container damage) are
+            //     auto-approved so they appear on the map immediately.
+            //   - All other types go to moderation.
+            //   - If the AI says no container was detected, force pending even for
+            //     types that would otherwise be auto-approved.
+            bool photoPresentButNoBin = hasPhoto && aiResult is not null && !containerDetected;
+            autoApprove = isNonPhotoVerifiable && !photoPresentButNoBin;
+        }
 
         var report = new Report
         {
@@ -84,9 +114,9 @@ public sealed class ReportService : IReportService
             Description            = dto.Description,
             PhotoURL               = dto.PhotoURL,
             AI_Score               = aiScore,
-            UserReputationOnSubmit = userReputation,
+            UserReputationOnSubmit = isDriver ? 0 : userReputation,   // drivers have no rep
             FinalConfidence        = finalConfidence,
-            IsApproved             = autoApprove ? true : autoReject ? false : null
+            IsApproved             = autoApprove ? true : null
         };
 
         await _reportRepo.AddAsync(report);
@@ -95,11 +125,8 @@ public sealed class ReportService : IReportService
         {
             if (dto.TrashContainerId > 0)
                 await _containerUpdateService.ApplyReportEffectAsync(dto.TrashContainerId, dto.ReportType);
-            await _reputationService.IncrementAsync(userId);
-        }
-        else if (autoReject)
-        {
-            await _reputationService.DecrementAsync(userId);
+            if (!isDriver)
+                await _reputationService.IncrementAsync(userId);   // drivers earn no rep
         }
 
         if (isTruckReport)
@@ -114,21 +141,22 @@ public sealed class ReportService : IReportService
             });
         }
 
-        string message = autoReject
-            ? "Сигналът е автоматично отхвърлен поради ниска репутация."
-            : autoApprove
-                ? "Сигналът е автоматично одобрен."
+        string message = autoApprove
+            ? "Сигналът е автоматично одобрен."
+            : hasPhoto && !containerDetected
+                ? "Не е открит контейнер на снимката — сигналът е изпратен за модерация."
                 : "Сигналът е изпратен за модерация.";
 
         return new ReportResponseDto
         {
-            ReportId        = report.Id,
-            FinalConfidence = finalConfidence,
-            IsApproved      = report.IsApproved,
-            AiScore         = aiScore,
-            AiDetectedClass = aiResult?.DetectedClass ?? string.Empty,
-            UserReputation  = userReputation,
-            Message         = message
+            ReportId          = report.Id,
+            FinalConfidence   = finalConfidence,
+            IsApproved        = report.IsApproved,
+            AiScore           = aiScore,
+            AiDetectedClass   = aiResult?.DetectedClass ?? string.Empty,
+            UserReputation    = isDriver ? 0 : userReputation,
+            ContainerDetected = containerDetected,
+            Message           = message
         };
     }
 
@@ -143,7 +171,8 @@ public sealed class ReportService : IReportService
         if (report.TrashContainerId.HasValue)
             await _containerUpdateService.ApplyReportEffectAsync(report.TrashContainerId.Value, report.ReportType);
 
-        await _reputationService.IncrementAsync(report.UserId);
+        if (!await IsDriverAsync(report.UserId))
+            await _reputationService.IncrementAsync(report.UserId);
     }
 
     public async Task RejectAsync(int reportId)
@@ -154,12 +183,20 @@ public sealed class ReportService : IReportService
         report.IsApproved = false;
         await _reportRepo.UpdateAsync(report);
 
-        await _reputationService.DecrementAsync(report.UserId);
+        if (!await IsDriverAsync(report.UserId))
+            await _reputationService.DecrementAsync(report.UserId);
     }
 
     #endregion
 
     #region Private
+
+    private async Task<bool> IsDriverAsync(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user is null) return false;
+        return await _userManager.IsInRoleAsync(user, "Driver");
+    }
 
     private static double CalculateConfidence(double aiScore, int reputation, bool hasPhoto)
     {

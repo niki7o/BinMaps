@@ -78,10 +78,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private searchMarker?: L.Marker;
   private searchCircles: L.Circle[] = [];
 
-  reportImagePreview: string | null = null;
-  reportDescription  = '';
-  selectedReportType = 'Full';
-  reportSubmitting   = false;
+  reportImagePreview:    string | null = null;
+  selectedFile:          File | null   = null;
+  reportDescription      = '';
+  selectedReportType     = 'Full';
+  reportSubmitting       = false;
+  reportCheckingPhoto    = false;   // true while pre-checking photo with AI
   reportResult: {
     reportId: number;
     finalConfidence: number;
@@ -91,6 +93,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     userReputation: number;
     message: string;
     hadPhoto: boolean;
+    containerDetected: boolean;
   } | null = null;
 
   get selectedBinHasSensor(): boolean {
@@ -1188,6 +1191,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
+    this.selectedFile = file;
+
     const r    = new FileReader();
     r.onload   = (e: any) => { this.reportImagePreview = e.target.result; };
     r.readAsDataURL(file);
@@ -1195,18 +1200,18 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   clearImagePreview() {
     this.reportImagePreview = null;
+    this.selectedFile       = null;
     const el = document.getElementById('report-image') as HTMLInputElement;
     if (el) el.value = '';
   }
 
-  submitReport() {
+  async submitReport() {
     if (!this.currentUser) {
       alert('Влезте в системата');
       this.router.navigate(['/login']);
       return;
     }
 
-    const img        = document.getElementById('report-image')       as HTMLInputElement;
     const desc       = document.getElementById('report-description') as HTMLTextAreaElement;
     const reportType = this.selectedReportType;
     const isTruckProblem = reportType === 'TruckProblem';
@@ -1214,6 +1219,41 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     if (!isTruckProblem && !this.selectedBinForReport) {
       alert('Изберете контейнер');
       return;
+    }
+
+    const token = this.getToken();
+    if (!token) {
+      alert('Сесията ви е изтекла');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    // ── Pre-check photo with AI before submitting ──────────────────────────
+    if (this.selectedFile) {
+      this.reportCheckingPhoto = true;
+      try {
+        const checkFd = new FormData();
+        checkFd.append('photo', this.selectedFile);
+
+        const check = await this.http
+          .post<any>(`${this.API_URL}/reports/analyze`, checkFd, {
+            headers: new HttpHeaders({ Authorization: `Bearer ${token}` })
+          })
+          .toPromise();
+
+        this.reportCheckingPhoto = false;
+
+        const containerDetected = check?.container_detected ?? true;
+        if (!containerDetected) {
+          const proceed = window.confirm(
+            'Не е открит контейнер на снимката.\n\nСигурни ли сте, че искате да изпратите доклада?'
+          );
+          if (!proceed) return;
+        }
+      } catch {
+        // If AI pre-check fails, allow submission without blocking.
+        this.reportCheckingPhoto = false;
+      }
     }
 
     const typeMap: Record<string, number> = {
@@ -1230,17 +1270,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     fd.append('ReportType', (typeMap[reportType] ?? 0).toString());
 
-    if (desc?.value)     fd.append('Description', desc.value);
-    if (img?.files?.[0]) fd.append('Photo', img.files[0]);
+    if (desc?.value)       fd.append('Description', desc.value);
+    if (this.selectedFile) fd.append('Photo', this.selectedFile);
 
-    const token = this.getToken();
-    if (!token) {
-      alert('Сесията ви е изтекла');
-      this.router.navigate(['/login']);
-      return;
-    }
-
-    const hadPhoto        = !!(img?.files?.[0]);
+    const hadPhoto        = !!this.selectedFile;
     this.reportSubmitting = true;
 
     this.http
@@ -1250,15 +1283,19 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       .subscribe({
         next: res => {
           this.reportSubmitting     = false;
-          this.reportResult         = { ...res, hadPhoto };
+          this.reportResult         = {
+            ...res,
+            hadPhoto,
+            containerDetected: res.containerDetected ?? true
+          };
           this.selectedBinForReport = null;
           this.reportImagePreview   = null;
+          this.selectedFile         = null;
           this.reportDescription    = '';
           this.selectedReportType   = 'Full';
 
           const si = document.getElementById('selected-bin-id') as HTMLInputElement;
           if (si)   si.value   = '';
-          if (img)  img.value  = '';
           if (desc) desc.value = '';
 
           setTimeout(() => this.loadBins(), 800);

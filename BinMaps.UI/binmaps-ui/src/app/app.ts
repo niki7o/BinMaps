@@ -1,9 +1,10 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet, RouterModule, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
-
 import { Header } from './header/header';
 import { filter } from 'rxjs/operators';
+
+const SHELL_HIDDEN_ROUTES = ['/login', '/register', '/terms'];
 
 @Component({
   selector: 'app-root',
@@ -13,17 +14,19 @@ import { filter } from 'rxjs/operators';
 })
 export class App {
   protected readonly title = signal('binmaps-ui');
-  isMapPage = false;
 
-  constructor(private router: Router) {
+  showShell = true;
+
+  constructor(private readonly router: Router) {
     this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe((event: any) => {
-        this.isMapPage = event.url === '/map' || event.url.startsWith('/map?');
+      .pipe(filter(e => e instanceof NavigationEnd))
+      .subscribe((e: any) => {
+        this.showShell = !SHELL_HIDDEN_ROUTES.some(r => e.url === r || e.url.startsWith(r + '?') || e.url.startsWith(r + '/'));
       });
   }
 
   isMapRoute(): boolean {
-    return this.router.url === '/map' || this.router.url.startsWith('/map?') || this.router.url.startsWith('/map/');
+    const url = this.router.url;
+    return url === '/map' || url.startsWith('/map?') || url.startsWith('/map/');
   }
 }

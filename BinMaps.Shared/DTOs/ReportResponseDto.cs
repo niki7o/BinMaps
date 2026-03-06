@@ -13,5 +13,7 @@ namespace BinMaps.Shared.DTOs
         public string AiDetectedClass { get; set; } = string.Empty;
         public int UserReputation { get; set; }
         public string Message { get; set; } = string.Empty;
+        /// <summary>True when the AI recognised a bin in the photo (or no photo was submitted).</summary>
+        public bool ContainerDetected { get; set; } = true;
     }
 }

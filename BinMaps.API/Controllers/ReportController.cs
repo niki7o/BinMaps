@@ -83,6 +83,23 @@ public sealed class ReportsController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Quick pre-submission photo check — runs the AI and returns whether a
+    /// trash container was detected.  No report is created.
+    /// </summary>
+    [HttpPost("analyze")]
+    [ProducesResponseType(typeof(AIResultDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> AnalyzePhoto([FromForm] IFormFile? photo)
+    {
+        if (photo is null)
+            return BadRequest(new { error = "Липсва снимка." });
+
+        var result = await _aiService.AnalyzeAsync(photo);
+
+        // If AI is unavailable return a safe default (container assumed present).
+        return Ok(result ?? new AIResultDto { ContainerDetected = true, Confidence = 0 });
+    }
+
     [HttpPut("{id:int}/approve")]
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

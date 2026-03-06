@@ -126,12 +126,17 @@ def predict(image_bytes: bytes) -> dict:
         best_idx = int(probs.argmax())
         confidence = round(float(probs[best_idx]) * 100, 2)
         best_class = CLASSES[best_idx]
-    
+
+    # If the model confidence is below 35%, the image likely does not contain
+    # a recognisable trash container.
+    container_detected = confidence >= 35.0
+
     return {
         "confidence": confidence,
         "detected_class": best_class,
         "fire_detected": best_class == "fire",
         "fill_percentage": _estimate_fill(best_class, confidence),
+        "container_detected": container_detected,
         "all_scores": {
             cls: round(float(probs[i]) * 100, 2)
             for i, cls in enumerate(CLASSES)

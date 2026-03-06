@@ -1,0 +1,28 @@
+<div class="err-screen">
+  <div class="err-card">
+    <div class="err-visual">
+      <div class="truck-path">
+        <svg class="modern-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+           <path d="M5 18H3c-1.1 0-2-.9-2-2V7c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v9c0 1.1-.9 2-2 2h-1M15 11h3l3 3v4h-2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+           <circle cx="7" cy="18" r="2" stroke-width="1.5"/>
+           <circle cx="17" cy="18" r="2" stroke-width="1.5"/>
+           <path d="M9 18h6" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="scanner-line"></div>
+    </div>
+
+    <h1 class="err-number">{{ errorCode }}</h1>
+    <h2 class="err-message">{{ errorTitle }}</h2>
+    <p class="err-text">{{ errorDesc }}</p>
+
+    <button class="btn-action" (click)="goBack()">
+      <span>ВЪРНИ СЕ В БЕЗОПАСНОСТ</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M5 12h14M5 12l4-4m-4 4l4 4"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="bg-blur"></div>
+</div>

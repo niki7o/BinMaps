@@ -2899,6 +2899,22 @@
   font-size: 0.73rem;
 }
 
+/* "No container detected" warning banner */
+.rp-result__no-bin {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 11px;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  color: #f59e0b;
+  font-size: 0.74rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.rp-result__no-bin svg { flex-shrink: 0; stroke: #f59e0b; }
+
 /* Final confidence */
 .rp-result__conf-row {
   display: flex;

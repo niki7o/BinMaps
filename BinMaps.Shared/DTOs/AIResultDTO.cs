@@ -15,4 +15,11 @@ public sealed class AIResultDto
 
     [JsonPropertyName("detected_class")]
     public string DetectedClass { get; set; } = string.Empty;
+
+    /// <summary>
+    /// True when the model confidence is ≥ 35 % and the image likely shows a trash container.
+    /// False signals that the photo probably does not contain a bin.
+    /// </summary>
+    [JsonPropertyName("container_detected")]
+    public bool ContainerDetected { get; set; } = true;
 }

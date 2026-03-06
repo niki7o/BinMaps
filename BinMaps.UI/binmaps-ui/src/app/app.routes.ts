@@ -7,6 +7,8 @@ import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard';
 import { AnalyticsDashboardComponent } from './bin-details/analytics-dashboard.component';
 import { ProfileComponent } from './profile.component/profile.component';
 import { AboutComponent } from './about/about';
+import { ErrorPageComponent } from './error-Page/error-page.component';
+import { TermsComponent } from './terms/terms';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -16,6 +18,11 @@ export const routes: Routes = [
   { path: 'admin', component: AdminDashboardComponent },
   { path: 'analytics', component: AnalyticsDashboardComponent },
   { path: 'profile', component: ProfileComponent },
+  { path: 'home', redirectTo: ''},
+  { path: 'terms',     component: TermsComponent },
   { path: 'about', component: AboutComponent },
-  { path: '**', redirectTo: '' }
+  { path: '**', component: ErrorPageComponent, data: { type: '404' } },
+  { path: 'forbidden', component: ErrorPageComponent, data: { type: '403' } },
+  
+
 ];

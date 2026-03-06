@@ -1,11 +1,11 @@
 <div class="app-wrapper">
-  <app-header></app-header>
+  <app-header *ngIf="showShell"></app-header>
 
-  <main class="app-content">
+  <main [class.app-content]="showShell">
     <router-outlet></router-outlet>
   </main>
 
-  <footer class="footer" *ngIf="!isMapRoute()">
+  <footer class="footer" *ngIf="showShell && !isMapRoute()">
     <div class="footer-container">
       <div class="footer-grid">
 
@@ -41,22 +41,25 @@
         </div>
 
         <div class="footer-col">
-          <h4>Контакт</h4>
+          <h4>Правна информация</h4>
           <ul>
+            <li><a routerLink="/terms">Условия за ползване</a></li>
             <li>
               <a href="mailto:contact@binmaps.bg" class="footer-contact-link">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="4" width="20" height="16" rx="2"/>
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                </svg>
                 contact&#64;binmaps.bg
               </a>
             </li>
-           
           </ul>
         </div>
 
       </div>
 
       <div class="footer-bottom">
-        <p>© 2026 BinMaps · Умни решения за по-чист град</p>
+        <p>© 2026 BinMaps · Умни решения за по-чист град · <a routerLink="/terms" style="color:#475569">Условия за ползване</a></p>
       </div>
     </div>
   </footer>

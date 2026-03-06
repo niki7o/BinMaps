@@ -1,0 +1,277 @@
+<div class="terms-page">
+
+  <div class="terms-bg">
+    <div class="terms-orb terms-orb--1"></div>
+    <div class="terms-orb terms-orb--2"></div>
+  </div>
+
+  <div class="terms-wrap">
+
+  <div class="terms-hero">
+      <div class="terms-hero__logo">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <path d="M14 2L24 8V20L14 26L4 20V8L14 2Z" stroke="#10b981" stroke-width="1.5" fill="none"/>
+          <circle cx="14" cy="14" r="3" fill="#10b981"/>
+        </svg>
+      </div>
+      <h1 class="terms-hero__title">Условия за ползване</h1>
+      <p class="terms-hero__sub">BinMaps · Последна актуализация: {{ lastUpdated }}</p>
+    </div>
+
+    <div class="terms-summary">
+      <div class="terms-summary__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <div>
+        <p class="terms-summary__title">Накратко</p>
+        <p class="terms-summary__text">
+          BinMaps е безплатна платформа за интелигентно управление на отпадъците в София.
+          Чрез регистрация получавате достъп до интерактивната карта, можете да изпращате
+          уведомления за контейнери и да следите тяхното състояние. Изисква се коректна употреба
+          и минимална възраст от 13 години.
+        </p>
+      </div>
+    </div>
+
+    <div class="terms-body">
+
+      <nav class="terms-toc">
+        <p class="terms-toc__title">Съдържание</p>
+        <ol class="terms-toc__list">
+          <li *ngFor="let s of sections">
+            <button
+              class="terms-toc__link"
+              [class.terms-toc__link--active]="isOpen(s.id)"
+              (click)="toggle(s.id)">
+              {{ s.title }}
+              <svg class="terms-toc__arrow" [class.terms-toc__arrow--open]="isOpen(s.id)"
+                width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+          </li>
+        </ol>
+      </nav>
+
+      <div class="terms-content">
+
+        <div class="terms-accordion" id="s1">
+          <button class="terms-accordion__header" (click)="toggle('s1')" [class.is-open]="isOpen('s1')">
+            <span class="terms-section__num">01</span>
+            <span class="terms-accordion__title">Нашите услуги</span>
+            <svg class="terms-accordion__chevron" width="18" height="18" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="terms-accordion__body" [class.is-open]="isOpen('s1')">
+            <p>BinMaps предоставя уеб платформа за визуализация, мониторинг и оптимизация на събирането на битови отпадъци в град София. Услугата включва:</p>
+            <ul class="terms-list">
+              <li>Интерактивна карта с контейнери в реално време</li>
+              <li>Мониторинг на нивото на запълване по зони</li>
+              <li>Оптимизация на маршрути за камиони</li>
+              <li>Система за граждански уведомления с автоматична проверка</li>
+              <li>Административен панел за управление</li>
+            </ul>
+            <p>Услугата е предназначена за граждани, шофьори и общински администратори на територията на Република България.</p>
+          </div>
+        </div>
+
+        <div class="terms-accordion" id="s2">
+          <button class="terms-accordion__header" (click)="toggle('s2')" [class.is-open]="isOpen('s2')">
+            <span class="terms-section__num">02</span>
+            <span class="terms-accordion__title">Интелектуална собственост</span>
+            <svg class="terms-accordion__chevron" width="18" height="18" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="terms-accordion__body" [class.is-open]="isOpen('s2')">
+            <p>Целият дизайн, алгоритми, база данни и съдържание на BinMaps са интелектуална собственост на авторите на проекта, защитена от законодателството на Република България.</p>
+            <p>Проектът е разпространяван под лиценз <strong>MIT License</strong> — можете да го използвате, модифицирате и разпространявате при условие, че запазите авторските бележки. Търговска употреба без изрично писмено разрешение е забранена.</p>
+            <p>Картографските данни са предоставени от <strong>OpenStreetMap</strong> под лиценз ODbL.</p>
+          </div>
+        </div>
+
+        <div class="terms-accordion" id="s3">
+          <button class="terms-accordion__header" (click)="toggle('s3')" [class.is-open]="isOpen('s3')">
+            <span class="terms-section__num">03</span>
+            <span class="terms-accordion__title">Регистрация и акаунт</span>
+            <svg class="terms-accordion__chevron" width="18" height="18" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="terms-accordion__body" [class.is-open]="isOpen('s3')">
+            <p>За достъп до пълната функционалност е необходима регистрация. При създаване на акаунт вие се задължавате да:</p>
+            <ul class="terms-list">
+              <li>Предоставите вярна, точна и пълна информация</li>
+              <li>Поддържате актуалността на данните си</li>
+              <li>Пазите паролата си в тайна</li>
+              <li>Уведомите незабавно при неоторизиран достъп до акаунта ви</li>
+            </ul>
+            <p>Минималната възраст за регистрация е <strong>13 години</strong>. Потребители под 18 години се нуждаят от родителско съгласие. Запазваме правото да прекратим акаунти при нарушение на условията.</p>
+          </div>
+        </div>
+
+        <div class="terms-accordion" id="s4">
+          <button class="terms-accordion__header" (click)="toggle('s4')" [class.is-open]="isOpen('s4')">
+            <span class="terms-section__num">04</span>
+            <span class="terms-accordion__title">Забранени дейности</span>
+            <svg class="terms-accordion__chevron" width="18" height="18" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="terms-accordion__body" [class.is-open]="isOpen('s4')">
+            <p>При ползване на BinMaps е строго забранено:</p>
+            <ul class="terms-list">
+              <li>Подаване на умишлено неверни уведомления за контейнери</li>
+              <li>Опити за заобикаляне на системата за влизане</li>
+              <li>Автоматизирано извличане на данни без писмено разрешение</li>
+              <li>Злоупотреба с репутационната система чрез фиктивни акаунти</li>
+              <li>Качване на незаконно, обидно или вредно съдържание</li>
+              <li>Имитиране на служители на BinMaps или общинска администрация</li>
+              <li>Всяка дейност, нарушаваща законодателството на Република България</li>
+            </ul>
+            <p>Нарушенията водят до незабавно блокиране на акаунта.</p>
+          </div>
+        </div>
+
+        <div class="terms-accordion" id="s5">
+          <button class="terms-accordion__header" (click)="toggle('s5')" [class.is-open]="isOpen('s5')">
+            <span class="terms-section__num">05</span>
+            <span class="terms-accordion__title">Уведомления за контейнери</span>
+            <svg class="terms-accordion__chevron" width="18" height="18" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="terms-accordion__body" [class.is-open]="isOpen('s5')">
+            <p>BinMaps позволява на регистрирани потребители да изпращат уведомления за конкретни контейнери. Видовете уведомления са:</p>
+            <ul class="terms-list">
+              <li><strong>Препълнен контейнер</strong> — контейнерът се нуждае от изпразване</li>
+              <li><strong>Пожарна опасност</strong> — спешен сигнал, обработва се приоритетно</li>
+              <li><strong>Повреда</strong> — контейнерът е увреден или не функционира</li>
+            </ul>
+            <p>Уведомленията могат да включват снимка, която се анализира автоматично. С изпращане на уведомление вие потвърждавате, че информацията е вярна и снимката отразява реалното състояние.</p>
+          </div>
+        </div>
+
+        <div class="terms-accordion" id="s6">
+          <button class="terms-accordion__header" (click)="toggle('s6')" [class.is-open]="isOpen('s6')">
+            <span class="terms-section__num">06</span>
+            <span class="terms-accordion__title">Мониторинг и данни</span>
+            <svg class="terms-accordion__chevron" width="18" height="18" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="terms-accordion__body" [class.is-open]="isOpen('s6')">
+            <p>Системата следи в реално време нивото на запълване, температурата и статуса на контейнерите в шестте зони на София. Данните се обновяват автоматично и се визуализират на картата.</p>
+            <p>BinMaps предоставя информацията такава, каквато е постъпила от сензорите. Конкретните решения за организиране на събирането на отпадъци се вземат от оторизирани общински служители.</p>
+          </div>
+        </div>
+
+        <div class="terms-accordion" id="s7">
+          <button class="terms-accordion__header" (click)="toggle('s7')" [class.is-open]="isOpen('s7')">
+            <span class="terms-section__num">07</span>
+            <span class="terms-accordion__title">Репутационна система</span>
+            <svg class="terms-accordion__chevron" width="18" height="18" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="terms-accordion__body" [class.is-open]="isOpen('s7')">
+            <p>Всеки потребител започва с репутация <strong>50 точки</strong> (скала 0–100). Репутацията влияе пряко на достоверността на изпратените уведомления:</p>
+            <ul class="terms-list">
+              <li><strong>+10 точки</strong> — при потвърдено уведомление</li>
+              <li><strong>−5 точки</strong> — при отхвърлено уведомление</li>
+              <li>Висока репутация води до автоматично потвърждение на уведомленията</li>
+            </ul>
+            <p>Манипулирането на репутационната система чрез неверни уведомления е нарушение на условията и води до блокиране на акаунта.</p>
+          </div>
+        </div>
+
+        <div class="terms-accordion" id="s8">
+          <button class="terms-accordion__header" (click)="toggle('s8')" [class.is-open]="isOpen('s8')">
+            <span class="terms-section__num">08</span>
+            <span class="terms-accordion__title">Управляващо право</span>
+            <svg class="terms-accordion__chevron" width="18" height="18" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="terms-accordion__body" [class.is-open]="isOpen('s8')">
+            <p>Настоящите условия се уреждат от законодателството на <strong>Република България</strong>. При спорове страните се споразумяват да ги решат по взаимно съгласие, а при невъзможност — пред компетентните съдилища в гр. София.</p>
+            <p>Ако използвате BinMaps от страна — членка на ЕС, се ползвате и с допълнителната защита, предоставена от потребителското законодателство на вашата държава.</p>
+          </div>
+        </div>
+
+        <div class="terms-accordion" id="s9">
+          <button class="terms-accordion__header" (click)="toggle('s9')" [class.is-open]="isOpen('s9')">
+            <span class="terms-section__num">09</span>
+            <span class="terms-accordion__title">Промени и прекратяване</span>
+            <svg class="terms-accordion__chevron" width="18" height="18" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="terms-accordion__body" [class.is-open]="isOpen('s9')">
+            <p>Запазваме правото да актуализираме настоящите условия по всяко време. При съществени промени ще бъдете уведомени чрез платформата. Продължаването на ползването след публикуване на промените означава приемането им.</p>
+            <p>Можем да прекратим или ограничим достъпа ви при нарушение на условията, без предварително предизвестие.</p>
+          </div>
+        </div>
+
+        <div class="terms-accordion" id="s10">
+          <button class="terms-accordion__header" (click)="toggle('s10')" [class.is-open]="isOpen('s10')">
+            <span class="terms-section__num">10</span>
+            <span class="terms-accordion__title">Лични данни</span>
+            <svg class="terms-accordion__chevron" width="18" height="18" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="terms-accordion__body" [class.is-open]="isOpen('s10')">
+            <p>Събираме минималния необходим обем данни: имейл адрес, потребителско име, телефонен номер (по избор) и история на изпратените уведомления. Данните се използват единствено за функционирането на платформата.</p>
+            <p>Паролите се съхраняват в криптиран вид. Нямаме реклами и не продаваме лични данни на трети страни.</p>
+            <p>При поискване можете да изтриете акаунта и всички свързани данни, като се свържете с нас на посочения по-долу имейл.</p>
+          </div>
+        </div>
+
+        <div class="terms-accordion" id="s11">
+          <button class="terms-accordion__header" (click)="toggle('s11')" [class.is-open]="isOpen('s11')">
+            <span class="terms-section__num">11</span>
+            <span class="terms-accordion__title">Контакт</span>
+            <svg class="terms-accordion__chevron" width="18" height="18" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="terms-accordion__body" [class.is-open]="isOpen('s11')">
+            <p>При въпроси относно условията за ползване или за изтриване на акаунт се свържете с нас:</p>
+            <div class="terms-contact">
+              <a href="mailto:contact@binmaps.bg" class="terms-contact__link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="4" width="20" height="16" rx="2"/>
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                </svg>
+                contact&#64;binmaps.bg
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="terms-footer">
+      <button class="btn btn--primary" (click)="goBack()">Назад</button>
+    </div>
+
+  </div>
+</div>

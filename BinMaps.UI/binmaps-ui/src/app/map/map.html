@@ -411,12 +411,12 @@
             </div>
           </div>
 
-          <button class="btn-submit" (click)="submitReport()" [disabled]="reportSubmitting">
+          <button class="btn-submit" (click)="submitReport()" [disabled]="reportSubmitting || reportCheckingPhoto">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="22" y1="2" x2="11" y2="13"/>
               <polygon points="22 2 15 22 11 13 2 9 22 2"/>
             </svg>
-            <span>{{ reportSubmitting ? 'Изпращане…' : 'Изпрати докладване' }}</span>
+            <span>{{ reportCheckingPhoto ? 'Проверка на снимка…' : reportSubmitting ? 'Изпращане…' : 'Изпрати докладване' }}</span>
           </button>
 
           <!-- ── AI Result Card ── -->
@@ -451,8 +451,18 @@
             <!-- AI block — only when photo was attached -->
             <ng-container *ngIf="reportResult.hadPhoto">
 
+              <!-- "No container" warning banner -->
+              <div class="rp-result__no-bin" *ngIf="!reportResult.containerDetected">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>AI не откри контейнер на снимката — сигналът е пратен за модерация</span>
+              </div>
+
               <!-- AI succeeded: show bar + % + detected class -->
-              <div class="rp-result__ai-block" *ngIf="reportResult.aiScore > 0">
+              <div class="rp-result__ai-block" *ngIf="reportResult.aiScore > 0 && reportResult.containerDetected">
                 <div class="rp-result__ai-header">
                   <span class="rp-result__ai-icon">🤖</span>
                   <span class="rp-result__ai-title">AI анализ</span>
@@ -472,7 +482,7 @@
               </div>
 
               <!-- AI returned 0 — service unreachable or error -->
-              <div class="rp-result__ai-row rp-result__ai-row--nophoto" *ngIf="reportResult.aiScore === 0">
+              <div class="rp-result__ai-row rp-result__ai-row--nophoto" *ngIf="reportResult.aiScore === 0 && reportResult.containerDetected">
                 <span class="rp-result__ai-icon">🤖</span>
                 <span class="rp-result__ai-na">AI не отговори — снимката е запазена</span>
               </div>
