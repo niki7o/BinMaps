@@ -1,4 +1,4 @@
-using BinMaps.Data.Entities;
+﻿using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
 using BinMaps.Infrastructure.Hubs;
 using BinMaps.Infrastructure.Repository;
@@ -87,23 +87,7 @@ public sealed class ReportService : IReportService
         }
         else
         {
-            // Regular users — three distinct cases:
-            //
-            //   SensorBroken:    A broken sensor cannot be verified from a photo.
-            //                    Auto-approve immediately so the map reflects it.
-            //
-            //   Full / Fire:     Photo-verifiable. Auto-approve only when the combined
-            //                    AI + reputation confidence clears AutoApproveThreshold.
-            //                    This uses the constant that was previously defined
-            //                    but never wired up.
-            //
-            //   ContainerDamage: Driver-only in practice. Approving it auto-sets the
-            //                    container to Offline — too impactful for a regular user
-            //                    to trigger. Always send to moderation.
-            //
-            //   TruckProblem:    Driver-only. Always send to moderation.
-            //
-            //   No bin in photo: Force pending regardless of report type.
+        
 
             bool photoPresentButNoBin = hasPhoto && aiResult is not null && !containerDetected;
             bool isSensorBroken       = dto.ReportType == ReportType.SensorBroken;
