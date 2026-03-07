@@ -218,46 +218,46 @@ public sealed class Program
 
         #endregion
 
-        #region Migration & Seed (runs AFTER port is bound)
+        #region Migration & Seed
 
-        // Migrations run in the background after the app starts listening.
-        // This prevents the startup probe from timing out while EF runs migrations.
-        // Retries up to 5 times with 5s delay to handle Azure SQL cold-start latency.
-        app.Lifetime.ApplicationStarted.Register(() =>
+        // Strategy: StartAsync() binds the port immediately so Azure's /ping probe
+        // succeeds, then we run MigrateAsync() synchronously before WaitForShutdownAsync().
+        // This prevents the race condition where auth requests arrive before the new
+        // columns (e.g. IsBanned) exist in the database, which caused HTTP 500 errors.
+
+        await app.StartAsync();   // port is bound — /ping responds NOW
+
+        var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
+        for (int attempt = 1; attempt <= 5; attempt++)
         {
-            _ = Task.Run(async () =>
+            try
             {
-                var logger = app.Services.GetRequiredService<ILogger<Program>>();
-                for (int attempt = 1; attempt <= 5; attempt++)
-                {
-                    try
-                    {
-                        logger.LogInformation("Migration attempt {Attempt}/5 starting...", attempt);
-                        using var scope = app.Services.CreateScope();
-                        var db = scope.ServiceProvider.GetRequiredService<BinMapsDbContext>();
-                        await db.Database.MigrateAsync();
-                        var seeder = scope.ServiceProvider.GetRequiredService<InitialStateSeeder>();
-                        await seeder.SeedAllAsync();
-                        logger.LogInformation("Database migration and seed completed successfully.");
-                        return;
-                    }
-                    catch (Exception ex) when (attempt < 5)
-                    {
-                        logger.LogWarning(ex,
-                            "Migration attempt {Attempt}/5 failed. Retrying in 5s...", attempt);
-                        await Task.Delay(TimeSpan.FromSeconds(5));
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogError(ex,
-                            "Database migration failed after 5 attempts. App will continue running.");
-                    }
-                }
-            });
-        });
+                startupLogger.LogInformation("Migration attempt {Attempt}/5 starting...", attempt);
+                using var scope = app.Services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<BinMapsDbContext>();
+                await db.Database.MigrateAsync();
+                var seeder = scope.ServiceProvider.GetRequiredService<InitialStateSeeder>();
+                await seeder.SeedAllAsync();
+                startupLogger.LogInformation("Database migration and seed completed successfully.");
+                break;
+            }
+            catch (Exception ex) when (attempt < 5)
+            {
+                startupLogger.LogWarning(ex,
+                    "Migration attempt {Attempt}/5 failed. Retrying in 5s...", attempt);
+                await Task.Delay(TimeSpan.FromSeconds(5));
+            }
+            catch (Exception ex)
+            {
+                startupLogger.LogError(ex,
+                    "Database migration failed after 5 attempts. App will continue running.");
+                break;
+            }
+        }
+
+        startupLogger.LogInformation("App fully ready — accepting all requests.");
+        await app.WaitForShutdownAsync();   // keeps the process alive
 
         #endregion
-
-        await app.RunAsync();
     }
 }
