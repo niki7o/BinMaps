@@ -1229,7 +1229,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
 
     // ── Pre-check photo with AI before submitting ──────────────────────────
-    if (this.selectedFile) {
+    // Only run the AI check for visual report types (Full / Fire).
+    const isAiReport = reportType === 'Full' || reportType === 'Fire';
+    if (this.selectedFile && isAiReport) {
       this.reportCheckingPhoto = true;
       try {
         const checkFd = new FormData();
@@ -1243,12 +1245,42 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
         this.reportCheckingPhoto = false;
 
-        const containerDetected = check?.container_detected ?? true;
+        const containerDetected: boolean = check?.container_detected ?? true;
+        const detectedClass: string      = check?.detected_class     ?? '';
+        const confidence: number         = check?.confidence         ?? 0;
+
+        // ── No container on photo ──────────────────────────────────────────
         if (!containerDetected) {
           const proceed = window.confirm(
-            'Не е открит контейнер на снимката.\n\nСигурни ли сте, че искате да изпратите доклада?'
+            'AI АНАЛИЗ — ВНИМАНИЕ\n\n' +
+            'Не беше открит контейнер на снимката.\n\n' +
+            'Сигналът ще бъде изпратен за ръчна модерация.\n' +
+            'Искате ли да продължите?'
           );
           if (!proceed) return;
+        }
+
+        // ── Conflict between report type and AI detection ──────────────────
+        else if (containerDetected && detectedClass && confidence > 0) {
+          const classInfo = this.getAiClassInfo(detectedClass);
+          const conflictsWithFire = reportType === 'Fire' &&
+            ['clean', 'moderate', 'full', 'damaged'].includes(detectedClass);
+          const conflictsWithFull = reportType === 'Full' &&
+            ['clean', 'moderate'].includes(detectedClass);
+
+          if (conflictsWithFire || conflictsWithFull) {
+            const reportTypeBg = reportType === 'Fire' ? 'пожар' : 'препълнен контейнер';
+            const proceed = window.confirm(
+              '⚠️ AI АНАЛИЗ — НЕСЪОТВЕТСТВИЕ\n\n' +
+              `Вие докладвате: ${reportType === 'Fire' ? 'ПОЖАР' : 'ПРЕПЪЛНЕН КОНТЕЙНЕР'}\n` +
+              `AI откри: ${classInfo.label} (${confidence.toFixed(0)}% увереност)\n\n` +
+              `${confidence.toFixed(0)}% означава: ${classInfo.description}\n\n` +
+              `Поради несъответствието сигналът ви ще бъде изпратен за ` +
+              `ръчна проверка от администратор вместо да бъде автоматично одобрен.\n\n` +
+              `Искате ли да изпратите сигнала за ${reportTypeBg} въпреки това?`
+            );
+            if (!proceed) return;
+          }
         }
       } catch {
         // If AI pre-check fails, allow submission without blocking.
@@ -1315,6 +1347,34 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   clearReportResult() {
     this.reportResult = null;
+  }
+
+  // ── AI class info — Bulgarian labels & descriptions ───────────────────────
+
+  getAiClassInfo(cls: string): { label: string; description: string } {
+    const map: Record<string, { label: string; description: string }> = {
+      clean:    {
+        label:       'Чиста кофа',
+        description: 'кофата изглежда почти празна или чиста — без видими признаци на препълване или пожар'
+      },
+      moderate: {
+        label:       'Умерено запълнена',
+        description: 'кофата е умерено запълнена (около 40–70%) — не е спешна за събиране'
+      },
+      full: {
+        label:       'Препълнена',
+        description: 'кофата е почти пълна или препълнена (над 85%) — нуждае се от събиране'
+      },
+      fire: {
+        label:       '🔥 Пожар / Горяща кофа',
+        description: 'открити са ясни признаци на горене, пламъци или задимяване'
+      },
+      damaged: {
+        label:       'Повредена кофа',
+        description: 'кофата изглежда физически повредена, деформирана или съборена'
+      },
+    };
+    return map[cls] ?? { label: cls, description: 'неизвестен резултат от AI' };
   }
 
   // ── Math Helpers ──────────────────────────────────────────────────────────

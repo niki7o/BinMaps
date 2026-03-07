@@ -478,19 +478,23 @@
                 <span>AI не откри контейнер на снимката — сигналът е пратен за модерация</span>
               </div>
 
-              <!-- AI succeeded: fire detection → show bold label; fill → show bar -->
+              <!-- AI succeeded: show Bulgarian label + confidence + description -->
               <div class="rp-result__ai-block" *ngIf="reportResult.aiScore > 0 && reportResult.containerDetected">
                 <div class="rp-result__ai-header">
                   <span class="rp-result__ai-icon">🤖</span>
                   <span class="rp-result__ai-title">AI анализ</span>
-                  <!-- Fire class shown as bold warning label, not a number -->
                   <span class="rp-result__ai-class rp-result__ai-class--fire"
-                        *ngIf="reportResult.aiDetectedClass === 'fire'">🔥 ПОЖАР</span>
+                        *ngIf="reportResult.aiDetectedClass === 'fire'">
+                    🔥 ПОЖАР / ГОРЯЩА
+                  </span>
                   <span class="rp-result__ai-class"
-                        *ngIf="reportResult.aiDetectedClass !== 'fire'">{{ reportResult.aiDetectedClass }}</span>
+                        *ngIf="reportResult.aiDetectedClass !== 'fire'">
+                    {{ getAiClassInfo(reportResult.aiDetectedClass).label }}
+                  </span>
                 </div>
-                <!-- Show fill bar only for non-fire classes -->
-                <div class="rp-result__ai-bar-row" *ngIf="reportResult.aiDetectedClass !== 'fire'">
+
+                <!-- Confidence bar (always visible — explains what the % means) -->
+                <div class="rp-result__ai-bar-row">
                   <div class="rp-result__ai-bar-track">
                     <div class="rp-result__ai-bar-fill"
                          [style.width.%]="reportResult.aiScore"
@@ -500,6 +504,12 @@
                     </div>
                   </div>
                   <span class="rp-result__ai-pct">{{ reportResult.aiScore.toFixed(0) }}%</span>
+                </div>
+
+                <!-- Plain-language description of what the % means -->
+                <div class="rp-result__ai-desc">
+                  <strong>{{ reportResult.aiScore.toFixed(0) }}% увереност</strong> означава:
+                  {{ getAiClassInfo(reportResult.aiDetectedClass).description }}.
                 </div>
               </div>
 

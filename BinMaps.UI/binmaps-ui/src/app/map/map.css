@@ -2990,3 +2990,19 @@
   font-size: 0.82rem;
   letter-spacing: 0.03em;
 }
+
+/* ── Plain-language AI description below confidence bar ── */
+.rp-result__ai-desc {
+  font-size: 0.72rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 7px 10px;
+  margin-top: 4px;
+}
+.rp-result__ai-desc strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
