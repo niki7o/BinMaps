@@ -69,12 +69,17 @@ public sealed class AuthService : IAuthService
         if (!signIn.Succeeded)
             return (false, false, null, null);
 
-        // Admins are never blocked by a ban
         var roles = await _userManager.GetRolesAsync(user);
         var role = roles.FirstOrDefault() ?? "User";
 
-        if (user.IsBanned && role != "Admin")
-            return (true, true, user.BanReason, null);
+        // Ban is stored as Identity lockout (LockoutEnd = DateTimeOffset.MaxValue).
+        // Admins are never blocked. No custom DB columns needed.
+        if (role != "Admin" && user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow)
+        {
+            var userClaims = await _userManager.GetClaimsAsync(user);
+            var banReason = userClaims.FirstOrDefault(c => c.Type == "ban_reason")?.Value;
+            return (true, true, banReason, null);
+        }
 
         var token = GenerateJwtToken(user, role);
 

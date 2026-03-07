@@ -100,7 +100,13 @@ public sealed class AdminController : ControllerBase
         var result = new List<object>();
         foreach (var user in users)
         {
-            var roles = await _userManager.GetRolesAsync(user);
+            var roles  = await _userManager.GetRolesAsync(user);
+            var claims = await _userManager.GetClaimsAsync(user);
+
+            // Ban is stored as LockoutEnd = DateTimeOffset.MaxValue (no custom columns needed)
+            var isBanned  = user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow;
+            var banReason = claims.FirstOrDefault(c => c.Type == "ban_reason")?.Value;
+
             result.Add(new
             {
                 user.Id,
@@ -108,10 +114,10 @@ public sealed class AdminController : ControllerBase
                 user.Email,
                 user.Reputation,
                 user.CreatedAt,
-                Role = roles.FirstOrDefault() ?? "User",
-                user.IsBanned,
-                user.BanReason,
-                user.BannedAt
+                Role      = roles.FirstOrDefault() ?? "User",
+                IsBanned  = isBanned,
+                BanReason = banReason,
+                BannedAt  = isBanned ? (DateTimeOffset?)user.LockoutEnd : null
             });
         }
 
@@ -132,10 +138,16 @@ public sealed class AdminController : ControllerBase
         if (roles.Contains("Admin"))
             return BadRequest(new { message = "Не можете да блокирате администратор." });
 
-        user.IsBanned  = true;
-        user.BanReason = reason.Trim();
-        user.BannedAt  = DateTime.UtcNow;
-        await _userManager.UpdateAsync(user);
+        // Set lockout to far future — no schema change needed
+        await _userManager.SetLockoutEnabledAsync(user, true);
+        await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+
+        // Store reason as a user claim (AspNetUserClaims — already exists)
+        var existingClaims = await _userManager.GetClaimsAsync(user);
+        var existing = existingClaims.FirstOrDefault(c => c.Type == "ban_reason");
+        if (existing is not null)
+            await _userManager.RemoveClaimAsync(user, existing);
+        await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("ban_reason", reason.Trim()));
 
         return NoContent();
     }
@@ -146,10 +158,14 @@ public sealed class AdminController : ControllerBase
         var user = await _userManager.FindByIdAsync(id);
         if (user is null) return NotFound();
 
-        user.IsBanned  = false;
-        user.BanReason = null;
-        user.BannedAt  = null;
-        await _userManager.UpdateAsync(user);
+        // Clear the lockout
+        await _userManager.SetLockoutEndDateAsync(user, null);
+
+        // Remove the ban_reason claim
+        var claims  = await _userManager.GetClaimsAsync(user);
+        var banClaim = claims.FirstOrDefault(c => c.Type == "ban_reason");
+        if (banClaim is not null)
+            await _userManager.RemoveClaimAsync(user, banClaim);
 
         return NoContent();
     }

@@ -266,16 +266,6 @@ namespace BinMaps.Data.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<string>("BanReason")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime?>("BannedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsBanned")
-                        .HasColumnType("bit");
-
                     b.Property<string>("ProfilePicturePath")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
