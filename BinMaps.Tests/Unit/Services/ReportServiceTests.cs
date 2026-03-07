@@ -1,299 +1,441 @@
-//using BinMaps.Data.Entities;
-//using BinMaps.Data.Entities.Enums;
-//using BinMaps.Infrastructure.Repository;
-//using BinMaps.Infrastructure.Services;
-//using BinMaps.Infrastructure.Services.Interfaces;
-//using BinMaps.Shared.DTOs;
-//using FluentAssertions;
-//using Moq;
-//using Microsoft.AspNetCore.Http;
-//using Xunit;
-//using Microsoft.AspNetCore.Identity;
+using BinMaps.Data.Entities;
+using BinMaps.Data.Entities.Enums;
+using BinMaps.Infrastructure.Hubs;
+using BinMaps.Infrastructure.Repository;
+using BinMaps.Infrastructure.Services;
+using BinMaps.Infrastructure.Services.Interfaces;
+using BinMaps.Shared.DTOs;
+using FluentAssertions;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Moq;
+using Xunit;
 
-//namespace BinMaps.Tests.Unit.Services
-//{
-//    public class ReportServiceTests
-//    {
-//        private readonly Mock<IRepository<Report, int>> _mockReportRepo;
-//        private readonly Mock<IAIService> _mockAIService;
-//        private readonly Mock<IReputationService> _mockReputationService;
-//        private readonly Mock<IContainerUpdateService> _mockContainerUpdateService;
-//        private readonly Mock<UserManager<IdentityUser>> _mockUserManager;
-//        private readonly ReportService _service;
+namespace BinMaps.Tests.Unit.Services
+{
+    public class ReportServiceTests
+    {
+        private readonly Mock<IRepository<Report, int>> _mockReportRepo;
+        private readonly Mock<IAIService> _mockAIService;
+        private readonly Mock<IReputationService> _mockReputationService;
+        private readonly Mock<IContainerUpdateService> _mockContainerUpdateService;
+        private readonly Mock<UserManager<User>> _mockUserManager;
+        private readonly Mock<IHubContext<ContainerHub>> _mockHub;
+        private readonly ReportService _service;
 
-//        public ReportServiceTests()
-//        {
-//            _mockReportRepo = new Mock<IRepository<Report, int>>();
-//            _mockAIService = new Mock<IAIService>();
-//            _mockReputationService = new Mock<IReputationService>();
-//            _mockContainerUpdateService = new Mock<IContainerUpdateService>();
+        public ReportServiceTests()
+        {
+            _mockReportRepo = new Mock<IRepository<Report, int>>();
+            _mockAIService = new Mock<IAIService>();
+            _mockReputationService = new Mock<IReputationService>();
+            _mockContainerUpdateService = new Mock<IContainerUpdateService>();
 
-//            _mockUserManager= new Mock<UserManager<IdentityUser>>(
-//                Mock.Of<IUserStore<IdentityUser>>(),
-//                null, null, null, null, null, null, null, null);
-//            _mockReportRepo.Setup(r => r.AddAsync(It.IsAny<Report>())).Returns(Task.CompletedTask);
-//            _mockReputationService.Setup(r => r.IncrementAsync(It.IsAny<string>(), It.IsAny<int>())).Returns(Task.CompletedTask);
-//            _mockReputationService.Setup(r => r.DecrementAsync(It.IsAny<string>(), It.IsAny<int>())).Returns(Task.CompletedTask);
-//            _mockContainerUpdateService.Setup(s => s.ApplyReportEffectAsync(It.IsAny<int>(), It.IsAny<ReportType>())).Returns(Task.CompletedTask);
+            _mockUserManager = new Mock<UserManager<User>>(
+                Mock.Of<IUserStore<User>>(),
+                Mock.Of<IOptions<IdentityOptions>>(),
+                Mock.Of<IPasswordHasher<User>>(),
+                new IUserValidator<User>[0],
+                new IPasswordValidator<User>[0],
+                Mock.Of<ILookupNormalizer>(),
+                Mock.Of<IdentityErrorDescriber>(),
+                Mock.Of<IServiceProvider>(),
+                Mock.Of<ILogger<UserManager<User>>>());
 
-//            _service = new ReportService(
-                
-//                _mockReportRepo.Object,
-//                _mockAIService.Object,
-//                _mockReputationService.Object,
-//                _mockContainerUpdateService.Object,
-//                _mockUserManager.Object,);
-//        }
+            var mockClientProxy = new Mock<IClientProxy>();
+            mockClientProxy
+                .Setup(c => c.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), default))
+                .Returns(Task.CompletedTask);
+            var mockClients = new Mock<IHubClients>();
+            mockClients.Setup(c => c.All).Returns(mockClientProxy.Object);
 
-//        //#region CreateAsync Tests
+            _mockHub = new Mock<IHubContext<ContainerHub>>();
+            _mockHub.Setup(h => h.Clients).Returns(mockClients.Object);
 
-//        [Fact]
-//        public async Task CreateAsync_WithPhoto_CallsAIService()
-//        {
-//            var mockPhoto = new Mock<IFormFile>();
-//            var dto = new CreateReportDTO
-//            {
-//                TrashContainerId = 1,
-//                ReportType = ReportType.Full,
-//                Photo = mockPhoto.Object,
-//                Description = "Test"
-//            };
+            _mockReportRepo
+                .Setup(r => r.AddAsync(It.IsAny<Report>()))
+                .Returns(Task.CompletedTask);
+            _mockReportRepo
+                .Setup(r => r.UpdateAsync(It.IsAny<Report>()))
+                .ReturnsAsync(true);
+            _mockReputationService
+                .Setup(r => r.IncrementAsync(It.IsAny<string>(), It.IsAny<int>()))
+                .Returns(Task.CompletedTask);
+            _mockReputationService
+                .Setup(r => r.DecrementAsync(It.IsAny<string>(), It.IsAny<int>()))
+                .Returns(Task.CompletedTask);
+            _mockContainerUpdateService
+                .Setup(s => s.ApplyReportEffectAsync(It.IsAny<int>(), It.IsAny<ReportType>()))
+                .Returns(Task.CompletedTask);
 
-//            _mockAIService.Setup(s => s.AnalyzeAsync(It.IsAny<IFormFile>()))
-//                .ReturnsAsync(new AIResultDto { Confidence = 85 });
+            _mockUserManager
+                .Setup(m => m.FindByIdAsync(It.IsAny<string>()))
+                .ReturnsAsync((User?)null);
+            _mockUserManager
+                .Setup(m => m.IsInRoleAsync(It.IsAny<User>(), It.IsAny<string>()))
+                .ReturnsAsync(false);
 
-//            await _service.CreateAsync(dto, "user1", "testuser", "User");
+            _service = new ReportService(
+                _mockReportRepo.Object,
+                _mockAIService.Object,
+                _mockReputationService.Object,
+                _mockContainerUpdateService.Object,
+                _mockUserManager.Object,
+                _mockHub.Object);
+        }
 
-//            _mockAIService.Verify(s => s.AnalyzeAsync(mockPhoto.Object), Times.Once);
-//        }
+        #region CreateAsync Tests
 
-//        [Fact]
-//        public async Task CreateAsync_WithoutPhoto_SkipsAIService()
-//        {
-//            var dto = new CreateReportDTO
-//            {
-//                TrashContainerId = 1,
-//                ReportType = ReportType.Full,
-//                Photo = null,
-//                Description = "Test"
-//            };
+        [Fact]
+        public async Task CreateAsync_WithPhotoFullReport_CallsAIService()
+        {
+            var mockPhoto = new Mock<IFormFile>();
+            var dto = new CreateReportDTO
+            {
+                TrashContainerId = 1,
+                ReportType = ReportType.Full,
+                Photo = mockPhoto.Object,
+                Description = "Test"
+            };
 
-//            await _service.CreateAsync(dto, "user1", "testuser", "User");
+            _mockAIService
+                .Setup(s => s.AnalyzeAsync(It.IsAny<IFormFile>()))
+                .ReturnsAsync(new AIResultDto { Confidence = 85, ContainerDetected = true });
 
-//            _mockAIService.Verify(s => s.AnalyzeAsync(It.IsAny<IFormFile>()), Times.Never);
-//        }
+            await _service.CreateAsync(dto, "user1", "testuser", "User");
 
-//        [Fact]
-//        public async Task CreateAsync_NoPhotoUserRole_CalculatesFinalConfidenceCorrectly()
-//        {
-            
-//            var dto = new CreateReportDTO
-//            {
-//                TrashContainerId = 1,
-//                ReportType = ReportType.Full,
-//                Photo = null
-//            };
+            _mockAIService.Verify(s => s.AnalyzeAsync(mockPhoto.Object), Times.Once);
+        }
 
-//            Report? capturedReport = null;
-//            _mockReportRepo.Setup(r => r.AddAsync(It.IsAny<Report>()))
-//                .Callback<Report>(r => capturedReport = r)
-//                .Returns(Task.CompletedTask);
+        [Fact]
+        public async Task CreateAsync_WithPhotoButPrecomputed_SkipsAIService()
+        {
+            var mockPhoto = new Mock<IFormFile>();
+            var dto = new CreateReportDTO
+            {
+                TrashContainerId = 1,
+                ReportType = ReportType.Full,
+                Photo = mockPhoto.Object
+            };
+            var precomputed = new AIResultDto { Confidence = 90, ContainerDetected = true };
 
-//            await _service.CreateAsync(dto, "user1", "testuser", "User");
+            await _service.CreateAsync(dto, "user1", "testuser", "User", precomputed);
 
-//            capturedReport.Should().NotBeNull();
-//            // No AI: CalculateConfidence returns (double)reputation = 50 (User role)
-//            capturedReport!.FinalConfidence.Should().Be(50.0);
-//        }
+            _mockAIService.Verify(s => s.AnalyzeAsync(It.IsAny<IFormFile>()), Times.Never);
+        }
 
-//        [Fact]
-//        public async Task CreateAsync_WithAI_CalculatesWeightedConfidence()
-//        {
-           
-//            var mockPhoto = new Mock<IFormFile>();
-//            var dto = new CreateReportDTO
-//            {
-//                TrashContainerId = 1,
-//                ReportType = ReportType.Full,
-//                Photo = mockPhoto.Object
-//            };
+        [Fact]
+        public async Task CreateAsync_WithoutPhoto_SkipsAIService()
+        {
+            var dto = new CreateReportDTO
+            {
+                TrashContainerId = 1,
+                ReportType = ReportType.Full,
+                Photo = null
+            };
 
-//            _mockAIService.Setup(s => s.AnalyzeAsync(It.IsAny<IFormFile>()))
-//                .ReturnsAsync(new AIResultDto { Confidence = 90 });
+            await _service.CreateAsync(dto, "user1", "testuser", "User");
 
-//            Report? capturedReport = null;
-//            _mockReportRepo.Setup(r => r.AddAsync(It.IsAny<Report>()))
-//                .Callback<Report>(r => capturedReport = r)
-//                .Returns(Task.CompletedTask);
+            _mockAIService.Verify(s => s.AnalyzeAsync(It.IsAny<IFormFile>()), Times.Never);
+        }
 
-//            await _service.CreateAsync(dto, "user1", "testuser", "User");
+        [Fact]
+        public async Task CreateAsync_NoPhoto_UserRole_CalculatesReputationBasedConfidence()
+        {
+            var dto = new CreateReportDTO
+            {
+                TrashContainerId = 1,
+                ReportType = ReportType.Full,
+                Photo = null
+            };
 
-//            capturedReport!.FinalConfidence.Should().Be(74.0);
-//        }
+            Report? capturedReport = null;
+            _mockReportRepo
+                .Setup(r => r.AddAsync(It.IsAny<Report>()))
+                .Callback<Report>(r => capturedReport = r)
+                .Returns(Task.CompletedTask);
 
-//        [Fact]
-//        public async Task CreateAsync_FireReport_AutoApproved()
-//        {
-//            var dto = new CreateReportDTO
-//            {
-//                TrashContainerId = 1,
-//                ReportType = ReportType.Fire,
-//                Photo = null
-//            };
+            await _service.CreateAsync(dto, "user1", "testuser", "User");
 
-//            Report? capturedReport = null;
-//            _mockReportRepo.Setup(r => r.AddAsync(It.IsAny<Report>()))
-//                .Callback<Report>(r => capturedReport = r)
-//                .Returns(Task.CompletedTask);
+            capturedReport.Should().NotBeNull();
+            // No AI, no photo: CalculateConfidence = reputation * 0.4 = 50 * 0.4 = 20
+            capturedReport!.FinalConfidence.Should().Be(20.0);
+        }
 
-//            await _service.CreateAsync(dto, "user1", "testuser", "User");
+        [Fact]
+        public async Task CreateAsync_WithAIAndPhoto_CalculatesWeightedConfidence()
+        {
+            var mockPhoto = new Mock<IFormFile>();
+            var dto = new CreateReportDTO
+            {
+                TrashContainerId = 1,
+                ReportType = ReportType.Full,
+                Photo = mockPhoto.Object
+            };
 
-//            capturedReport!.IsApproved.Should().BeTrue();
-//        }
+            _mockAIService
+                .Setup(s => s.AnalyzeAsync(It.IsAny<IFormFile>()))
+                .ReturnsAsync(new AIResultDto { Confidence = 90, ContainerDetected = true });
 
-//        [Fact]
-//        public async Task CreateAsync_HighConfidence_AutoApproved()
-//        {
-          
-//            var mockPhoto = new Mock<IFormFile>();
-//            var dto = new CreateReportDTO
-//            {
-//                TrashContainerId = 1,
-//                ReportType = ReportType.Full,
-//                Photo = mockPhoto.Object
-//            };
+            Report? capturedReport = null;
+            _mockReportRepo
+                .Setup(r => r.AddAsync(It.IsAny<Report>()))
+                .Callback<Report>(r => capturedReport = r)
+                .Returns(Task.CompletedTask);
 
-//            _mockAIService.Setup(s => s.AnalyzeAsync(It.IsAny<IFormFile>()))
-//                .ReturnsAsync(new AIResultDto { Confidence = 100 });
+            await _service.CreateAsync(dto, "user1", "testuser", "User");
 
-//            Report? capturedReport = null;
-//            _mockReportRepo.Setup(r => r.AddAsync(It.IsAny<Report>()))
-//                .Callback<Report>(r => capturedReport = r)
-//                .Returns(Task.CompletedTask);
+            // (90 * 0.6) + (50 * 0.4) = 54 + 20 = 74
+            capturedReport!.FinalConfidence.Should().Be(74.0);
+        }
 
-//            await _service.CreateAsync(dto, "user1", "testuser", "Admin");
+        [Fact]
+        public async Task CreateAsync_AdminRole_AlwaysAutoApproves()
+        {
+            var dto = new CreateReportDTO
+            {
+                TrashContainerId = 1,
+                ReportType = ReportType.Full,
+                Photo = null
+            };
 
-//            capturedReport!.IsApproved.Should().BeTrue();
-//        }
+            Report? capturedReport = null;
+            _mockReportRepo
+                .Setup(r => r.AddAsync(It.IsAny<Report>()))
+                .Callback<Report>(r => capturedReport = r)
+                .Returns(Task.CompletedTask);
 
-//        [Fact]
-//        public async Task CreateAsync_LowConfidence_NotAutoApproved()
-//        {
-            
-//            var dto = new CreateReportDTO
-//            {
-//                TrashContainerId = 1,
-//                ReportType = ReportType.Full,
-//                Photo = null
-//            };
+            await _service.CreateAsync(dto, "admin1", "adminuser", "Admin");
 
-//            Report? capturedReport = null;
-//            _mockReportRepo.Setup(r => r.AddAsync(It.IsAny<Report>()))
-//                .Callback<Report>(r => capturedReport = r)
-//                .Returns(Task.CompletedTask);
+            capturedReport!.IsApproved.Should().BeTrue();
+        }
 
-//            await _service.CreateAsync(dto, "user1", "testuser", "User");
+        [Fact]
+        public async Task CreateAsync_LowConfidence_NotAutoApproved()
+        {
+            var dto = new CreateReportDTO
+            {
+                TrashContainerId = 1,
+                ReportType = ReportType.Full,
+                Photo = null
+            };
 
-//            capturedReport!.IsApproved.Should().BeFalse();
-//        }
+            Report? capturedReport = null;
+            _mockReportRepo
+                .Setup(r => r.AddAsync(It.IsAny<Report>()))
+                .Callback<Report>(r => capturedReport = r)
+                .Returns(Task.CompletedTask);
 
-//        [Theory]
-//        [InlineData("Driver")]
-//        [InlineData("Admin")]
-//        public async Task CreateAsync_PrivilegedRole_GetsHigherReputation(string role)
-//        {
-//            var dto = new CreateReportDTO
-//            {
-//                TrashContainerId = 1,
-//                ReportType = ReportType.Full,
-//                Photo = null
-//            };
+            await _service.CreateAsync(dto, "user1", "testuser", "User");
 
-//            Report? capturedReport = null;
-//            _mockReportRepo.Setup(r => r.AddAsync(It.IsAny<Report>()))
-//                .Callback<Report>(r => capturedReport = r)
-//                .Returns(Task.CompletedTask);
+            // finalConfidence = 20 < 85 threshold
+            capturedReport!.IsApproved.Should().BeNull();
+        }
 
-//            await _service.CreateAsync(dto, "user1", "testuser", role);
+        [Fact]
+        public async Task CreateAsync_NoBinDetected_NotAutoApproved()
+        {
+            var mockPhoto = new Mock<IFormFile>();
+            var dto = new CreateReportDTO
+            {
+                TrashContainerId = 1,
+                ReportType = ReportType.Full,
+                Photo = mockPhoto.Object
+            };
+            var precomputed = new AIResultDto
+            {
+                Confidence = 95,
+                ContainerDetected = false,
+                DetectedClass = "person"
+            };
 
-//            // Driver=75 → 75*0.4=30; Admin=100 → 100*0.4=40 — both > User's 20
-//            capturedReport!.UserReputationOnSubmit.Should().BeGreaterThan(50);
-//        }
+            Report? capturedReport = null;
+            _mockReportRepo
+                .Setup(r => r.AddAsync(It.IsAny<Report>()))
+                .Callback<Report>(r => capturedReport = r)
+                .Returns(Task.CompletedTask);
 
-//        #endregion
+            await _service.CreateAsync(dto, "user1", "testuser", "User", precomputed);
 
-//        #region ApproveAsync Tests
+            // photoPresentButNoBin = true => autoApprove = false
+            capturedReport!.IsApproved.Should().BeNull();
+        }
 
-//        [Fact]
-//        public async Task ApproveAsync_ValidReport_SetsApprovedTrue()
-//        {
-//            var report = new Report { Id = 1, UserId = "user1", IsApproved = false };
-//            _mockReportRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(report);
-//            _mockReportRepo.Setup(r => r.UpdateAsync(report)).ReturnsAsync(true);
+        [Fact]
+        public async Task CreateAsync_NoBinDetected_MessageIndicatesModerationNeeded()
+        {
+            var mockPhoto = new Mock<IFormFile>();
+            var dto = new CreateReportDTO
+            {
+                TrashContainerId = 1,
+                ReportType = ReportType.Full,
+                Photo = mockPhoto.Object
+            };
+            var precomputed = new AIResultDto { Confidence = 50, ContainerDetected = false };
 
-//            await _service.ApproveAsync(1);
+            var result = await _service.CreateAsync(dto, "user1", "testuser", "User", precomputed);
 
-//            report.IsApproved.Should().BeTrue();
-//        }
+            result.Message.Should().Contain("модерация");
+        }
 
-//        [Fact]
-//        public async Task ApproveAsync_CallsIncrementReputation()
-//        {
-//            var report = new Report { Id = 1, UserId = "user1", IsApproved = false };
-//            _mockReportRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(report);
-//            _mockReportRepo.Setup(r => r.UpdateAsync(report)).ReturnsAsync(true);
+        [Fact]
+        public async Task CreateAsync_SensorBrokenWithoutPhoto_AutoApproved()
+        {
+            var dto = new CreateReportDTO
+            {
+                TrashContainerId = 1,
+                ReportType = ReportType.SensorBroken,
+                Photo = null
+            };
 
-//            await _service.ApproveAsync(1);
+            Report? capturedReport = null;
+            _mockReportRepo
+                .Setup(r => r.AddAsync(It.IsAny<Report>()))
+                .Callback<Report>(r => capturedReport = r)
+                .Returns(Task.CompletedTask);
 
-//            _mockReputationService.Verify(r => r.IncrementAsync("user1", It.IsAny<int>()), Times.Once);
-//        }
+            await _service.CreateAsync(dto, "user1", "testuser", "User");
 
-//        [Fact]
-//        public async Task ApproveAsync_NonExistentReport_ThrowsInvalidOperation()
-//        {
-//            _mockReportRepo.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((Report)null!);
+            capturedReport!.IsApproved.Should().BeTrue();
+        }
 
-//            await Assert.ThrowsAsync<InvalidOperationException>(
-//                () => _service.ApproveAsync(999));
-//        }
+        [Fact]
+        public async Task CreateAsync_DriverRole_RecordsZeroReputation()
+        {
+            var dto = new CreateReportDTO
+            {
+                TrashContainerId = 1,
+                ReportType = ReportType.Full,
+                Photo = null
+            };
 
-//        #endregion
+            Report? capturedReport = null;
+            _mockReportRepo
+                .Setup(r => r.AddAsync(It.IsAny<Report>()))
+                .Callback<Report>(r => capturedReport = r)
+                .Returns(Task.CompletedTask);
 
-//        #region RejectAsync Tests
+            await _service.CreateAsync(dto, "driver1", "driveruser", "Driver");
 
-//        [Fact]
-//        public async Task RejectAsync_ValidReport_SetsApprovedFalse()
-//        {
-//            var report = new Report { Id = 1, UserId = "user1", IsApproved = true };
-//            _mockReportRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(report);
-//            _mockReportRepo.Setup(r => r.UpdateAsync(report)).ReturnsAsync(true);
+            capturedReport!.UserReputationOnSubmit.Should().Be(0);
+        }
 
-//            await _service.RejectAsync(1);
+        [Fact]
+        public async Task CreateAsync_NoPhoto_ReturnsContainerDetectedTrue()
+        {
+            var dto = new CreateReportDTO
+            {
+                TrashContainerId = 1,
+                ReportType = ReportType.Full,
+                Photo = null
+            };
 
-//            report.IsApproved.Should().BeFalse();
-//        }
+            var result = await _service.CreateAsync(dto, "user1", "testuser", "User");
 
-//        [Fact]
-//        public async Task RejectAsync_UpdatesRepository()
-//        {
-//            var report = new Report { Id = 1, UserId = "user1", IsApproved = true };
-//            _mockReportRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(report);
-//            _mockReportRepo.Setup(r => r.UpdateAsync(report)).ReturnsAsync(true);
+            // No photo => aiResult is null => containerDetected defaults to true
+            result.ContainerDetected.Should().BeTrue();
+        }
 
-//            await _service.RejectAsync(1);
+        #endregion
 
-//            _mockReportRepo.Verify(r => r.UpdateAsync(report), Times.Once);
-//        }
+        #region ApproveAsync Tests
 
-//        [Fact]
-//        public async Task RejectAsync_NonExistentReport_ThrowsInvalidOperation()
-//        {
-//            _mockReportRepo.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((Report)null!);
+        [Fact]
+        public async Task ApproveAsync_ValidReport_SetsApprovedTrue()
+        {
+            var report = new Report { Id = 1, UserId = "user1", UserName = "testuser", IsApproved = null };
+            _mockReportRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(report);
 
-//            await Assert.ThrowsAsync<InvalidOperationException>(
-//                () => _service.RejectAsync(999));
-//        }
+            await _service.ApproveAsync(1);
 
-//        #endregion
-//    }
-//}
+            report.IsApproved.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task ApproveAsync_CallsUpdateOnRepository()
+        {
+            var report = new Report { Id = 1, UserId = "user1", UserName = "testuser", IsApproved = null };
+            _mockReportRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(report);
+
+            await _service.ApproveAsync(1);
+
+            _mockReportRepo.Verify(r => r.UpdateAsync(report), Times.Once);
+        }
+
+        [Fact]
+        public async Task ApproveAsync_NonDriver_CallsIncrementReputation()
+        {
+            var user = new User { Id = "user1" };
+            var report = new Report { Id = 1, UserId = "user1", UserName = "testuser", IsApproved = null };
+            _mockReportRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(report);
+            _mockUserManager.Setup(m => m.FindByIdAsync("user1")).ReturnsAsync(user);
+            _mockUserManager.Setup(m => m.IsInRoleAsync(user, "Driver")).ReturnsAsync(false);
+
+            await _service.ApproveAsync(1);
+
+            _mockReputationService.Verify(r => r.IncrementAsync("user1", It.IsAny<int>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task ApproveAsync_NonExistentReport_ThrowsInvalidOperation()
+        {
+            _mockReportRepo.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((Report?)null);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _service.ApproveAsync(999));
+        }
+
+        #endregion
+
+        #region RejectAsync Tests
+
+        [Fact]
+        public async Task RejectAsync_ValidReport_SetsApprovedFalse()
+        {
+            var report = new Report { Id = 1, UserId = "user1", UserName = "testuser", IsApproved = true };
+            _mockReportRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(report);
+
+            await _service.RejectAsync(1);
+
+            report.IsApproved.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task RejectAsync_CallsUpdateOnRepository()
+        {
+            var report = new Report { Id = 1, UserId = "user1", UserName = "testuser", IsApproved = true };
+            _mockReportRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(report);
+
+            await _service.RejectAsync(1);
+
+            _mockReportRepo.Verify(r => r.UpdateAsync(report), Times.Once);
+        }
+
+        [Fact]
+        public async Task RejectAsync_NonDriver_CallsDecrementReputation()
+        {
+            var user = new User { Id = "user1" };
+            var report = new Report { Id = 1, UserId = "user1", UserName = "testuser", IsApproved = true };
+            _mockReportRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(report);
+            _mockUserManager.Setup(m => m.FindByIdAsync("user1")).ReturnsAsync(user);
+            _mockUserManager.Setup(m => m.IsInRoleAsync(user, "Driver")).ReturnsAsync(false);
+
+            await _service.RejectAsync(1);
+
+            _mockReputationService.Verify(r => r.DecrementAsync("user1", It.IsAny<int>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task RejectAsync_NonExistentReport_ThrowsInvalidOperation()
+        {
+            _mockReportRepo.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((Report?)null);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _service.RejectAsync(999));
+        }
+
+        #endregion
+    }
+}

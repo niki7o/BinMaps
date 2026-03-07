@@ -84,8 +84,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   selectedReportType = 'Full';
   reportSubmitting = false;
   reportCheckingPhoto = false;   // true while pre-checking photo with AI
-  photoNoBinWarning = false;   // true when AI detected no bin in selected photo
-  photoCheckingPreview = false;   // true while running quick AI check on selected photo
+  photoNoBinWarning = false;
+  photoCheckingPreview = false;
+  private photoAnalysisCache: { containerDetected: boolean; detectedClass: string; confidence: number } | null = null;
 
   navigationMode: 'auto' | 'step' = 'auto';   // 'auto' = animated; 'step' = manual
   stepPending = false;                       // true when waiting for user to confirm next stop
@@ -1352,7 +1353,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
 
     this.selectedFile = file;
-    this.photoNoBinWarning = false;   // reset warning for new file
+    this.photoNoBinWarning = false;
+    this.photoAnalysisCache = null;
 
     const r = new FileReader();
     r.onload = (e: any) => { this.reportImagePreview = e.target.result; };
@@ -1368,7 +1370,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       }).pipe(timeout(8_000), takeUntil(this.destroy$)).subscribe({
         next: res => {
           this.photoCheckingPreview = false;
-          this.photoNoBinWarning = !(res?.container_detected ?? true);
+          const containerDetected: boolean = res?.container_detected ?? true;
+          this.photoNoBinWarning = !containerDetected;
+          this.photoAnalysisCache = {
+            containerDetected,
+            detectedClass: res?.detected_class ?? '',
+            confidence: res?.confidence ?? 0
+          };
         },
         error: () => { this.photoCheckingPreview = false; }
       });
@@ -1380,6 +1388,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.selectedFile = null;
     this.photoNoBinWarning = false;
     this.photoCheckingPreview = false;
+    this.photoAnalysisCache = null;
     const el = document.getElementById('report-image') as HTMLInputElement;
     if (el) el.value = '';
   }
@@ -1413,49 +1422,56 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     let preCheckResult: { containerDetected: boolean; detectedClass: string; confidence: number } | null = null;
 
     if (this.selectedFile && isAiReport) {
-      this.reportCheckingPhoto = true;
-      try {
-        const checkFd = new FormData();
-        checkFd.append('photo', this.selectedFile);
+      if (this.photoAnalysisCache) {
+        preCheckResult = this.photoAnalysisCache;
+      } else {
+        this.reportCheckingPhoto = true;
+        try {
+          const checkFd = new FormData();
+          checkFd.append('photo', this.selectedFile);
 
-        const check = await firstValueFrom(
-          this.http.post<any>(`${this.API_URL}/reports/analyze`, checkFd, {
-            headers: new HttpHeaders({ Authorization: `Bearer ${token}` })
-          }).pipe(timeout(8_000))
-        );
+          const check = await firstValueFrom(
+            this.http.post<any>(`${this.API_URL}/reports/analyze`, checkFd, {
+              headers: new HttpHeaders({ Authorization: `Bearer ${token}` })
+            }).pipe(timeout(8_000))
+          );
 
-        this.reportCheckingPhoto = false;
+          this.reportCheckingPhoto = false;
 
-        const containerDetected: boolean = check?.container_detected ?? true;
-        const detectedClass: string = check?.detected_class ?? '';
-        const confidence: number = check?.confidence ?? 0;
+          const containerDetected: boolean = check?.container_detected ?? true;
+          const detectedClass: string = check?.detected_class ?? '';
+          const confidence: number = check?.confidence ?? 0;
 
-        preCheckResult = { containerDetected, detectedClass, confidence };
-
-        if (!containerDetected) {
-          const proceed = await this.showAiModal('noBin', '', '', '', 0);
-          if (!proceed) return;
-        } else if (detectedClass && confidence > 0) {
-          const classInfo = this.getAiClassInfo(detectedClass);
-          const conflictsWithFire = reportType === 'Fire' &&
-            ['clean', 'moderate', 'full', 'damaged'].includes(detectedClass);
-          const conflictsWithFull = reportType === 'Full' &&
-            ['clean', 'moderate'].includes(detectedClass);
-
-          if (conflictsWithFire || conflictsWithFull) {
-            const reportLabel = reportType === 'Fire' ? '🔥 ПОЖАР' : '📦 ПРЕПЪЛНЕН';
-            const proceed = await this.showAiModal(
-              'conflict',
-              reportLabel,
-              classInfo.label,
-              classInfo.description,
-              confidence
-            );
-            if (!proceed) return;
-          }
+          preCheckResult = { containerDetected, detectedClass, confidence };
+        } catch {
+          this.reportCheckingPhoto = false;
+          preCheckResult = { containerDetected: false, detectedClass: '', confidence: 0 };
         }
-      } catch {
-        this.reportCheckingPhoto = false;
+      }
+
+      const { containerDetected, detectedClass, confidence } = preCheckResult;
+
+      if (!containerDetected) {
+        const proceed = await this.showAiModal('noBin', '', '', '', 0);
+        if (!proceed) return;
+      } else if (detectedClass && confidence > 0) {
+        const classInfo = this.getAiClassInfo(detectedClass);
+        const conflictsWithFire = reportType === 'Fire' &&
+          ['clean', 'moderate', 'full', 'damaged'].includes(detectedClass);
+        const conflictsWithFull = reportType === 'Full' &&
+          ['clean', 'moderate'].includes(detectedClass);
+
+        if (conflictsWithFire || conflictsWithFull) {
+          const reportLabel = reportType === 'Fire' ? '🔥 ПОЖАР' : '📦 ПРЕПЪЛНЕН';
+          const proceed = await this.showAiModal(
+            'conflict',
+            reportLabel,
+            classInfo.label,
+            classInfo.description,
+            confidence
+          );
+          if (!proceed) return;
+        }
       }
     }
 
