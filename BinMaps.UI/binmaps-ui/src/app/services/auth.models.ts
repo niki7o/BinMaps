@@ -5,6 +5,8 @@ export interface AuthUser {
   role: string;
   token: string;
   profilePicturePath?: string | null;
+  isBanned?: boolean;
+  banReason?: string | null;
 }
 
 export interface LoginRequest {
@@ -14,11 +16,15 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   id?: string;
+  userId?: string;
   userName?: string;
   username?: string;
   email?: string;
   role?: string;
   token: string;
+  reputation?: number;
+  isBanned?: boolean;
+  banReason?: string | null;
 }
 
 export interface RegisterRequest {

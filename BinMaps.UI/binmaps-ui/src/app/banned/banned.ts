@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 @Component({
@@ -11,23 +11,21 @@ import { AuthService } from '../services/auth.service';
   styleUrls: ['./banned.css']
 })
 export class BannedComponent implements OnInit {
-  banReason = '';
+  banReason = 'Профилът ви е блокиран от администратор.';
 
   constructor(
-    private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly auth: AuthService
   ) {}
 
   ngOnInit(): void {
-    this.banReason = this.route.snapshot.queryParamMap.get('reason')
-      ?? 'Профилът ви е блокиран от администратор.';
-
-    // Ensure the user is logged out so they can't bypass the ban page via stored token
-    this.auth.logout();
+    // Ban reason comes from the stored AuthUser (set during login)
+    const reason = this.auth.currentUser?.banReason;
+    if (reason) this.banReason = reason;
   }
 
-  goToLogin(): void {
+  logout(): void {
+    this.auth.logout();
     this.router.navigate(['/login']);
   }
 }

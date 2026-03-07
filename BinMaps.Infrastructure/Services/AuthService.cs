@@ -59,38 +59,41 @@ public sealed class AuthService : IAuthService
 
 
 
-    public async Task<(bool Success, bool IsBanned, string? BanReason, AuthResultDto? Result)> LoginAsync(LoginDTO dto)
+    public async Task<(bool Success, AuthResultDto? Result)> LoginAsync(LoginDTO dto)
     {
         var user = await _userManager.FindByEmailAsync(dto.Email);
         if (user is null)
-            return (false, false, null, null);
+            return (false, null);
 
         var signIn = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, lockoutOnFailure: false);
         if (!signIn.Succeeded)
-            return (false, false, null, null);
+            return (false, null);
 
         var roles = await _userManager.GetRolesAsync(user);
-        var role = roles.FirstOrDefault() ?? "User";
-
-        // Ban is stored as Identity lockout (LockoutEnd = DateTimeOffset.MaxValue).
-        // Admins are never blocked. No custom DB columns needed.
-        if (role != "Admin" && user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow)
-        {
-            var userClaims = await _userManager.GetClaimsAsync(user);
-            var banReason = userClaims.FirstOrDefault(c => c.Type == "ban_reason")?.Value;
-            return (true, true, banReason, null);
-        }
-
+        var role  = roles.FirstOrDefault() ?? "User";
         var token = GenerateJwtToken(user, role);
 
-        return (true, false, null, new AuthResultDto
+        // Ban detection: LockoutEnd = DateTimeOffset.MaxValue means banned.
+        // Admins are never blocked. We still issue a token so the frontend can
+        // show the ban page with context; Angular guards block all other routes.
+        var isBanned  = role != "Admin" && user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow;
+        string? banReason = null;
+        if (isBanned)
         {
-            Token = token,
-            UserId = user.Id,
-            UserName = user.UserName!,
-            Email = user.Email!,
-            Role = role,
-            Reputation = user.Reputation
+            var userClaims = await _userManager.GetClaimsAsync(user);
+            banReason = userClaims.FirstOrDefault(c => c.Type == "ban_reason")?.Value;
+        }
+
+        return (true, new AuthResultDto
+        {
+            Token     = token,
+            UserId    = user.Id,
+            UserName  = user.UserName!,
+            Email     = user.Email!,
+            Role      = role,
+            Reputation = user.Reputation,
+            IsBanned  = isBanned,
+            BanReason = banReason
         });
     }
 

@@ -24,6 +24,7 @@ export class AuthService {
 
   get currentUser(): AuthUser | null { return this._state$.value; }
   get isAuthenticated(): boolean { return !!this._state$.value; }
+  get isBanned(): boolean { return this._state$.value?.isBanned === true; }
 
   getToken(): string | null {
     return this._state$.value?.token ?? null;
@@ -75,12 +76,14 @@ export class AuthService {
     if (!r?.token) return;
 
     const user: AuthUser = {
-      id: r.id ?? '',
+      id: r.id ?? r.userId ?? '',
       userName: r.userName ?? r.username ?? email.split('@')[0],
       email: r.email ?? email,
       role: r.role ?? 'User',
       token: r.token,
-      profilePicturePath: null
+      profilePicturePath: null,
+      isBanned: r.isBanned ?? false,
+      banReason: r.banReason ?? null
     };
 
     this.storage.save(user);

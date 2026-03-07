@@ -5,15 +5,16 @@ import { AuthService } from '../services/auth.service';
 /**
  * Allows only Admin users.
  * Unauthenticated → /login
- * Authenticated but wrong role → /forbidden (shows 403 page)
+ * Banned → /banned
+ * Authenticated but wrong role → /forbidden (403 page)
  */
 export const adminGuard: CanActivateFn = () => {
   const auth   = inject(AuthService);
   const router = inject(Router);
 
   if (!auth.isAuthenticated) return router.createUrlTree(['/login']);
-  if (auth.hasRole('Admin'))  return true;
+  if (auth.isBanned)         return router.createUrlTree(['/banned']);
+  if (auth.hasRole('Admin')) return true;
 
-  // Authenticated but not Admin → show forbidden page
   return router.createUrlTree(['/forbidden']);
 };

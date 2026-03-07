@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Header } from './header/header';
 import { filter } from 'rxjs/operators';
 
-const SHELL_HIDDEN_ROUTES = ['/login', '/register', '/terms'];
+const SHELL_HIDDEN_ROUTES = ['/login', '/register', '/terms', '/banned', '/forbidden'];
 
 @Component({
   selector: 'app-root',
