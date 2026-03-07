@@ -85,10 +85,11 @@ public sealed class ReportService : IReportService
             autoApprove = true;
         }
         else if (isDriver)
-        {
-            bool aiVeryLow = hasPhoto && aiScore > 0 && aiScore < 20.0;
-            autoApprove = !aiVeryLow;
-        }
+{
+    bool aiVeryLow = hasPhoto && aiScore > 0 && aiScore < 20.0;
+    bool noBinDetected = hasPhoto && aiResult is not null && !containerDetected;
+    autoApprove = !aiVeryLow && !noBinDetected;
+}
         else
         {
             bool photoPresentButNoBin = hasPhoto && aiResult is not null && !containerDetected;

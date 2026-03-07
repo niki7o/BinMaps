@@ -83,14 +83,14 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   reportDescription = '';
   selectedReportType = 'Full';
   reportSubmitting = false;
-  reportCheckingPhoto = false;   // true while pre-checking photo with AI
+  reportCheckingPhoto = false;   
   photoNoBinWarning = false;
   photoCheckingPreview = false;
   private photoAnalysisCache: { containerDetected: boolean; detectedClass: string; confidence: number } | null = null;
 
-  navigationMode: 'auto' | 'step' = 'auto';   // 'auto' = animated; 'step' = manual
-  stepPending = false;                       // true when waiting for user to confirm next stop
-  private _stepResolve?: () => void;           // resolves the step-wait promise
+  navigationMode: 'auto' | 'step' = 'auto';  
+  stepPending = false;                       
+  private _stepResolve?: () => void;           
 
   currentCollectedStop: {
     id:       number;
@@ -162,11 +162,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     return `${this.ICONS_DIR}/bin-${['mixed', 'plastic', 'paper', 'glass'][type] ?? 'mixed'}.svg`;
   }
 
-  private get fireIcon()          { return `${this.ICONS_DIR}/bin-fire.svg`;           }
-  private get burningIcon()       { return `${this.ICONS_DIR}/bin-burning.svg`;        }
-  private get brokenIcon()        { return `${this.ICONS_DIR}/bin-broken.svg`;         }
+  private get fireIcon()   { return `${this.ICONS_DIR}/bin-fire.svg`;           }
+  private get burningIcon() { return `${this.ICONS_DIR}/bin-burning.svg`;        }
+  private get brokenIcon() { return `${this.ICONS_DIR}/bin-broken.svg`;         }
   private get sensorBrokenIcon()  { return `${this.ICONS_DIR}/bin-sensor-broken.svg`;  }
-  private get sensorIcon()        { return `${this.ICONS_DIR}/sensor-dot.svg`;         }
+  private get sensorIcon() { return `${this.ICONS_DIR}/sensor-dot.svg`;         }
 
 
 
@@ -826,8 +826,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const f = Math.round(bin.fillPercentage);
     const temp = bin.temperature ?? 0;
     const isFire = bin.status === 2 || (temp > 55 && bin.fillPercentage > 70);
-    const isSensorBroke = !isFire && bin.status === 3;           // SensorBroken status
-    const isOffline = !isFire && bin.status === 1;           // Offline / ContainerDamage
+    const isSensorBroke = !isFire && bin.status === 3;           
+    const isOffline = !isFire && bin.status === 1;           
     const isBroken = isSensorBroke || isOffline;
     const isWarm = temp > 44 && !isFire;
 
@@ -1544,8 +1544,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
 
 
-  /** Opens the in-page conflict/noBin modal and resolves when the user
-   *  clicks Confirm (true) or Cancel (false). */
   private showAiModal(
     variant:     'conflict' | 'noBin',
     reportLabel: string,
