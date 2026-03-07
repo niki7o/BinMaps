@@ -243,31 +243,31 @@
             </div>
 
             <!-- Step controls — only in step mode while waiting for confirmation -->
-            <div class="step-controls" *ngIf="navigationMode === 'step' && stepPending">
+            <div class="step-controls" *ngIf="navigationMode === 'step' && stepPending && currentCollectedStop">
               <div class="step-controls__header">
                 <div class="step-current-info">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
-                  Контейнер #{{ routeResult.route[currentStop - 1]?.id }} събран
+                  Контейнер #{{ currentCollectedStop!.id }} събран
                 </div>
                 <button class="btn-next-step" (click)="confirmNextStep()">
                   Следваща →
                 </button>
               </div>
-              <!-- Per-stop stats row -->
+              <!-- Per-stop stats — values captured from allBins at moment of collection -->
               <div class="step-controls__stats">
                 <div class="step-stat">
-                  <span class="step-stat__label">Запълненост</span>
-                  <span class="step-stat__value">{{ routeResult.route[currentStop - 1]?.fillPercentage | number:'1.0-1' }}%</span>
+                  <span class="step-stat__label">Беше пълно</span>
+                  <span class="step-stat__value">{{ currentCollectedStop!.fill | number:'1.0-1' }}%</span>
                 </div>
                 <div class="step-stat">
                   <span class="step-stat__label">Събрано</span>
-                  <span class="step-stat__value">{{ routeResult.route[currentStop - 1]?.estimatedLoad | number:'1.0-0' }} л</span>
+                  <span class="step-stat__value">{{ currentCollectedStop!.load | number:'1.0-0' }} л</span>
                 </div>
                 <div class="step-stat">
-                  <span class="step-stat__label">Обем кофа</span>
-                  <span class="step-stat__value">{{ routeResult.route[currentStop - 1]?.capacity | number:'1.0-0' }} л</span>
+                  <span class="step-stat__label">Капацитет</span>
+                  <span class="step-stat__value">{{ currentCollectedStop!.capacity | number:'1.0-0' }} л</span>
                 </div>
               </div>
             </div>
@@ -573,6 +573,24 @@
                 <span>Качи снимка</span>
               </label>
             </div>
+          </div>
+
+          <!-- AI quick-check spinner while photo is being evaluated -->
+          <div class="photo-ai-checking" *ngIf="photoCheckingPreview">
+            <svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            </svg>
+            <span>AI проверява снимката…</span>
+          </div>
+
+          <!-- Warning: AI detected no bin in the photo -->
+          <div class="photo-no-bin-warning" *ngIf="photoNoBinWarning && !photoCheckingPreview">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span>AI не откри контейнер на снимката — докладът ще бъде изпратен <strong>за одобрение от администратор</strong>, а не автоматично одобрен.</span>
           </div>
 
           <button class="btn-submit" (click)="submitReport()" [disabled]="reportSubmitting || reportCheckingPhoto">

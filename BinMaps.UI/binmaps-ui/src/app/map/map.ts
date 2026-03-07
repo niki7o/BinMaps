@@ -84,11 +84,21 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   selectedReportType     = 'Full';
   reportSubmitting       = false;
   reportCheckingPhoto    = false;   // true while pre-checking photo with AI
+  photoNoBinWarning      = false;   // true when AI detected no bin in selected photo
+  photoCheckingPreview   = false;   // true while running quick AI check on selected photo
 
   // ── Navigation mode ───────────────────────────────────────────────────────
   navigationMode: 'auto' | 'step' = 'auto';   // 'auto' = animated; 'step' = manual
   stepPending    = false;                       // true when waiting for user to confirm next stop
   private _stepResolve?: () => void;           // resolves the step-wait promise
+
+  // ── Current collected stop (step mode): fill BEFORE bin was emptied ───────
+  currentCollectedStop: {
+    id:       number;
+    fill:     number;
+    load:     number;
+    capacity: number;
+  } | null = null;
 
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -575,8 +585,26 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   // ── Shared: collect a single stop (both modes use this) ───────────────────
   private doCollectStop(idx: number, route: RouteStop[], token: string | null): void {
-    this.currentStop      = idx + 1;
-    this.currentTruckLoad += isFinite(route[idx].estimatedLoad) ? route[idx].estimatedLoad : 0;
+    this.currentStop = idx + 1;
+
+    // ── Capture ACTUAL fill from allBins BEFORE marking it empty ─────────────
+    // This gives us the real fill percentage at the moment the truck arrives,
+    // which is what was physically collected — not the route-snapshot value.
+    const bin      = this.allBins.find(b => b.id === route[idx].id);
+    const capacity = route[idx].capacity > 0 ? route[idx].capacity : 1100;
+    const actualFill = bin != null
+      ? bin.fillPercentage
+      : route[idx].fillPercentage;                 // fallback to route snapshot
+    const actualLoad = Math.round((actualFill / 100) * capacity);
+
+    this.currentCollectedStop = {
+      id:       route[idx].id,
+      fill:     +actualFill.toFixed(1),
+      load:     actualLoad,
+      capacity: capacity
+    };
+
+    this.currentTruckLoad += isFinite(actualLoad) ? actualLoad : 0;
 
     if (this.routeMarkers[idx]) {
       this.routeMarkers[idx].setIcon(L.divIcon({
@@ -586,7 +614,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       }));
     }
 
-    const bin = this.allBins.find(b => b.id === route[idx].id);
+    // Optimistically zero the bin locally so the map marker updates
     if (bin) {
       bin.fillPercentage = Math.random() * 5 + 1;
       if (bin.hasSensor && bin.temperature != null && bin.temperature > 32)
@@ -1384,16 +1412,38 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
-    this.selectedFile = file;
+    this.selectedFile      = file;
+    this.photoNoBinWarning = false;   // reset warning for new file
 
     const r    = new FileReader();
     r.onload   = (e: any) => { this.reportImagePreview = e.target.result; };
     r.readAsDataURL(file);
+
+    // ── Quick AI preview check (non-blocking) ─────────────────────────────
+    // Fires immediately when the user picks a photo. If AI says there's no
+    // bin, a warning banner appears before they even click submit.
+    const token = this.getToken();
+    if (token) {
+      this.photoCheckingPreview = true;
+      const checkFd = new FormData();
+      checkFd.append('photo', file);
+      this.http.post<any>(`${this.API_URL}/reports/analyze`, checkFd, {
+        headers: new HttpHeaders({ Authorization: `Bearer ${token}` })
+      }).pipe(timeout(8_000), takeUntil(this.destroy$)).subscribe({
+        next: res => {
+          this.photoCheckingPreview = false;
+          this.photoNoBinWarning    = !(res?.container_detected ?? true);
+        },
+        error: () => { this.photoCheckingPreview = false; }
+      });
+    }
   }
 
   clearImagePreview() {
-    this.reportImagePreview = null;
-    this.selectedFile       = null;
+    this.reportImagePreview  = null;
+    this.selectedFile        = null;
+    this.photoNoBinWarning   = false;
+    this.photoCheckingPreview = false;
     const el = document.getElementById('report-image') as HTMLInputElement;
     if (el) el.value = '';
   }

@@ -217,9 +217,14 @@
   -webkit-appearance: none;
   cursor: pointer;
   padding-right: 38px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  /* Force dark rendering of native elements (overrides OS light-mode override) */
+  color-scheme: dark;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
+  /* Explicit colors so browser can't override with OS theme */
+  color: #f1f5f9 !important;
+  background-color: #0f1724 !important;
 }
 
 .form-select:focus {
@@ -227,8 +232,9 @@
 }
 
 .form-select option {
-  background: #090e1c;
-  color: #e2e8f0;
+  background: #0f1724;
+  color: #f1f5f9;
+  font-size: 0.9rem;
 }
 
 .form-input::placeholder,
@@ -3550,4 +3556,54 @@
 .breakdown-modal__btn--confirm:hover {
   background: rgba(239,68,68,0.32);
   border-color: rgba(239,68,68,0.65);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   AI photo pre-check: spinner + no-bin warning banner
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.photo-ai-checking {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(99,102,241,0.08);
+  border: 1px solid rgba(99,102,241,0.20);
+  font-size: 0.78rem;
+  color: #a5b4fc;
+  margin-bottom: 0.6rem;
+}
+
+.photo-ai-checking .spin {
+  animation: aiSpin 0.9s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes aiSpin {
+  to { transform: rotate(360deg); }
+}
+
+.photo-no-bin-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(234,179,8,0.08);
+  border: 1px solid rgba(234,179,8,0.25);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: #fde68a;
+  margin-bottom: 0.65rem;
+}
+
+.photo-no-bin-warning svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #fbbf24;
+}
+
+.photo-no-bin-warning strong {
+  color: #fcd34d;
+  font-weight: 700;
 }
