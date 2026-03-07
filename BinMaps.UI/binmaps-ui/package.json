@@ -7,6 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
+    
   },
   "prettier": {
     "overrides": [
@@ -29,10 +30,10 @@
     "@microsoft/signalr": "^8.0.7",
     "chart.js": "^3.9.1",
     "leaflet": "^1.9.4",
+    "leaflet.markercluster": "^1.5.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
-    "zone.js": "0.15.1",
-    "leaflet.markercluster": "^1.5.3"
+    "zone.js": "0.15.1"
   },
   "devDependencies": {
     "@angular/build": "^20.1.5",
