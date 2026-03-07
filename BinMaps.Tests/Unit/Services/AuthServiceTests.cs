@@ -55,6 +55,10 @@ namespace BinMaps.Tests.Unit.Services
             _mockConfig.Setup(c => c["Jwt:Audience"]).Returns("BinMapsClient");
             _mockConfig.Setup(c => c["Jwt:ExpireDays"]).Returns("7");
 
+            _mockUserManager
+                .Setup(m => m.GetClaimsAsync(It.IsAny<User>()))
+                .ReturnsAsync(new List<System.Security.Claims.Claim>());
+
             _service = new AuthService(_mockUserManager.Object, _mockSignInManager.Object, _mockConfig.Object);
         }
 
@@ -146,8 +150,7 @@ namespace BinMaps.Tests.Unit.Services
 
             var user = new User { Id = "user1", Email = "test@example.com", UserName = "testuser" };
             _mockUserManager.Setup(m => m.FindByEmailAsync(dto.Email)).ReturnsAsync(user);
-            _mockSignInManager.Setup(m => m.CheckPasswordSignInAsync(user, dto.Password, false))
-                .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Success);
+            _mockUserManager.Setup(m => m.CheckPasswordAsync(user, dto.Password)).ReturnsAsync(true);
             _mockUserManager.Setup(m => m.GetRolesAsync(user)).ReturnsAsync(new List<string> { "User" });
 
             var (success, result) = await _service.LoginAsync(dto);
@@ -186,8 +189,7 @@ namespace BinMaps.Tests.Unit.Services
 
             var user = new User { Id = "user1", Email = "test@example.com" };
             _mockUserManager.Setup(m => m.FindByEmailAsync(dto.Email)).ReturnsAsync(user);
-            _mockSignInManager.Setup(m => m.CheckPasswordSignInAsync(user, dto.Password, false))
-                .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Failed);
+            _mockUserManager.Setup(m => m.CheckPasswordAsync(user, dto.Password)).ReturnsAsync(false);
 
             var (success, result) = await _service.LoginAsync(dto);
 
@@ -205,8 +207,7 @@ namespace BinMaps.Tests.Unit.Services
             var user = new User { Id = "user1", Email = "test@example.com", UserName = "testuser" };
 
             _mockUserManager.Setup(m => m.FindByEmailAsync(dto.Email)).ReturnsAsync(user);
-            _mockSignInManager.Setup(m => m.CheckPasswordSignInAsync(user, dto.Password, false))
-                .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Success);
+            _mockUserManager.Setup(m => m.CheckPasswordAsync(user, dto.Password)).ReturnsAsync(true);
             _mockUserManager.Setup(m => m.GetRolesAsync(user)).ReturnsAsync(new List<string> { expectedRole });
 
             var (success, result) = await _service.LoginAsync(dto);

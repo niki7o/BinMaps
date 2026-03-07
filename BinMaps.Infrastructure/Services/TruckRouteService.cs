@@ -290,7 +290,13 @@ public sealed class TruckRouteService : ITruckRouteService
         public int TargetId { get; init; }
         public double TravelSeconds { get; init; }
         public double DistanceKm { get; init; }
-        public double Weight => TravelSeconds;
+
+        private double? _weight;
+        public double Weight
+        {
+            get => _weight ?? TravelSeconds;
+            init => _weight = value;
+        }
     }
 
     internal sealed class GraphNode
@@ -309,6 +315,10 @@ public sealed class TruckRouteService : ITruckRouteService
         #region Building
 
         public void AddNode(GraphNode node) => _nodes[node.Id] = node;
+
+        public List<GraphNode> GetNodes() => _nodes.Values.ToList();
+
+        public GraphNode? GetNode(int id) => _nodes.TryGetValue(id, out var node) ? node : null;
 
         public void AddEdge(int fromId, int toId, double travelSeconds)
         {

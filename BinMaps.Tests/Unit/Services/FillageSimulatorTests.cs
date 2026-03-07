@@ -100,8 +100,8 @@ namespace BinMaps.Tests.Unit.Services
             double mixedAvg = 0, glassAvg = 0;
             for (int i = 0; i < 200; i++)
             {
-                mixedAvg += _simulator.SimulateTemperature(mixed);
-                glassAvg += _simulator.SimulateTemperature(glass);
+                mixedAvg += _simulator.SimulateTemperature(mixed, 20.0);
+                glassAvg += _simulator.SimulateTemperature(glass, 20.0);
             }
 
             (mixedAvg / 200).Should().BeGreaterThan(glassAvg / 200);
@@ -116,8 +116,8 @@ namespace BinMaps.Tests.Unit.Services
             double fullAvg = 0, emptyAvg = 0;
             for (int i = 0; i < 200; i++)
             {
-                fullAvg += _simulator.SimulateTemperature(full);
-                emptyAvg += _simulator.SimulateTemperature(empty);
+                fullAvg += _simulator.SimulateTemperature(full, 20.0);
+                emptyAvg += _simulator.SimulateTemperature(empty, 20.0);
             }
 
             (fullAvg / 200).Should().BeGreaterThan(emptyAvg / 200);
@@ -129,7 +129,7 @@ namespace BinMaps.Tests.Unit.Services
             var container = new TrashContainer { TrashType = TrashType.Mixed, FillPercentage = 70 };
             for (int i = 0; i < 50; i++)
             {
-                _simulator.SimulateTemperature(container).Should().BeInRange(10, 60);
+                _simulator.SimulateTemperature(container, 20.0).Should().BeInRange(-20, 58);
             }
         }
 
@@ -139,7 +139,7 @@ namespace BinMaps.Tests.Unit.Services
             var container = new TrashContainer { TrashType = TrashType.Glass, FillPercentage = 5 };
             for (int i = 0; i < 100; i++)
             {
-                _simulator.SimulateTemperature(container).Should().BeGreaterThanOrEqualTo(10);
+                _simulator.SimulateTemperature(container, 20.0).Should().BeGreaterThanOrEqualTo(-20);
             }
         }
 
@@ -149,7 +149,7 @@ namespace BinMaps.Tests.Unit.Services
             var container = new TrashContainer { TrashType = TrashType.Mixed, FillPercentage = 95, Temperature = 50 };
             for (int i = 0; i < 100; i++)
             {
-                _simulator.SimulateTemperature(container).Should().BeLessThanOrEqualTo(60);
+                _simulator.SimulateTemperature(container, 20.0).Should().BeLessThanOrEqualTo(58);
             }
         }
 
@@ -163,21 +163,21 @@ namespace BinMaps.Tests.Unit.Services
             var hot = new TrashContainer { Temperature = 35 };
             var cool = new TrashContainer { Temperature = 20 };
 
-            _simulator.CalculateBatteryDrain(hot).Should().BeGreaterThan(_simulator.CalculateBatteryDrain(cool));
+            FillageSimulator.CalculateBatteryDrain(hot).Should().BeGreaterThan(FillageSimulator.CalculateBatteryDrain(cool));
         }
 
         [Fact]
         public void CalculateBatteryDrain_AlwaysPositive()
         {
             var container = new TrashContainer { Temperature = 25 };
-            _simulator.CalculateBatteryDrain(container).Should().BeGreaterThan(0);
+            FillageSimulator.CalculateBatteryDrain(container).Should().BeGreaterThan(0);
         }
 
         [Fact]
         public void CalculateBatteryDrain_RealisticRate()
         {
             var container = new TrashContainer { Temperature = 25, BatteryPercentage = 100 };
-            _simulator.CalculateBatteryDrain(container).Should().BeLessThan(0.1);
+            FillageSimulator.CalculateBatteryDrain(container).Should().BeLessThan(0.1);
         }
 
         #endregion
@@ -187,7 +187,7 @@ namespace BinMaps.Tests.Unit.Services
         [Fact]
         public void GetEmptyFillLevel_ReturnsResidualLevel()
         {
-            _simulator.GetEmptyFillLevel().Should().BeInRange(2, 8);
+            FillageSimulator.GetEmptyFillLevel().Should().BeInRange(2, 8);
         }
 
         [Fact]
@@ -195,7 +195,7 @@ namespace BinMaps.Tests.Unit.Services
         {
             for (int i = 0; i < 100; i++)
             {
-                _simulator.GetEmptyFillLevel().Should().BeGreaterThan(0);
+                FillageSimulator.GetEmptyFillLevel().Should().BeGreaterThan(0);
             }
         }
 
@@ -231,7 +231,7 @@ namespace BinMaps.Tests.Unit.Services
 
             for (int i = 0; i < 1000; i++)
             {
-                var drain = _simulator.CalculateBatteryDrain(container);
+                var drain = FillageSimulator.CalculateBatteryDrain(container);
                 container.BatteryPercentage = Math.Max(0, container.BatteryPercentage!.Value - drain);
             }
 

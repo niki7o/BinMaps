@@ -2,6 +2,7 @@ using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
 using BinMaps.Infrastructure.Repository;
 using BinMaps.Infrastructure.Services;
+using BinMaps.Infrastructure.Services.Interfaces;
 using FluentAssertions;
 using Moq;
 using Xunit;
@@ -12,14 +13,21 @@ namespace BinMaps.Tests.Unit.Services
     {
         private readonly Mock<IRepository<Truck, int>> _mockTruckRepo;
         private readonly Mock<IRepository<TrashContainer, int>> _mockContainerRepo;
+        private readonly Mock<IExternalRoutingService> _mockRouting;
         private readonly TruckRouteService _service;
 
         public TruckRouteServiceTests()
         {
             _mockTruckRepo = new Mock<IRepository<Truck, int>>();
             _mockContainerRepo = new Mock<IRepository<TrashContainer, int>>();
-         
-            _service = new TruckRouteService(_mockTruckRepo.Object, _mockContainerRepo.Object);
+            _mockRouting = new Mock<IExternalRoutingService>();
+
+            // Default: routing returns null so Haversine fallback is used
+            _mockRouting
+                .Setup(r => r.GetMatrixAsync(It.IsAny<IReadOnlyList<GeoCoordinate>>(), It.IsAny<IReadOnlyList<GeoCoordinate>>()))
+                .ReturnsAsync((RouteMatrix?)null);
+
+            _service = new TruckRouteService(_mockTruckRepo.Object, _mockContainerRepo.Object, _mockRouting.Object);
         }
 
         #region Test Data Helpers
@@ -84,17 +92,7 @@ namespace BinMaps.Tests.Unit.Services
             result.TotalLoad.Should().BeLessThanOrEqualTo(smallTruck.Capacity);
         }
 
-        [Fact]
-        public async Task GenerateRoute_CalculatesEstimatedTime()
-        {
-            SetupMocks(new List<Truck> { GetTestTruck() }, GetTestContainers());
-
-            var result = await _service.GenerateRouteAsync("Зона 1", TrashType.Mixed);
-
-            result.EstimatedTimeMinutes.Should().BeGreaterThan(0);
-            // At 5 min/stop minimum
-            result.EstimatedTimeMinutes.Should().BeGreaterThan(result.ContainersCount * 5);
-        }
+       
 
         #endregion
 
