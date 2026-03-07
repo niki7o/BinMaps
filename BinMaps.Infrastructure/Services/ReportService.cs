@@ -56,10 +56,16 @@ public sealed class ReportService : IReportService
         var isDriver      = role == "Driver";
         var isTruckReport = dto.ReportType == ReportType.TruckProblem;
 
+        // AI is only meaningful for visual (photo-based) fill/fire reports.
+        // SensorBroken, ContainerDamage (Offline), and TruckProblem are not assessed
+        // by visual AI — the photo is stored for reference only, never analyzed.
+        var isAiApplicable = dto.ReportType == ReportType.Full ||
+                             dto.ReportType == ReportType.Fire;
+
         // Use precomputed AI result from controller (photo stream was fresh there),
         // or fall back to calling AI here if no precomputed result was supplied.
         AIResultDto? aiResult = precomputedAiResult;
-        if (aiResult is null && dto.Photo is not null)
+        if (aiResult is null && dto.Photo is not null && isAiApplicable)
             aiResult = await _aiService.AnalyzeAsync(dto.Photo!);
 
         var aiScore           = aiResult?.Confidence       ?? 0.0;

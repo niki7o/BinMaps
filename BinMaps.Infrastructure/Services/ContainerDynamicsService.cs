@@ -114,19 +114,15 @@ public sealed class ContainerDynamicsService : BackgroundService
             container.Temperature = null;
         }
 
-        // Offline is set only by approved ContainerDamage reports and cleared only by
-        // an explicit admin/driver action (e.g. emptying). Never auto-clear it.
-        if (container.Status == TrashContainerStatus.Offline)
+        // Fire, Offline, and SensorBroken are "locked" statuses — they are set either by
+        // approved reports or by sensor auto-detection in a previous cycle.
+        // The dynamics cycle must NEVER auto-clear them; only an explicit admin/driver
+        // action (e.g. emptying, marking as repaired) can return a container to Active.
+        if (container.Status != TrashContainerStatus.Active)
             return;
 
-        var newStatus = FillageSimulator.DetermineStatus(container);
-
-        // Auto-set Fire/SensorBroken when sensors confirm the condition.
-        // Auto-clear Fire/SensorBroken ONLY when sensors confirm the condition has passed
-        // AND the status was sensor-detected (not manually approved via a report).
-        // To keep it simple: only clear if DetermineStatus explicitly says Active,
-        // meaning neither fire nor battery conditions are met.
-        container.Status = newStatus;
+        // Container is Active — let sensors promote it to Fire or SensorBroken if needed.
+        container.Status = FillageSimulator.DetermineStatus(container);
     }
 
     private static async Task SaveBatchedAsync(BinMapsDbContext db, List<TrashContainer> containers, CancellationToken token)
@@ -139,8 +135,10 @@ public sealed class ContainerDynamicsService : BackgroundService
                 entry.Property(x => x.FillPercentage).IsModified = true;
                 entry.Property(x => x.Temperature).IsModified = true;
                 entry.Property(x => x.BatteryPercentage).IsModified = true;
-                // Only persist the status column for non-Offline containers.
-                // Offline is owned by report approval; the dynamics cycle must not touch it.
+                // Never persist status for Offline containers — that status is owned
+                // exclusively by report approval. For Active/Fire/SensorBroken: save normally
+                // (ApplyUpdates only changes status FROM Active, so Fire/SensorBroken containers
+                // that returned early have the same value — the DB write is a safe no-op for them).
                 if (c.Status != TrashContainerStatus.Offline)
                     entry.Property(x => x.Status).IsModified = true;
             }

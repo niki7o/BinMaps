@@ -2,11 +2,11 @@
 train.py — Fine-tune MobileNetV2 for BinMaps bin classification.
 
 Transfer learning strategy (two phases):
-  Phase 1  — backbone frozen, only classifier head trained  (fast, avoids destroying pretrained features)
-  Phase 2  — full network unfrozen, fine-tuned at a lower LR  (adapts features to our domain)
+  Phase 1  — backbone frozen, only classifier head trained
+  Phase 2  — full network unfrozen, fine-tuned at a lower LR
 
 CSV format:  data/labels.csv
-    filename,fill_percent,label        ← fill_percent column is ignored at training time
+    filename,fill_percent,label        <- fill_percent column is ignored at training time
     img_001.jpg,91,full
     img_002.jpg,85,fire
 
@@ -15,7 +15,7 @@ Images must be placed in:  data/images/
 
 Usage:
     python train.py
-    python train.py --phase1 15 --phase2 30 --batch 8
+    python train.py --phase1 15 --phase2 40 --batch 8
 
 Output:
     bin_fill_model.pth  — best weights (saved whenever val accuracy improves)
@@ -25,12 +25,13 @@ import argparse
 import csv
 import os
 import sys
+from collections import Counter
 
 import torch
 import torch.nn as nn
 import torchvision.models as tv_models
 from PIL import Image
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from torchvision import transforms
 
 # ---------------------------------------------------------------------------
@@ -45,33 +46,33 @@ CLASS_TO_IDX = {c: i for i, c in enumerate(CLASSES)}
 # ---------------------------------------------------------------------------
 
 def build_model(num_classes: int = 5, pretrained: bool = True) -> nn.Module:
-    """
-    MobileNetV2 backbone + custom linear head.
-
-    pretrained=True  → loads ImageNet weights (use for training)
-    pretrained=False → random weights          (use in app.py at inference,
-                        which then loads our own bin_fill_model.pth)
-    """
     weights = tv_models.MobileNet_V2_Weights.IMAGENET1K_V1 if pretrained else None
     model   = tv_models.mobilenet_v2(weights=weights)
     in_feat = model.classifier[1].in_features   # 1280 for MobileNetV2
-    model.classifier[1] = nn.Linear(in_feat, num_classes)
+    # Dropout before final layer reduces overfitting on small datasets
+    model.classifier = nn.Sequential(
+        nn.Dropout(p=0.4),
+        nn.Linear(in_feat, num_classes),
+    )
     return model
 
 
 # ---------------------------------------------------------------------------
-# Dataset
+# Transforms — aggressive augmentation to compensate for small dataset
 # ---------------------------------------------------------------------------
 TRAIN_TRANSFORM = transforms.Compose([
     transforms.Resize((256, 256)),
     transforms.RandomCrop(224),
     transforms.RandomHorizontalFlip(),
-    transforms.RandomVerticalFlip(p=0.2),
-    transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.3, hue=0.05),
-    transforms.RandomRotation(15),
+    transforms.RandomVerticalFlip(p=0.3),
+    transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.4, hue=0.08),
+    transforms.RandomRotation(20),
+    transforms.RandomPerspective(distortion_scale=0.3, p=0.4),
+    transforms.RandomGrayscale(p=0.1),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406],
                          std=[0.229, 0.224, 0.225]),
+    transforms.RandomErasing(p=0.3, scale=(0.02, 0.2)),
 ])
 
 VAL_TRANSFORM = transforms.Compose([
@@ -82,12 +83,11 @@ VAL_TRANSFORM = transforms.Compose([
 ])
 
 
-class BinDataset(Dataset):
-    """
-    Reads labels.csv (columns: filename, [fill_percent,] label).
-    The fill_percent column is accepted but ignored — only label is used.
-    """
+# ---------------------------------------------------------------------------
+# Dataset
+# ---------------------------------------------------------------------------
 
+class BinDataset(Dataset):
     def __init__(self, csv_file: str, image_dir: str, transform=None):
         self.image_dir = image_dir
         self.transform = transform
@@ -122,11 +122,65 @@ class BinDataset(Dataset):
 
 
 # ---------------------------------------------------------------------------
+# Stratified split — ensures EVERY class appears in both train AND val
+# ---------------------------------------------------------------------------
+
+def stratified_split(data: list, val_fraction: float, seed: int = 42):
+    """
+    Split data so each class is proportionally represented in both splits.
+    With random_split and only 36 samples, you can easily end up with
+    NO fire samples in val — this fixes that.
+    """
+    import random
+    rng = random.Random(seed)
+    by_class: dict[int, list] = {}
+    for item in data:
+        by_class.setdefault(item[1], []).append(item)
+
+    train_items, val_items = [], []
+    for label, items in by_class.items():
+        shuffled = items[:]
+        rng.shuffle(shuffled)
+        # Always keep at least 1 in training; val gets floor(n * frac) min 1
+        if len(shuffled) == 1:
+            train_items.extend(shuffled)   # too few to split
+        else:
+            n_val = max(1, round(len(shuffled) * val_fraction))
+            val_items.extend(shuffled[:n_val])
+            train_items.extend(shuffled[n_val:])
+
+    rng.shuffle(train_items)
+    rng.shuffle(val_items)
+    return train_items, val_items
+
+
+# ---------------------------------------------------------------------------
+# Simple dataset from a pre-split list
+# ---------------------------------------------------------------------------
+
+class SubsetDataset(Dataset):
+    def __init__(self, data: list, image_dir: str, transform=None):
+        self.data      = data
+        self.image_dir = image_dir
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        filename, label_idx = self.data[idx]
+        img_path = os.path.join(self.image_dir, filename)
+        image = Image.open(img_path).convert("RGB")
+        if self.transform:
+            image = self.transform(image)
+        return image, torch.tensor(label_idx, dtype=torch.long)
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 def _freeze_backbone(model: nn.Module) -> None:
-    """Freeze everything except the classifier head."""
     for param in model.parameters():
         param.requires_grad = False
     for param in model.classifier.parameters():
@@ -136,23 +190,6 @@ def _freeze_backbone(model: nn.Module) -> None:
 def _unfreeze_all(model: nn.Module) -> None:
     for param in model.parameters():
         param.requires_grad = True
-
-
-class TransformWrapper(Dataset):
-    """Applies a transform to a random_split Subset without touching the base dataset."""
-    def __init__(self, subset, transform):
-        self.subset    = subset
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.subset)
-
-    def __getitem__(self, idx):
-        filename, label_idx = self.subset.dataset.data[self.subset.indices[idx]]
-        img_path = os.path.join(self.subset.dataset.image_dir, filename)
-        image = Image.open(img_path).convert("RGB")
-        image = self.transform(image)
-        return image, torch.tensor(label_idx, dtype=torch.long)
 
 
 def _run_epoch(model, loader, criterion, optimizer, device, training: bool):
@@ -185,55 +222,70 @@ def train(
     csv_file:    str   = "data/labels.csv",
     image_dir:   str   = "data/images",
     output_path: str   = "bin_fill_model.pth",
-    phase1_epochs: int = 10,    # frozen backbone — train head only
-    phase2_epochs: int = 25,    # unfrozen — full fine-tune at lower LR
+    phase1_epochs: int = 10,
+    phase2_epochs: int = 25,
     batch_size:  int   = 8,
-    lr_head:     float = 1e-3,  # phase 1 LR
-    lr_finetune: float = 1e-4,  # phase 2 LR
+    lr_head:     float = 1e-3,
+    lr_finetune: float = 1e-4,
     val_split:   float = 0.2,
     seed:        int   = 42,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
-    # ── Dataset ──────────────────────────────────────────────────────────────
+    # ── Load all data ────────────────────────────────────────────────────────
     full_dataset = BinDataset(csv_file, image_dir, transform=None)
-    n_total = len(full_dataset)
-    n_val   = max(1, int(n_total * val_split))
-    n_train = n_total - n_val
+    all_data     = full_dataset.data
+    n_total      = len(all_data)
 
-    print(f"Dataset: {n_total} samples  →  train={n_train}, val={n_val}")
-
-    torch.manual_seed(seed)
-    train_subset, val_subset = random_split(full_dataset, [n_train, n_val])
-
-    train_loader = DataLoader(
-        TransformWrapper(train_subset, TRAIN_TRANSFORM),
-        batch_size=batch_size, shuffle=True, num_workers=0,
-    )
-    val_loader = DataLoader(
-        TransformWrapper(val_subset, VAL_TRANSFORM),
-        batch_size=batch_size, shuffle=False, num_workers=0,
-    )
-
-    # ── Class distribution ────────────────────────────────────────────────────
-    all_labels = [label for _, label in full_dataset.data]
+    print(f"Dataset: {n_total} total samples")
     print("Class distribution:")
+    counts = Counter(label for _, label in all_data)
     for i, cls in enumerate(CLASSES):
-        count = all_labels.count(i)
-        print(f"  [{i}] {cls:10s}  {count:4d} samples")
+        print(f"  [{i}] {cls:10s}  {counts.get(i, 0):4d} samples")
 
-    # ── Model (MobileNetV2 with ImageNet weights) ─────────────────────────────
+    # ── Stratified split — every class in both splits ────────────────────────
+    train_data, val_data = stratified_split(all_data, val_fraction=val_split, seed=seed)
+    print(f"\nStratified split  ->  train={len(train_data)}, val={len(val_data)}")
+
+    train_counts = Counter(label for _, label in train_data)
+    val_counts   = Counter(label for _, label in val_data)
+    print("  Train:", {CLASSES[k]: v for k, v in sorted(train_counts.items())})
+    print("  Val:  ", {CLASSES[k]: v for k, v in sorted(val_counts.items())})
+
+    # ── Class weights — penalise errors on rare classes more ─────────────────
+    # With 3 fire vs 16 full, fire loss gets ~5x more weight than full.
+    class_weights = torch.tensor(
+        [len(train_data) / max(train_counts.get(i, 1), 1) for i in range(len(CLASSES))],
+        dtype=torch.float
+    ).to(device)
+    class_weights = class_weights / class_weights.sum() * len(CLASSES)
+    print(f"\n  Class weights: ", end="")
+    print(", ".join(f"{CLASSES[i]}={class_weights[i].item():.2f}" for i in range(len(CLASSES))))
+
+    # ── WeightedRandomSampler — oversample rare classes each batch ───────────
+    sample_weights = [class_weights[label].item() for _, label in train_data]
+    sampler = WeightedRandomSampler(
+        weights=sample_weights, num_samples=len(train_data), replacement=True
+    )
+
+    train_ds = SubsetDataset(train_data, image_dir, TRAIN_TRANSFORM)
+    val_ds   = SubsetDataset(val_data,   image_dir, VAL_TRANSFORM)
+
+    train_loader = DataLoader(train_ds, batch_size=batch_size, sampler=sampler,  num_workers=0)
+    val_loader   = DataLoader(val_ds,   batch_size=batch_size, shuffle=False,    num_workers=0)
+
+    # ── Model ────────────────────────────────────────────────────────────────
     model     = build_model(num_classes=len(CLASSES), pretrained=True).to(device)
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(weight=class_weights)
 
     best_val_acc = 0.0
     best_epoch   = 0
     total_epochs = phase1_epochs + phase2_epochs
 
-    # ══════════════════════════════════════════════════════════════════════════
+    # ======================================================================
     # Phase 1 — freeze backbone, train classifier head only
-    # ══════════════════════════════════════════════════════════════════════════
+    # ======================================================================
     if phase1_epochs > 0:
         print(f"\n{'─'*60}")
         print(f"Phase 1 — frozen backbone ({phase1_epochs} epochs, LR={lr_head})")
@@ -244,31 +296,26 @@ def train(
             filter(lambda p: p.requires_grad, model.parameters()),
             lr=lr_head, weight_decay=1e-4,
         )
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=phase1_epochs
-        )
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=phase1_epochs)
 
         for epoch in range(1, phase1_epochs + 1):
-            tr_loss, tr_acc = _run_epoch(model, train_loader, criterion, optimizer, device, training=True)
-            va_loss, va_acc = _run_epoch(model, val_loader,   criterion, optimizer, device, training=False)
+            tr_loss, tr_acc = _run_epoch(model, train_loader, criterion, optimizer, device, True)
+            va_loss, va_acc = _run_epoch(model, val_loader,   criterion, optimizer, device, False)
             scheduler.step()
 
             marker = ""
             if va_acc > best_val_acc:
-                best_val_acc = va_acc
-                best_epoch   = epoch
+                best_val_acc, best_epoch = va_acc, epoch
                 torch.save(model.state_dict(), output_path)
-                marker = "  ← saved"
+                marker = "  <- saved"
 
-            print(
-                f"  P1 Epoch {epoch:3d}/{phase1_epochs}  "
-                f"train loss={tr_loss:.4f} acc={tr_acc:.1f}%  "
-                f"val loss={va_loss:.4f} acc={va_acc:.1f}%{marker}"
-            )
+            print(f"  P1 Epoch {epoch:3d}/{phase1_epochs}  "
+                  f"train loss={tr_loss:.4f} acc={tr_acc:.1f}%  "
+                  f"val loss={va_loss:.4f} acc={va_acc:.1f}%{marker}")
 
-    # ══════════════════════════════════════════════════════════════════════════
-    # Phase 2 — unfreeze all layers, fine-tune at lower LR
-    # ══════════════════════════════════════════════════════════════════════════
+    # ======================================================================
+    # Phase 2 — unfreeze all, fine-tune at lower LR
+    # ======================================================================
     if phase2_epochs > 0:
         print(f"\n{'─'*60}")
         print(f"Phase 2 — full fine-tuning ({phase2_epochs} epochs, LR={lr_finetune})")
@@ -276,33 +323,28 @@ def train(
 
         _unfreeze_all(model)
         optimizer = torch.optim.Adam(model.parameters(), lr=lr_finetune, weight_decay=1e-4)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=phase2_epochs
-        )
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=phase2_epochs)
 
         for epoch in range(1, phase2_epochs + 1):
-            tr_loss, tr_acc = _run_epoch(model, train_loader, criterion, optimizer, device, training=True)
-            va_loss, va_acc = _run_epoch(model, val_loader,   criterion, optimizer, device, training=False)
+            tr_loss, tr_acc = _run_epoch(model, train_loader, criterion, optimizer, device, True)
+            va_loss, va_acc = _run_epoch(model, val_loader,   criterion, optimizer, device, False)
             scheduler.step()
 
             marker = ""
             if va_acc > best_val_acc:
-                best_val_acc = va_acc
-                best_epoch   = phase1_epochs + epoch
+                best_val_acc, best_epoch = va_acc, phase1_epochs + epoch
                 torch.save(model.state_dict(), output_path)
-                marker = "  ← saved"
+                marker = "  <- saved"
 
-            print(
-                f"  P2 Epoch {epoch:3d}/{phase2_epochs}  "
-                f"train loss={tr_loss:.4f} acc={tr_acc:.1f}%  "
-                f"val loss={va_loss:.4f} acc={va_acc:.1f}%{marker}"
-            )
+            print(f"  P2 Epoch {epoch:3d}/{phase2_epochs}  "
+                  f"train loss={tr_loss:.4f} acc={tr_acc:.1f}%  "
+                  f"val loss={va_loss:.4f} acc={va_acc:.1f}%{marker}")
 
-    # ── Summary ───────────────────────────────────────────────────────────────
+    # ── Summary ──────────────────────────────────────────────────────────────
     print(f"\nBest val accuracy: {best_val_acc:.1f}%  (epoch {best_epoch}/{total_epochs})")
     print(f"Model saved to: {output_path}")
 
-    # ── Per-class report on validation set ───────────────────────────────────
+    # ── Per-class accuracy on val set ─────────────────────────────────────────
     print("\nPer-class accuracy on validation set:")
     state = torch.load(output_path, map_location=device, weights_only=True)
     model.load_state_dict(state)
@@ -326,6 +368,9 @@ def train(
             print(f"  {cls:10s}: {class_correct[i]}/{n}  ({100*class_correct[i]//n}%)")
         else:
             print(f"  {cls:10s}: no samples in validation set")
+
+    print("\nNOTE: With < 50 samples per class the model will still overfit.")
+    print("      Add more labeled images (aim for 30+ per class) for reliable accuracy.")
 
 
 # ---------------------------------------------------------------------------

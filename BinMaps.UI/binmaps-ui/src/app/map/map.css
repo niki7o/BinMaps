@@ -2961,3 +2961,32 @@
   border-color: rgba(99, 102, 241, 0.45);
   color: #c7d2fe;
 }
+/* ── AI indicator badge (shown below report type selector) ── */
+.rp-ai-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.rp-ai-badge--active {
+  background: rgba(16, 185, 129, 0.10);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  color: #34d399;
+}
+.rp-ai-badge--inactive {
+  background: rgba(71, 85, 105, 0.12);
+  border: 1px solid rgba(71, 85, 105, 0.25);
+  color: #64748b;
+}
+
+/* ── Fire class label in AI result ── */
+.rp-result__ai-class--fire {
+  color: #ef4444 !important;
+  font-weight: 800;
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+}

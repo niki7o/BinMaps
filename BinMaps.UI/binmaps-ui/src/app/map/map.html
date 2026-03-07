@@ -337,6 +337,23 @@
             </div>
           </div>
 
+          <!-- AI indicator — shows whether AI analysis will run on photo upload -->
+          <div class="rp-ai-badge rp-ai-badge--active"
+               *ngIf="selectedReportType === 'Full' || selectedReportType === 'Fire'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 8v4l3 3"/>
+            </svg>
+            <span>AI ще анализира снимката</span>
+          </div>
+          <div class="rp-ai-badge rp-ai-badge--inactive"
+               *ngIf="selectedReportType !== 'Full' && selectedReportType !== 'Fire'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            <span>Без AI — снимката се запазва само като доказателство</span>
+          </div>
+
           <!-- Truck-problem notice: no bin required -->
           <div class="rp-truck-notice" *ngIf="selectedReportType === 'TruckProblem'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -461,14 +478,19 @@
                 <span>AI не откри контейнер на снимката — сигналът е пратен за модерация</span>
               </div>
 
-              <!-- AI succeeded: show bar + % + detected class -->
+              <!-- AI succeeded: fire detection → show bold label; fill → show bar -->
               <div class="rp-result__ai-block" *ngIf="reportResult.aiScore > 0 && reportResult.containerDetected">
                 <div class="rp-result__ai-header">
                   <span class="rp-result__ai-icon">🤖</span>
                   <span class="rp-result__ai-title">AI анализ</span>
-                  <span class="rp-result__ai-class">{{ reportResult.aiDetectedClass }}</span>
+                  <!-- Fire class shown as bold warning label, not a number -->
+                  <span class="rp-result__ai-class rp-result__ai-class--fire"
+                        *ngIf="reportResult.aiDetectedClass === 'fire'">🔥 ПОЖАР</span>
+                  <span class="rp-result__ai-class"
+                        *ngIf="reportResult.aiDetectedClass !== 'fire'">{{ reportResult.aiDetectedClass }}</span>
                 </div>
-                <div class="rp-result__ai-bar-row">
+                <!-- Show fill bar only for non-fire classes -->
+                <div class="rp-result__ai-bar-row" *ngIf="reportResult.aiDetectedClass !== 'fire'">
                   <div class="rp-result__ai-bar-track">
                     <div class="rp-result__ai-bar-fill"
                          [style.width.%]="reportResult.aiScore"
