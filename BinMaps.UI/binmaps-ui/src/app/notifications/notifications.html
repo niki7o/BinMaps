@@ -1,0 +1,118 @@
+<div class="npage">
+
+  <!-- ── Header ───────────────────────────────────────────────────────── -->
+  <div class="npage-header">
+    <div class="npage-header-left">
+      <a class="npage-back" routerLink="/map" title="Обратно към картата">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </a>
+      <div>
+        <h1 class="npage-title">Известия</h1>
+        <p class="npage-subtitle">
+          <span *ngIf="unreadCount() > 0">{{ unreadCount() }} непрочетени</span>
+          <span *ngIf="unreadCount() === 0">Всички прочетени</span>
+          &nbsp;·&nbsp; {{ totalCount() }} общо
+        </p>
+      </div>
+    </div>
+
+    <div class="npage-header-actions">
+      <button class="npage-btn npage-btn--ghost" *ngIf="unreadCount() > 0" (click)="markAllRead()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Прочети всички
+      </button>
+      <button class="npage-btn npage-btn--danger" *ngIf="totalCount() > 0" (click)="clearAll()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+          <path d="M10 11v6M14 11v6"/>
+        </svg>
+        Изчисти всички
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Filter tabs ───────────────────────────────────────────────────── -->
+  <div class="npage-tabs">
+    <button class="npage-tab" [class.is-active]="activeFilter() === 'all'" (click)="setFilter('all')">
+      Всички
+      <span class="npage-tab-badge" *ngIf="totalCount() > 0">{{ totalCount() }}</span>
+    </button>
+    <button class="npage-tab npage-tab--critical" [class.is-active]="activeFilter() === 'critical'" (click)="setFilter('critical')">
+      🔥 Критични
+      <span class="npage-tab-badge npage-tab-badge--critical" *ngIf="criticalCount() > 0">{{ criticalCount() }}</span>
+    </button>
+    <button class="npage-tab" [class.is-active]="activeFilter() === 'reports'" (click)="setFilter('reports')">
+      📋 Доклади
+      <span class="npage-tab-badge" *ngIf="reportCount() > 0">{{ reportCount() }}</span>
+    </button>
+    <button class="npage-tab" [class.is-active]="activeFilter() === 'route'" (click)="setFilter('route')">
+      ⭐ Профил
+      <span class="npage-tab-badge" *ngIf="routeCount() > 0">{{ routeCount() }}</span>
+    </button>
+  </div>
+
+  <!-- ── Notification list ─────────────────────────────────────────────── -->
+  <div class="npage-list">
+
+    <div
+      class="npage-item"
+      *ngFor="let n of filtered(); trackBy: trackById"
+      [class.npage-item--unread]="!n.read"
+      [class.npage-item--critical]="n.severity === 'critical'"
+      [class.npage-item--warning]="n.severity === 'warning'"
+      [class.npage-item--info]="n.severity === 'info'"
+      [class.npage-item--clickable]="!!n.actionUrl"
+      (click)="openNotification(n)">
+
+      <!-- Icon -->
+      <div class="npage-icon" [ngClass]="'npage-icon--' + n.iconType">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path [attr.d]="getIconPath(n.type)"/>
+        </svg>
+      </div>
+
+      <!-- Content -->
+      <div class="npage-content">
+        <div class="npage-item-header">
+          <span class="npage-item-title">{{ n.title }}</span>
+          <span class="npage-unread-dot" *ngIf="!n.read"></span>
+        </div>
+        <p class="npage-item-desc">{{ n.description }}</p>
+        <div class="npage-item-footer">
+          <span class="npage-time">{{ n.timeAgo }}</span>
+          <span class="npage-navigate-hint" *ngIf="n.actionUrl">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            Виж на картата
+          </span>
+        </div>
+      </div>
+
+      <!-- Remove -->
+      <button class="npage-remove" title="Премахни" (click)="removeNotif(n.id, $event)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Empty state -->
+    <div class="npage-empty" *ngIf="filtered().length === 0">
+      <div class="npage-empty-icon">
+        <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.2">
+          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 01-3.46 0"/>
+        </svg>
+      </div>
+      <h2 class="npage-empty-title">Всичко е спокойно</h2>
+      <p class="npage-empty-sub">Няма известия в избраната категория</p>
+    </div>
+
+  </div>
+</div>

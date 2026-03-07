@@ -1,6 +1,6 @@
 import { Component, AfterViewInit, ViewEncapsulation, inject, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, timeout, firstValueFrom } from 'rxjs';
@@ -115,6 +115,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   private http        = inject(HttpClient);
   private router      = inject(Router);
+  private route       = inject(ActivatedRoute);
   private authService = inject(AuthService);
   private signalR     = inject(ContainerSignalRService);
 
@@ -149,10 +150,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     return `${this.ICONS_DIR}/bin-${['mixed', 'plastic', 'paper', 'glass'][type] ?? 'mixed'}.svg`;
   }
 
-  private get fireIcon()    { return `${this.ICONS_DIR}/bin-fire.svg`;    }
-  private get burningIcon() { return `${this.ICONS_DIR}/bin-burning.svg`; }
-  private get brokenIcon()  { return `${this.ICONS_DIR}/bin-broken.svg`;  }
-  private get sensorIcon()  { return `${this.ICONS_DIR}/sensor-dot.svg`;  }
+  private get fireIcon()          { return `${this.ICONS_DIR}/bin-fire.svg`;           }
+  private get burningIcon()       { return `${this.ICONS_DIR}/bin-burning.svg`;        }
+  private get brokenIcon()        { return `${this.ICONS_DIR}/bin-broken.svg`;         }
+  private get sensorBrokenIcon()  { return `${this.ICONS_DIR}/bin-sensor-broken.svg`;  }
+  private get sensorIcon()        { return `${this.ICONS_DIR}/sensor-dot.svg`;         }
 
   // #endregion
 
@@ -291,6 +293,17 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         this.allBins = bins;
         this.renderBins(bins);
         setTimeout(() => this.populateZoneFilter(bins), 250);
+
+        // If navigated from a notification with ?bin=<id>, zoom to that container
+        const binParam = this.route.snapshot.queryParamMap.get('bin');
+        if (binParam) {
+          const targetId = parseInt(binParam, 10);
+          const target   = bins.find(b => b.id === targetId);
+          if (target) {
+            // Small delay so the cluster layers are fully initialised
+            setTimeout(() => this.highlightBin(target), 400);
+          }
+        }
       },
       error: e => console.error(e)
     });
@@ -708,11 +721,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   // #region Icon Factory
 
   private createBinIcon(bin: Bin): L.DivIcon {
-    const f        = Math.round(bin.fillPercentage);
-    const temp     = bin.temperature ?? 0;
-    const isFire   = bin.status === 2 || (temp > 55 && bin.fillPercentage > 70);
-    const isBroken = !isFire && (bin.status === 1 || bin.status === 3);
-    const isWarm   = temp > 44 && !isFire;
+    const f             = Math.round(bin.fillPercentage);
+    const temp          = bin.temperature ?? 0;
+    const isFire        = bin.status === 2 || (temp > 55 && bin.fillPercentage > 70);
+    const isSensorBroke = !isFire && bin.status === 3;           // SensorBroken status
+    const isOffline     = !isFire && bin.status === 1;           // Offline / ContainerDamage
+    const isBroken      = isSensorBroke || isOffline;
+    const isWarm        = temp > 44 && !isFire;
 
     const ring = isBroken ? '#94a3b8'
                : f >= 85  ? '#ef4444'
@@ -726,9 +741,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
                : f >= 45  ? 'rgba(245,158,11,0.50)'
                :             'rgba(16,185,129,0.45)';
 
-    const mainSrc = isFire   ? this.burningIcon
-                  : isBroken ? this.brokenIcon
-                  :             this.binIcon(bin.trashType);
+    // Distinct icons: burning bin → sensor-broken → physically damaged → normal
+    const mainSrc = isFire        ? this.burningIcon
+                  : isSensorBroke ? this.sensorBrokenIcon
+                  : isOffline     ? this.brokenIcon
+                  :                  this.binIcon(bin.trashType);
 
     const flameCount = isFire ? 3 : isWarm ? 1 : 0;
     const flames = Array.from({ length: flameCount }, (_, i) => `
@@ -737,12 +754,19 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
            alt="огън" draggable="false" />`
     ).join('');
 
-    const sensor = bin.hasSensor
+    // Sensor dot — only for bins with a working sensor
+    const sensor = bin.hasSensor && !isSensorBroke
       ? `<img src="${this.sensorIcon}" class="bm-sensor" alt="сензор" draggable="false" />`
       : '';
 
-    const tbadge = bin.hasSensor && bin.temperature !== null
-      ? `<div class="bm-tbadge${isFire ? ' tbadge-fire' : isWarm ? ' tbadge-warm' : ''}">${Math.round(bin.temperature!)}°C</div>`
+    // Temperature badge — suppress on fire (temperature reading is unreliable)
+    const tbadge = bin.hasSensor && bin.temperature !== null && !isFire
+      ? `<div class="bm-tbadge${isWarm ? ' tbadge-warm' : ''}">${Math.round(bin.temperature!)}°C</div>`
+      : '';
+
+    // "No sensor" label — shown on sensorless bins
+    const noSensorLabel = !bin.hasSensor
+      ? `<div class="bm-nosensor">Без сензор</div>`
       : '';
 
     const brokenBadge = isBroken
@@ -763,6 +787,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
           </div>
           ${sensor}
           ${tbadge}
+          ${noSensorLabel}
           ${brokenBadge}
           <div class="bm-id">#${bin.id}</div>
         </div>`,
@@ -787,23 +812,32 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const typeBg  = ['rgba(148,163,184,.18)', 'rgba(245,158,11,.18)', 'rgba(59,130,246,.18)', 'rgba(34,211,238,.18)'][bin.trashType];
     const typeClr = ['#94a3b8', '#f59e0b', '#60a5fa', '#22d3ee'][bin.trashType];
 
-    const tempHtml = bin.hasSensor && temp !== null ? `
-      <div class="bpp-temp ${isFire ? 'bpp-temp--fire' : isWarm ? 'bpp-temp--warm' : ''}">
+    // Temperature block — hidden when on fire (sensors unreliable) or no sensor
+    const tempHtml = bin.hasSensor && temp !== null && !isFire ? `
+      <div class="bpp-temp ${isWarm ? 'bpp-temp--warm' : ''}">
         <div class="bpp-temp-left">
-          <img src="${this.fireIcon}" class="bpp-fire-icon${isFire || isWarm ? '' : ' bpp-fire-icon--hidden'}" alt="огън" />
+          <img src="${this.fireIcon}" class="bpp-fire-icon${isWarm ? '' : ' bpp-fire-icon--hidden'}" alt="огън" />
           <div>
             <div class="bpp-temp-lbl">Температура</div>
-            <div class="bpp-temp-val" style="color:${isFire ? '#ef4444' : isWarm ? '#f97316' : '#94a3b8'}">
+            <div class="bpp-temp-val" style="color:${isWarm ? '#f97316' : '#94a3b8'}">
               ${Math.round(temp!)}°C
             </div>
           </div>
         </div>
-        ${isFire
-          ? `<div class="bpp-warn bpp-warn--fire">Риск от пожар</div>`
-          : isWarm
-          ? `<div class="bpp-warn bpp-warn--warm">Повишена темп.</div>`
-          : ''}
-      </div>` : '';
+        ${isWarm ? `<div class="bpp-warn bpp-warn--warm">Повишена темп.</div>` : ''}
+      </div>`
+    : isFire ? `
+      <div class="bpp-temp bpp-temp--fire">
+        <div class="bpp-temp-left">
+          <img src="${this.fireIcon}" class="bpp-fire-icon" alt="огън" />
+          <div>
+            <div class="bpp-temp-lbl">Температура</div>
+            <div class="bpp-temp-val" style="color:#ef4444">— °C</div>
+          </div>
+        </div>
+        <div class="bpp-warn bpp-warn--fire">🔥 Кофата гори</div>
+      </div>`
+    : '';
 
     return `
       <div class="bpp">
@@ -830,10 +864,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
         <div class="bpp-rows">
           <div class="bpp-row">
-            <img src="${this.sensorIcon}" width="16" height="16" alt="сензор" />
+            <img src="${bin.status === 3 ? this.sensorBrokenIcon : this.sensorIcon}" width="16" height="16" alt="сензор" />
             <span>Сензор</span>
-            <span style="color:${bin.hasSensor ? '#22d3ee' : '#475569'};font-weight:700">
-              ${bin.hasSensor ? 'Активен' : 'Няма'}
+            <span style="color:${bin.hasSensor ? (bin.status === 3 ? '#f59e0b' : '#22d3ee') : '#475569'};font-weight:700">
+              ${bin.hasSensor ? (bin.status === 3 ? 'Счупен' : 'Активен') : 'Без сензор'}
             </span>
           </div>
           <div class="bpp-row">

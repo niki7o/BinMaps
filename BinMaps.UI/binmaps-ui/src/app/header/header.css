@@ -522,6 +522,54 @@
   text-align: center;
 }
 
+/* Clickable notification item (has actionUrl) */
+.notif-item.notif-clickable {
+  cursor: pointer;
+  transition: background 0.18s, transform 0.15s;
+}
+.notif-item.notif-clickable:hover {
+  background: rgba(255,255,255,0.05);
+  transform: translateX(2px);
+}
+
+/* Time + "Map" hint row */
+.notif-time-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.notif-goto-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #34d399;
+  opacity: 0.75;
+  transition: opacity 0.15s;
+}
+.notif-item.notif-clickable:hover .notif-goto-hint { opacity: 1; }
+
+/* "See all" footer button */
+.notif-see-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  color: #34d399;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.18s, gap 0.18s;
+}
+.notif-see-all:hover {
+  color: #6ee7b7;
+  gap: 8px;
+}
+
 .notif-view-all {
   color: #34d399;
   font-size: 13.5px;

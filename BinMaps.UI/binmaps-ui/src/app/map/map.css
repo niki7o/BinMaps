@@ -2139,6 +2139,24 @@
   0%,100% { filter: drop-shadow(0 0  5px rgba(148,163,184,0.4)); }
   50%      { filter: drop-shadow(0 0 14px rgba(148,163,184,0.75)); }
 }
+/* "No sensor" label on sensorless bins */
+.bm-nosensor {
+  position: absolute;
+  bottom: 14px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px; line-height: 1;
+  background: rgba(71,85,105,0.80);
+  border: 1px solid rgba(148,163,184,0.30);
+  color: #94a3b8;
+  border-radius: 5px;
+  padding: 2px 5px;
+  font-weight: 700;
+  white-space: nowrap;
+  z-index: 6;
+  pointer-events: none;
+  letter-spacing: 0.02em;
+}
+
 /* Warning badge for broken bins */
 .bm-broken-badge {
   position: absolute;

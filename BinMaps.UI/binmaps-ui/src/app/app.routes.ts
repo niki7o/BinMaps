@@ -9,6 +9,7 @@ import { ProfileComponent } from './profile.component/profile.component';
 import { AboutComponent } from './about/about';
 import { ErrorPageComponent } from './error-Page/error-page.component';
 import { TermsComponent } from './terms/terms';
+import { NotificationsComponent } from './notifications/notifications';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -18,11 +19,12 @@ export const routes: Routes = [
   { path: 'admin', component: AdminDashboardComponent },
   { path: 'analytics', component: AnalyticsDashboardComponent },
   { path: 'profile', component: ProfileComponent },
+  { path: 'notifications', component: NotificationsComponent },
   { path: 'home', redirectTo: ''},
   { path: 'terms',     component: TermsComponent },
   { path: 'about', component: AboutComponent },
   { path: '**', component: ErrorPageComponent, data: { type: '404' } },
   { path: 'forbidden', component: ErrorPageComponent, data: { type: '403' } },
-  
+
 
 ];

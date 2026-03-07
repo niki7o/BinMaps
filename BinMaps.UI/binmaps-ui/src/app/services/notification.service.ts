@@ -2,16 +2,21 @@ import { Injectable, signal } from '@angular/core';
 import { AuthService } from './auth.service';
 
 export interface Notification {
-  id: string;
-  type: 'fire' | 'full' | 'report' | 'route';
-  severity: 'critical' | 'warning' | 'info';
-  iconType: 'eco' | 'danger' | 'warn' | 'blue';
-  title: string;
-  description: string;
-  timeAgo: string;
-  read: boolean;
-  filter: 'critical' | 'route' | 'reports' | 'all';
-  forRoles: string[];
+  id:           string;
+  type:         'fire' | 'full' | 'report' | 'route';
+  severity:     'critical' | 'warning' | 'info';
+  iconType:     'eco' | 'danger' | 'warn' | 'blue';
+  title:        string;
+  description:  string;
+  timeAgo:      string;
+  read:         boolean;
+  filter:       'critical' | 'route' | 'reports' | 'all';
+  forRoles:     string[];
+  // Optional: navigation target when notification is clicked
+  containerId?: number;
+  actionUrl?:   string;
+  // Optional: target specific user (for approve/reject/reputation events)
+  targetUserId?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -20,18 +25,24 @@ export class NotificationService {
   readonly notifications  = this._notifications.asReadonly();
   readonly unreadCount    = signal<number>(0);
 
-  private currentRole = '';
+  private currentRole   = '';
+  private currentUserId = '';
 
   constructor(private auth: AuthService) {
     this.auth.currentUser$.subscribe(user => {
-      this.currentRole = user?.role ?? '';
+      this.currentRole   = user?.role ?? '';
+      this.currentUserId = user?.id ?? '';
     });
   }
 
   push(notif: Omit<Notification, 'id' | 'read'>): void {
     if (!notif.forRoles.includes(this.currentRole)) return;
+
+    // If the notification targets a specific user, only show it to that user
+    if (notif.targetUserId && notif.targetUserId !== this.currentUserId) return;
+
     const n: Notification = { ...notif, id: crypto.randomUUID(), read: false };
-    this._notifications.update(list => [n, ...list].slice(0, 50));
+    this._notifications.update(list => [n, ...list].slice(0, 100));
     this.recalcUnread();
   }
 
@@ -50,6 +61,11 @@ export class NotificationService {
   remove(id: string): void {
     this._notifications.update(list => list.filter(n => n.id !== id));
     this.recalcUnread();
+  }
+
+  clearAll(): void {
+    this._notifications.set([]);
+    this.unreadCount.set(0);
   }
 
   forFilter(filter: string): Notification[] {

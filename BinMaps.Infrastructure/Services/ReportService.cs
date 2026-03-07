@@ -1,4 +1,4 @@
-﻿using BinMaps.Data.Entities;
+using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
 using BinMaps.Infrastructure.Hubs;
 using BinMaps.Infrastructure.Repository;
@@ -90,14 +90,11 @@ public sealed class ReportService : IReportService
         }
         else if (isDriver)
         {
-            
             bool aiVeryLow = hasPhoto && aiScore > 0 && aiScore < 20.0;
             autoApprove = !aiVeryLow;
         }
         else
         {
-        
-
             bool photoPresentButNoBin = hasPhoto && aiResult is not null && !containerDetected;
             bool isSensorBroken       = dto.ReportType == ReportType.SensorBroken;
             bool isPhotoVerifiable    = dto.ReportType == ReportType.Full ||
@@ -129,7 +126,19 @@ public sealed class ReportService : IReportService
             if (dto.TrashContainerId > 0)
                 await _containerUpdateService.ApplyReportEffectAsync(dto.TrashContainerId, dto.ReportType);
             if (!isDriver)
-                await _reputationService.IncrementAsync(userId);   // drivers earn no rep
+                await IncrementReputationAndNotifyAsync(userId, userName);
+        }
+        else if (!isTruckReport)
+        {
+            // Report pending admin review — notify admins
+            await _hub.Clients.All.SendAsync("ReportCreated", new
+            {
+                ReportId    = report.Id,
+                ContainerId = dto.TrashContainerId > 0 ? dto.TrashContainerId : (int?)null,
+                ReportType  = dto.ReportType.ToString(),
+                UserName    = userName,
+                CreatedAt   = report.CreatedAt
+            });
         }
 
         if (isTruckReport)
@@ -174,8 +183,19 @@ public sealed class ReportService : IReportService
         if (report.TrashContainerId.HasValue)
             await _containerUpdateService.ApplyReportEffectAsync(report.TrashContainerId.Value, report.ReportType);
 
-        if (!await IsDriverAsync(report.UserId))
-            await _reputationService.IncrementAsync(report.UserId);
+        bool isDriver = await IsDriverAsync(report.UserId);
+        if (!isDriver)
+            await IncrementReputationAndNotifyAsync(report.UserId, report.UserName);
+
+        // Notify the reporter that their report was approved
+        await _hub.Clients.All.SendAsync("ReportStatusChanged", new
+        {
+            ReportId    = report.Id,
+            ContainerId = report.TrashContainerId,
+            IsApproved  = true,
+            UserId      = report.UserId,
+            ReportType  = report.ReportType.ToString()
+        });
     }
 
     public async Task RejectAsync(int reportId)
@@ -188,11 +208,37 @@ public sealed class ReportService : IReportService
 
         if (!await IsDriverAsync(report.UserId))
             await _reputationService.DecrementAsync(report.UserId);
+
+        // Notify the reporter that their report was rejected
+        await _hub.Clients.All.SendAsync("ReportStatusChanged", new
+        {
+            ReportId    = report.Id,
+            ContainerId = report.TrashContainerId,
+            IsApproved  = false,
+            UserId      = report.UserId,
+            ReportType  = report.ReportType.ToString()
+        });
     }
 
     #endregion
 
     #region Private
+
+    private async Task IncrementReputationAndNotifyAsync(string userId, string userName)
+    {
+        await _reputationService.IncrementAsync(userId);
+
+        // Read the updated reputation to include in the notification
+        var updatedUser = await _userManager.FindByIdAsync(userId);
+        var newReputation = updatedUser?.Reputation ?? 0;
+
+        await _hub.Clients.All.SendAsync("ReputationIncreased", new
+        {
+            UserId        = userId,
+            UserName      = userName,
+            NewReputation = newReputation
+        });
+    }
 
     private async Task<bool> IsDriverAsync(string userId)
     {

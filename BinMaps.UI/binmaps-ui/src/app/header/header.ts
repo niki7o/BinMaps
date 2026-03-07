@@ -86,6 +86,19 @@ export class Header implements OnInit, OnDestroy {
   markRead(id: string): void { this.notifService.markRead(id); }
   removeNotif(id: string): void { this.notifService.remove(id); }
 
+  navigateToNotification(n: { id: string; actionUrl?: string }): void {
+    this.notifService.markRead(n.id);
+    this.showNotifPanel.set(false);
+    if (n.actionUrl) {
+      this.router.navigateByUrl(n.actionUrl);
+    }
+  }
+
+  goToNotificationsPage(): void {
+    this.showNotifPanel.set(false);
+    this.router.navigate(['/notifications']);
+  }
+
   logout(): void {
     this.authService.logout();
     this.showUserMenu.set(false);

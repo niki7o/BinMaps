@@ -45,8 +45,11 @@
           </div>
 
           <div class="notif-body">
-            <div class="notif-item" *ngFor="let n of notifications"
-                 [class.notif-unread]="!n.read">
+            <div class="notif-item"
+                 *ngFor="let n of notifications"
+                 [class.notif-unread]="!n.read"
+                 [class.notif-clickable]="!!n.actionUrl"
+                 (click)="navigateToNotification(n)">
               <div class="notif-icon-wrapper" [ngClass]="n.iconType">
                 <svg class="notif-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path *ngIf="n.type === 'report'" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
@@ -60,10 +63,18 @@
               <div class="notif-content">
                 <div class="notif-title">{{ n.title }}</div>
                 <div class="notif-message">{{ n.description }}</div>
-                <div class="notif-time">{{ n.timeAgo }}</div>
+                <div class="notif-time-row">
+                  <span class="notif-time">{{ n.timeAgo }}</span>
+                  <span class="notif-goto-hint" *ngIf="n.actionUrl">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                    Карта
+                  </span>
+                </div>
               </div>
 
-              <button class="notif-close" title="Премахни" (click)="removeNotif(n.id)">
+              <button class="notif-close" title="Премахни" (click)="removeNotif(n.id); $event.stopPropagation()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M18 6L6 18M6 6l12 12"/>
                 </svg>
@@ -80,6 +91,16 @@
               <h3>Всичко е спокойно</h3>
               <p>Няма нови известия в момента</p>
             </div>
+          </div>
+
+          <!-- "See all" footer link -->
+          <div class="notif-footer">
+            <button class="notif-see-all" (click)="goToNotificationsPage()">
+              Виж всички известия
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </button>
           </div>
         </div>
       </div>

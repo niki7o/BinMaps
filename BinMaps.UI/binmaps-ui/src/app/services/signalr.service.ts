@@ -20,10 +20,31 @@ export interface TruckProblemEvent {
   createdAt:   string;
 }
 
+export interface ReportCreatedEvent {
+  reportId:    number;
+  containerId: number | null;
+  reportType:  string;
+  userName:    string;
+  createdAt:   string;
+}
+
+export interface ReportStatusChangedEvent {
+  reportId:    number;
+  containerId: number | null;
+  isApproved:  boolean;
+  userId:      string;
+  reportType:  string;
+}
+
+export interface ReputationIncreasedEvent {
+  userId:         string;
+  userName:       string;
+  newReputation:  number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ContainerSignalRService {
 
-  
   private static readonly RECONNECT_MS = [0, 2000, 5000, 10000, 30000] as const;
 
   private hub!: signalR.HubConnection;
@@ -34,86 +55,177 @@ export class ContainerSignalRService {
   readonly containerUpdates$  = this._updates$.asObservable();
   readonly truckProblems$     = this._truckProblems$.asObservable();
 
+  // Track which bins are already known to be on fire — prevents spam every 10s
+  private readonly _seenFires = new Set<number>();
+
   constructor(private readonly notifService: NotificationService) {}
 
   start(): void {
-  if (this.hub) return;
+    if (this.hub) return;
 
-  this.hub = this.buildHub();
-  this.registerHandlers();
+    this.hub = this.buildHub();
+    this.registerHandlers();
 
-  this.hub.onclose(async () => {
-    console.warn('SignalR disconnected. Reconnecting...');
+    this.hub.onclose(async () => {
+      console.warn('SignalR disconnected. Reconnecting...');
+      await this.reconnectLoop();
+    });
 
-    await this.reconnectLoop();
-  });
+    this.hub.start().catch(err => {
+      console.error('SignalR start error', err);
+      this.reconnectLoop();
+    });
+  }
 
-  this.hub.start().catch(err => {
-    console.error('SignalR start error', err);
-    this.reconnectLoop();
-  });
-}
-
-
-private async reconnectLoop(): Promise<void> {
-  let attempts = 0;
-
-  while (attempts < 10) {
-    try {
-      await new Promise(r => setTimeout(r, 3000));
-      await this.hub.start();
-      console.log('SignalR reconnected');
-      return;
-    } catch {
-      attempts++;
+  private async reconnectLoop(): Promise<void> {
+    let attempts = 0;
+    while (attempts < 10) {
+      try {
+        await new Promise(r => setTimeout(r, 3000));
+        await this.hub.start();
+        console.log('SignalR reconnected');
+        return;
+      } catch {
+        attempts++;
+      }
     }
   }
-}
 
   stop(): void { this.hub?.stop(); }
 
- private buildHub(): signalR.HubConnection {
-  const fullHubUrl = `${window.location.origin}${environment.hubUrl}`;
-  return new signalR.HubConnectionBuilder()
-    .withUrl(fullHubUrl, {
-      transport:
-        signalR.HttpTransportType.WebSockets |
-        signalR.HttpTransportType.LongPolling
-    })
-    .withAutomaticReconnect([...ContainerSignalRService.RECONNECT_MS])
-    .configureLogging(signalR.LogLevel.Warning)
-    .build();
-}
+  private buildHub(): signalR.HubConnection {
+    const fullHubUrl = `${window.location.origin}${environment.hubUrl}`;
+    return new signalR.HubConnectionBuilder()
+      .withUrl(fullHubUrl, {
+        transport:
+          signalR.HttpTransportType.WebSockets |
+          signalR.HttpTransportType.LongPolling
+      })
+      .withAutomaticReconnect([...ContainerSignalRService.RECONNECT_MS])
+      .configureLogging(signalR.LogLevel.Warning)
+      .build();
+  }
+
   private registerHandlers(): void {
+
+    // ── Container sensor updates (every ~10s) ─────────────────────────────
     this.hub.on('ContainersUpdated', (updates: ContainerUpdate[]) => {
       this._updates$.next(updates);
+
       updates.forEach(u => {
-        if (u.status === 2) {
+        const isOnFire = u.status === 2;
+
+        if (isOnFire && !this._seenFires.has(u.id)) {
+          // First time we detect this bin is on fire → push notification once
+          this._seenFires.add(u.id);
           this.notifService.push({
             type:        'fire',
             severity:    'critical',
             iconType:    'danger',
-            title:       'Пожарна опасност',
+            title:       '🔥 Пожарна опасност',
             description: `Контейнер #${u.id} е в пожар`,
             timeAgo:     'Сега',
             filter:      'critical',
-            forRoles:    ['User', 'Admin', 'Driver']
+            forRoles:    ['User', 'Admin', 'Driver'],
+            containerId: u.id,
+            actionUrl:   `/map?bin=${u.id}`
           });
+        }
+
+        // When a bin transitions back to non-fire, remove it from seen set
+        // so a future re-ignition will generate a new notification
+        if (!isOnFire) {
+          this._seenFires.delete(u.id);
         }
       });
     });
 
+    // ── Truck problem (driver reports) ────────────────────────────────────
     this.hub.on('TruckProblemReported', (ev: TruckProblemEvent) => {
       this._truckProblems$.next(ev);
       this.notifService.push({
         type:        'report',
         severity:    'warning',
         iconType:    'warn',
-        title:       'Проблем с камион',
+        title:       '🚛 Проблем с камион',
         description: ev.description || `Докладван от ${ev.reporter}`,
         timeAgo:     'Сега',
         filter:      'reports',
-        forRoles:    ['Driver', 'Admin']
+        forRoles:    ['Driver', 'Admin'],
+        containerId: ev.containerId ?? undefined,
+        actionUrl:   ev.containerId ? `/map?bin=${ev.containerId}` : undefined
+      });
+    });
+
+    // ── New report submitted (admin gets notified) ────────────────────────
+    this.hub.on('ReportCreated', (ev: ReportCreatedEvent) => {
+      const typeLabel: Record<string, string> = {
+        Full:           'Пълен',
+        Fire:           'Пожар',
+        SensorBroken:   'Счупен сензор',
+        ContainerDamage:'Повреден контейнер',
+        TruckProblem:   'Проблем с камион'
+      };
+      const label = typeLabel[ev.reportType] ?? ev.reportType;
+      this.notifService.push({
+        type:        'report',
+        severity:    'info',
+        iconType:    'blue',
+        title:       '📋 Нов доклад за преглед',
+        description: `${ev.userName} докладва: ${label}${ev.containerId ? ` (Контейнер #${ev.containerId})` : ''}`,
+        timeAgo:     'Сега',
+        filter:      'reports',
+        forRoles:    ['Admin'],
+        containerId: ev.containerId ?? undefined,
+        actionUrl:   ev.containerId ? `/map?bin=${ev.containerId}` : undefined
+      });
+    });
+
+    // ── Report approved / rejected (user gets notified) ───────────────────
+    this.hub.on('ReportStatusChanged', (ev: ReportStatusChangedEvent) => {
+      if (ev.isApproved) {
+        this.notifService.push({
+          type:        'report',
+          severity:    'info',
+          iconType:    'eco',
+          title:       '✅ Докладът е одобрен',
+          description: `Вашият доклад е одобрен${ev.containerId ? ` за Контейнер #${ev.containerId}` : ''}`,
+          timeAgo:     'Сега',
+          filter:      'reports',
+          forRoles:    ['User'],
+          targetUserId: ev.userId,
+          containerId:  ev.containerId ?? undefined,
+          actionUrl:    ev.containerId ? `/map?bin=${ev.containerId}` : undefined
+        });
+      } else {
+        this.notifService.push({
+          type:        'report',
+          severity:    'warning',
+          iconType:    'warn',
+          title:       '❌ Докладът е отхвърлен',
+          description: `Вашият доклад е отхвърлен${ev.containerId ? ` за Контейнер #${ev.containerId}` : ''}`,
+          timeAgo:     'Сега',
+          filter:      'reports',
+          forRoles:    ['User'],
+          targetUserId: ev.userId,
+          containerId:  ev.containerId ?? undefined,
+          actionUrl:    ev.containerId ? `/map?bin=${ev.containerId}` : undefined
+        });
+      }
+    });
+
+    // ── Reputation increased (user personal notification) ─────────────────
+    this.hub.on('ReputationIncreased', (ev: ReputationIncreasedEvent) => {
+      this.notifService.push({
+        type:        'route',
+        severity:    'info',
+        iconType:    'eco',
+        title:       '⭐ Репутацията ви нарасна',
+        description: `Вашата репутация е вече ${ev.newReputation} точки`,
+        timeAgo:     'Сега',
+        filter:      'all',
+        forRoles:    ['User'],
+        targetUserId: ev.userId
       });
     });
   }
