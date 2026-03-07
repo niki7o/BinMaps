@@ -1,4 +1,4 @@
-using BinMaps.Data.Entities;
+﻿using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
 
 namespace BinMaps.Infrastructure;
@@ -28,7 +28,7 @@ public sealed class FillageSimulator
         TrashType.Plastic => 1.2,
         TrashType.Paper => 1.0,
         TrashType.Glass => 0.8,
-        _ => 1.0
+        _                 => 1.0
     };
 
     private static double GetTimeMultiplier()
@@ -49,7 +49,7 @@ public sealed class FillageSimulator
             TrashType.Plastic => fill * 6.0,
             TrashType.Paper => fill * 5.0,
             TrashType.Glass => fill * 2.0,
-            _ => fill * 5.0
+            _                 => fill * 5.0
         };
 
         var variation = (Random.Shared.NextDouble() * 4) - 2;

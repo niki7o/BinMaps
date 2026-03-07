@@ -1,4 +1,4 @@
-﻿using BinMaps.Data.Entities;
+﻿﻿using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
 using BinMaps.Infrastructure.Hubs;
 using BinMaps.Infrastructure.Repository;
@@ -115,7 +115,7 @@ public sealed class TrashContainersController : ControllerBase
             new
             {
                 Id  = id,
-                FillPercentage    = 0.0,
+                FillPercentage = 0.0,
                 Temperature  = container.Temperature,
                 BatteryPercentage = container.BatteryPercentage,
                 Status = (int)TrashContainerStatus.Active
@@ -142,11 +142,11 @@ public sealed class TrashContainersController : ControllerBase
             return NotFound();
 
         container.FillPercentage = dto.FillPercentage;
-        container.Status        = dto.Status;
+        container.Status = dto.Status;
 
         if (dto.HasSensor && !container.HasSensor)
         {
-            container.HasSensor = true;
+            container.HasSensor  = true;
             container.BatteryPercentage = 100;
             container.Temperature = null;
         }
@@ -154,7 +154,7 @@ public sealed class TrashContainersController : ControllerBase
         {
             container.HasSensor = false;
             container.BatteryPercentage = null;
-            container.Temperature = null;
+            container.Temperature  = null;
         }
 
         await _containerRepo.UpdateAsync(container);
@@ -164,10 +164,10 @@ public sealed class TrashContainersController : ControllerBase
             new
             {
                 Id = id,
-                FillPercentage = dto.FillPercentage,
-                Temperature = container.Temperature,
+                FillPercentage= dto.FillPercentage,
+                Temperature  = container.Temperature,
                 BatteryPercentage = container.BatteryPercentage,
-                HasSensor = container.HasSensor,
+                HasSensor  = container.HasSensor,
                 Status = (int)dto.Status
             }
         });

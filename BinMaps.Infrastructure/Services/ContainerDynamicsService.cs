@@ -1,4 +1,4 @@
-﻿using BinMaps.Data;
+﻿﻿using BinMaps.Data;
 using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
 using BinMaps.Infrastructure.Hubs;
@@ -16,7 +16,7 @@ public sealed class ContainerDynamicsService : BackgroundService
     private static readonly TimeSpan UpdateInterval = TimeSpan.FromSeconds(10);
     private const int BatchSize = 50;
     private const double SofiaLat = 42.6977;
-    private const double SofiaLng = 23.3219;
+    private const double SofiaLng  = 23.3219;
     private const double FallbackAmbient = 20.0;
     private const double LowBatteryThreshold = 20.0;
 
@@ -32,8 +32,8 @@ public sealed class ContainerDynamicsService : BackgroundService
         ILogger<ContainerDynamicsService> logger)
     {
         _scopeFactory = scopeFactory;
-        _hubContext = hubContext;
-        _logger = logger;
+        _hubContext  = hubContext;
+        _logger  = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -142,7 +142,7 @@ public sealed class ContainerDynamicsService : BackgroundService
                         Type = "battery_low",
                         ContainerId = container.Id,
                         AreaId= container.AreaId,
-                        Battery = Math.Round(container.BatteryPercentage.Value, 1),
+                        Battery  = Math.Round(container.BatteryPercentage.Value, 1),
                         Message= $"Ниска батерия: контейнер #{container.Id} ({container.AreaId}) — {container.BatteryPercentage.Value:F0}%"
                     });
                 }
@@ -174,7 +174,7 @@ public sealed class ContainerDynamicsService : BackgroundService
             {
                 var entry = db.Entry(c);
                 entry.Property(x => x.FillPercentage).IsModified = true;
-                entry.Property(x => x.Temperature).IsModified = true;
+                entry.Property(x => x.Temperature).IsModified   = true;
                 entry.Property(x => x.BatteryPercentage).IsModified = true;
                 entry.Property(x => x.HasSensor).IsModified = true;
                 if (c.Status != TrashContainerStatus.Offline)
@@ -196,5 +196,5 @@ public sealed class ContainerDynamicsService : BackgroundService
             Status = (int?)c.Status
         });
         await _hubContext.Clients.All.SendAsync("ContainersUpdated", payload, token);
-    }
-}
+        
+}}
