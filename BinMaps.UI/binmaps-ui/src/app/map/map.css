@@ -530,12 +530,20 @@
   align-items: stretch;
 }
 
-/* Both buttons share equal width */
+/* Both primary nav buttons share equal width */
 .route-actions .btn-simulate,
 .route-actions .btn-stop {
   flex: 1;
+  min-width: 0;
   width: auto;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Breakdown button sits below, full-width, on its own row */
+.breakdown-action {
+  margin-top: 0.45rem;
 }
 
 
@@ -3267,6 +3275,7 @@
 
 .mode-btn {
   flex: 1;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3280,6 +3289,9 @@
   background: rgba(255,255,255,0.05);
   color: var(--text-secondary, #94a3b8);
   transition: background 0.18s, color 0.18s, border-color 0.18s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .mode-btn:hover {
   background: rgba(255,255,255,0.10);
@@ -3307,7 +3319,6 @@
   transition: background 0.18s, border-color 0.18s;
   width: 100%;
   justify-content: center;
-  margin-top: 0.4rem;
 }
 .btn-breakdown:hover {
   background: rgba(239,68,68,0.22);
@@ -3317,23 +3328,60 @@
 /* ── Step controls panel ─────────────────────────────────────────────────── */
 .step-controls {
   display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  background: rgba(16,185,129,0.07);
+  border: 1px solid rgba(16,185,129,0.25);
+}
+
+.step-controls__header {
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.6rem;
-  margin-top: 0.75rem;
-  padding: 0.65rem 0.8rem;
-  border-radius: 9px;
-  background: rgba(16,185,129,0.08);
-  border: 1px solid rgba(16,185,129,0.25);
+  gap: 0.5rem;
 }
 
 .step-current-info {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.80rem;
-  font-weight: 600;
+  font-size: 0.82rem;
+  font-weight: 700;
   color: #34d399;
+}
+
+.step-controls__stats {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.step-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 7px;
+  background: rgba(16,185,129,0.10);
+  border: 1px solid rgba(16,185,129,0.18);
+  text-align: center;
+}
+
+.step-stat__label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary, #64748b);
+}
+
+.step-stat__value {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary, #f1f5f9);
 }
 
 .btn-next-step {

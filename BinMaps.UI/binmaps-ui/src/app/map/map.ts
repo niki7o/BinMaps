@@ -90,13 +90,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   stepPending    = false;                       // true when waiting for user to confirm next stop
   private _stepResolve?: () => void;           // resolves the step-wait promise
 
-  // ── Breakdown modal ───────────────────────────────────────────────────────
-  breakdownModal: {
-    visible:  boolean;
-    zoneName: string;
-    stopName: string;
-    binId:    number;
-  } | null = null;
   // ─────────────────────────────────────────────────────────────────────────
 
   // ── AI Conflict Modal ─────────────────────────────────────────────────────
@@ -746,54 +739,36 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this._stepResolve = undefined;
   }
 
-  // ── Breakdown modal ───────────────────────────────────────────────────────
-  showBreakdownModal(): void {
-    const idx  = Math.max(0, this.currentStop - 1);
-    const stop = this.routeResult?.route[idx];
-    this.breakdownModal = {
-      visible:  true,
-      zoneName: this.routeResult?.areaId ?? 'Неизвестна зона',
-      stopName: stop ? `Контейнер #${stop.id} (Спирка ${this.currentStop})` : 'Неизвестно',
-      binId:    stop?.id ?? 0
-    };
-  }
+  // ── Breakdown: stop navigation and open report panel pre-filled ──────────
+  triggerBreakdown(): void {
+    // Grab context before clearing state
+    const idx      = Math.max(0, this.currentStop - 1);
+    const stop     = this.routeResult?.route[idx];
+    const zoneName = this.routeResult?.areaId ?? 'Неизвестна зона';
+    const stopName = stop
+      ? `Контейнер #${stop.id} (Спирка ${this.currentStop})`
+      : 'Неизвестно';
 
-  cancelBreakdown(): void {
-    this.breakdownModal = null;
-  }
-
-  async confirmBreakdown(): Promise<void> {
-    const modal = this.breakdownModal;
-    if (!modal) return;
-
-    this.breakdownModal = null;
-
-    // Stop any ongoing navigation
+    // Halt navigation loop
     this.navigationActive = false;
     this.stepPending      = false;
     this._stepResolve?.();
     this._stepResolve = undefined;
 
-    // Submit TruckProblem report via existing API
-    const token = this.getToken();
-    if (token) {
-      const fd = new FormData();
-      if (modal.binId > 0) fd.append('TrashContainerId', modal.binId.toString());
-      fd.append('ReportType', '3');   // TruckProblem
-      fd.append('Description',
-        `🚨 Камионът е повреден в ${modal.zoneName}. Последна спирка: ${modal.stopName}`);
+    // Pre-fill report panel as TruckProblem
+    this.selectedReportType  = 'TruckProblem';
+    this.reportDescription   =
+      `🚨 Камионът е повреден в ${zoneName}. Последна спирка: ${stopName}.`;
 
-      this.http.post(`${this.API_URL}/reports`, fd, {
-        headers: new HttpHeaders({ Authorization: `Bearer ${token}` })
-      }).toPromise().catch(() => {});
-    }
+    // Open the report panel (opens edge panel if hidden)
+    this.toggleReportPanel(true);
 
-    // Clear the route
+    // Clear route state
     this.clearRoute();
-    this.routeActive       = false;
-    this.routeResult       = null;
-    this.currentStop       = 0;
-    this.currentTruckLoad  = 0;
+    this.routeActive      = false;
+    this.routeResult      = null;
+    this.currentStop      = 0;
+    this.currentTruckLoad = 0;
     this.loadBins();
   }
 
