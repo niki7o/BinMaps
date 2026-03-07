@@ -1,12 +1,10 @@
-﻿using BinMaps.Data.Entities;
+using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
 
 namespace BinMaps.Infrastructure;
 
 public sealed class FillageSimulator
 {
-    #region Fill
-
     public double CalculateFillIncrement(TrashContainer container, double zoneMultiplier)
     {
         var slowdown = container.FillPercentage switch
@@ -26,11 +24,11 @@ public sealed class FillageSimulator
 
     private static double GetTypeMultiplier(TrashType type) => type switch
     {
-        TrashType.Mixed => 1.5,
+        TrashType.Mixed   => 1.5,
         TrashType.Plastic => 1.2,
-        TrashType.Paper => 1.0,
-        TrashType.Glass => 0.8,
-        _ => 1.0
+        TrashType.Paper   => 1.0,
+        TrashType.Glass   => 0.8,
+        _                 => 1.0
     };
 
     private static double GetTimeMultiplier()
@@ -41,30 +39,25 @@ public sealed class FillageSimulator
              : 1.0;
     }
 
-    #endregion
-
-    #region Temperature
-
     public double SimulateTemperature(TrashContainer container, double ambientCelsius)
     {
-        var organicHeat = container.TrashType == TrashType.Mixed
-            ? container.FillPercentage * 0.15
-            : 0;
+        var fill = container.FillPercentage / 100.0;
+
+        var heatRise = container.TrashType switch
+        {
+            TrashType.Mixed   => fill * 15.0,
+            TrashType.Plastic => fill * 6.0,
+            TrashType.Paper   => fill * 5.0,
+            TrashType.Glass   => fill * 2.0,
+            _                 => fill * 5.0
+        };
 
         var variation = (Random.Shared.NextDouble() * 4) - 2;
-        return Math.Clamp(ambientCelsius + organicHeat + variation, 10, 60);
+        return Math.Clamp(ambientCelsius + heatRise + variation, -20, 58);
     }
-
-    #endregion
-
-    #region Battery
 
     public static double CalculateBatteryDrain(TrashContainer container)
         => 0.002 * (container.Temperature > 30 ? 1.3 : 1.0);
-
-    #endregion
-
-    #region Status
 
     public static TrashContainerStatus DetermineStatus(TrashContainer container)
     {
@@ -77,12 +70,6 @@ public sealed class FillageSimulator
         return TrashContainerStatus.Active;
     }
 
-    #endregion
-
-    #region Misc
-
     public static double GetEmptyFillLevel()
         => 2.0 + Random.Shared.NextDouble() * 6.0;
-
-    #endregion
 }

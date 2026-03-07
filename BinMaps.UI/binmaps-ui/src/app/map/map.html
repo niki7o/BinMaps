@@ -1,10 +1,10 @@
 <div class="map-page">
 
-  <!-- ════════════════════ AI CONFLICT MODAL ═════════════════════════════ -->
+
   <div class="ai-modal-backdrop" *ngIf="aiConflictModal?.visible" (click)="cancelAiModal()">
     <div class="ai-modal" (click)="$event.stopPropagation()">
 
-      <!-- Header -->
+     
       <div class="ai-modal__header">
         <div class="ai-modal__icon"
              [class.ai-modal__icon--warn]="aiConflictModal!.variant === 'conflict'"
@@ -19,10 +19,10 @@
         </div>
       </div>
 
-      <!-- Body: conflict variant -->
+     
       <div class="ai-modal__body" *ngIf="aiConflictModal!.variant === 'conflict'">
 
-        <!-- Report vs AI side-by-side -->
+     
         <div class="ai-modal__grid">
           <div class="ai-modal__side ai-modal__side--report">
             <span class="ai-modal__side-label">Вие докладвате</span>
@@ -33,8 +33,6 @@
             <span class="ai-modal__side-value">{{ aiConflictModal!.aiLabel }}</span>
           </div>
         </div>
-
-        <!-- Confidence bar -->
         <div class="ai-modal__conf-row">
           <span class="ai-modal__conf-label">Увереност</span>
           <div class="ai-modal__bar-track">
@@ -42,14 +40,10 @@
           </div>
           <span class="ai-modal__conf-pct">{{ aiConflictModal!.confidence.toFixed(0) }}%</span>
         </div>
-
-        <!-- Plain-language description -->
         <div class="ai-modal__desc">
           <strong>{{ aiConflictModal!.confidence.toFixed(0) }}% увереност</strong> означава:
           {{ aiConflictModal!.aiDesc }}.
         </div>
-
-        <!-- Manual review info -->
         <div class="ai-modal__info-row">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="flex-shrink:0;margin-top:1px">
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -58,8 +52,6 @@
             <strong>ръчна проверка</strong> вместо автоматично одобрение.</span>
         </div>
       </div>
-
-      <!-- Body: no-bin variant -->
       <div class="ai-modal__body" *ngIf="aiConflictModal!.variant === 'noBin'">
         <div class="ai-modal__info-row">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="flex-shrink:0;margin-top:1px">
@@ -69,8 +61,6 @@
             сигналът ще бъде изпратен за <strong>ръчна модерация</strong>.</span>
         </div>
       </div>
-
-      <!-- Footer -->
       <div class="ai-modal__footer">
         <button class="ai-modal__btn ai-modal__btn--cancel" (click)="cancelAiModal()">Откажи</button>
         <button class="ai-modal__btn"
@@ -83,11 +73,8 @@
 
     </div>
   </div>
-  <!-- ════════════════════════════════════════════════════════════════════ -->
-
   <div class="map-layout">
 
-    <!-- ═══════════════════ LEFT: ROUTE / NAVIGATION ═══════════════════ -->
     <aside class="map-sidebar left" *ngIf="isDriver && showRoutePanel">
       <div class="sidebar-panel">
         <div class="panel-header">
@@ -100,7 +87,7 @@
           <h2>{{ routeActive ? 'Навигация' : 'Маршрут' }}</h2>
         </div>
 
-        <!-- Route generation form -->
+        
         <div class="panel-content" *ngIf="!routeActive">
 
           <div class="form-group">
@@ -158,7 +145,7 @@
           </button>
         </div>
 
-        <!-- Active navigation panel -->
+       
         <div class="panel-content" *ngIf="routeActive && routeResult">
           <div class="route-stats">
             <div class="stat-card">
@@ -183,7 +170,7 @@
             </div>
           </div>
 
-          <!-- ── Navigation mode toggle ──────────────────────────────── -->
+         
           <div class="nav-mode-toggle" *ngIf="!isAdmin && !navigationActive">
             <button class="mode-btn" [class.mode-btn--active]="navigationMode === 'auto'"
                     (click)="navigationMode = 'auto'">
@@ -219,7 +206,6 @@
             </button>
           </div>
 
-          <!-- Breakdown button — full-width, separate row, visible only during navigation -->
           <div class="breakdown-action" *ngIf="navigationActive && !isAdmin">
             <button class="btn-breakdown" (click)="triggerBreakdown()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
@@ -242,7 +228,7 @@
               </div>
             </div>
 
-            <!-- Step controls — only in step mode while waiting for confirmation -->
+            
             <div class="step-controls" *ngIf="navigationMode === 'step' && stepPending && currentCollectedStop">
               <div class="step-controls__header">
                 <div class="step-current-info">
@@ -255,7 +241,7 @@
                   Следваща →
                 </button>
               </div>
-              <!-- Per-stop stats — values captured from allBins at moment of collection -->
+              
               <div class="step-controls__stats">
                 <div class="step-stat">
                   <span class="step-stat__label">Беше пълно</span>
@@ -275,8 +261,6 @@
         </div>
       </div>
     </aside>
-
-    <!-- ═══════ LEFT EDGE HANDLE (toggles route panel) ═══════ -->
     <button
       class="edge-handle edge-handle--left"
       [class.is-open]="showRoutePanel"
@@ -287,8 +271,6 @@
       </svg>
       <span class="edge-label">Маршрут</span>
     </button>
-
-    <!-- ═══════════════════════ CENTER: MAP ═══════════════════════════ -->
     <main class="map-container">
       <div class="map-style-switcher">
         <button *ngFor="let style of mapStyles"
@@ -299,7 +281,7 @@
       <div id="map"></div>
 
       <div class="map-legend map-legend--br">
-        <!-- Header -->
+        
         <div class="leg-hdr">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
@@ -309,7 +291,6 @@
           <span>Легенда</span>
         </div>
 
-        <!-- Bin types section -->
         <div class="leg-section">
           <div class="leg-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -335,8 +316,6 @@
             <span class="leg-bin-label">Стъкло</span>
           </div>
         </div>
-
-        <!-- Status section -->
         <div class="leg-section">
           <div class="leg-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -353,8 +332,6 @@
             <span class="leg-bin-label" style="color:#94a3b8">Повреда / авария</span>
           </div>
         </div>
-
-        <!-- Fill level section -->
         <div class="leg-section" style="padding-bottom:10px">
           <div class="leg-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -404,7 +381,6 @@
       </div>
     </main>
 
-    <!-- ═══════ RIGHT EDGE HANDLE (toggles report panel) ═══════ -->
     <button
       class="edge-handle edge-handle--right"
       [class.is-open]="showReportPanel"
@@ -415,8 +391,6 @@
         <polyline points="15 18 9 12 15 6"/>
       </svg>
     </button>
-
-    <!-- ════════════════════ RIGHT: REPORT PANEL ══════════════════════ -->
     <aside class="map-sidebar right" *ngIf="(isUser || isDriver) && showReportPanel">
       <div class="sidebar-panel">
         <div class="panel-header">
@@ -429,8 +403,6 @@
         </div>
 
         <div class="panel-content">
-
-          <!-- Report type — tap-friendly buttons -->
           <div class="form-group">
             <label class="form-label">
               <svg class="form-label-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -484,7 +456,6 @@
             </div>
           </div>
 
-          <!-- AI indicator — shows whether AI analysis will run on photo upload -->
           <div class="rp-ai-badge rp-ai-badge--active"
                *ngIf="selectedReportType === 'Full' || selectedReportType === 'Fire'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
@@ -501,7 +472,6 @@
             <span>Без AI — снимката се запазва само като доказателство</span>
           </div>
 
-          <!-- Truck-problem notice: no bin required -->
           <div class="rp-truck-notice" *ngIf="selectedReportType === 'TruckProblem'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="1" y="3" width="15" height="13"/>
@@ -512,7 +482,6 @@
             <span>Докладване за камион — контейнерът е <strong>незадължителен</strong></span>
           </div>
 
-          <!-- Bin selector (hidden for TruckProblem) -->
           <div class="form-group" *ngIf="selectedReportType !== 'TruckProblem'">
             <label class="form-label">
               <svg class="form-label-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -575,7 +544,6 @@
             </div>
           </div>
 
-          <!-- AI quick-check spinner while photo is being evaluated -->
           <div class="photo-ai-checking" *ngIf="photoCheckingPreview">
             <svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
               <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
@@ -583,7 +551,6 @@
             <span>AI проверява снимката…</span>
           </div>
 
-          <!-- Warning: AI detected no bin in the photo -->
           <div class="photo-no-bin-warning" *ngIf="photoNoBinWarning && !photoCheckingPreview">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
@@ -601,7 +568,6 @@
             <span>{{ reportCheckingPhoto ? 'Проверка на снимка…' : reportSubmitting ? 'Изпращане…' : 'Изпрати докладване' }}</span>
           </button>
 
-          <!-- ── AI Result Card ── -->
           <div class="rp-result rp-result--compact" *ngIf="reportResult">
 
             <div class="rp-result__status"
@@ -630,10 +596,8 @@
               </span>
             </div>
 
-            <!-- AI block — only when photo was attached -->
             <ng-container *ngIf="reportResult.hadPhoto">
 
-              <!-- "No container" warning banner -->
               <div class="rp-result__no-bin" *ngIf="!reportResult.containerDetected">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
                   <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
@@ -643,7 +607,6 @@
                 <span>AI не откри контейнер на снимката — сигналът е пратен за модерация</span>
               </div>
 
-              <!-- AI succeeded: show Bulgarian label + confidence + description -->
               <div class="rp-result__ai-block" *ngIf="reportResult.aiScore > 0 && reportResult.containerDetected">
                 <div class="rp-result__ai-header">
                   <span class="rp-result__ai-icon">🤖</span>
@@ -658,7 +621,6 @@
                   </span>
                 </div>
 
-                <!-- Confidence bar (always visible — explains what the % means) -->
                 <div class="rp-result__ai-bar-row">
                   <div class="rp-result__ai-bar-track">
                     <div class="rp-result__ai-bar-fill"
@@ -671,14 +633,12 @@
                   <span class="rp-result__ai-pct">{{ reportResult.aiScore.toFixed(0) }}%</span>
                 </div>
 
-                <!-- Plain-language description of what the % means -->
                 <div class="rp-result__ai-desc">
                   <strong>{{ reportResult.aiScore.toFixed(0) }}% увереност</strong> означава:
                   {{ getAiClassInfo(reportResult.aiDetectedClass).description }}.
                 </div>
               </div>
 
-              <!-- AI returned 0 — service unreachable or error -->
               <div class="rp-result__ai-row rp-result__ai-row--nophoto" *ngIf="reportResult.aiScore === 0 && reportResult.containerDetected">
                 <span class="rp-result__ai-icon">🤖</span>
                 <span class="rp-result__ai-na">AI не отговори — снимката е запазена</span>
@@ -686,7 +646,6 @@
 
             </ng-container>
 
-            <!-- No photo -->
             <div class="rp-result__ai-row rp-result__ai-row--nophoto" *ngIf="!reportResult.hadPhoto">
               <span class="rp-result__ai-icon">🤖</span>
               <span class="rp-result__ai-na">Без снимка — AI не е използван</span>

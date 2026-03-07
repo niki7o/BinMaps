@@ -1,67 +1,149 @@
-# BinMaps — Стартиране с Docker
+# BinMaps
 
-## Изисквания
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) — единственото нужно нещо
+Система за мониторинг и управление на контейнери за отпадъци в реално време.
+
+## Технологии
+
+- **Backend** — .NET 8 Web API, ASP.NET Core Identity, SignalR, Entity Framework Core
+- **Frontend** — Angular 17, Leaflet, Chart.js
+- **AI сервис** — Python FastAPI (анализ на снимки с компютърно зрение)
+- **База данни** — MS SQL Server
+- **Контейнеризация** — Docker / Docker Compose
 
 ---
 
-## Стартиране (еднократно)
+## Бързо стартиране с Docker
 
-1. Отвори терминал (PowerShell или Command Prompt) в папката на проекта
-2. Изпълни:
+### Изисквания
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
+### 1. Настрой средата
+
+```bash
+cp .env.example .env
 ```
+
+Редактирай `.env` и попълни:
+
+| Променлива | Описание |
+|---|---|
+| `ConnectionStrings__DefaultConnection` | Connection string към SQL Server |
+| `Jwt__Key` | Таен ключ за JWT (мин. 32 символа) |
+| `ExternalAPIs__TomTom__ApiKey` | API ключ от [TomTom](https://developer.tomtom.com/) за маршрути |
+| `AllowedOrigins` | Разрешени произходи (напр. `http://localhost:4300`) |
+
+> **Бележка:** Температурите се вземат от [Open-Meteo](https://open-meteo.com/) — безплатен API, **без ключ**.
+
+### 2. Стартирай
+
+```bash
 docker compose up --build
 ```
 
-Първото стартиране ще отнеме **5–10 минути** (изтегля образи, компилира).
+Първото стартиране отнема **5–10 минути** (изтегля образи, компилира).
 
----
-
-## Достъп до приложението
+### 3. Достъп
 
 | Услуга | Адрес |
-|--------|-------|
-| **Приложение (Frontend)** | http://localhost |
-| **API** | http://localhost/api |
-| **AI Сервис** | http://localhost:8000 |
+|---|---|
+| Приложение (UI) | http://localhost:4300 |
+| API | http://localhost:4300/api |
+| AI Сервис (директно) | http://localhost:8000 |
 
----
+### Спиране
 
-## Спиране
-
-```
+```bash
 docker compose down
 ```
 
-За да изтриеш и базата данни:
-```
+За пълно изчистване (вкл. база данни):
+```bash
 docker compose down -v
+```
+
+### Повторно стартиране без rebuild
+
+```bash
+docker compose up
 ```
 
 ---
 
-## При повторно стартиране (без rebuild)
+## Локална разработка (без Docker)
 
+### Изисквания
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [Node.js 18+](https://nodejs.org/) и npm
+- [SQL Server](https://www.microsoft.com/en-us/sql-server/sql-server-downloads) (Developer Edition или SQL Server Express)
+- [Python 3.11+](https://www.python.org/) (за AI сервиса)
+
+### База данни
+
+Редактирай `BinMaps.API/appsettings.json`:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost\\SQLEXPRESS;Database=BinMaps;Trusted_Connection=True;TrustServerCertificate=True"
+  }
+}
 ```
-docker compose up
+
+Базата се създава и мигрира **автоматично** при стартиране на API-то. Seed данни (зони, контейнери, камиони) се зареждат при първо стартиране.
+
+### Backend (.NET API)
+
+```bash
+cd BinMaps.API
+dotnet run
 ```
+
+API ще се стартира на `http://localhost:8080`.
+
+### AI сервис (Python)
+
+```bash
+cd BinMaps.AI
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+### Frontend (Angular)
+
+```bash
+cd BinMaps.UI/binmaps-ui
+npm install
+ng serve --port 4200
+```
+
+Frontend ще се стартира на `http://localhost:4200`.
+
+> При локална разработка Angular dev server проксира `/api/` и `/hubs/` директно към `http://localhost:8080`. Провери `proxy.conf.json` ако е необходимо.
 
 ---
 
 ## Структура на проекта
 
 ```
-BinMaps.API/          — .NET 8 Web API
-BinMaps.UI/           — Angular 20 Frontend (nginx)
-BinMaps.AI/           — Python FastAPI AI Service
-BinMaps.Data/         — Entity Framework Core, Migrations
-BinMaps.Infrastructure/ — Services, SignalR
-BinMaps.Shared/       — DTOs
-BinMaps.Tests/        — Unit Tests (xUnit + Jasmine)
+BinMaps.API/            — ASP.NET Core Web API (контролери, SignalR хъб)
+BinMaps.UI/             — Angular 17 Frontend + nginx конфигурация
+BinMaps.AI/             — Python FastAPI (AI анализ на снимки)
+BinMaps.Data/           — Entity Framework Core модели, DbContext, миграции
+BinMaps.Infrastructure/ — Услуги, фонови задачи, SignalR, симулатор
+BinMaps.Shared/         — DTO-та (споделени между проектите)
+BinMaps.Tests/          — xUnit тестове
 ```
 
 ---
 
-> Базата данни се създава и мигрира **автоматично** при първото стартиране.
-> Тестови данни (контейнери, зони, камиони) се зареждат автоматично от Seeder-а.
+## Роли
+
+| Роля | Права |
+|---|---|
+| **Admin** | Пълен достъп: управление на контейнери, потребители, камиони, доклади |
+| **Driver** | Генериране и навигация по маршрути, изпразване на контейнери |
+| **User** | Подаване на сигнали, преглед на картата |
+
+---
+
+> Базата данни и seed данните се създават **автоматично** при първо стартиране — не е нужна ръчна конфигурация.

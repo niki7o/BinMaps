@@ -89,6 +89,20 @@ public sealed class AdminController : ControllerBase
 
         return Ok(trucks);
     }
+
+    [HttpPut("trucks/{id:int}/trashtype")]
+    public async Task<IActionResult> UpdateTruckTrashType([FromRoute] int id, [FromBody] int trashType)
+    {
+        if (!Enum.IsDefined(typeof(Data.Entities.Enums.TrashType), trashType))
+            return BadRequest(new { message = "Невалиден тип отпадък." });
+
+        var truck = await _context.Trucks.FindAsync(id);
+        if (truck is null) return NotFound();
+
+        truck.TrashType = (Data.Entities.Enums.TrashType)trashType;
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
     #endregion
 
     #region Users
@@ -103,7 +117,6 @@ public sealed class AdminController : ControllerBase
             var roles  = await _userManager.GetRolesAsync(user);
             var claims = await _userManager.GetClaimsAsync(user);
 
-            // Ban is stored as LockoutEnd = DateTimeOffset.MaxValue (no custom columns needed)
             var isBanned  = user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow;
             var banReason = claims.FirstOrDefault(c => c.Type == "ban_reason")?.Value;
 
@@ -133,16 +146,13 @@ public sealed class AdminController : ControllerBase
         var user = await _userManager.FindByIdAsync(id);
         if (user is null) return NotFound();
 
-        // Admins cannot be banned
         var roles = await _userManager.GetRolesAsync(user);
         if (roles.Contains("Admin"))
             return BadRequest(new { message = "Не можете да блокирате администратор." });
 
-        // Set lockout to far future — no schema change needed
         await _userManager.SetLockoutEnabledAsync(user, true);
         await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
 
-        // Store reason as a user claim (AspNetUserClaims — already exists)
         var existingClaims = await _userManager.GetClaimsAsync(user);
         var existing = existingClaims.FirstOrDefault(c => c.Type == "ban_reason");
         if (existing is not null)
@@ -158,10 +168,8 @@ public sealed class AdminController : ControllerBase
         var user = await _userManager.FindByIdAsync(id);
         if (user is null) return NotFound();
 
-        // Clear the lockout
         await _userManager.SetLockoutEndDateAsync(user, null);
 
-        // Remove the ban_reason claim
         var claims  = await _userManager.GetClaimsAsync(user);
         var banClaim = claims.FirstOrDefault(c => c.Type == "ban_reason");
         if (banClaim is not null)
@@ -241,7 +249,7 @@ public sealed class AdminController : ControllerBase
                 r.TrashContainerId,
                 ReportType = r.ReportType.ToString(),
                 r.FinalConfidence,
-                r.AI_Score,
+                AiScore = r.AI_Score,
                 r.UserReputationOnSubmit,
                 r.IsApproved,
                 r.PhotoURL,
@@ -268,7 +276,7 @@ public sealed class AdminController : ControllerBase
                 r.TrashContainerId,
                 ReportType = r.ReportType.ToString(),
                 r.FinalConfidence,
-                r.AI_Score,
+                AiScore = r.AI_Score,
                 r.UserReputationOnSubmit,
                 r.IsApproved,
                 r.PhotoURL,

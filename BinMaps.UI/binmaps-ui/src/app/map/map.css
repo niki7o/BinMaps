@@ -56,8 +56,7 @@
   overflow: hidden;
 }
 
-.map-layout > .edge-handle { }  /* direct flex children — stretch naturally */
-
+.map-layout > .edge-handle { } 
 
 
 .map-sidebar {
@@ -87,12 +86,11 @@
     inset 1px 0 0 rgba(59, 130, 246, 0.12);
 }
 
-/* Right panel (report) uses blue accent for header shimmer */
+
 .map-sidebar.right .panel-header::after {
   background: linear-gradient(90deg, var(--primary-tech), transparent);
 }
 
-/* Right panel header icon uses blue tint */
 .map-sidebar.right .panel-header svg {
   color: var(--primary-tech);
   filter: drop-shadow(var(--shadow-glow-blue));
@@ -102,7 +100,7 @@
   padding: var(--space-6);
 }
 
-/* Panel Header */
+
 .panel-header {
   display: flex;
   align-items: center;
@@ -158,7 +156,6 @@
   gap: var(--space-2);
 }
 
-/* ── Premium form label ─────────────────────────────────────── */
 .form-label {
   font-size: 0.73rem;
   font-weight: 700;
@@ -176,7 +173,6 @@
   flex-shrink: 0;
 }
 
-/* ── Base input / select / textarea ─────────────────────────── */
 .form-input,
 .form-select,
 .form-textarea {
@@ -211,18 +207,16 @@
     inset 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
-/* ── Custom-styled select ────────────────────────────────────── */
+
 .form-select {
   appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
   padding-right: 38px;
-  /* Force dark rendering of native elements (overrides OS light-mode override) */
   color-scheme: dark;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
-  /* Explicit colors so browser can't override with OS theme */
   color: #f1f5f9 !important;
   background-color: #0f1724 !important;
 }
@@ -249,7 +243,7 @@
   line-height: 1.55;
 }
 
-/* ── Icon-prefix wrapper for inputs / selects ─────────────────── */
+
 .form-field-wrap {
   position: relative;
 }
@@ -275,7 +269,7 @@
   padding-left: 38px;
 }
 
-/* File Input */
+
 .file-input-wrapper {
   position: relative;
   cursor: pointer;
@@ -438,13 +432,13 @@
   height: 20px;
 }
 
-/* Stop Button — same size as start button, red colour */
+
 .btn-stop {
   background: linear-gradient(135deg, var(--accent-alert) 0%, #dc2626 100%);
   box-shadow:
     0 4px 16px rgba(239, 68, 68, 0.3),
     inset 0 -2px 8px rgba(0, 0, 0, 0.2);
-  /* No custom padding — inherits the shared 1rem 1.5rem */
+ 
 }
 
 .btn-stop svg {
@@ -536,7 +530,7 @@
   align-items: stretch;
 }
 
-/* Both primary nav buttons share equal width */
+
 .route-actions .btn-simulate,
 .route-actions .btn-stop {
   flex: 1;
@@ -547,7 +541,7 @@
   text-overflow: ellipsis;
 }
 
-/* Breakdown button sits below, full-width, on its own row */
+
 .breakdown-action {
   margin-top: 0.45rem;
 }
@@ -625,7 +619,7 @@
 }
 
 
-/* ── Map style switcher — premium pill row ──────────────────── */
+
 .map-style-switcher {
   position: absolute;
   top: 12px;
@@ -644,7 +638,6 @@
   box-shadow:
     0 8px 24px rgba(0,0,0,0.55),
     inset 0 1px 0 rgba(255,255,255,0.04);
-  /* Allow the ::before accent bar pseudo-element */
   overflow: visible;
 }
 
@@ -691,13 +684,10 @@
 }
 
 
-/* ══════════════════════════════════════════════════════════════
-   Legend — premium glassmorphism redesign (leg-* namespace)
-   ══════════════════════════════════════════════════════════════ */
 .map-legend {
   position: absolute;
   bottom: var(--space-6);
-  left: var(--space-4);   /* default (legacy) */
+  left: var(--space-4); 
   z-index: 500;
   background: linear-gradient(160deg,
     rgba(10, 15, 28, 0.97) 0%,
@@ -713,14 +703,13 @@
   overflow: hidden;
 }
 
-/* Bottom-right variant — keeps legend away from top-left filter */
+
 .map-legend--br {
   left: unset;
   right: 16px;
-  bottom: 48px; /* above Leaflet attribution */
+  bottom: 48px; 
 }
 
-/* Rainbow top accent bar */
 .map-legend::before {
   content: '';
   position: absolute;
@@ -731,7 +720,6 @@
   z-index: 1;
 }
 
-/* Header */
 .leg-hdr {
   display: flex;
   align-items: center;
@@ -753,13 +741,11 @@
   color: #2e4159;
 }
 
-/* Sections */
+
 .leg-section {
   padding: 6px 13px 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.032);
 }
-
-/* Section title */
 .leg-title {
   display: flex;
   align-items: center;
@@ -781,7 +767,6 @@
   color: #2e4159;
 }
 
-/* Fill level rows */
 .leg-fill-row {
   display: flex;
   align-items: center;
@@ -844,7 +829,6 @@
   border: 1px solid rgba(6, 182, 212, 0.24);
 }
 
-/* ── Legend bin-type rows ───────────────────────────────────── */
 .leg-bin-row {
   display: flex;
   align-items: center;
@@ -873,7 +857,6 @@
   letter-spacing: -0.01em;
 }
 
-/* ── Form label optional tag ────────────────────────────────── */
 .form-label-opt {
   font-weight: 500;
   text-transform: none;
@@ -882,7 +865,6 @@
   font-size: 0.68rem;
 }
 
-/* ── Report type severity chip ──────────────────────────────── */
 .rp-type-chip {
   display: flex;
   align-items: center;
@@ -917,7 +899,6 @@
 .rp-type-chip--blue   { color: #93c5fd; background: rgba(59,130,246,0.07); border-color: rgba(59,130,246,0.18); }
 .rp-type-chip--blue   .rp-type-dot { background: #3b82f6; box-shadow: 0 0 6px rgba(59,130,246,0.5); }
 
-/* ── Truck problem notice ────────────────────────────────────── */
 .rp-truck-notice {
   display: flex;
   align-items: flex-start;
@@ -943,7 +924,7 @@
   color: var(--text-primary);
 }
 
-/* Legacy selectors hidden — HTML updated to leg-* */
+
 .legend-header, .legend-section, .legend-title,
 .legend-item, .legend-dot, .legend-icon,
 .legend-content { display: none; }
@@ -1064,7 +1045,7 @@
   height: 60px !important;
 }
 
-/* Custom Bin Marker */
+
 .custom-bin-marker {
   background: transparent !important;
   border: none !important;
@@ -1129,7 +1110,7 @@
   z-index: 1;
 }
 
-/* Sensor Dot */
+
 .sensor-dot {
   position: absolute;
   bottom: -4px;
@@ -1348,11 +1329,7 @@
 }
 
 
-/* ══════════════════════════════════════════════════════════════
-   Filter Control — Premium fc-* redesign
-   ══════════════════════════════════════════════════════════════ */
 
-/* Reset Leaflet outer wrapper */
 .map-filter-control {
   background: none !important;
   border: none !important;
@@ -1360,7 +1337,6 @@
   padding: 0 !important;
 }
 
-/* ── Filter toggle button ─────────────────────────────────────── */
 .fc-toggle {
   display: flex;
   align-items: center;
@@ -1381,8 +1357,6 @@
 .fc-toggle--collapsed { border-bottom-color: transparent; }
 .fc-toggle svg { opacity: 0.7; flex-shrink: 0; }
 .fc-body { overflow: hidden; }
-
-/* ── Outer glass card ─────────────────────────────────────────── */
 .fc-wrap {
   background: linear-gradient(160deg,
     rgba(10, 15, 28, 0.97) 0%,
@@ -1400,8 +1374,6 @@
   overflow: hidden;
   position: relative;
 }
-
-/* Rainbow top accent bar */
 .fc-wrap::before {
   content: '';
   position: absolute;
@@ -1412,7 +1384,6 @@
   z-index: 1;
 }
 
-/* ── Search hero row ──────────────────────────────────────────── */
 .fc-search {
   position: relative;
   display: flex;
@@ -1489,7 +1460,6 @@
 
 .fc-search-go svg { width: 12px; height: 12px; }
 
-/* ── Hairline separator ───────────────────────────────────────── */
 .fc-sep {
   height: 1px;
   margin: 0 10px;
@@ -1500,7 +1470,6 @@
     transparent 100%);
 }
 
-/* ── "Filters" header row ─────────────────────────────────────── */
 .fc-hdr {
   display: flex;
   align-items: center;
@@ -1543,7 +1512,6 @@
   border-color: rgba(148, 163, 184, 0.26);
 }
 
-/* ── Content blocks ───────────────────────────────────────────── */
 .fc-block {
   padding: 5px 11px 6px;
   border-top: 1px solid rgba(255, 255, 255, 0.032);
@@ -1551,7 +1519,6 @@
 
 .fc-block--last { padding-bottom: 11px; }
 
-/* Sub-label with icon */
 .fc-blk-lbl {
   display: flex;
   align-items: center;
@@ -1573,7 +1540,6 @@
   color: #2e4159;
 }
 
-/* ── Zone select ──────────────────────────────────────────────── */
 .fc-select {
   width: 100%;
   height: 31px;
@@ -1606,7 +1572,6 @@
   color: #e2e8f0;
 }
 
-/* ── Pill buttons ─────────────────────────────────────────────── */
 .fc-pills {
   display: flex;
   flex-wrap: wrap;
@@ -1637,7 +1602,6 @@
   color: #6a8099;
 }
 
-/* Color dot (type pills) */
 .fc-dot {
   display: inline-block;
   width: 6px; height: 6px;
@@ -1645,7 +1609,6 @@
   flex-shrink: 0;
 }
 
-/* "All" active — green→blue gradient */
 .fc-pill--all.active {
   background: linear-gradient(135deg,
     rgba(16, 185, 129, 0.20) 0%,
@@ -1655,7 +1618,6 @@
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.14);
 }
 
-/* Type pill active states */
 .fc-pill--t0.active {
   background: rgba(148, 163, 184, 0.15);
   border-color: rgba(148, 163, 184, 0.30);
@@ -1684,7 +1646,6 @@
   box-shadow: 0 1px 5px rgba(6, 182, 212, 0.14);
 }
 
-/* Mini fill-bar (inside fill pills) */
 .fc-fillbar {
   display: inline-block;
   width: 20px; height: 4px;
@@ -1706,7 +1667,6 @@
   border-radius: 3px;
 }
 
-/* Fill pill active states */
 .fc-pill--flow.active {
   background: rgba(16, 185, 129, 0.16);
   border-color: rgba(16, 185, 129, 0.34);
@@ -1813,12 +1773,6 @@
 .map-sidebar::-webkit-scrollbar-thumb:hover {
   background: #059669;
 }
-/* ══════════════════════════════════════════════════════════════════
-   BinMaps — Bin Marker & Popup   (bin-markers.css)
-   Uses real assets: bin-*.svg, bin-fire.svg, sensor-dot.svg, truck.svg
-   ══════════════════════════════════════════════════════════════════ */
-
-/* ── Leaflet popup wrapper ────────────────────────────────────── */
 .bpp-container .leaflet-popup-content-wrapper {
   background:    #0d1b2a;
   border:        1px solid rgba(148,163,184,0.13);
@@ -1835,7 +1789,6 @@
 }
 .bpp-container .leaflet-popup-close-button:hover { color: #e2e8f0 !important; }
 
-/* ══ POPUP INNER ══════════════════════════════════════════════════ */
 .bpp {
   width: 262px;
   padding: 15px 15px 12px;
@@ -1872,7 +1825,6 @@
   white-space: nowrap; letter-spacing: 0.03em;
 }
 
-/* Fill */
 .bpp-fill { display: flex; flex-direction: column; gap: 6px; }
 .bpp-fill-row {
   display: flex; justify-content: space-between; align-items: center;
@@ -1902,7 +1854,6 @@
 }
 @keyframes ppShine { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
 
-/* Temperature block */
 .bpp-temp {
   display: flex; align-items: center; justify-content: space-between;
   gap: 8px; padding: 10px 12px;
@@ -1962,7 +1913,7 @@
 .bpp-warn--warm { background: rgba(249,115,22,0.12); color: #f97316; }
 @keyframes warnBlink { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-/* Rows */
+
 .bpp-rows { display: flex; flex-direction: column; gap: 1px; }
 .bpp-row {
   display: flex; align-items: center; gap: 7px;
@@ -1974,7 +1925,7 @@
 .bpp-row img { flex-shrink: 0; opacity: 0.8; }
 .bpp-row span:last-child { margin-left: auto; }
 
-/* ══ BIN MARKER ═══════════════════════════════════════════════════ */
+
 .bm-host {
   background: transparent !important;
   border: none !important;
@@ -1989,19 +1940,19 @@
   gap: 2px;
   cursor: pointer;
   transition: transform 0.2s ease;
-  /* hardware-accelerate so setLatLng doesn't trigger repaints */
+  
   will-change: transform;
 }
 .bm:hover { transform: scale(1.13) translateY(-2px); }
 
-/* Critical — whole marker pulses red */
+
 .bm-critical { animation: critPulse 1.3s ease-in-out infinite; }
 @keyframes critPulse {
   0%,100% { filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5)); }
   50%      { filter: drop-shadow(0 4px 22px rgba(239,68,68,0.75)); }
 }
 
-/* Conic ring (fill indicator) */
+
 .bm-ring {
   width: 48px; height: 48px;
   border-radius: 50%;
@@ -2011,7 +1962,7 @@
 }
 .bm:hover .bm-ring { transform: scale(1.05); }
 
-/* Dark inner circle */
+
 .bm-inner {
   width: 100%; height: 100%;
   border-radius: 50%;
@@ -2020,14 +1971,13 @@
   border: 2px solid rgba(255,255,255,0.07);
 }
 
-/* Bin icon image inside the circle */
 .bm-binimg {
   width: 22px; height: 22px;
   filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
   pointer-events: none; user-select: none;
 }
 
-/* ID label */
+
 .bm-id {
   font-size: 9.5px; font-weight: 800;
   color: rgba(255,255,255,0.88);
@@ -2038,7 +1988,6 @@
   margin-top: 1px;
 }
 
-/* Sensor dot (sensor-dot.svg) */
 .bm-sensor {
   position: absolute;
   top: 2px; right: 1px;
@@ -2046,7 +1995,7 @@
   pointer-events: none; user-select: none;
 }
 
-/* Temperature badge */
+
 .bm-tbadge {
   position: absolute;
   bottom: 20px; right: -8px;
@@ -2076,7 +2025,6 @@
   50%      { box-shadow: 0 0 12px rgba(239,68,68,0.85); }
 }
 
-/* ── Flame images (bin-fire.svg) ──────────────────────────────── */
 .bm-flame {
   position: absolute;
   width: 18px; height: 18px;
@@ -2087,7 +2035,6 @@
   z-index: 5;
 }
 
-/* Three-flame layout for real fire (>55°C) */
 .bm-flame-1 {
   left: 50%; top: -14px;
   transform: translateX(-50%);
@@ -2102,7 +2049,7 @@
   width: 15px; height: 15px;
 }
 
-/* Warm — single small flame, subtle */
+
 .bm-flame.bm-warm {
   left: 50%; top: -10px;
   width: 14px; height: 14px;
@@ -2111,7 +2058,6 @@
   filter: drop-shadow(0 0 3px rgba(249,115,22,0.5));
 }
 
-/* Animations for each flame position */
 .bm-flame-1.bm-fire { animation: flame1 0.65s infinite; }
 .bm-flame-2.bm-fire { animation: flame2 0.80s infinite 0.08s; }
 .bm-flame-3.bm-fire { animation: flame3 0.75s infinite 0.18s; }
@@ -2135,14 +2081,13 @@
   50%      { transform: translateX(-50%) scale(1.05) translateY(-2px); opacity: 0.9; }
 }
 
-/* Ring glow for on-fire markers */
+
 .bm-on-fire .bm-ring { animation: onFireGlow 1.1s ease-in-out infinite; }
 @keyframes onFireGlow {
   0%,100% { filter: drop-shadow(0 0  7px rgba(239,68,68,0.55)); }
   50%      { filter: drop-shadow(0 0 20px rgba(239,68,68,0.95)); }
 }
 
-/* ── Broken / damaged bin ─────────────────────────────────────── */
 .bm-broken { animation: brokenShimmer 2.4s ease-in-out infinite; }
 @keyframes brokenShimmer {
   0%,100% { filter: drop-shadow(0 4px 8px rgba(0,0,0,0.45)) saturate(0.7); }
@@ -2153,7 +2098,6 @@
   0%,100% { filter: drop-shadow(0 0  5px rgba(148,163,184,0.4)); }
   50%      { filter: drop-shadow(0 0 14px rgba(148,163,184,0.75)); }
 }
-/* "No sensor" label on sensorless bins */
 .bm-nosensor {
   position: absolute;
   bottom: 14px; left: 50%;
@@ -2170,8 +2114,6 @@
   pointer-events: none;
   letter-spacing: 0.02em;
 }
-
-/* Warning badge for broken bins */
 .bm-broken-badge {
   position: absolute;
   top: 0; left: -1px;
@@ -2191,7 +2133,6 @@
   50%      { opacity: 1; box-shadow: 0 0 8px rgba(245,158,11,0.6); }
 }
 
-/* ── Truck marker ─────────────────────────────────────────────── */
 .truck-marker-active {
   background: transparent !important;
   border: none !important;
@@ -2213,7 +2154,6 @@
   50%      { transform: translateY(-6px) scale(1.04); }
 }
 
-/* ── Panel close button ─────────────────────────────────────── */
 .panel-header {
   position: relative;
 }
@@ -2245,13 +2185,10 @@
   height: 14px;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   Sidebar edge handles — collapse / expand with animated label
-   ══════════════════════════════════════════════════════════════ */
 .edge-handle {
   position: relative;
   flex-shrink: 0;
-  width: 18px;            /* slightly thicker so it's clickable even when open */
+  width: 18px;          
   align-self: stretch;
   display: flex;
   flex-direction: column;
@@ -2270,7 +2207,7 @@
   background: transparent;
 }
 
-/* ── LEFT handle: GREEN — matches the route / eco sidebar ── */
+
 .edge-handle--left {
   border-right: 1px solid rgba(16, 185, 129, 0.15);
   background: linear-gradient(90deg,
@@ -2278,14 +2215,13 @@
     transparent 100%);
 }
 
-/* When route panel is open, the thin handle strip should be invisible */
+
 .edge-handle--left.is-open {
   background: transparent;
   border-right-color: transparent;
   box-shadow: none;
 }
 
-/* Collapsed: route panel hidden → expand + reveal label */
 .edge-handle--left:not(.is-open) {
   width: 44px;
   color: rgba(16, 185, 129, 0.80);
@@ -2304,7 +2240,7 @@
     rgba(15, 23, 42, 0.55) 100%);
 }
 
-/* ── RIGHT handle: BLUE — matches the report / tech sidebar ── */
+
 .edge-handle--right {
   border-left: 1px solid rgba(59, 130, 246, 0.15);
   background: linear-gradient(90deg,
@@ -2312,7 +2248,6 @@
     rgba(59, 130, 246, 0.05) 100%);
 }
 
-/* Collapsed: report panel hidden → expand + reveal label */
 .edge-handle--right:not(.is-open) {
   width: 44px;
   color: rgba(59, 130, 246, 0.80);
@@ -2331,7 +2266,6 @@
     rgba(59, 130, 246, 0.18) 100%);
 }
 
-/* ── Chevron arrow ── */
 .edge-handle svg {
   width: 11px;
   height: 11px;
@@ -2342,20 +2276,18 @@
 .edge-handle:hover svg,
 .edge-handle:not(.is-open) svg { opacity: 1; }
 
-/* Open panels: flip chevron to point "outward" (indicates close) */
 .edge-handle--left.is-open  svg { transform: scaleX(-1); }
 .edge-handle--right.is-open svg { transform: scaleX(-1); }
 
-/* ── Rotated label text (visible only when panel is collapsed) ── */
 .edge-label {
   writing-mode: vertical-rl;
-  font-size: 11px;          /* was 8.5px — now actually readable */
+  font-size: 11px;          
   font-weight: 800;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   white-space: nowrap;
   pointer-events: none;
-  /* hidden when panel is open */
+ 
   opacity: 0;
   max-height: 0;
   overflow: hidden;
@@ -2364,27 +2296,21 @@
     max-height 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Left label reads bottom→top */
+
 .edge-handle--left .edge-label  { transform: rotate(180deg); }
-/* Right label reads top→bottom (default vertical-rl) */
+
 .edge-handle--right .edge-label { transform: rotate(0deg); }
 
-/* Show label when panel is collapsed */
+
 .edge-handle:not(.is-open) .edge-label {
   opacity: 1;
   max-height: 160px;
 }
-
-/* Legacy filter-search / filter-zone-select classes removed — now using fc-* namespace above */
-
-/* ══════════════════════════════════════════════════════════════
-   Truck marker — detailed top-down garbage truck, rotates with bearing
-   ══════════════════════════════════════════════════════════════ */
 .truck-marker-wrap {
   position: relative;
   width: 56px; height: 56px;
   display: flex; align-items: center; justify-content: center;
-  /* Smooth bearing rotation — linear so it tracks realtime without lag */
+ 
   transition: transform 0.18s linear;
   will-change: transform;
 }
@@ -2414,12 +2340,10 @@
   overflow: visible;
 }
 
-/* Keep old dot classes so nothing breaks if referenced */
+
 .truck-dot { display: none; }
 
-/* ══════════════════════════════════════════════════════════════
-   Address search — geocoded pin
-   ══════════════════════════════════════════════════════════════ */
+
 .search-pin {
   position: relative;
   width: 40px; height: 40px;
@@ -2451,7 +2375,6 @@
   100% { width: 42px; height: 42px; opacity: 0;    transform: translate(-50%, -50%); }
 }
 
-/* Nearby bin highlight circles (Leaflet L.circle with className) */
 .bin-nearby-circle {
   cursor: pointer;
   animation: nearbyCirclePulse 2s ease-in-out infinite;
@@ -2461,11 +2384,7 @@
   50%       { opacity: 1;   }
 }
 
-/* ══════════════════════════════════════════════════════════════
-   FILL FILTER PILLS — active states
-   ══════════════════════════════════════════════════════════════ */
 
-/* "All fill" active — matches the "All type" green pill */
 .fc-pill--fall.active {
   background: linear-gradient(135deg,
     rgba(16, 185, 129, 0.20) 0%,
@@ -2475,11 +2394,7 @@
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.14);
 }
 
-/* ══════════════════════════════════════════════════════════════
-   SORT PILLS — active states
-   ══════════════════════════════════════════════════════════════ */
 
-/* Sort icon inside pills */
 .fc-sort-ico {
   width: 10px;
   height: 10px;
@@ -2487,7 +2402,7 @@
   opacity: 0.7;
 }
 
-/* Sort: no sort (default) */
+
 .fc-pill--snone.active {
   background: linear-gradient(135deg,
     rgba(16, 185, 129, 0.20) 0%,
@@ -2497,7 +2412,7 @@
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.14);
 }
 
-/* Sort: ascending (low → high) */
+
 .fc-pill--sasc.active {
   background: rgba(16, 185, 129, 0.16);
   border-color: rgba(16, 185, 129, 0.38);
@@ -2506,7 +2421,7 @@
 }
 .fc-pill--sasc.active .fc-sort-ico { opacity: 1; color: #6ee7b7; }
 
-/* Sort: descending (high → low) — danger red tint for urgency */
+
 .fc-pill--sdesc.active {
   background: rgba(239, 68, 68, 0.15);
   border-color: rgba(239, 68, 68, 0.36);
@@ -2515,11 +2430,7 @@
 }
 .fc-pill--sdesc.active .fc-sort-ico { opacity: 1; color: #fca5a5; }
 
-/* ══════════════════════════════════════════════════════════════
-   PREMIUM DESIGN POLISH — Competition-Grade Upgrades
-   ══════════════════════════════════════════════════════════════ */
 
-/* 1. Sidebar: animated gradient border on hover */
 .map-sidebar.left {
   transition: box-shadow 0.35s ease;
 }
@@ -2527,7 +2438,7 @@
   transition: box-shadow 0.35s ease;
 }
 
-/* 2. Filter control: richer glass card */
+
 .map-filter-control {
   filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.55));
 }
@@ -2540,7 +2451,7 @@
     0 12px 40px rgba(0, 0, 0, 0.65);
 }
 
-/* 3. fc-block hover highlight */
+
 .fc-block {
   transition: background 0.18s ease;
   border-radius: 6px;
@@ -2549,7 +2460,7 @@
   background: rgba(255, 255, 255, 0.015);
 }
 
-/* 4. Better fill bar — taller and rounded with glow */
+
 .fc-fillbar {
   height: 5px;
   border-radius: 4px;
@@ -2560,7 +2471,7 @@
   filter: brightness(1.3);
 }
 
-/* 5. Glowing count badge on reset button when active */
+
 .fc-reset-btn:not([style*="display: none"]) {
   animation: resetPulse 2.5s ease-in-out infinite;
 }
@@ -2569,7 +2480,7 @@
   50% { box-shadow: 0 0 8px rgba(248, 113, 113, 0.35); border-color: rgba(248, 113, 113, 0.28); color: #f87171; }
 }
 
-/* 6. Stat cards: number counter glow on render */
+
 .stat-card {
   animation: statFadeIn 0.4s ease both;
 }
@@ -2578,7 +2489,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* 7. Panel header: thicker glowing underline accent */
+
 .panel-header::after {
   height: 2px;
   width: 80px;
@@ -2590,7 +2501,7 @@
   50% { transform: translateX(120px); opacity: 0.4; }
 }
 
-/* 8. Buttons: micro shimmer width fix for stop button */
+
 .btn-stop::before {
   content: '';
   position: absolute;
@@ -2601,14 +2512,11 @@
 }
 .btn-stop:hover::before { left: 100%; }
 
-/* 9. Better progress fill gradient */
 .progress-fill {
   background: linear-gradient(90deg,
     #10b981 0%, #34d399 50%, #6ee7b7 100%);
   box-shadow: 0 0 16px rgba(16, 185, 129, 0.6), 0 0 4px rgba(16, 185, 129, 1);
 }
-
-/* 10. File upload zone: premium drag target */
 .file-input-label {
   background: linear-gradient(145deg,
     rgba(16, 185, 129, 0.04) 0%,
@@ -2635,7 +2543,6 @@
   transform: translateY(-1px);
 }
 
-/* 11. Guest banner: richer animated border */
 .guest-banner {
   background: linear-gradient(135deg,
     rgba(15, 26, 48, 0.97) 0%,
@@ -2661,7 +2568,6 @@
   100% { left: 150%; }
 }
 
-/* 12. Map style switcher: tighter active pill */
 .map-style-switcher button.active {
   background: linear-gradient(135deg,
     rgba(16, 185, 129, 0.28) 0%,
@@ -2673,7 +2579,6 @@
     inset 0 1px 0 rgba(16, 185, 129, 0.12);
 }
 
-/* 13. Navigation progress: glowing step counter */
 .progress-header {
   font-size: 0.82rem;
   font-weight: 700;
@@ -2687,12 +2592,11 @@
   box-shadow: inset 0 0 16px rgba(16, 185, 129, 0.04);
 }
 
-/* 14. Report type chip: micro animation on selection */
 .rp-type-chip {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 15. Popup: add a subtle top accent gradient line */
+
 .bpp-container .leaflet-popup-content-wrapper::before {
   content: '';
   display: block;
@@ -2701,10 +2605,6 @@
     #10b981 0%, #3b82f6 50%, #06b6d4 100%);
   border-radius: 18px 18px 0 0;
 }
-
-/* ══════════════════════════════════════════════════════════════
-   ACTIVE FILTER BADGE — shows active sort mode in filter header
-   ══════════════════════════════════════════════════════════════ */
 .fc-active-badge {
   display: inline-flex;
   align-items: center;
@@ -2725,11 +2625,6 @@
   from { transform: scale(0.7); opacity: 0; }
   to   { transform: scale(1);   opacity: 1; }
 }
-
-/* ══════════════════════════════════════════════════════════════
-   REPORT TYPE GRID — tap-friendly buttons replacing select
-   ══════════════════════════════════════════════════════════════ */
-/* ── Report-type selector — single-column list ────────────────────── */
 .rp-type-list {
   display: flex;
   flex-direction: column;
@@ -2754,8 +2649,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 .rp-type-btn:hover { background: rgba(255,255,255,0.08); }
-
-/* Colored dot indicator */
 .rp-type-indicator {
   flex-shrink: 0;
   width: 10px;
@@ -2766,14 +2659,13 @@
 }
 .rp-type-label { flex: 1; }
 
-/* Per-color overrides */
+
 .rp-type-btn--green  { border-color: rgba(16,185,129,0.20);  color: #6ee7b7; }
 .rp-type-btn--red    { border-color: rgba(239,68,68,0.20);   color: #fca5a5; }
 .rp-type-btn--orange { border-color: rgba(249,115,22,0.20);  color: #fdba74; }
 .rp-type-btn--cyan   { border-color: rgba(6,182,212,0.20);   color: #67e8f9; }
 .rp-type-btn--blue   { border-color: rgba(59,130,246,0.20);  color: #93c5fd; }
 
-/* Active states — solid border + glow + indicator fully opaque */
 .rp-type-btn--green.rp-type-btn--active  {
   background: rgba(16,185,129,0.12);
   border-color: rgba(16,185,129,0.65);
@@ -2801,9 +2693,6 @@
 }
 .rp-type-btn--active .rp-type-indicator { opacity: 1; }
 
-/* ══════════════════════════════════════════════════════════════
-   REPORT RESULT CARD  — shown after submitReport() succeeds
-   ══════════════════════════════════════════════════════════════ */
 .rp-result {
   margin-top: 14px;
   padding: 14px 14px 12px;
@@ -2822,7 +2711,6 @@
   to   { opacity: 1; transform: translateY(0)   scale(1);    }
 }
 
-/* Status badge */
 .rp-result__status {
   display: flex;
   align-items: center;
@@ -2848,9 +2736,6 @@
   border: 1px solid rgba(239, 68, 68, 0.25);
   color: #fca5a5;
 }
-
-/* AI row */
-/* AI block (new layout) */
 .rp-result__ai-block {
   display: flex;
   flex-direction: column;
@@ -2884,7 +2769,6 @@
   gap: 8px;
 }
 
-/* Legacy row (no-photo notice etc.) */
 .rp-result__ai-row {
   display: flex;
   align-items: center;
@@ -2930,8 +2814,6 @@
   font-style: italic;
   font-size: 0.73rem;
 }
-
-/* "No container detected" warning banner */
 .rp-result__no-bin {
   display: flex;
   align-items: center;
@@ -2947,7 +2829,7 @@
 }
 .rp-result__no-bin svg { flex-shrink: 0; stroke: #f59e0b; }
 
-/* Final confidence */
+
 .rp-result__conf-row {
   display: flex;
   align-items: center;
@@ -2964,14 +2846,13 @@
   color: var(--text-secondary);
 }
 
-/* Status message */
+
 .rp-result__msg {
   font-size: 0.73rem;
   color: var(--text-tertiary);
   line-height: 1.5;
 }
 
-/* New report button */
 .rp-result__new-btn {
   display: flex;
   align-items: center;
@@ -2993,7 +2874,7 @@
   border-color: rgba(99, 102, 241, 0.45);
   color: #c7d2fe;
 }
-/* ── AI indicator badge (shown below report type selector) ── */
+
 .rp-ai-badge {
   display: flex;
   align-items: center;
@@ -3015,7 +2896,6 @@
   color: #64748b;
 }
 
-/* ── Fire class label in AI result ── */
 .rp-result__ai-class--fire {
   color: #ef4444 !important;
   font-weight: 800;
@@ -3023,7 +2903,6 @@
   letter-spacing: 0.03em;
 }
 
-/* ── Compact result card (reduce excess gaps) ── */
 .rp-result--compact {
   gap: 7px;
 }
@@ -3035,9 +2914,6 @@
   gap: 5px;
 }
 
-/* ═══════════════════════════════════════════════════
-   AI CONFLICT MODAL
-   ═══════════════════════════════════════════════════ */
 .ai-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -3252,7 +3128,6 @@
   background: rgba(99, 102, 241, 0.20);
 }
 
-/* ── Plain-language AI description below confidence bar ── */
 .rp-result__ai-desc {
   font-size: 0.72rem;
   line-height: 1.55;
@@ -3267,12 +3142,6 @@
   color: var(--text-primary);
   font-weight: 700;
 }
-
-/* ══════════════════════════════════════════════════════════════════════════
-   Navigation mode toggle + Step controls + Breakdown
-   ══════════════════════════════════════════════════════════════════════════ */
-
-/* ── Mode toggle (Наведнъж / На стъпки) ─────────────────────────────────── */
 .nav-mode-toggle {
   display: flex;
   gap: 0.4rem;
@@ -3309,7 +3178,6 @@
   color: #34d399;
 }
 
-/* ── Breakdown button (in route-actions during navigation) ──────────────── */
 .btn-breakdown {
   display: inline-flex;
   align-items: center;
@@ -3331,7 +3199,6 @@
   border-color: rgba(239,68,68,0.55);
 }
 
-/* ── Step controls panel ─────────────────────────────────────────────────── */
 .step-controls {
   display: flex;
   flex-direction: column;
@@ -3410,10 +3277,6 @@
   background: rgba(16,185,129,0.30);
   border-color: rgba(16,185,129,0.65);
 }
-
-/* ══════════════════════════════════════════════════════════════════════════
-   Breakdown Modal
-   ══════════════════════════════════════════════════════════════════════════ */
 
 .breakdown-backdrop {
   position: fixed;
@@ -3558,9 +3421,6 @@
   border-color: rgba(239,68,68,0.65);
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   AI photo pre-check: spinner + no-bin warning banner
-   ══════════════════════════════════════════════════════════════════════════ */
 
 .photo-ai-checking {
   display: flex;
@@ -3606,4 +3466,184 @@
 .photo-no-bin-warning strong {
   color: #fcd34d;
   font-weight: 700;
+}
+
+
+@media (max-width: 480px) {
+  .map-page {
+    height: calc(100dvh - 56px);
+  }
+
+  .map-layout {
+    flex-direction: column;
+    position: relative;
+  }
+
+  .map-sidebar {
+    position: absolute;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 55vh;
+    overflow-y: auto;
+    z-index: 1100;
+    border-radius: 0 0 16px 16px;
+    border-top: none;
+  }
+
+  .map-sidebar.left {
+    top: 0;
+    left: 0;
+    right: 0;
+    border-right: none;
+    border-bottom: 2px solid rgba(16, 185, 129, 0.25);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  }
+
+  .map-sidebar.right {
+    top: 0;
+    left: 0;
+    right: 0;
+    border-left: none;
+    border-bottom: 2px solid rgba(59, 130, 246, 0.25);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  }
+
+  .sidebar-panel {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .panel-header {
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-3);
+  }
+
+  .panel-header h2 {
+    font-size: 1rem;
+  }
+
+  .route-stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+
+  .stat-card {
+    padding: var(--space-2);
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+    margin-bottom: 2px;
+  }
+
+  .stat-value {
+    font-size: 1rem;
+  }
+
+  .route-actions {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .route-actions .btn-simulate,
+  .route-actions .btn-stop {
+    width: 100%;
+    padding: var(--space-3);
+    font-size: 0.85rem;
+  }
+
+  .btn-route {
+    width: 100%;
+    padding: var(--space-3);
+  }
+
+  .nav-mode-toggle {
+    margin-bottom: var(--space-2);
+  }
+
+  .navigation-progress {
+    padding: var(--space-3);
+  }
+
+  .step-controls {
+    padding: var(--space-2);
+  }
+
+  .step-controls__stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-2);
+  }
+
+  .form-group {
+    margin-bottom: var(--space-3);
+  }
+
+  .map-filter-control {
+    bottom: var(--space-2);
+    right: var(--space-2);
+    max-width: calc(100vw - 1rem);
+  }
+
+  .map-style-switcher {
+    top: auto;
+    bottom: var(--space-2);
+    left: var(--space-2);
+    right: auto;
+  }
+
+  .map-legend {
+    display: none;
+  }
+
+  .map-filter-control {
+    bottom: 3rem;
+  }
+
+  .guest-banner {
+    max-width: 95%;
+    padding: var(--space-4);
+    margin: var(--space-2);
+  }
+
+  .guest-banner h2 {
+    font-size: 1.1rem;
+  }
+
+  .guest-banner p {
+    font-size: 0.85rem;
+  }
+
+  .bpp {
+    width: 220px;
+    padding: 12px 12px 10px;
+    gap: 8px;
+  }
+
+  .bpp-title {
+    font-size: 13px;
+  }
+
+  .bpp-fill-pct {
+    font-size: 17px;
+  }
+
+  .report-form {
+    padding: var(--space-3);
+  }
+
+  .report-toggle-group {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .btn-breakdown {
+    width: 100%;
+    font-size: 0.8rem;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .breakdown-action {
+    margin-top: var(--space-2);
+  }
 }

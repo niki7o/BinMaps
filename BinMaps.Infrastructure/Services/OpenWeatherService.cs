@@ -1,6 +1,5 @@
 using BinMaps.Infrastructure.Services.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
@@ -10,27 +9,21 @@ namespace BinMaps.Infrastructure.Services;
 public sealed class OpenWeatherService : IExternalWeatherService
 {
     private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(15);
-    private const string CacheKeyPrefix = "owm_temp_";
+    private const string CacheKeyPrefix = "omt_temp_";
 
     private readonly HttpClient _http;
     private readonly IMemoryCache _cache;
     private readonly ILogger<OpenWeatherService> _logger;
-    private readonly string _apiKey;
 
     public OpenWeatherService(
         HttpClient http,
         IMemoryCache cache,
-        IConfiguration config,
         ILogger<OpenWeatherService> logger)
     {
         _http = http;
-        _cache = cache;
+        _cache  = cache;
         _logger = logger;
-        _apiKey = config["ExternalAPIs:OpenWeatherMap:ApiKey"]
-            ?? throw new InvalidOperationException("ExternalAPIs:OpenWeatherMap:ApiKey not configured.");
     }
-
-    #region IExternalWeatherService
 
     public async Task<double?> GetAmbientTemperatureAsync(double lat, double lng)
     {
@@ -41,39 +34,33 @@ public sealed class OpenWeatherService : IExternalWeatherService
 
         try
         {
-            var url = $"https://api.openweathermap.org/data/2.5/weather"
-                    + $"?lat={lat:F6}&lon={lng:F6}&appid={_apiKey}&units=metric";
+            var url = $"https://api.open-meteo.com/v1/forecast"
+                    + $"?latitude={lat:F6}&longitude={lng:F6}&current=temperature_2m";
 
-            var response = await _http.GetFromJsonAsync<OwmResponse>(url);
+            var response = await _http.GetFromJsonAsync<OmtResponse>(url);
 
-            if (response?.Main?.Temp is null)
+            if (response?.Current?.Temperature2m is null)
                 return null;
 
-            _cache.Set(cacheKey, response.Main.Temp.Value, CacheDuration);
-            return response.Main.Temp.Value;
+            _cache.Set(cacheKey, response.Current.Temperature2m.Value, CacheDuration);
+            return response.Current.Temperature2m.Value;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "OpenWeatherMap failed for ({Lat},{Lng}). Using fallback.", lat, lng);
+            _logger.LogWarning(ex, "Open-Meteo failed for ({Lat},{Lng}). Using fallback.", lat, lng);
             return null;
         }
     }
 
-    #endregion
-
-    #region Response Models
-
-    private sealed class OwmResponse
+    private sealed class OmtResponse
     {
-        [JsonPropertyName("main")]
-        public OwmMain? Main { get; init; }
+        [JsonPropertyName("current")]
+        public OmtCurrent? Current { get; init; }
     }
 
-    private sealed class OwmMain
+    private sealed class OmtCurrent
     {
-        [JsonPropertyName("temp")]
-        public double? Temp { get; init; }
+        [JsonPropertyName("temperature_2m")]
+        public double? Temperature2m { get; init; }
     }
-
-    #endregion
 }

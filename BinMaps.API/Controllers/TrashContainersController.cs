@@ -114,11 +114,11 @@ public sealed class TrashContainersController : ControllerBase
         {
             new
             {
-                Id                = id,
+                Id  = id,
                 FillPercentage    = 0.0,
-                Temperature       = container.Temperature,
+                Temperature  = container.Temperature,
                 BatteryPercentage = container.BatteryPercentage,
-                Status            = (int)TrashContainerStatus.Active
+                Status = (int)TrashContainerStatus.Active
             }
         });
 
@@ -142,18 +142,32 @@ public sealed class TrashContainersController : ControllerBase
             return NotFound();
 
         container.FillPercentage = dto.FillPercentage;
-        container.Status = dto.Status;
-        container.HasSensor = dto.HasSensor;
+        container.Status        = dto.Status;
+
+        if (dto.HasSensor && !container.HasSensor)
+        {
+            container.HasSensor         = true;
+            container.BatteryPercentage = 100;
+            container.Temperature       = null;
+        }
+        else if (!dto.HasSensor)
+        {
+            container.HasSensor         = false;
+            container.BatteryPercentage = null;
+            container.Temperature       = null;
+        }
+
         await _containerRepo.UpdateAsync(container);
 
         await hubContext.Clients.All.SendAsync("ContainersUpdated", new[]
         {
             new
             {
-                Id                = id,
+                Id = id,
                 FillPercentage    = dto.FillPercentage,
                 Temperature       = container.Temperature,
                 BatteryPercentage = container.BatteryPercentage,
+                HasSensor         = container.HasSensor,
                 Status            = (int)dto.Status
             }
         });

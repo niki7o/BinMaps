@@ -12,7 +12,7 @@ interface Report {
   userId: string;
   userName: string;
   reportType: string;
-  ai_Score: number;
+  aiScore: number;
   userReputationOnSubmit: number;
   finalConfidence: number;
   isApproved: boolean | null;
@@ -613,8 +613,21 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
-  navigateToTruckRoute(id: number, areaId: string): void {
-    this.showToast(`Преглед на маршрут за камион #${id} в зона ${areaId}`, 'info');
+  updateTruckTrashType(truckId: number, trashType: number): void {
+    const headers = this.authHeaders().headers.set('Content-Type', 'application/json');
+    this.http.put(
+      `${this.API}/admin/trucks/${truckId}/trashtype`,
+      JSON.stringify(trashType),
+      { headers }
+    ).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.showToast(`Типът отпадък на камион #${truckId} е обновен`);
+          const truck = this.trucks.find(t => t.id === truckId);
+          if (truck) truck.trashType = trashType;
+        },
+        error: () => this.showToast('Грешка при обновяване на тип отпадък', 'error')
+      });
   }
 
   exportReports(): void {
@@ -625,7 +638,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       r.trashContainerId,
       r.userName,
       r.userReputationOnSubmit,
-      r.ai_Score,
+      r.aiScore,
       r.finalConfidence,
       this.formatDate(r.createdAt),
       r.isApproved === null ? 'Чакащ' : r.isApproved ? 'Одобрен' : 'Отхвърлен'

@@ -87,12 +87,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   photoNoBinWarning      = false;   // true when AI detected no bin in selected photo
   photoCheckingPreview   = false;   // true while running quick AI check on selected photo
 
-  // ── Navigation mode ───────────────────────────────────────────────────────
   navigationMode: 'auto' | 'step' = 'auto';   // 'auto' = animated; 'step' = manual
   stepPending    = false;                       // true when waiting for user to confirm next stop
   private _stepResolve?: () => void;           // resolves the step-wait promise
 
-  // ── Current collected stop (step mode): fill BEFORE bin was emptied ───────
   currentCollectedStop: {
     id:       number;
     fill:     number;
@@ -100,9 +98,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     capacity: number;
   } | null = null;
 
-  // ─────────────────────────────────────────────────────────────────────────
 
-  // ── AI Conflict Modal ─────────────────────────────────────────────────────
   aiConflictModal: {
     visible:     boolean;
     variant:     'conflict' | 'noBin';
@@ -112,7 +108,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     confidence:  number;
   } | null = null;
   private _conflictResolve?: (confirmed: boolean) => void;
-  // ─────────────────────────────────────────────────────────────────────────
 
   reportResult: {
     reportId: number;
@@ -161,7 +156,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     { key: 'light',     label: 'Светла'      }
   ];
 
-  // #region Icon Helpers
 
   private binIcon(type: number): string {
     return `${this.ICONS_DIR}/bin-${['mixed', 'plastic', 'paper', 'glass'][type] ?? 'mixed'}.svg`;
@@ -173,9 +167,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private get sensorBrokenIcon()  { return `${this.ICONS_DIR}/bin-sensor-broken.svg`;  }
   private get sensorIcon()        { return `${this.ICONS_DIR}/sensor-dot.svg`;         }
 
-  // #endregion
 
-  // #region Lifecycle
 
   ngOnInit() {
     this.authService.currentUser$
@@ -195,9 +187,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         if (!b) return;
 
         b.fillPercentage = u.fillPercentage;
-        b.temperature    = u.temperature ?? b.temperature;
+        b.temperature    = u.temperature ?? null;
 
-        if (u.status != null) b.status = u.status;
+        if (u.status   != null)    b.status           = u.status;
+        if (u.hasSensor != null)   b.hasSensor        = u.hasSensor;
       });
 
       this.renderBins(this.filtered());
@@ -230,9 +223,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.signalR.stop();
   }
 
-  // #endregion
 
-  // #region Role
 
   private syncRole() {
     if (!this.currentUser) {
@@ -249,9 +240,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.isUser   = this.currentUser.role === 'User';
   }
 
-  // #endregion
 
-  // #region Map Initialization
 
   private initMap() {
     this.cluster = L.markerClusterGroup({
@@ -300,9 +289,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     localStorage.setItem('mapStyle', key);
   }
 
-  // #endregion
 
-  // #region Data
 
   private loadBins() {
     this.http.get<Bin[]>(`${this.API_URL}/containers`).subscribe({
@@ -311,13 +298,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         this.renderBins(bins);
         setTimeout(() => this.populateZoneFilter(bins), 250);
 
-        // If navigated from a notification with ?bin=<id>, zoom to that container
         const binParam = this.route.snapshot.queryParamMap.get('bin');
         if (binParam) {
           const targetId = parseInt(binParam, 10);
           const target   = bins.find(b => b.id === targetId);
           if (target) {
-            // Small delay so the cluster layers are fully initialised
             setTimeout(() => this.highlightBin(target), 400);
           }
         }
@@ -342,9 +327,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     return b;
   }
 
-  // #endregion
 
-  // #region Route
 
   async generateRoute() {
     if (!this.selectedAreaId) {
@@ -370,9 +353,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         return;
       }
 
-      // Server already provides correct EstimatedLoad (computed from container.Capacity
-      // and FillPercentage). TotalLoad and CapacityUtilization are also correct from
-      // the backend — no client-side override needed.
 
       this.routeResult = res;
       this.routeActive = true;
@@ -493,11 +473,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     );
   }
 
-  // #endregion
 
-  // #region Navigation
 
-  // ── Entry point: delegates to auto or step mode ───────────────────────────
   async startNavigation() {
     if (!this.routeResult?.route.length || !this.realRouteCoords.length) {
       alert('Маршрутът не е готов');
@@ -518,7 +495,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
   }
 
-  // ── Shared setup: truck icon, path resampling, stop index mapping ─────────
   private buildNavSetup() {
     const route  = this.routeResult!.route;
     const totalKm = this.realRouteCoords.reduce(
@@ -583,13 +559,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     return { truckIcon, path, stopIndices, FRAMES };
   }
 
-  // ── Shared: collect a single stop (both modes use this) ───────────────────
   private doCollectStop(idx: number, route: RouteStop[], token: string | null): void {
     this.currentStop = idx + 1;
 
-    // ── Capture ACTUAL fill from allBins BEFORE marking it empty ─────────────
-    // This gives us the real fill percentage at the moment the truck arrives,
-    // which is what was physically collected — not the route-snapshot value.
     const bin      = this.allBins.find(b => b.id === route[idx].id);
     const capacity = route[idx].capacity > 0 ? route[idx].capacity : 1100;
     const actualFill = bin != null
@@ -614,7 +586,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       }));
     }
 
-    // Optimistically zero the bin locally so the map marker updates
     if (bin) {
       bin.fillPercentage = Math.random() * 5 + 1;
       if (bin.hasSensor && bin.temperature != null && bin.temperature > 32)
@@ -627,7 +598,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     ).toPromise().catch(() => {});
   }
 
-  // ── Shared: pan logic ─────────────────────────────────────────────────────
   private panIfNearEdge(coord: [number, number]): void {
     const bounds = this.map.getBounds();
     const [lat, lng] = coord;
@@ -641,7 +611,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
   }
 
-  // ── AUTO mode: full animation in one shot ─────────────────────────────────
   private async runAutoNavigation(
     truckIcon: L.DivIcon,
     path: [number, number][],
@@ -692,7 +661,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     alert(`Маршрут завършен!\nСпирки: ${route.length}\nСъбран товар: ${load.toFixed(0)} л`);
   }
 
-  // ── STEP mode: pause at each stop until driver confirms ───────────────────
   private async runStepNavigation(
     truckIcon: L.DivIcon,
     path: [number, number][],
@@ -712,7 +680,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
       const toFrame = stopIndices[si];
 
-      // Animate truck to this stop
       for (let i = prevFrame; i <= toFrame; i++) {
         if (!this.navigationActive) return;
 
@@ -732,11 +699,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
       if (!this.navigationActive) break;
 
-      // ── Arrived at stop — collect & wait for driver to confirm ─────────
       this.doCollectStop(si, route, token);
       this.renderBins(this.filtered());
 
-      // Wait for driver to click "Confirm" (or interrupt via breakdown)
       if (si < route.length - 1) {
         this.stepPending = true;
         await new Promise<void>(resolve => { this._stepResolve = resolve; });
@@ -747,7 +712,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       prevFrame = toFrame + 1;
     }
 
-    // Flush any remaining stops if navigating was not aborted
     if (this.navigationActive) {
       this.navigationActive = false;
       const load = this.currentTruckLoad;
@@ -760,16 +724,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.stepPending = false;
   }
 
-  // ── Confirm next step (step mode) ─────────────────────────────────────────
   confirmNextStep(): void {
     this.stepPending = false;
     this._stepResolve?.();
     this._stepResolve = undefined;
   }
 
-  // ── Breakdown: stop navigation and open report panel pre-filled ──────────
   triggerBreakdown(): void {
-    // Grab context before clearing state
     const idx      = Math.max(0, this.currentStop - 1);
     const stop     = this.routeResult?.route[idx];
     const zoneName = this.routeResult?.areaId ?? 'Неизвестна зона';
@@ -777,21 +738,17 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       ? `Контейнер #${stop.id} (Спирка ${this.currentStop})`
       : 'Неизвестно';
 
-    // Halt navigation loop
     this.navigationActive = false;
     this.stepPending      = false;
     this._stepResolve?.();
     this._stepResolve = undefined;
 
-    // Pre-fill report panel as TruckProblem
     this.selectedReportType  = 'TruckProblem';
     this.reportDescription   =
       `🚨 Камионът е повреден в ${zoneName}. Последна спирка: ${stopName}.`;
 
-    // Open the report panel (opens edge panel if hidden)
     this.toggleReportPanel(true);
 
-    // Clear route state
     this.clearRoute();
     this.routeActive      = false;
     this.routeResult      = null;
@@ -800,9 +757,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.loadBins();
   }
 
-  // #endregion
 
-  // #region Route Controls
 
   stopRoute() {
     this.navigationActive  = false;
@@ -834,9 +789,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     setTimeout(() => this.map?.invalidateSize(), 350);
   }
 
-  // #endregion
 
-  // #region Render
 
   private renderBins(bins: Bin[]) {
     this.cluster.clearLayers();
@@ -866,9 +819,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
-  // #endregion
 
-  // #region Icon Factory
 
   private createBinIcon(bin: Bin): L.DivIcon {
     const f             = Math.round(bin.fillPercentage);
@@ -891,7 +842,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
                : f >= 45  ? 'rgba(245,158,11,0.50)'
                :             'rgba(16,185,129,0.45)';
 
-    // Distinct icons: burning bin → sensor-broken → physically damaged → normal
     const mainSrc = isFire        ? this.burningIcon
                   : isSensorBroke ? this.sensorBrokenIcon
                   : isOffline     ? this.brokenIcon
@@ -904,17 +854,14 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
            alt="огън" draggable="false" />`
     ).join('');
 
-    // Sensor dot — only for bins with a working sensor
     const sensor = bin.hasSensor && !isSensorBroke
       ? `<img src="${this.sensorIcon}" class="bm-sensor" alt="сензор" draggable="false" />`
       : '';
 
-    // Temperature badge — suppress on fire (temperature reading is unreliable)
     const tbadge = bin.hasSensor && bin.temperature !== null && !isFire
       ? `<div class="bm-tbadge${isWarm ? ' tbadge-warm' : ''}">${Math.round(bin.temperature!)}°C</div>`
       : '';
 
-    // "No sensor" label — shown on sensorless bins
     const noSensorLabel = !bin.hasSensor
       ? `<div class="bm-nosensor">Без сензор</div>`
       : '';
@@ -946,9 +893,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
-  // #endregion
 
-  // #region Popup
 
   private createPopup(bin: Bin): string {
     const f      = bin.fillPercentage;
@@ -962,7 +907,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const typeBg  = ['rgba(148,163,184,.18)', 'rgba(245,158,11,.18)', 'rgba(59,130,246,.18)', 'rgba(34,211,238,.18)'][bin.trashType];
     const typeClr = ['#94a3b8', '#f59e0b', '#60a5fa', '#22d3ee'][bin.trashType];
 
-    // Temperature block — hidden when on fire (sensors unreliable) or no sensor
     const tempHtml = bin.hasSensor && temp !== null && !isFire ? `
       <div class="bpp-temp ${isWarm ? 'bpp-temp--warm' : ''}">
         <div class="bpp-temp-left">
@@ -1033,9 +977,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       </div>`;
   }
 
-  // #endregion
 
-  // #region Filter Control
 
   private initFilterControl() {
     const self = this;
@@ -1281,9 +1223,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
-  // #endregion
 
-  // #region Search
 
   async searchNearestBin(query: string) {
     if (!query.trim()) return;
@@ -1396,7 +1336,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }, 850);
   }
 
-  // #region Report
 
   handleImagePreview(event: any) {
     const file = event.target.files?.[0];
@@ -1419,9 +1358,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     r.onload   = (e: any) => { this.reportImagePreview = e.target.result; };
     r.readAsDataURL(file);
 
-    // ── Quick AI preview check (non-blocking) ─────────────────────────────
-    // Fires immediately when the user picks a photo. If AI says there's no
-    // bin, a warning banner appears before they even click submit.
     const token = this.getToken();
     if (token) {
       this.photoCheckingPreview = true;
@@ -1449,7 +1385,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   async submitReport() {
-    // Guard: prevent double-submit if already in progress
     if (this.reportSubmitting || this.reportCheckingPhoto) return;
 
     if (!this.currentUser) {
@@ -1474,8 +1409,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
-    // ── Pre-check photo with AI before submitting ──────────────────────────
-    // Only run for visual report types (Full / Fire).
     const isAiReport = reportType === 'Full' || reportType === 'Fire';
     if (this.selectedFile && isAiReport) {
       this.reportCheckingPhoto = true;
@@ -1483,7 +1416,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         const checkFd = new FormData();
         checkFd.append('photo', this.selectedFile);
 
-        // 8-second timeout — if AI service is slow/down, fall through to normal submit
         const check = await firstValueFrom(
           this.http.post<any>(`${this.API_URL}/reports/analyze`, checkFd, {
             headers: new HttpHeaders({ Authorization: `Bearer ${token}` })
@@ -1496,13 +1428,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         const detectedClass: string      = check?.detected_class     ?? '';
         const confidence: number         = check?.confidence         ?? 0;
 
-        // ── No container on photo ──────────────────────────────────────────
         if (!containerDetected) {
           const proceed = await this.showAiModal('noBin', '', '', '', 0);
           if (!proceed) return;
         }
 
-        // ── Conflict between report type and AI detection ──────────────────
         else if (detectedClass && confidence > 0) {
           const classInfo         = this.getAiClassInfo(detectedClass);
           const conflictsWithFire = reportType === 'Fire' &&
@@ -1523,7 +1453,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
           }
         }
       } catch {
-        // AI pre-check failed or timed out — allow submission without blocking.
         this.reportCheckingPhoto = false;
       }
     }
@@ -1589,9 +1518,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.reportResult = null;
   }
 
-  // #endregion
 
-  // #region AI Modal
 
   /** Opens the in-page conflict/noBin modal and resolves when the user
    *  clicks Confirm (true) or Cancel (false). */
@@ -1642,9 +1569,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     return map[cls] ?? { label: cls, description: 'неизвестен резултат от AI' };
   }
 
-  // #endregion
 
-  // #region Math Helpers
 
   private resamplePath(coords: [number, number][], count: number): [number, number][] {
     if (coords.length < 2) return coords;
@@ -1720,5 +1645,4 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     return this.authService.getToken();
   }
 
-  // #endregion
 }
