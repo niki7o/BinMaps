@@ -114,10 +114,10 @@ public sealed class AdminController : ControllerBase
         var result = new List<object>();
         foreach (var user in users)
         {
-            var roles  = await _userManager.GetRolesAsync(user);
+            var roles = await _userManager.GetRolesAsync(user);
             var claims = await _userManager.GetClaimsAsync(user);
 
-            var isBanned  = user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow;
+            var isBanned = user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow;
             var banReason = claims.FirstOrDefault(c => c.Type == "ban_reason")?.Value;
 
             result.Add(new
@@ -127,10 +127,10 @@ public sealed class AdminController : ControllerBase
                 user.Email,
                 user.Reputation,
                 user.CreatedAt,
-                Role      = roles.FirstOrDefault() ?? "User",
-                IsBanned  = isBanned,
+                Role = roles.FirstOrDefault() ?? "User",
+                IsBanned = isBanned,
                 BanReason = banReason,
-                BannedAt  = isBanned ? (DateTimeOffset?)user.LockoutEnd : null
+                BannedAt = isBanned ? (DateTimeOffset?)user.LockoutEnd : null
             });
         }
 
@@ -170,7 +170,7 @@ public sealed class AdminController : ControllerBase
 
         await _userManager.SetLockoutEndDateAsync(user, null);
 
-        var claims  = await _userManager.GetClaimsAsync(user);
+        var claims = await _userManager.GetClaimsAsync(user);
         var banClaim = claims.FirstOrDefault(c => c.Type == "ban_reason");
         if (banClaim is not null)
             await _userManager.RemoveClaimAsync(user, banClaim);

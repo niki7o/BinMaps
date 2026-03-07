@@ -146,15 +146,15 @@ public sealed class TrashContainersController : ControllerBase
 
         if (dto.HasSensor && !container.HasSensor)
         {
-            container.HasSensor         = true;
+            container.HasSensor = true;
             container.BatteryPercentage = 100;
-            container.Temperature       = null;
+            container.Temperature = null;
         }
         else if (!dto.HasSensor)
         {
-            container.HasSensor         = false;
+            container.HasSensor = false;
             container.BatteryPercentage = null;
-            container.Temperature       = null;
+            container.Temperature = null;
         }
 
         await _containerRepo.UpdateAsync(container);
@@ -164,11 +164,11 @@ public sealed class TrashContainersController : ControllerBase
             new
             {
                 Id = id,
-                FillPercentage    = dto.FillPercentage,
-                Temperature       = container.Temperature,
+                FillPercentage = dto.FillPercentage,
+                Temperature = container.Temperature,
                 BatteryPercentage = container.BatteryPercentage,
-                HasSensor         = container.HasSensor,
-                Status            = (int)dto.Status
+                HasSensor = container.HasSensor,
+                Status = (int)dto.Status
             }
         });
 

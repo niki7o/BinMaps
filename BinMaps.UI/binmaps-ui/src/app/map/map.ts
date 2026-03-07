@@ -61,7 +61,7 @@ interface RouteStop {
 })
 export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
-  private readonly API_URL   = environment.apiUrl;
+  private readonly API_URL = environment.apiUrl;
   private readonly ICONS_DIR = 'assets/icons';
 
   private map!: L.Map;
@@ -79,16 +79,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private searchCircles: L.Circle[] = [];
 
   reportImagePreview:    string | null = null;
-  selectedFile:          File | null   = null;
-  reportDescription      = '';
-  selectedReportType     = 'Full';
-  reportSubmitting       = false;
-  reportCheckingPhoto    = false;   // true while pre-checking photo with AI
-  photoNoBinWarning      = false;   // true when AI detected no bin in selected photo
-  photoCheckingPreview   = false;   // true while running quick AI check on selected photo
+  selectedFile:          File | null = null;
+  reportDescription = '';
+  selectedReportType = 'Full';
+  reportSubmitting = false;
+  reportCheckingPhoto = false;   // true while pre-checking photo with AI
+  photoNoBinWarning = false;   // true when AI detected no bin in selected photo
+  photoCheckingPreview = false;   // true while running quick AI check on selected photo
 
   navigationMode: 'auto' | 'step' = 'auto';   // 'auto' = animated; 'step' = manual
-  stepPending    = false;                       // true when waiting for user to confirm next stop
+  stepPending = false;                       // true when waiting for user to confirm next stop
   private _stepResolve?: () => void;           // resolves the step-wait promise
 
   currentCollectedStop: {
@@ -125,27 +125,27 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     return this.selectedBinForReport?.hasSensor ?? false;
   }
 
-  private http        = inject(HttpClient);
-  private router      = inject(Router);
-  private route       = inject(ActivatedRoute);
+  private http = inject(HttpClient);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
-  private signalR     = inject(ContainerSignalRService);
+  private signalR = inject(ContainerSignalRService);
 
   currentUser: AuthUser | null = null;
-  isAdmin           = false;
-  isDriver          = false;
-  isUser            = false;
-  isGuest           = true;
+  isAdmin = false;
+  isDriver = false;
+  isUser = false;
+  isGuest = true;
   guestBannerVisible = true;
-  selectedAreaId    = '';
+  selectedAreaId = '';
   selectedTrashType = 0;
   routeResult: RouteResult | null = null;
-  routeActive       = false;
-  navigationActive  = false;
-  showReportPanel   = true;
-  showRoutePanel    = true;
-  currentStop       = 0;
-  currentTruckLoad  = 0;
+  routeActive = false;
+  navigationActive = false;
+  showReportPanel = true;
+  showRoutePanel = true;
+  currentStop = 0;
+  currentTruckLoad = 0;
 
   private baseLayers: Record<string, L.TileLayer> = {};
   currentMapStyle = localStorage.getItem('mapStyle') || 'standard';
@@ -187,10 +187,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         if (!b) return;
 
         b.fillPercentage = u.fillPercentage;
-        b.temperature    = u.temperature ?? null;
+        b.temperature = u.temperature ?? null;
 
-        if (u.status   != null)    b.status           = u.status;
-        if (u.hasSensor != null)   b.hasSensor        = u.hasSensor;
+        if (u.status   != null)    b.status = u.status;
+        if (u.hasSensor != null)   b.hasSensor = u.hasSensor;
       });
 
       this.renderBins(this.filtered());
@@ -227,17 +227,17 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   private syncRole() {
     if (!this.currentUser) {
-      this.isGuest  = true;
-      this.isAdmin  = false;
+      this.isGuest = true;
+      this.isAdmin = false;
       this.isDriver = false;
-      this.isUser   = false;
+      this.isUser = false;
       return;
     }
 
-    this.isGuest  = false;
-    this.isAdmin  = this.currentUser.role === 'Admin';
+    this.isGuest = false;
+    this.isAdmin = this.currentUser.role === 'Admin';
     this.isDriver = this.currentUser.role === 'Driver';
-    this.isUser   = this.currentUser.role === 'User';
+    this.isUser = this.currentUser.role === 'User';
   }
 
 
@@ -301,7 +301,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         const binParam = this.route.snapshot.queryParamMap.get('bin');
         if (binParam) {
           const targetId = parseInt(binParam, 10);
-          const target   = bins.find(b => b.id === targetId);
+          const target = bins.find(b => b.id === targetId);
           if (target) {
             setTimeout(() => this.highlightBin(target), 400);
           }
@@ -482,9 +482,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
 
     this.navigationActive = true;
-    this.currentStop      = 0;
+    this.currentStop = 0;
     this.currentTruckLoad = 0;
-    this.stepPending      = false;
+    this.stepPending = false;
 
     const { truckIcon, path, stopIndices } = this.buildNavSetup();
 
@@ -496,13 +496,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   private buildNavSetup() {
-    const route  = this.routeResult!.route;
+    const route = this.routeResult!.route;
     const totalKm = this.realRouteCoords.reduce(
       (acc, c, i) => i > 0 ? acc + this.dist(this.realRouteCoords[i - 1], c) : 0, 0
     );
 
     const FRAMES = Math.max(250, Math.round(totalKm * 70));
-    const path   = this.resamplePath(this.realRouteCoords, FRAMES);
+    const path = this.resamplePath(this.realRouteCoords, FRAMES);
 
     const stopIndices: number[] = route.map(stop => {
       let best = 0, bestD = Infinity;
@@ -562,7 +562,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private doCollectStop(idx: number, route: RouteStop[], token: string | null): void {
     this.currentStop = idx + 1;
 
-    const bin      = this.allBins.find(b => b.id === route[idx].id);
+    const bin = this.allBins.find(b => b.id === route[idx].id);
     const capacity = route[idx].capacity > 0 ? route[idx].capacity : 1100;
     const actualFill = bin != null
       ? bin.fillPercentage
@@ -603,7 +603,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const [lat, lng] = coord;
     const latR = bounds.getNorth() - bounds.getSouth();
     const lngR = bounds.getEast()  - bounds.getWest();
-    const p    = 0.22;
+    const p = 0.22;
 
     if (lat < bounds.getSouth() + latR * p || lat > bounds.getNorth() - latR * p
      || lng < bounds.getWest()  + lngR * p || lng > bounds.getEast()  - lngR * p) {
@@ -631,8 +631,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.truckMarker.setLatLng(path[i]);
 
       if (i > 0) {
-        const deg  = this.bearing(path[i - 1], path[i]);
-        const el   = this.truckMarker.getElement();
+        const deg = this.bearing(path[i - 1], path[i]);
+        const el = this.truckMarker.getElement();
         const wrap = el?.querySelector('.truck-marker-wrap') as HTMLElement | null;
         if (wrap) wrap.style.transform = `rotate(${deg}deg)`;
       }
@@ -686,8 +686,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         this.truckMarker.setLatLng(path[i]);
 
         if (i > 0) {
-          const deg  = this.bearing(path[i - 1], path[i]);
-          const el   = this.truckMarker.getElement();
+          const deg = this.bearing(path[i - 1], path[i]);
+          const el = this.truckMarker.getElement();
           const wrap = el?.querySelector('.truck-marker-wrap') as HTMLElement | null;
           if (wrap) wrap.style.transform = `rotate(${deg}deg)`;
         }
@@ -731,28 +731,28 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   triggerBreakdown(): void {
-    const idx      = Math.max(0, this.currentStop - 1);
-    const stop     = this.routeResult?.route[idx];
+    const idx = Math.max(0, this.currentStop - 1);
+    const stop = this.routeResult?.route[idx];
     const zoneName = this.routeResult?.areaId ?? 'Неизвестна зона';
     const stopName = stop
       ? `Контейнер #${stop.id} (Спирка ${this.currentStop})`
       : 'Неизвестно';
 
     this.navigationActive = false;
-    this.stepPending      = false;
+    this.stepPending = false;
     this._stepResolve?.();
     this._stepResolve = undefined;
 
-    this.selectedReportType  = 'TruckProblem';
-    this.reportDescription   =
+    this.selectedReportType = 'TruckProblem';
+    this.reportDescription =
       `🚨 Камионът е повреден в ${zoneName}. Последна спирка: ${stopName}.`;
 
     this.toggleReportPanel(true);
 
     this.clearRoute();
-    this.routeActive      = false;
-    this.routeResult      = null;
-    this.currentStop      = 0;
+    this.routeActive = false;
+    this.routeResult = null;
+    this.currentStop = 0;
     this.currentTruckLoad = 0;
     this.loadBins();
   }
@@ -760,21 +760,21 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
 
   stopRoute() {
-    this.navigationActive  = false;
+    this.navigationActive = false;
     this.clearRoute();
-    this.routeResult       = null;
-    this.routeActive       = false;
-    this.currentStop       = 0;
-    this.currentTruckLoad  = 0;
-    this.selectedAreaId    = '';
+    this.routeResult = null;
+    this.routeActive = false;
+    this.currentStop = 0;
+    this.currentTruckLoad = 0;
+    this.selectedAreaId = '';
     this.selectedTrashType = 0;
   }
 
   private clearRoute() {
-    if (this.routeLine)   { this.map.removeLayer(this.routeLine);   this.routeLine   = undefined; }
+    if (this.routeLine)   { this.map.removeLayer(this.routeLine);   this.routeLine = undefined; }
     if (this.truckMarker) { this.map.removeLayer(this.truckMarker); this.truckMarker = undefined; }
     this.routeMarkers.forEach(m => this.map.removeLayer(m));
-    this.routeMarkers    = [];
+    this.routeMarkers = [];
     this.realRouteCoords = [];
     this.clearSearch();
   }
@@ -807,8 +807,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       if ((this.isUser || this.isDriver) && !this.navigationActive) {
         m.on('click', () => {
           this.selectedBinForReport = bin;
-          this.reportResult         = null;
-          this.reportSubmitting     = false;
+          this.reportResult = null;
+          this.reportSubmitting = false;
 
           const el = document.getElementById('selected-bin-id') as HTMLInputElement;
           if (el) el.value = `Контейнер #${bin.id}`;
@@ -822,13 +822,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
 
   private createBinIcon(bin: Bin): L.DivIcon {
-    const f             = Math.round(bin.fillPercentage);
-    const temp          = bin.temperature ?? 0;
-    const isFire        = bin.status === 2 || (temp > 55 && bin.fillPercentage > 70);
+    const f = Math.round(bin.fillPercentage);
+    const temp = bin.temperature ?? 0;
+    const isFire = bin.status === 2 || (temp > 55 && bin.fillPercentage > 70);
     const isSensorBroke = !isFire && bin.status === 3;           // SensorBroken status
-    const isOffline     = !isFire && bin.status === 1;           // Offline / ContainerDamage
-    const isBroken      = isSensorBroke || isOffline;
-    const isWarm        = temp > 44 && !isFire;
+    const isOffline = !isFire && bin.status === 1;           // Offline / ContainerDamage
+    const isBroken = isSensorBroke || isOffline;
+    const isWarm = temp > 44 && !isFire;
 
     const ring = isBroken ? '#94a3b8'
                : f >= 85  ? '#ef4444'
@@ -896,15 +896,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
 
   private createPopup(bin: Bin): string {
-    const f      = bin.fillPercentage;
+    const f = bin.fillPercentage;
     const liters = Math.round(f / 100 * 1100);
-    const temp   = bin.temperature;
+    const temp = bin.temperature;
     const isFire = bin.status === 2 || (temp !== null && temp! > 55 && bin.fillPercentage > 70);
     const isWarm = temp !== null && temp! > 44 && !isFire;
-    const ring   = f >= 85 ? '#ef4444' : f >= 65 ? '#f97316' : f >= 45 ? '#f59e0b' : '#10b981';
+    const ring = f >= 85 ? '#ef4444' : f >= 65 ? '#f97316' : f >= 45 ? '#f59e0b' : '#10b981';
 
     const typeLbl = ['Смесен', 'Пластмаса', 'Хартия', 'Стъкло'][bin.trashType] ?? '';
-    const typeBg  = ['rgba(148,163,184,.18)', 'rgba(245,158,11,.18)', 'rgba(59,130,246,.18)', 'rgba(34,211,238,.18)'][bin.trashType];
+    const typeBg = ['rgba(148,163,184,.18)', 'rgba(245,158,11,.18)', 'rgba(59,130,246,.18)', 'rgba(34,211,238,.18)'][bin.trashType];
     const typeClr = ['#94a3b8', '#f59e0b', '#60a5fa', '#22d3ee'][bin.trashType];
 
     const tempHtml = bin.hasSensor && temp !== null && !isFire ? `
@@ -1121,8 +1121,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
         setTimeout(() => {
           const toggleBtn = el.querySelector('#fc-toggle') as HTMLButtonElement | null;
-          const fcBody    = el.querySelector('#fc-body')   as HTMLElement      | null;
-          let collapsed   = false;
+          const fcBody = el.querySelector('#fc-body')   as HTMLElement      | null;
+          let collapsed = false;
 
           toggleBtn?.addEventListener('click', () => {
             collapsed = !collapsed;
@@ -1189,8 +1189,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
           }));
 
           const searchInput = el.querySelector('#bin-search-input') as HTMLInputElement;
-          const searchBtn   = el.querySelector('#bin-search-btn')   as HTMLButtonElement;
-          const doSearch    = () => self.searchNearestBin(searchInput.value);
+          const searchBtn = el.querySelector('#bin-search-btn')   as HTMLButtonElement;
+          const doSearch = () => self.searchNearestBin(searchInput.value);
 
           searchBtn?.addEventListener('click', doSearch);
           searchInput?.addEventListener('keydown', (e: KeyboardEvent) => {
@@ -1216,8 +1216,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     select.innerHTML = '<option value="all">Всички зони</option>';
 
     zones.forEach(z => {
-      const opt       = document.createElement('option');
-      opt.value       = z;
+      const opt = document.createElement('option');
+      opt.value = z;
       opt.textContent = z;
       select.appendChild(opt);
     });
@@ -1265,7 +1265,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       zIndexOffset: 1500
     }).addTo(this.map);
 
-    const RADIUS_M     = 500;
+    const RADIUS_M = 500;
     const radiusCircle = L.circle([lat, lon], {
       radius:      RADIUS_M,
       color:       '#3b82f6',
@@ -1351,11 +1351,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
-    this.selectedFile      = file;
+    this.selectedFile = file;
     this.photoNoBinWarning = false;   // reset warning for new file
 
-    const r    = new FileReader();
-    r.onload   = (e: any) => { this.reportImagePreview = e.target.result; };
+    const r = new FileReader();
+    r.onload = (e: any) => { this.reportImagePreview = e.target.result; };
     r.readAsDataURL(file);
 
     const token = this.getToken();
@@ -1368,7 +1368,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       }).pipe(timeout(8_000), takeUntil(this.destroy$)).subscribe({
         next: res => {
           this.photoCheckingPreview = false;
-          this.photoNoBinWarning    = !(res?.container_detected ?? true);
+          this.photoNoBinWarning = !(res?.container_detected ?? true);
         },
         error: () => { this.photoCheckingPreview = false; }
       });
@@ -1376,9 +1376,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   clearImagePreview() {
-    this.reportImagePreview  = null;
-    this.selectedFile        = null;
-    this.photoNoBinWarning   = false;
+    this.reportImagePreview = null;
+    this.selectedFile = null;
+    this.photoNoBinWarning = false;
     this.photoCheckingPreview = false;
     const el = document.getElementById('report-image') as HTMLInputElement;
     if (el) el.value = '';
@@ -1393,8 +1393,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
-    const desc           = document.getElementById('report-description') as HTMLTextAreaElement;
-    const reportType     = this.selectedReportType;
+    const desc = document.getElementById('report-description') as HTMLTextAreaElement;
+    const reportType = this.selectedReportType;
     const isTruckProblem = reportType === 'TruckProblem';
 
     if (!isTruckProblem && !this.selectedBinForReport) {
@@ -1425,8 +1425,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         this.reportCheckingPhoto = false;
 
         const containerDetected: boolean = check?.container_detected ?? true;
-        const detectedClass: string      = check?.detected_class     ?? '';
-        const confidence: number         = check?.confidence         ?? 0;
+        const detectedClass: string = check?.detected_class     ?? '';
+        const confidence: number = check?.confidence         ?? 0;
 
         if (!containerDetected) {
           const proceed = await this.showAiModal('noBin', '', '', '', 0);
@@ -1434,7 +1434,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         }
 
         else if (detectedClass && confidence > 0) {
-          const classInfo         = this.getAiClassInfo(detectedClass);
+          const classInfo = this.getAiClassInfo(detectedClass);
           const conflictsWithFire = reportType === 'Fire' &&
             ['clean', 'moderate', 'full', 'damaged'].includes(detectedClass);
           const conflictsWithFull = reportType === 'Full' &&
@@ -1474,7 +1474,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     if (desc?.value)       fd.append('Description', desc.value);
     if (this.selectedFile) fd.append('Photo', this.selectedFile);
 
-    const hadPhoto        = !!this.selectedFile;
+    const hadPhoto = !!this.selectedFile;
     this.reportSubmitting = true;
 
     this.http
@@ -1483,20 +1483,20 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       })
       .subscribe({
         next: res => {
-          this.reportSubmitting     = false;
-          this.reportResult         = {
+          this.reportSubmitting = false;
+          this.reportResult = {
             ...res,
             hadPhoto,
             containerDetected: res.containerDetected ?? true
           };
           this.selectedBinForReport = null;
-          this.reportImagePreview   = null;
-          this.selectedFile         = null;
-          this.reportDescription    = '';
-          this.selectedReportType   = 'Full';
+          this.reportImagePreview = null;
+          this.selectedFile = null;
+          this.reportDescription = '';
+          this.selectedReportType = 'Full';
 
           const si = document.getElementById('selected-bin-id') as HTMLInputElement;
-          if (si)   si.value   = '';
+          if (si)   si.value = '';
           if (desc) desc.value = '';
 
           setTimeout(() => this.loadBins(), 800);
@@ -1585,16 +1585,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const out: [number, number][] = [];
 
     for (let k = 0; k < count; k++) {
-      const d  = (k / (count - 1)) * total;
-      let lo   = 0;
-      let hi   = cum.length - 1;
+      const d = (k / (count - 1)) * total;
+      let lo = 0;
+      let hi = cum.length - 1;
 
       while (lo < hi - 1) {
         const mid = (lo + hi) >> 1;
         if (cum[mid] <= d) lo = mid; else hi = mid;
       }
 
-      const t         = (cum[hi] - cum[lo]) > 0 ? (d - cum[lo]) / (cum[hi] - cum[lo]) : 0;
+      const t = (cum[hi] - cum[lo]) > 0 ? (d - cum[lo]) / (cum[hi] - cum[lo]) : 0;
       const [la, ln]  = coords[lo];
       const [lb, ln2] = coords[hi];
       out.push([la + (lb - la) * t, ln + (ln2 - ln) * t]);
@@ -1631,10 +1631,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   private dist(a: [number, number], b: [number, number]): number {
-    const R    = 6371;
+    const R = 6371;
     const dLat = (b[0] - a[0]) * Math.PI / 180;
     const dLon = (b[1] - a[1]) * Math.PI / 180;
-    const x    = Math.sin(dLat / 2) ** 2
+    const x = Math.sin(dLat / 2) ** 2
                + Math.cos(a[0] * Math.PI / 180)
                * Math.cos(b[0] * Math.PI / 180)
                * Math.sin(dLon / 2) ** 2;

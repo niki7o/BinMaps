@@ -24,11 +24,11 @@ public sealed class FillageSimulator
 
     private static double GetTypeMultiplier(TrashType type) => type switch
     {
-        TrashType.Mixed   => 1.5,
+        TrashType.Mixed => 1.5,
         TrashType.Plastic => 1.2,
-        TrashType.Paper   => 1.0,
-        TrashType.Glass   => 0.8,
-        _                 => 1.0
+        TrashType.Paper => 1.0,
+        TrashType.Glass => 0.8,
+        _ => 1.0
     };
 
     private static double GetTimeMultiplier()
@@ -45,11 +45,11 @@ public sealed class FillageSimulator
 
         var heatRise = container.TrashType switch
         {
-            TrashType.Mixed   => fill * 15.0,
+            TrashType.Mixed => fill * 15.0,
             TrashType.Plastic => fill * 6.0,
-            TrashType.Paper   => fill * 5.0,
-            TrashType.Glass   => fill * 2.0,
-            _                 => fill * 5.0
+            TrashType.Paper => fill * 5.0,
+            TrashType.Glass => fill * 2.0,
+            _ => fill * 5.0
         };
 
         var variation = (Random.Shared.NextDouble() * 4) - 2;

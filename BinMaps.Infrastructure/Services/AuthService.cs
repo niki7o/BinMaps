@@ -71,11 +71,10 @@ public sealed class AuthService : IAuthService
             return (false, null);
 
         var roles = await _userManager.GetRolesAsync(user);
-        var role  = roles.FirstOrDefault() ?? "User";
+        var role = roles.FirstOrDefault() ?? "User";
         var token = GenerateJwtToken(user, role);
 
-        
-        var isBanned  = role != "Admin" && user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow;
+        var isBanned = role != "Admin" && user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow;
         string? banReason = null;
         if (isBanned)
         {
@@ -85,13 +84,13 @@ public sealed class AuthService : IAuthService
 
         return (true, new AuthResultDto
         {
-            Token     = token,
-            UserId    = user.Id,
-            UserName  = user.UserName!,
-            Email     = user.Email!,
-            Role      = role,
+            Token = token,
+            UserId = user.Id,
+            UserName = user.UserName!,
+            Email = user.Email!,
+            Role = role,
             Reputation = user.Reputation,
-            IsBanned  = isBanned,
+            IsBanned = isBanned,
             BanReason = banReason
         });
     }
