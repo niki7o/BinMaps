@@ -42,10 +42,14 @@ public sealed class AuthController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var (success, result) = await _authService.LoginAsync(dto);
+        var (success, isBanned, banReason, result) = await _authService.LoginAsync(dto);
 
-        if (!success || result is null)
+        if (!success)
             return Unauthorized(new { message = "Невалиден имейл или парола." });
+
+        if (isBanned)
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { code = "BANNED", banReason = banReason ?? "Нямате достъп до системата." });
 
         return Ok(result);
     }

@@ -21,6 +21,17 @@ namespace BinMaps.Data.Entities
 
         #endregion
 
+        #region Ban
+
+        public bool IsBanned { get; set; } = false;
+
+        [MaxLength(500)]
+        public string? BanReason { get; set; }
+
+        public DateTime? BannedAt { get; set; }
+
+        #endregion
+
         #region Navigation
 
         public ICollection<Report> Reports { get; set; } = new List<Report>();

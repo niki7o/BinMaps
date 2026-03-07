@@ -49,10 +49,10 @@ public sealed class ReputationService : IReputationService
 
     public int GetNextLevelThreshold(string level) => level switch
     {
-        "" => 20,
-        "Новак" => 40,
-        "Активен" => 60,
-        "Верен" => 80,
+        "Новак" => 20,
+        "Активен" => 40,
+        "Верен" => 60,
+        "Елитен" => 80,
         _ => 100
     };
 

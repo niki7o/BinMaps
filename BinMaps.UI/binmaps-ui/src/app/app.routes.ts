@@ -10,21 +10,29 @@ import { AboutComponent } from './about/about';
 import { ErrorPageComponent } from './error-Page/error-page.component';
 import { TermsComponent } from './terms/terms';
 import { NotificationsComponent } from './notifications/notifications';
+import { BannedComponent } from './banned/banned';
+import { authGuard } from './guards/auth.guard';
+import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
-  { path: '', component: HomeComponent },
-  { path: 'login', component: LoginComponent },
-  { path: 'register', component: RegisterComponent },
-  { path: 'map', component: MapComponent },
-  { path: 'admin', component: AdminDashboardComponent },
-  { path: 'analytics', component: AnalyticsDashboardComponent },
-  { path: 'profile', component: ProfileComponent },
-  { path: 'notifications', component: NotificationsComponent },
-  { path: 'home', redirectTo: ''},
-  { path: 'terms',     component: TermsComponent },
-  { path: 'about', component: AboutComponent },
-  { path: '**', component: ErrorPageComponent, data: { type: '404' } },
-  { path: 'forbidden', component: ErrorPageComponent, data: { type: '403' } },
+  { path: '',            component: HomeComponent },
+  { path: 'login',       component: LoginComponent },
+  { path: 'register',    component: RegisterComponent },
+  { path: 'banned',      component: BannedComponent },
+  { path: 'terms',       component: TermsComponent },
+  { path: 'about',       component: AboutComponent },
 
+  // Protected — requires authentication
+  { path: 'map',           component: MapComponent,                 canActivate: [authGuard] },
+  { path: 'analytics',     component: AnalyticsDashboardComponent,  canActivate: [authGuard] },
+  { path: 'profile',       component: ProfileComponent,             canActivate: [authGuard] },
+  { path: 'notifications', component: NotificationsComponent,       canActivate: [authGuard] },
 
+  // Admin-only — non-admins see 403 page
+  { path: 'admin',         component: AdminDashboardComponent,      canActivate: [adminGuard] },
+
+  // Error pages
+  { path: 'forbidden',   component: ErrorPageComponent, data: { type: '403' } },
+  { path: 'home',        redirectTo: '' },
+  { path: '**',          component: ErrorPageComponent, data: { type: '404' } },
 ];

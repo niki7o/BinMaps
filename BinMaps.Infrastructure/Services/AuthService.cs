@@ -2,7 +2,6 @@
 using BinMaps.Infrastructure.Services.Interfaces;
 using BinMaps.Shared.DTOs;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -60,22 +59,26 @@ public sealed class AuthService : IAuthService
 
 
 
-    public async Task<(bool Success, AuthResultDto? Result)> LoginAsync(LoginDTO dto)
+    public async Task<(bool Success, bool IsBanned, string? BanReason, AuthResultDto? Result)> LoginAsync(LoginDTO dto)
     {
         var user = await _userManager.FindByEmailAsync(dto.Email);
         if (user is null)
-            return (false, null);
+            return (false, false, null, null);
 
         var signIn = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, lockoutOnFailure: false);
         if (!signIn.Succeeded)
-            return (false, null);
+            return (false, false, null, null);
 
-
+        // Admins are never blocked by a ban
         var roles = await _userManager.GetRolesAsync(user);
         var role = roles.FirstOrDefault() ?? "User";
+
+        if (user.IsBanned && role != "Admin")
+            return (true, true, user.BanReason, null);
+
         var token = GenerateJwtToken(user, role);
 
-        return (true, new AuthResultDto
+        return (true, false, null, new AuthResultDto
         {
             Token = token,
             UserId = user.Id,

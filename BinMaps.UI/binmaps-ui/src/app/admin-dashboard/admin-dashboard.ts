@@ -48,6 +48,9 @@ interface User {
   role: string;
   reputation: number;
   createdAt?: string;
+  isBanned?: boolean;
+  banReason?: string | null;
+  bannedAt?: string | null;
 }
 
 interface AdminStats {
@@ -116,6 +119,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   selectedReport: Report | null = null;
   editingContainer: Container | null = null;
   reputationModal: { user: User; value: number } | null = null;
+  banModal: { user: User; reason: string } | null = null;
 
   toasts: Toast[] = [];
   private toastCounter = 0;
@@ -550,6 +554,50 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     if (!photoURL) return null;
     const base = this.API.replace(/\/api$/, '');
     return `${base}${photoURL}`;
+  }
+
+  openBanModal(user: User): void {
+    this.banModal = { user, reason: '' };
+  }
+
+  closeBanModal(): void {
+    this.banModal = null;
+  }
+
+  confirmBan(): void {
+    if (!this.banModal) return;
+    const { user, reason } = this.banModal;
+    if (!reason.trim()) {
+      this.showToast('Въведете причина за блокиране', 'error');
+      return;
+    }
+
+    const headers = this.authHeaders().headers.set('Content-Type', 'application/json');
+    this.http.put(
+      `${this.API}/admin/users/${user.id}/ban`,
+      JSON.stringify(reason.trim()),
+      { headers }
+    ).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.showToast(`${user.userName} е блокиран`);
+          this.banModal = null;
+          this.loadUsers();
+        },
+        error: (e) => this.showToast(e?.error?.message ?? 'Грешка при блокиране', 'error')
+      });
+  }
+
+  unbanUser(user: User): void {
+    this.http.put(`${this.API}/admin/users/${user.id}/unban`, {}, this.authHeaders())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.showToast(`${user.userName} е деблокиран`);
+          this.loadUsers();
+        },
+        error: () => this.showToast('Грешка при деблокиране', 'error')
+      });
   }
 
   deleteUser(user: User): void {

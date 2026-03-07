@@ -1,0 +1,199 @@
+/* ── Ban Screen ────────────────────────────────────── */
+.ban-screen {
+  position: fixed;
+  inset: 0;
+  background: #0a0f1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+}
+
+/* ── Card ──────────────────────────────────────────── */
+.ban-card {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 48px 40px;
+  max-width: 480px;
+  width: 90%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 24px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 60px rgba(239, 68, 68, 0.08), inset 0 1px 0 rgba(255,255,255,0.05);
+  animation: card-appear 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes card-appear {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Ban Icon ──────────────────────────────────────── */
+.ban-icon-wrap {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 28px;
+}
+
+.ban-icon {
+  width: 64px;
+  height: 64px;
+  color: #ef4444;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: icon-pulse 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.5));
+}
+
+.ban-icon-ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  border-radius: 50%;
+  animation: ring-expand 2.5s ease-out infinite;
+}
+
+@keyframes icon-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
+
+@keyframes ring-expand {
+  0%   { transform: scale(0.8); opacity: 0.6; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* ── Text ──────────────────────────────────────────── */
+.ban-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  margin: 0 0 8px;
+  letter-spacing: -0.5px;
+}
+
+.ban-subtitle {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin: 0 0 32px;
+}
+
+/* ── Reason Box ────────────────────────────────────── */
+.ban-reason-box {
+  background: rgba(239, 68, 68, 0.07);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.ban-reason-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ef4444;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.ban-reason-label svg {
+  flex-shrink: 0;
+  stroke: #ef4444;
+}
+
+.ban-reason-text {
+  color: #cbd5e1;
+  font-size: 0.97rem;
+  line-height: 1.6;
+  margin: 0;
+  word-break: break-word;
+}
+
+/* ── Help text ─────────────────────────────────────── */
+.ban-help {
+  color: #475569;
+  font-size: 0.85rem;
+  margin: 0 0 32px;
+  line-height: 1.5;
+}
+
+/* ── Button ────────────────────────────────────────── */
+.ban-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.ban-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.ban-btn svg { stroke: #94a3b8; }
+
+/* ── Glow ──────────────────────────────────────────── */
+.ban-glow {
+  position: absolute;
+  width: 40vw;
+  height: 40vw;
+  background: #ef4444;
+  filter: blur(160px);
+  opacity: 0.05;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* ── Background particles ──────────────────────────── */
+.ban-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: rgba(239, 68, 68, 0.4);
+  border-radius: 50%;
+  animation: float-particle linear infinite;
+}
+
+.particle:nth-child(1) { left: 10%; animation-duration: 8s;  animation-delay: 0s;   bottom: -5px; }
+.particle:nth-child(2) { left: 30%; animation-duration: 12s; animation-delay: 2s;   bottom: -5px; }
+.particle:nth-child(3) { left: 50%; animation-duration: 9s;  animation-delay: 1s;   bottom: -5px; }
+.particle:nth-child(4) { left: 70%; animation-duration: 11s; animation-delay: 3s;   bottom: -5px; }
+.particle:nth-child(5) { left: 85%; animation-duration: 7s;  animation-delay: 0.5s; bottom: -5px; }
+.particle:nth-child(6) { left: 45%; animation-duration: 10s; animation-delay: 1.5s; bottom: -5px; }
+
+@keyframes float-particle {
+  0%   { transform: translateY(0)   scale(1);   opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 0.5; }
+  100% { transform: translateY(-100vh) scale(0.3); opacity: 0; }
+}

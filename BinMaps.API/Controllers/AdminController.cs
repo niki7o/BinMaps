@@ -108,11 +108,50 @@ public sealed class AdminController : ControllerBase
                 user.Email,
                 user.Reputation,
                 user.CreatedAt,
-                Role = roles.FirstOrDefault() ?? "User"
+                Role = roles.FirstOrDefault() ?? "User",
+                user.IsBanned,
+                user.BanReason,
+                user.BannedAt
             });
         }
 
         return Ok(result);
+    }
+
+    [HttpPut("users/{id}/ban")]
+    public async Task<IActionResult> BanUser([FromRoute] string id, [FromBody] string reason)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+            return BadRequest(new { message = "Причината за бан е задължителна." });
+
+        var user = await _userManager.FindByIdAsync(id);
+        if (user is null) return NotFound();
+
+        // Admins cannot be banned
+        var roles = await _userManager.GetRolesAsync(user);
+        if (roles.Contains("Admin"))
+            return BadRequest(new { message = "Не можете да блокирате администратор." });
+
+        user.IsBanned  = true;
+        user.BanReason = reason.Trim();
+        user.BannedAt  = DateTime.UtcNow;
+        await _userManager.UpdateAsync(user);
+
+        return NoContent();
+    }
+
+    [HttpPut("users/{id}/unban")]
+    public async Task<IActionResult> UnbanUser([FromRoute] string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user is null) return NotFound();
+
+        user.IsBanned  = false;
+        user.BanReason = null;
+        user.BannedAt  = null;
+        await _userManager.UpdateAsync(user);
+
+        return NoContent();
     }
 
     [HttpPut("users/{id}/role")]

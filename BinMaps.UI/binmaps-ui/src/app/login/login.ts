@@ -74,8 +74,15 @@ export class LoginComponent {
     this.router.navigate([destination]);
   }
 
-  private onLoginError(err: { status: number }): void {
+  private onLoginError(err: { status: number; error?: { code?: string; banReason?: string } }): void {
     this.loading.set(false);
+
+    if (err.status === 403 && err.error?.code === 'BANNED') {
+      const reason = encodeURIComponent(err.error?.banReason ?? 'Акаунтът ви е блокиран.');
+      this.router.navigate(['/banned'], { queryParams: { reason: decodeURIComponent(reason) } });
+      return;
+    }
+
     this.error.set(
       err.status === 401 || err.status === 400
         ? 'Грешен имейл или парола'

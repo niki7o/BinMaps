@@ -663,3 +663,63 @@
     max-width: 100%;
   }
 }
+/* ── Ban system styles ────────────────────────────────── */
+.user-row--banned {
+  opacity: 0.75;
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.user-avatar--banned {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: #ef4444 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.ban-reason-inline {
+  color: #ef4444;
+  margin-top: 2px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Ban modal */
+.modal--ban .modal__header {
+  border-bottom-color: rgba(239, 68, 68, 0.2);
+}
+
+.modal__title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ban-modal-icon {
+  width: 32px;
+  height: 32px;
+  background: rgba(239, 68, 68, 0.12);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ef4444;
+  flex-shrink: 0;
+}
+
+.ban-modal-desc {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.ban-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.ban-chars {
+  text-align: right;
+  margin-top: 4px;
+}
