@@ -217,15 +217,18 @@ public sealed class TruckRouteService : ITruckRouteService
 
             stops.Add(new ContainerStopDto
             {
-                Id = container.Id,
-                StopNumber = stopNum++,
-                FillPercentage = container.FillPercentage,
-                LocationX = container.LocationX,
-                LocationY = container.LocationY,
+                Id                   = container.Id,
+                StopNumber           = stopNum++,
+                FillPercentage       = container.FillPercentage,
+                LocationX            = container.LocationX,
+                LocationY            = container.LocationY,
                 DistanceFromPrevious = Math.Round(distKm, 3),
-                EstimatedLoad = Math.Round(estLoadKg, 1),
-                TrashType = container.TrashType,
-                Status = container.Status
+                EstimatedLoad        = Math.Round(estLoadKg, 1),
+                Capacity             = container.Capacity,
+                HasSensor            = container.HasSensor,
+                AreaId               = container.AreaId,
+                TrashType            = container.TrashType,
+                Status               = container.Status
             });
 
             totalDistKm += distKm;

@@ -85,6 +85,20 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   reportSubmitting       = false;
   reportCheckingPhoto    = false;   // true while pre-checking photo with AI
 
+  // ── Navigation mode ───────────────────────────────────────────────────────
+  navigationMode: 'auto' | 'step' = 'auto';   // 'auto' = animated; 'step' = manual
+  stepPending    = false;                       // true when waiting for user to confirm next stop
+  private _stepResolve?: () => void;           // resolves the step-wait promise
+
+  // ── Breakdown modal ───────────────────────────────────────────────────────
+  breakdownModal: {
+    visible:  boolean;
+    zoneName: string;
+    stopName: string;
+    binId:    number;
+  } | null = null;
+  // ─────────────────────────────────────────────────────────────────────────
+
   // ── AI Conflict Modal ─────────────────────────────────────────────────────
   aiConflictModal: {
     visible:     boolean;
@@ -353,20 +367,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         return;
       }
 
-      const STD_CAP = 1100;
-
-      res.route.forEach(stop => {
-        const cap  = stop.capacity > 0 ? stop.capacity : STD_CAP;
-        const fill = isFinite(stop.fillPercentage)
-          ? Math.max(0, Math.min(100, stop.fillPercentage))
-          : 0;
-        stop.estimatedLoad = +(cap * fill / 100).toFixed(1);
-      });
-
-      res.totalLoad = +res.route.reduce((s, r) => s + r.estimatedLoad, 0).toFixed(1);
-      res.capacityUtilization = res.truckCapacity > 0
-        ? +(res.totalLoad / res.truckCapacity * 100).toFixed(1)
-        : 0;
+      // Server already provides correct EstimatedLoad (computed from container.Capacity
+      // and FillPercentage). TotalLoad and CapacityUtilization are also correct from
+      // the backend — no client-side override needed.
 
       this.routeResult = res;
       this.routeActive = true;
@@ -491,6 +494,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   // #region Navigation
 
+  // ── Entry point: delegates to auto or step mode ───────────────────────────
   async startNavigation() {
     if (!this.routeResult?.route.length || !this.realRouteCoords.length) {
       alert('Маршрутът не е готов');
@@ -500,9 +504,41 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.navigationActive = true;
     this.currentStop      = 0;
     this.currentTruckLoad = 0;
+    this.stepPending      = false;
 
-    const route = this.routeResult.route;
-    const token = this.getToken();
+    const { truckIcon, path, stopIndices } = this.buildNavSetup();
+
+    if (this.navigationMode === 'step') {
+      await this.runStepNavigation(truckIcon, path, stopIndices);
+    } else {
+      await this.runAutoNavigation(truckIcon, path, stopIndices);
+    }
+  }
+
+  // ── Shared setup: truck icon, path resampling, stop index mapping ─────────
+  private buildNavSetup() {
+    const route  = this.routeResult!.route;
+    const totalKm = this.realRouteCoords.reduce(
+      (acc, c, i) => i > 0 ? acc + this.dist(this.realRouteCoords[i - 1], c) : 0, 0
+    );
+
+    const FRAMES = Math.max(250, Math.round(totalKm * 70));
+    const path   = this.resamplePath(this.realRouteCoords, FRAMES);
+
+    const stopIndices: number[] = route.map(stop => {
+      let best = 0, bestD = Infinity;
+      path.forEach((coord, idx) => {
+        const d = this.dist(coord, [stop.locationY, stop.locationX]);
+        if (d < bestD) { bestD = d; best = idx; }
+      });
+      return best;
+    });
+
+    const stride = Math.max(1, Math.floor(FRAMES / (route.length + 1)));
+    for (let k = 1; k < stopIndices.length; k++) {
+      if (stopIndices[k] <= stopIndices[k - 1]) stopIndices[k] = stopIndices[k - 1] + stride;
+      if (stopIndices[k] >= FRAMES)             stopIndices[k] = FRAMES - 1;
+    }
 
     const truckHtml = `
       <div class="truck-marker-wrap">
@@ -538,65 +574,64 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       </div>`;
 
     const truckIcon = L.divIcon({
-      className:  '',
-      html:       truckHtml,
-      iconSize:   [56, 56],
-      iconAnchor: [28, 28]
+      className: '', html: truckHtml, iconSize: [56, 56], iconAnchor: [28, 28]
     });
 
-    const totalKm = this.realRouteCoords.reduce(
-      (acc, c, i) => i > 0 ? acc + this.dist(this.realRouteCoords[i - 1], c) : 0,
-      0
-    );
+    return { truckIcon, path, stopIndices, FRAMES };
+  }
 
-    const FRAMES = Math.max(250, Math.round(totalKm * 70));
-    const path   = this.resamplePath(this.realRouteCoords, FRAMES);
+  // ── Shared: collect a single stop (both modes use this) ───────────────────
+  private doCollectStop(idx: number, route: RouteStop[], token: string | null): void {
+    this.currentStop      = idx + 1;
+    this.currentTruckLoad += isFinite(route[idx].estimatedLoad) ? route[idx].estimatedLoad : 0;
 
-    const stopIndices: number[] = route.map(stop => {
-      let best = 0, bestD = Infinity;
-      path.forEach((coord, idx) => {
-        const d = this.dist(coord, [stop.locationY, stop.locationX]);
-        if (d < bestD) { bestD = d; best = idx; }
-      });
-      return best;
-    });
-
-    const stride = Math.max(1, Math.floor(FRAMES / (route.length + 1)));
-    for (let k = 1; k < stopIndices.length; k++) {
-      if (stopIndices[k] <= stopIndices[k - 1]) stopIndices[k] = stopIndices[k - 1] + stride;
-      if (stopIndices[k] >= FRAMES)             stopIndices[k] = FRAMES - 1;
+    if (this.routeMarkers[idx]) {
+      this.routeMarkers[idx].setIcon(L.divIcon({
+        className: 'route-stop-marker-completed',
+        html: `<div class="stop-number">✓</div>`,
+        iconSize: [32, 32], iconAnchor: [16, 16]
+      }));
     }
+
+    const bin = this.allBins.find(b => b.id === route[idx].id);
+    if (bin) {
+      bin.fillPercentage = Math.random() * 5 + 1;
+      if (bin.hasSensor && bin.temperature != null && bin.temperature > 32)
+        bin.temperature = +(16 + Math.random() * 8).toFixed(1);
+    }
+
+    this.http.put(
+      `${this.API_URL}/containers/${route[idx].id}/empty`, {},
+      token ? { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) } : {}
+    ).toPromise().catch(() => {});
+  }
+
+  // ── Shared: pan logic ─────────────────────────────────────────────────────
+  private panIfNearEdge(coord: [number, number]): void {
+    const bounds = this.map.getBounds();
+    const [lat, lng] = coord;
+    const latR = bounds.getNorth() - bounds.getSouth();
+    const lngR = bounds.getEast()  - bounds.getWest();
+    const p    = 0.22;
+
+    if (lat < bounds.getSouth() + latR * p || lat > bounds.getNorth() - latR * p
+     || lng < bounds.getWest()  + lngR * p || lng > bounds.getEast()  - lngR * p) {
+      this.map.panTo(coord, { animate: true, duration: 0.45, easeLinearity: 1 });
+    }
+  }
+
+  // ── AUTO mode: full animation in one shot ─────────────────────────────────
+  private async runAutoNavigation(
+    truckIcon: L.DivIcon,
+    path: [number, number][],
+    stopIndices: number[]
+  ): Promise<void> {
+    const route = this.routeResult!.route;
+    const token = this.getToken();
+    const FRAMES = path.length;
 
     this.map.panTo(path[0], { animate: true, duration: 0.8 });
     this.truckMarker = L.marker(path[0], { icon: truckIcon, zIndexOffset: 2000 }).addTo(this.map);
-
-    const collectStop = (idx: number) => {
-      this.currentStop      = idx + 1;
-      this.currentTruckLoad += isFinite(route[idx].estimatedLoad) ? route[idx].estimatedLoad : 0;
-
-      if (this.routeMarkers[idx]) {
-        this.routeMarkers[idx].setIcon(L.divIcon({
-          className:  'route-stop-marker-completed',
-          html:       `<div class="stop-number">✓</div>`,
-          iconSize:   [32, 32],
-          iconAnchor: [16, 16]
-        }));
-      }
-
-      const bin = this.allBins.find(b => b.id === route[idx].id);
-      if (bin) {
-        bin.fillPercentage = Math.random() * 5 + 1;
-        if (bin.hasSensor && bin.temperature != null && bin.temperature > 32) {
-          bin.temperature = +(16 + Math.random() * 8).toFixed(1);
-        }
-      }
-
-      this.http.put(
-        `${this.API_URL}/containers/${route[idx].id}/empty`,
-        {},
-        token ? { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) } : {}
-      ).toPromise().catch(() => {});
-    };
 
     let si = 0;
 
@@ -612,42 +647,154 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         if (wrap) wrap.style.transform = `rotate(${deg}deg)`;
       }
 
-      if (i % 20 === 0) {
-        const bounds = this.map.getBounds();
-        const [lat, lng] = path[i];
-        const latR = bounds.getNorth() - bounds.getSouth();
-        const lngR = bounds.getEast()  - bounds.getWest();
-        const p    = 0.22;
-
-        const nearEdge = lat < bounds.getSouth() + latR * p
-                      || lat > bounds.getNorth() - latR * p
-                      || lng < bounds.getWest()  + lngR * p
-                      || lng > bounds.getEast()  - lngR * p;
-
-        if (nearEdge) {
-          this.map.panTo(path[i], { animate: true, duration: 0.45, easeLinearity: 1 });
-        }
-      }
+      if (i % 20 === 0) this.panIfNearEdge(path[i]);
 
       let needsRerender = false;
       while (si < route.length && i >= stopIndices[si]) {
-        collectStop(si);
+        this.doCollectStop(si, route, token);
         needsRerender = true;
         si++;
       }
-
       if (needsRerender) this.renderBins(this.filtered());
 
       await new Promise(r => setTimeout(r, 22));
     }
 
-    while (si < route.length) { collectStop(si); si++; }
+    while (si < route.length) { this.doCollectStop(si, route, token); si++; }
     if (si > 0) this.renderBins(this.filtered());
 
-    const load = this.currentTruckLoad;
     this.navigationActive = false;
-    alert(`Маршрут завършен!\nСпирки: ${route.length}\nСъбран товар: ${load.toFixed(0)} л`);
+    const load = this.currentTruckLoad;
     this.currentTruckLoad = 0;
+    this.loadBins();   // refresh from server after emptying
+
+    alert(`Маршрут завършен!\nСпирки: ${route.length}\nСъбран товар: ${load.toFixed(0)} л`);
+  }
+
+  // ── STEP mode: pause at each stop until driver confirms ───────────────────
+  private async runStepNavigation(
+    truckIcon: L.DivIcon,
+    path: [number, number][],
+    stopIndices: number[]
+  ): Promise<void> {
+    const route = this.routeResult!.route;
+    const token = this.getToken();
+    const FRAMES = path.length;
+
+    this.map.panTo(path[0], { animate: true, duration: 0.8 });
+    this.truckMarker = L.marker(path[0], { icon: truckIcon, zIndexOffset: 2000 }).addTo(this.map);
+
+    let prevFrame = 0;
+
+    for (let si = 0; si < route.length; si++) {
+      if (!this.navigationActive) break;
+
+      const toFrame = stopIndices[si];
+
+      // Animate truck to this stop
+      for (let i = prevFrame; i <= toFrame; i++) {
+        if (!this.navigationActive) return;
+
+        this.truckMarker.setLatLng(path[i]);
+
+        if (i > 0) {
+          const deg  = this.bearing(path[i - 1], path[i]);
+          const el   = this.truckMarker.getElement();
+          const wrap = el?.querySelector('.truck-marker-wrap') as HTMLElement | null;
+          if (wrap) wrap.style.transform = `rotate(${deg}deg)`;
+        }
+
+        if (i % 20 === 0) this.panIfNearEdge(path[i]);
+
+        await new Promise(r => setTimeout(r, 22));
+      }
+
+      if (!this.navigationActive) break;
+
+      // ── Arrived at stop — collect & wait for driver to confirm ─────────
+      this.doCollectStop(si, route, token);
+      this.renderBins(this.filtered());
+
+      // Wait for driver to click "Confirm" (or interrupt via breakdown)
+      if (si < route.length - 1) {
+        this.stepPending = true;
+        await new Promise<void>(resolve => { this._stepResolve = resolve; });
+        this.stepPending = false;
+        if (!this.navigationActive) break;
+      }
+
+      prevFrame = toFrame + 1;
+    }
+
+    // Flush any remaining stops if navigating was not aborted
+    if (this.navigationActive) {
+      this.navigationActive = false;
+      const load = this.currentTruckLoad;
+      this.currentTruckLoad = 0;
+      this.loadBins();   // refresh from server after emptying
+
+      alert(`Маршрут завършен!\nСпирки: ${route.length}\nСъбран товар: ${load.toFixed(0)} л`);
+    }
+
+    this.stepPending = false;
+  }
+
+  // ── Confirm next step (step mode) ─────────────────────────────────────────
+  confirmNextStep(): void {
+    this.stepPending = false;
+    this._stepResolve?.();
+    this._stepResolve = undefined;
+  }
+
+  // ── Breakdown modal ───────────────────────────────────────────────────────
+  showBreakdownModal(): void {
+    const idx  = Math.max(0, this.currentStop - 1);
+    const stop = this.routeResult?.route[idx];
+    this.breakdownModal = {
+      visible:  true,
+      zoneName: this.routeResult?.areaId ?? 'Неизвестна зона',
+      stopName: stop ? `Контейнер #${stop.id} (Спирка ${this.currentStop})` : 'Неизвестно',
+      binId:    stop?.id ?? 0
+    };
+  }
+
+  cancelBreakdown(): void {
+    this.breakdownModal = null;
+  }
+
+  async confirmBreakdown(): Promise<void> {
+    const modal = this.breakdownModal;
+    if (!modal) return;
+
+    this.breakdownModal = null;
+
+    // Stop any ongoing navigation
+    this.navigationActive = false;
+    this.stepPending      = false;
+    this._stepResolve?.();
+    this._stepResolve = undefined;
+
+    // Submit TruckProblem report via existing API
+    const token = this.getToken();
+    if (token) {
+      const fd = new FormData();
+      if (modal.binId > 0) fd.append('TrashContainerId', modal.binId.toString());
+      fd.append('ReportType', '3');   // TruckProblem
+      fd.append('Description',
+        `🚨 Камионът е повреден в ${modal.zoneName}. Последна спирка: ${modal.stopName}`);
+
+      this.http.post(`${this.API_URL}/reports`, fd, {
+        headers: new HttpHeaders({ Authorization: `Bearer ${token}` })
+      }).toPromise().catch(() => {});
+    }
+
+    // Clear the route
+    this.clearRoute();
+    this.routeActive       = false;
+    this.routeResult       = null;
+    this.currentStop       = 0;
+    this.currentTruckLoad  = 0;
+    this.loadBins();
   }
 
   // #endregion
