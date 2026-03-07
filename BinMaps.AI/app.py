@@ -36,7 +36,7 @@ def _build_model(num_classes: int = 5) -> nn.Module:
     weights=None at inference time because we load our own bin_fill_model.pth.
     """
     model = tv_models.mobilenet_v2(weights=None)
-    in_features = model.classifier[1].in_features   # 1280
+    in_features = model.classifier[1].in_features   
     model.classifier[1] = nn.Linear(in_features, num_classes)
     return model
 
