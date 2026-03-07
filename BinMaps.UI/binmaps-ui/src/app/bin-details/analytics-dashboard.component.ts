@@ -4,7 +4,6 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { Chart, registerables } from 'chart.js';
-import * as L from 'leaflet';
 import { environment } from '../../environments/environment';
 
 Chart.register(...registerables);

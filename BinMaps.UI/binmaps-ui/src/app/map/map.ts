@@ -8,8 +8,7 @@ import { AuthService } from '../services/auth.service';
 import { AuthUser } from '../services/auth.models';
 import { ContainerSignalRService } from '../services/signalr.service';
 import { environment } from '../../environments/environment';
-import * as L from 'leaflet';
-import 'leaflet.markercluster';
+
 
 interface Bin {
   id: number;
