@@ -23,15 +23,21 @@ public sealed class ContainerDynamicsService : BackgroundService
     private readonly IHubContext<ContainerHub> _hubContext;
     private readonly ILogger<ContainerDynamicsService> _logger;
 
+    #region Constructor
+
     public ContainerDynamicsService(
         IServiceScopeFactory scopeFactory,
         IHubContext<ContainerHub> hubContext,
         ILogger<ContainerDynamicsService> logger)
     {
         _scopeFactory = scopeFactory;
-        _hubContext = hubContext;
-        _logger = logger;
+        _hubContext   = hubContext;
+        _logger       = logger;
     }
+
+    #endregion
+
+    #region Background Service Entry Point
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -41,6 +47,10 @@ public sealed class ContainerDynamicsService : BackgroundService
             await Task.Delay(UpdateInterval, stoppingToken);
         }
     }
+
+    #endregion
+
+    #region Private — Cycle & Updates
 
     private async Task RunCycleAsync(CancellationToken token)
     {
@@ -158,4 +168,6 @@ public sealed class ContainerDynamicsService : BackgroundService
         });
         await _hubContext.Clients.All.SendAsync("ContainersUpdated", payload, token);
     }
+
+    #endregion
 }

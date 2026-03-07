@@ -23,6 +23,8 @@ public sealed class ReportService : IReportService
     private readonly UserManager<User>         _userManager;
     private readonly IHubContext<ContainerHub> _hub;
 
+    #region Constructor
+
     public ReportService(
         IRepository<Report, int>  reportRepo,
         IAIService                aiService,
@@ -38,6 +40,8 @@ public sealed class ReportService : IReportService
         _userManager            = userManager;
         _hub                    = hub;
     }
+
+    #endregion
 
     #region Public
 

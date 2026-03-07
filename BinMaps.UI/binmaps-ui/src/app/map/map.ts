@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, timeout, firstValueFrom } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { AuthUser } from '../services/auth.models';
 import { ContainerSignalRService } from '../services/signalr.service';
@@ -84,6 +84,19 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   selectedReportType     = 'Full';
   reportSubmitting       = false;
   reportCheckingPhoto    = false;   // true while pre-checking photo with AI
+
+  // ── AI Conflict Modal ─────────────────────────────────────────────────────
+  aiConflictModal: {
+    visible:     boolean;
+    variant:     'conflict' | 'noBin';
+    reportLabel: string;
+    aiLabel:     string;
+    aiDesc:      string;
+    confidence:  number;
+  } | null = null;
+  private _conflictResolve?: (confirmed: boolean) => void;
+  // ─────────────────────────────────────────────────────────────────────────
+
   reportResult: {
     reportId: number;
     finalConfidence: number;
@@ -130,7 +143,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     { key: 'light',     label: 'Светла'      }
   ];
 
-  // ── Icon helpers ──────────────────────────────────────────────────────────
+  // #region Icon Helpers
 
   private binIcon(type: number): string {
     return `${this.ICONS_DIR}/bin-${['mixed', 'plastic', 'paper', 'glass'][type] ?? 'mixed'}.svg`;
@@ -141,7 +154,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private get brokenIcon()  { return `${this.ICONS_DIR}/bin-broken.svg`;  }
   private get sensorIcon()  { return `${this.ICONS_DIR}/sensor-dot.svg`;  }
 
-  // ── Lifecycle ─────────────────────────────────────────────────────────────
+  // #endregion
+
+  // #region Lifecycle
 
   ngOnInit() {
     this.authService.currentUser$
@@ -196,7 +211,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.signalR.stop();
   }
 
-  // ── Role ──────────────────────────────────────────────────────────────────
+  // #endregion
+
+  // #region Role
 
   private syncRole() {
     if (!this.currentUser) {
@@ -213,7 +230,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.isUser   = this.currentUser.role === 'User';
   }
 
-  // ── Map Init ──────────────────────────────────────────────────────────────
+  // #endregion
+
+  // #region Map Initialization
 
   private initMap() {
     this.cluster = L.markerClusterGroup({
@@ -262,7 +281,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     localStorage.setItem('mapStyle', key);
   }
 
-  // ── Data ──────────────────────────────────────────────────────────────────
+  // #endregion
+
+  // #region Data
 
   private loadBins() {
     this.http.get<Bin[]>(`${this.API_URL}/containers`).subscribe({
@@ -291,7 +312,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     return b;
   }
 
-  // ── Route ─────────────────────────────────────────────────────────────────
+  // #endregion
+
+  // #region Route
 
   async generateRoute() {
     if (!this.selectedAreaId) {
@@ -451,7 +474,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     );
   }
 
-  // ── Navigation ────────────────────────────────────────────────────────────
+  // #endregion
+
+  // #region Navigation
 
   async startNavigation() {
     if (!this.routeResult?.route.length || !this.realRouteCoords.length) {
@@ -612,7 +637,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.currentTruckLoad = 0;
   }
 
-  // ── Route Controls ────────────────────────────────────────────────────────
+  // #endregion
+
+  // #region Route Controls
 
   stopRoute() {
     this.navigationActive  = false;
@@ -644,7 +671,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     setTimeout(() => this.map?.invalidateSize(), 350);
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // #endregion
+
+  // #region Render
 
   private renderBins(bins: Bin[]) {
     this.cluster.clearLayers();
@@ -674,7 +703,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
-  // ── Icon Factory ──────────────────────────────────────────────────────────
+  // #endregion
+
+  // #region Icon Factory
 
   private createBinIcon(bin: Bin): L.DivIcon {
     const f        = Math.round(bin.fillPercentage);
@@ -740,7 +771,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
-  // ── Popup ─────────────────────────────────────────────────────────────────
+  // #endregion
+
+  // #region Popup
 
   private createPopup(bin: Bin): string {
     const f      = bin.fillPercentage;
@@ -816,7 +849,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       </div>`;
   }
 
-  // ── Filter Control ────────────────────────────────────────────────────────
+  // #endregion
+
+  // #region Filter Control
 
   private initFilterControl() {
     const self = this;
@@ -1062,7 +1097,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
-  // ── Search ────────────────────────────────────────────────────────────────
+  // #endregion
+
+  // #region Search
 
   async searchNearestBin(query: string) {
     if (!query.trim()) return;
@@ -1175,7 +1212,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }, 850);
   }
 
-  // ── Report ────────────────────────────────────────────────────────────────
+  // #region Report
 
   handleImagePreview(event: any) {
     const file = event.target.files?.[0];
@@ -1206,14 +1243,17 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   async submitReport() {
+    // Guard: prevent double-submit if already in progress
+    if (this.reportSubmitting || this.reportCheckingPhoto) return;
+
     if (!this.currentUser) {
       alert('Влезте в системата');
       this.router.navigate(['/login']);
       return;
     }
 
-    const desc       = document.getElementById('report-description') as HTMLTextAreaElement;
-    const reportType = this.selectedReportType;
+    const desc           = document.getElementById('report-description') as HTMLTextAreaElement;
+    const reportType     = this.selectedReportType;
     const isTruckProblem = reportType === 'TruckProblem';
 
     if (!isTruckProblem && !this.selectedBinForReport) {
@@ -1229,7 +1269,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
 
     // ── Pre-check photo with AI before submitting ──────────────────────────
-    // Only run the AI check for visual report types (Full / Fire).
+    // Only run for visual report types (Full / Fire).
     const isAiReport = reportType === 'Full' || reportType === 'Fire';
     if (this.selectedFile && isAiReport) {
       this.reportCheckingPhoto = true;
@@ -1237,11 +1277,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         const checkFd = new FormData();
         checkFd.append('photo', this.selectedFile);
 
-        const check = await this.http
-          .post<any>(`${this.API_URL}/reports/analyze`, checkFd, {
+        // 8-second timeout — if AI service is slow/down, fall through to normal submit
+        const check = await firstValueFrom(
+          this.http.post<any>(`${this.API_URL}/reports/analyze`, checkFd, {
             headers: new HttpHeaders({ Authorization: `Bearer ${token}` })
-          })
-          .toPromise();
+          }).pipe(timeout(8_000))
+        );
 
         this.reportCheckingPhoto = false;
 
@@ -1251,39 +1292,32 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
         // ── No container on photo ──────────────────────────────────────────
         if (!containerDetected) {
-          const proceed = window.confirm(
-            'AI АНАЛИЗ — ВНИМАНИЕ\n\n' +
-            'Не беше открит контейнер на снимката.\n\n' +
-            'Сигналът ще бъде изпратен за ръчна модерация.\n' +
-            'Искате ли да продължите?'
-          );
+          const proceed = await this.showAiModal('noBin', '', '', '', 0);
           if (!proceed) return;
         }
 
         // ── Conflict between report type and AI detection ──────────────────
-        else if (containerDetected && detectedClass && confidence > 0) {
-          const classInfo = this.getAiClassInfo(detectedClass);
+        else if (detectedClass && confidence > 0) {
+          const classInfo         = this.getAiClassInfo(detectedClass);
           const conflictsWithFire = reportType === 'Fire' &&
             ['clean', 'moderate', 'full', 'damaged'].includes(detectedClass);
           const conflictsWithFull = reportType === 'Full' &&
             ['clean', 'moderate'].includes(detectedClass);
 
           if (conflictsWithFire || conflictsWithFull) {
-            const reportTypeBg = reportType === 'Fire' ? 'пожар' : 'препълнен контейнер';
-            const proceed = window.confirm(
-              '⚠️ AI АНАЛИЗ — НЕСЪОТВЕТСТВИЕ\n\n' +
-              `Вие докладвате: ${reportType === 'Fire' ? 'ПОЖАР' : 'ПРЕПЪЛНЕН КОНТЕЙНЕР'}\n` +
-              `AI откри: ${classInfo.label} (${confidence.toFixed(0)}% увереност)\n\n` +
-              `${confidence.toFixed(0)}% означава: ${classInfo.description}\n\n` +
-              `Поради несъответствието сигналът ви ще бъде изпратен за ` +
-              `ръчна проверка от администратор вместо да бъде автоматично одобрен.\n\n` +
-              `Искате ли да изпратите сигнала за ${reportTypeBg} въпреки това?`
+            const reportLabel = reportType === 'Fire' ? '🔥 ПОЖАР' : '📦 ПРЕПЪЛНЕН';
+            const proceed = await this.showAiModal(
+              'conflict',
+              reportLabel,
+              classInfo.label,
+              classInfo.description,
+              confidence
             );
             if (!proceed) return;
           }
         }
       } catch {
-        // If AI pre-check fails, allow submission without blocking.
+        // AI pre-check failed or timed out — allow submission without blocking.
         this.reportCheckingPhoto = false;
       }
     }
@@ -1349,7 +1383,32 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.reportResult = null;
   }
 
-  // ── AI class info — Bulgarian labels & descriptions ───────────────────────
+  // #endregion
+
+  // #region AI Modal
+
+  /** Opens the in-page conflict/noBin modal and resolves when the user
+   *  clicks Confirm (true) or Cancel (false). */
+  private showAiModal(
+    variant:     'conflict' | 'noBin',
+    reportLabel: string,
+    aiLabel:     string,
+    aiDesc:      string,
+    confidence:  number
+  ): Promise<boolean> {
+    this.aiConflictModal = { visible: true, variant, reportLabel, aiLabel, aiDesc, confidence };
+    return new Promise(resolve => { this._conflictResolve = resolve; });
+  }
+
+  confirmAiModal(): void {
+    this._conflictResolve?.(true);
+    this.aiConflictModal = null;
+  }
+
+  cancelAiModal(): void {
+    this._conflictResolve?.(false);
+    this.aiConflictModal = null;
+  }
 
   getAiClassInfo(cls: string): { label: string; description: string } {
     const map: Record<string, { label: string; description: string }> = {
@@ -1377,7 +1436,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     return map[cls] ?? { label: cls, description: 'неизвестен резултат от AI' };
   }
 
-  // ── Math Helpers ──────────────────────────────────────────────────────────
+  // #endregion
+
+  // #region Math Helpers
 
   private resamplePath(coords: [number, number][], count: number): [number, number][] {
     if (coords.length < 2) return coords;
@@ -1452,4 +1513,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private getToken(): string | null {
     return this.authService.getToken();
   }
+
+  // #endregion
 }

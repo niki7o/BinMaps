@@ -1,4 +1,90 @@
 <div class="map-page">
+
+  <!-- ════════════════════ AI CONFLICT MODAL ═════════════════════════════ -->
+  <div class="ai-modal-backdrop" *ngIf="aiConflictModal?.visible" (click)="cancelAiModal()">
+    <div class="ai-modal" (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="ai-modal__header">
+        <div class="ai-modal__icon"
+             [class.ai-modal__icon--warn]="aiConflictModal!.variant === 'conflict'"
+             [class.ai-modal__icon--info]="aiConflictModal!.variant === 'noBin'">
+          <span>{{ aiConflictModal!.variant === 'conflict' ? '⚠️' : '🔍' }}</span>
+        </div>
+        <div class="ai-modal__titles">
+          <span class="ai-modal__title">
+            {{ aiConflictModal!.variant === 'conflict' ? 'AI АНАЛИЗ — НЕСЪОТВЕТСТВИЕ' : 'AI АНАЛИЗ — ВНИМАНИЕ' }}
+          </span>
+          <span class="ai-modal__subtitle">Преглед преди изпращане</span>
+        </div>
+      </div>
+
+      <!-- Body: conflict variant -->
+      <div class="ai-modal__body" *ngIf="aiConflictModal!.variant === 'conflict'">
+
+        <!-- Report vs AI side-by-side -->
+        <div class="ai-modal__grid">
+          <div class="ai-modal__side ai-modal__side--report">
+            <span class="ai-modal__side-label">Вие докладвате</span>
+            <span class="ai-modal__side-value">{{ aiConflictModal!.reportLabel }}</span>
+          </div>
+          <div class="ai-modal__side ai-modal__side--ai">
+            <span class="ai-modal__side-label">AI откри</span>
+            <span class="ai-modal__side-value">{{ aiConflictModal!.aiLabel }}</span>
+          </div>
+        </div>
+
+        <!-- Confidence bar -->
+        <div class="ai-modal__conf-row">
+          <span class="ai-modal__conf-label">Увереност</span>
+          <div class="ai-modal__bar-track">
+            <div class="ai-modal__bar-fill" [style.width.%]="aiConflictModal!.confidence"></div>
+          </div>
+          <span class="ai-modal__conf-pct">{{ aiConflictModal!.confidence.toFixed(0) }}%</span>
+        </div>
+
+        <!-- Plain-language description -->
+        <div class="ai-modal__desc">
+          <strong>{{ aiConflictModal!.confidence.toFixed(0) }}% увереност</strong> означава:
+          {{ aiConflictModal!.aiDesc }}.
+        </div>
+
+        <!-- Manual review info -->
+        <div class="ai-modal__info-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="flex-shrink:0;margin-top:1px">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>Поради несъответствието сигналът ви ще бъде изпратен за
+            <strong>ръчна проверка</strong> вместо автоматично одобрение.</span>
+        </div>
+      </div>
+
+      <!-- Body: no-bin variant -->
+      <div class="ai-modal__body" *ngIf="aiConflictModal!.variant === 'noBin'">
+        <div class="ai-modal__info-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="flex-shrink:0;margin-top:1px">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>AI <strong>не откри контейнер</strong> на снимката. Ако снимката е вярна,
+            сигналът ще бъде изпратен за <strong>ръчна модерация</strong>.</span>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="ai-modal__footer">
+        <button class="ai-modal__btn ai-modal__btn--cancel" (click)="cancelAiModal()">Откажи</button>
+        <button class="ai-modal__btn"
+                [class.ai-modal__btn--danger]="aiConflictModal!.variant === 'conflict'"
+                [class.ai-modal__btn--neutral]="aiConflictModal!.variant === 'noBin'"
+                (click)="confirmAiModal()">
+          {{ aiConflictModal!.variant === 'conflict' ? 'Изпрати въпреки това' : 'Продължи' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+
   <div class="map-layout">
 
     <!-- ═══════════════════ LEFT: ROUTE / NAVIGATION ═══════════════════ -->
@@ -437,7 +523,7 @@
           </button>
 
           <!-- ── AI Result Card ── -->
-          <div class="rp-result" *ngIf="reportResult">
+          <div class="rp-result rp-result--compact" *ngIf="reportResult">
 
             <div class="rp-result__status"
                  [class.rp-result__status--approved]="reportResult.isApproved === true"
