@@ -1410,6 +1410,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
 
     const isAiReport = reportType === 'Full' || reportType === 'Fire';
+    let preCheckResult: { containerDetected: boolean; detectedClass: string; confidence: number } | null = null;
+
     if (this.selectedFile && isAiReport) {
       this.reportCheckingPhoto = true;
       try {
@@ -1425,15 +1427,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         this.reportCheckingPhoto = false;
 
         const containerDetected: boolean = check?.container_detected ?? true;
-        const detectedClass: string = check?.detected_class     ?? '';
-        const confidence: number = check?.confidence         ?? 0;
+        const detectedClass: string = check?.detected_class ?? '';
+        const confidence: number = check?.confidence ?? 0;
+
+        preCheckResult = { containerDetected, detectedClass, confidence };
 
         if (!containerDetected) {
           const proceed = await this.showAiModal('noBin', '', '', '', 0);
           if (!proceed) return;
-        }
-
-        else if (detectedClass && confidence > 0) {
+        } else if (detectedClass && confidence > 0) {
           const classInfo = this.getAiClassInfo(detectedClass);
           const conflictsWithFire = reportType === 'Fire' &&
             ['clean', 'moderate', 'full', 'damaged'].includes(detectedClass);
@@ -1471,8 +1473,14 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     fd.append('ReportType', (typeMap[reportType] ?? 0).toString());
 
-    if (desc?.value)       fd.append('Description', desc.value);
+    if (desc?.value) fd.append('Description', desc.value);
     if (this.selectedFile) fd.append('Photo', this.selectedFile);
+
+    if (preCheckResult) {
+      fd.append('PreComputedContainerDetected', preCheckResult.containerDetected.toString());
+      fd.append('PreComputedDetectedClass', preCheckResult.detectedClass);
+      fd.append('PreComputedConfidence', preCheckResult.confidence.toString());
+    }
 
     const hadPhoto = !!this.selectedFile;
     this.reportSubmitting = true;

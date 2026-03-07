@@ -40,7 +40,21 @@ public sealed class ReportsController : ControllerBase
             dto.PhotoURL = null;
             AIResultDto? aiResult = null;
             if (dto.Photo is not null)
-                aiResult = await _aiService.AnalyzeAsync(dto.Photo);
+            {
+                if (dto.PreComputedContainerDetected.HasValue)
+                {
+                    aiResult = new AIResultDto
+                    {
+                        ContainerDetected = dto.PreComputedContainerDetected.Value,
+                        DetectedClass = dto.PreComputedDetectedClass ?? string.Empty,
+                        Confidence = dto.PreComputedConfidence ?? 0
+                    };
+                }
+                else
+                {
+                    aiResult = await _aiService.AnalyzeAsync(dto.Photo);
+                }
+            }
             if (dto.Photo is not null)
             {
                 var webRoot = _environment.WebRootPath

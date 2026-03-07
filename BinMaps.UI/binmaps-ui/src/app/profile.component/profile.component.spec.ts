@@ -12,12 +12,13 @@ describe('ProfileComponent', () => {
   let fixture: ComponentFixture<ProfileComponent>;
 
   beforeEach(async () => {
-    const mockAuthService = jasmine.createSpyObj('AuthService', ['getAuthHeaders', 'logout'], {
+    const mockAuthService = jasmine.createSpyObj('AuthService', ['getAuthHeaders', 'logout', 'getToken', 'updateProfilePicture'], {
       currentUser$: of(null),
       currentUser: null,
       isAuthenticated: false
     });
     mockAuthService.getAuthHeaders.and.returnValue({ headers: {} as any });
+    mockAuthService.getToken.and.returnValue(null);
 
     await TestBed.configureTestingModule({
       imports: [ProfileComponent],

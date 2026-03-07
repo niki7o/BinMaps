@@ -33,6 +33,7 @@ describe('AnalyticsDashboardComponent', () => {
 
     fixture = TestBed.createComponent(AnalyticsDashboardComponent);
     component = fixture.componentInstance;
+    spyOn(component, 'ngAfterViewInit').and.callFake(() => {});
     fixture.detectChanges();
   });
 

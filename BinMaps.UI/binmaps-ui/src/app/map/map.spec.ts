@@ -39,6 +39,7 @@ describe('MapComponent', () => {
 
     fixture = TestBed.createComponent(MapComponent);
     component = fixture.componentInstance;
+    spyOn(component, 'ngAfterViewInit').and.callFake(() => {});
     fixture.detectChanges();
   });
 

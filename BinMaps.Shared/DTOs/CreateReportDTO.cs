@@ -19,4 +19,8 @@ public sealed class CreateReportDTO
 
     [MaxLength(500)]
     public string? PhotoURL { get; set; }
+
+    public bool? PreComputedContainerDetected { get; set; }
+    public string? PreComputedDetectedClass { get; set; }
+    public double? PreComputedConfidence { get; set; }
 }

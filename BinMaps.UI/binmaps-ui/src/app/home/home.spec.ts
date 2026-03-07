@@ -32,7 +32,12 @@ describe('HomeComponent', () => {
 
     fixture = TestBed.createComponent(HomeComponent);
     component = fixture.componentInstance;
+    spyOn(component, 'ngAfterViewInit').and.callFake(() => {});
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    if (fixture) fixture.destroy();
   });
 
   it('should create', () => {
