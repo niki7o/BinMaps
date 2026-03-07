@@ -65,8 +65,12 @@ public sealed class AuthService : IAuthService
         if (user is null)
             return (false, null);
 
-        var signIn = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, lockoutOnFailure: false);
-        if (!signIn.Succeeded)
+        // Use CheckPasswordAsync (not SignInManager) so that locked-out users are
+        // not rejected here — we still want to issue a token and let the frontend
+        // show the ban page. SignInManager.CheckPasswordSignInAsync returns LockedOut
+        // (not Succeeded) for locked accounts even with lockoutOnFailure:false.
+        var passwordValid = await _userManager.CheckPasswordAsync(user, dto.Password);
+        if (!passwordValid)
             return (false, null);
 
         var roles = await _userManager.GetRolesAsync(user);
