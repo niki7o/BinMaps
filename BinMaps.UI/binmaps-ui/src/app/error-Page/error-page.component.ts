@@ -18,7 +18,7 @@ export class ErrorPageComponent implements OnInit {
   constructor(private route: ActivatedRoute, private router: Router) {}
 
   ngOnInit() {
-    // Абонираме се за данните от рутера
+   
     this.route.data.subscribe(data => {
       if (data['type'] === 403 || data['type'] === '403') {
         this.errorCode = 403;

@@ -1,6 +1,5 @@
 <div class="npage">
 
-  <!-- ── Header ───────────────────────────────────────────────────────── -->
   <div class="npage-header">
     <div class="npage-header-left">
       <a class="npage-back" routerLink="/map" title="Обратно към картата">
@@ -36,7 +35,6 @@
     </div>
   </div>
 
-  <!-- ── Filter tabs ───────────────────────────────────────────────────── -->
   <div class="npage-tabs">
     <button class="npage-tab" [class.is-active]="activeFilter() === 'all'" (click)="setFilter('all')">
       Всички
@@ -55,8 +53,6 @@
       <span class="npage-tab-badge" *ngIf="routeCount() > 0">{{ routeCount() }}</span>
     </button>
   </div>
-
-  <!-- ── Notification list ─────────────────────────────────────────────── -->
   <div class="npage-list">
 
     <div
@@ -69,14 +65,12 @@
       [class.npage-item--clickable]="!!n.actionUrl"
       (click)="openNotification(n)">
 
-      <!-- Icon -->
       <div class="npage-icon" [ngClass]="'npage-icon--' + n.iconType">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path [attr.d]="getIconPath(n.type)"/>
         </svg>
       </div>
 
-      <!-- Content -->
       <div class="npage-content">
         <div class="npage-item-header">
           <span class="npage-item-title">{{ n.title }}</span>
@@ -94,7 +88,6 @@
         </div>
       </div>
 
-      <!-- Remove -->
       <button class="npage-remove" title="Премахни" (click)="removeNotif(n.id, $event)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 6L6 18M6 6l12 12"/>
@@ -102,7 +95,6 @@
       </button>
     </div>
 
-    <!-- Empty state -->
     <div class="npage-empty" *ngIf="filtered().length === 0">
       <div class="npage-empty-icon">
         <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.2">

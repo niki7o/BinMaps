@@ -1,4 +1,4 @@
-/* ─── Pagination ────────────────────────────────────── */
+
 .admin__pagination {
   display: flex;
   align-items: center;
@@ -8,7 +8,7 @@
   flex-wrap: wrap;
 }
 
-/* ─── Admin ────────────────────────────────────────── */
+
 .admin {
   padding: var(--space-8) var(--content-padding) var(--space-12);
   max-width: var(--max-content-width);
@@ -663,7 +663,7 @@
     max-width: 100%;
   }
 }
-/* ── Ban system styles ────────────────────────────────── */
+
 .user-row--banned {
   opacity: 0.75;
   background: rgba(239, 68, 68, 0.04);
@@ -684,7 +684,7 @@
   white-space: nowrap;
 }
 
-/* Ban modal */
+
 .modal--ban .modal__header {
   border-bottom-color: rgba(239, 68, 68, 0.2);
 }

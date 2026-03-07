@@ -1,4 +1,3 @@
-/* ── Page shell ─────────────────────────────────────────────────────── */
 .npage {
   min-height: calc(100vh - 64px);
   background: var(--bg-primary, #0f172a);
@@ -9,7 +8,6 @@
   margin: 0 auto;
 }
 
-/* ── Header ─────────────────────────────────────────────────────────── */
 .npage-header {
   display: flex;
   align-items: flex-start;
@@ -56,7 +54,6 @@
   margin: 0;
 }
 
-/* Header action buttons */
 .npage-header-actions {
   display: flex;
   gap: 0.6rem;
@@ -90,7 +87,6 @@
 }
 .npage-btn--danger:hover { background: rgba(239,68,68,0.20); }
 
-/* ── Filter tabs ────────────────────────────────────────────────────── */
 .npage-tabs {
   display: flex;
   gap: 0.5rem;
@@ -142,7 +138,6 @@
   color: #fca5a5;
 }
 
-/* ── Notification list ───────────────────────────────────────────────── */
 .npage-list {
   display: flex;
   flex-direction: column;
@@ -186,7 +181,6 @@
   background: rgba(245,158,11,0.06);
 }
 
-/* ── Item icon ───────────────────────────────────────────────────────── */
 .npage-icon {
   width: 42px; height: 42px;
   border-radius: 10px;
@@ -198,7 +192,6 @@
 .npage-icon--eco     { background: rgba(16,185,129,0.15); color: #34d399; }
 .npage-icon--blue    { background: rgba(59,130,246,0.15); color: #60a5fa; }
 
-/* ── Item content ────────────────────────────────────────────────────── */
 .npage-content {
   flex: 1;
   min-width: 0;
@@ -263,7 +256,6 @@
 }
 .npage-item--clickable:hover .npage-navigate-hint { opacity: 1; }
 
-/* ── Remove button ───────────────────────────────────────────────────── */
 .npage-remove {
   display: flex;
   align-items: center;
@@ -286,7 +278,6 @@
   color: #f87171;
 }
 
-/* ── Empty state ─────────────────────────────────────────────────────── */
 .npage-empty {
   display: flex;
   flex-direction: column;

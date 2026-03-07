@@ -36,16 +36,11 @@ public sealed class ReportsController : ControllerBase
 
         try
         {
-            // Security: PhotoURL is always assigned server-side after saving the file.
-            // Discard whatever the client sent so they cannot inject an arbitrary URL.
+    
             dto.PhotoURL = null;
-
-            // ── Step 1: run AI on the FRESH stream BEFORE any disk I/O ──────────
             AIResultDto? aiResult = null;
             if (dto.Photo is not null)
                 aiResult = await _aiService.AnalyzeAsync(dto.Photo);
-
-            // ── Step 2: save photo to disk ───────────────────────────────────────
             if (dto.Photo is not null)
             {
                 var webRoot = _environment.WebRootPath
@@ -55,9 +50,6 @@ public sealed class ReportsController : ControllerBase
 
                 var fileName = $"{Guid.NewGuid()}{Path.GetExtension(dto.Photo.FileName)}";
                 var fullPath = Path.Combine(uploadsDir, fileName);
-
-                // Copy via a memory buffer so the original IFormFile stream
-                // position is not affected (allows re-reading if needed).
                 using var ms = new MemoryStream();
                 await dto.Photo.CopyToAsync(ms);
                 ms.Position = 0;
@@ -72,14 +64,12 @@ public sealed class ReportsController : ControllerBase
                            ?? User.FindFirstValue("name")
                            ?? userId;
             var role     = User.FindFirstValue(ClaimTypes.Role) ?? "User";
-
-            // ── Step 3: pass precomputed AI result to service ────────────────────
             var result = await _reportService.CreateAsync(dto, userId, userName, role, aiResult);
             return Ok(result);
         }
         catch (Exception ex)
         {
-            // Log and return a structured error so clients see a message, not a blank 500.
+            
             var env = HttpContext.RequestServices
                           .GetRequiredService<IWebHostEnvironment>();
             var detail = env.IsDevelopment() ? ex.ToString() : "Грешка при създаване на доклада.";
@@ -87,10 +77,6 @@ public sealed class ReportsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Quick pre-submission photo check — runs the AI and returns whether a
-    /// trash container was detected.  No report is created.
-    /// </summary>
     [HttpPost("analyze")]
     [ProducesResponseType(typeof(AIResultDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> AnalyzePhoto([FromForm] IFormFile? photo)
@@ -100,7 +86,7 @@ public sealed class ReportsController : ControllerBase
 
         var result = await _aiService.AnalyzeAsync(photo);
 
-        // If AI is unavailable return a safe default (container assumed present).
+    
         return Ok(result ?? new AIResultDto { ContainerDetected = true, Confidence = 0 });
     }
 

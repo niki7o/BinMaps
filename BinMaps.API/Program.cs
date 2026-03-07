@@ -168,11 +168,9 @@ public sealed class Program
 
         #region Health & Readiness Endpoints
 
-        // /ping — responds immediately as soon as the port is bound
-        // Use this as the startup/liveness probe in Azure Container Apps
         app.MapGet("/ping", () => Results.Ok("pong")).AllowAnonymous();
 
-        // /ready — checks DB connectivity; returns 503 until DB is reachable
+        
         app.MapGet("/ready", async (BinMapsDbContext db) =>
         {
             try
@@ -190,7 +188,6 @@ public sealed class Program
 
         #region Middleware Pipeline
 
-        // Swagger enabled in all environments so you can diagnose from Azure URL
         app.UseSwagger();
         app.UseSwaggerUI();
 
@@ -220,12 +217,8 @@ public sealed class Program
 
         #region Migration & Seed
 
-        // Strategy: StartAsync() binds the port immediately so Azure's /ping probe
-        // succeeds, then we run MigrateAsync() synchronously before WaitForShutdownAsync().
-        // This prevents the race condition where auth requests arrive before the new
-        // columns (e.g. IsBanned) exist in the database, which caused HTTP 500 errors.
 
-        await app.StartAsync();   // port is bound — /ping responds NOW
+        await app.StartAsync();   
 
         var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
         for (int attempt = 1; attempt <= 5; attempt++)
@@ -256,7 +249,7 @@ public sealed class Program
         }
 
         startupLogger.LogInformation("App fully ready — accepting all requests.");
-        await app.WaitForShutdownAsync();   // keeps the process alive
+        await app.WaitForShutdownAsync();  
 
         #endregion
     }

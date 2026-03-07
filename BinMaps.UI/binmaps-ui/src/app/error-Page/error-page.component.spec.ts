@@ -8,7 +8,7 @@ describe('ErrorPageComponent', () => {
   let component: ErrorPageComponent;
   let fixture: ComponentFixture<ErrorPageComponent>;
 
-  // Симулираме първоначално 404 състояние
+  
   const activatedRouteStub = {
     data: of({ type: '404' })
   };
@@ -17,7 +17,7 @@ describe('ErrorPageComponent', () => {
     await TestBed.configureTestingModule({
       imports: [
         RouterTestingModule,
-        ErrorPageComponent // Standalone component
+        ErrorPageComponent 
       ],
       providers: [
         { provide: ActivatedRoute, useValue: activatedRouteStub }
@@ -36,21 +36,20 @@ describe('ErrorPageComponent', () => {
   it('should show 404 by default', () => {
     expect(component.errorCode).toBe(404);
     const compiled = fixture.nativeElement as HTMLElement;
-    // Проверяваме дали големият надпис е 404
+   
     expect(compiled.querySelector('.err-number')?.textContent).toContain('404');
   });
 
   it('should switch to 403 when route data type is 403', () => {
-    // Ръчно подаваме 403 данни през mock-а
+   
     (component as any).route.data = of({ type: 403 });
     
-    component.ngOnInit(); // Реинициализираме логиката
-    fixture.detectChanges(); // Обновяваме HTML-а
-
+    component.ngOnInit(); 
+    fixture.detectChanges(); 
     expect(component.errorCode).toBe(403);
     
     const compiled = fixture.nativeElement as HTMLElement;
-    // Търсим новия текст в заглавието
+    
     expect(compiled.querySelector('.err-number')?.textContent).toContain('403');
     expect(compiled.querySelector('.err-message')?.textContent).toContain('Достъпът е ограничен');
   });

@@ -522,7 +522,7 @@
   text-align: center;
 }
 
-/* Clickable notification item (has actionUrl) */
+
 .notif-item.notif-clickable {
   cursor: pointer;
   transition: background 0.18s, transform 0.15s;
@@ -532,7 +532,7 @@
   transform: translateX(2px);
 }
 
-/* Time + "Map" hint row */
+
 .notif-time-row {
   display: flex;
   align-items: center;
@@ -550,8 +550,6 @@
   transition: opacity 0.15s;
 }
 .notif-item.notif-clickable:hover .notif-goto-hint { opacity: 1; }
-
-/* "See all" footer button */
 .notif-see-all {
   display: inline-flex;
   align-items: center;

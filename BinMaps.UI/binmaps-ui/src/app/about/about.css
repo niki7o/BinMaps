@@ -2,7 +2,7 @@
   overflow-x: hidden;
 }
 
-/* ─── HERO ─────────────────────────────── */
+
 .about-hero {
   position: relative;
   padding: calc(var(--navbar-height, 64px) + 80px) 0 100px;
@@ -68,7 +68,7 @@
   max-width: 620px;
 }
 
-/* ─── WHY ───────────────────────────────── */
+
 .about-why {
   padding: 100px 0;
   background: var(--surface-2, #0f172a);
@@ -128,7 +128,7 @@
   line-height: 1.4;
 }
 
-/* ─── MISSION ───────────────────────────── */
+
 .about-mission {
   padding: 100px 0;
 }
@@ -179,7 +179,7 @@
   font-size: 0.95rem;
 }
 
-/* ─── VALUES ────────────────────────────── */
+
 .about-values {
   padding: 100px 0;
   background: var(--surface-2, #0f172a);
@@ -230,7 +230,7 @@
   line-height: 1.6;
 }
 
-/* ─── TECH STACK ────────────────────────── */
+
 .about-stack {
   padding: 100px 0;
 }
@@ -276,7 +276,7 @@
 .stack-chip--orange { background: rgba(249,115,22,0.1);  border-color: rgba(249,115,22,0.25);  color: #fb923c; }
 .stack-chip--eco    { background: rgba(16,185,129,0.1);  border-color: rgba(16,185,129,0.25);  color: #34d399; }
 
-/* ─── ARCHITECTURE ──────────────────────── */
+
 .about-arch {
   display: flex;
   align-items: center;
@@ -321,7 +321,7 @@
   opacity: 0.5;
 }
 
-/* ─── CTA ────────────────────────────────── */
+
 .about-cta {
   padding: 100px 0;
   background: var(--surface-2, #0f172a);
@@ -355,7 +355,7 @@
   flex-wrap: wrap;
 }
 
-/* ─── RESPONSIVE ────────────────────────── */
+
 @media (max-width: 1024px) {
   .about-values__grid {
     grid-template-columns: repeat(2, 1fr);

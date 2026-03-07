@@ -12,10 +12,8 @@ export interface Notification {
   read:         boolean;
   filter:       'critical' | 'route' | 'reports' | 'all';
   forRoles:     string[];
-  // Optional: navigation target when notification is clicked
   containerId?: number;
   actionUrl?:   string;
-  // Optional: target specific user (for approve/reject/reputation events)
   targetUserId?: string;
 }
 
@@ -37,8 +35,6 @@ export class NotificationService {
 
   push(notif: Omit<Notification, 'id' | 'read'>): void {
     if (!notif.forRoles.includes(this.currentRole)) return;
-
-    // If the notification targets a specific user, only show it to that user
     if (notif.targetUserId && notif.targetUserId !== this.currentUserId) return;
 
     const n: Notification = { ...notif, id: crypto.randomUUID(), read: false };

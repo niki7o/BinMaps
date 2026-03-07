@@ -65,10 +65,7 @@ public sealed class AuthService : IAuthService
         if (user is null)
             return (false, null);
 
-        // Use CheckPasswordAsync (not SignInManager) so that locked-out users are
-        // not rejected here — we still want to issue a token and let the frontend
-        // show the ban page. SignInManager.CheckPasswordSignInAsync returns LockedOut
-        // (not Succeeded) for locked accounts even with lockoutOnFailure:false.
+        
         var passwordValid = await _userManager.CheckPasswordAsync(user, dto.Password);
         if (!passwordValid)
             return (false, null);
@@ -77,9 +74,7 @@ public sealed class AuthService : IAuthService
         var role  = roles.FirstOrDefault() ?? "User";
         var token = GenerateJwtToken(user, role);
 
-        // Ban detection: LockoutEnd = DateTimeOffset.MaxValue means banned.
-        // Admins are never blocked. We still issue a token so the frontend can
-        // show the ban page with context; Angular guards block all other routes.
+        
         var isBanned  = role != "Admin" && user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow;
         string? banReason = null;
         if (isBanned)

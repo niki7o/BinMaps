@@ -54,11 +54,6 @@ namespace BinMaps.Data.Entities
 
         #region Status
 
-        /// <summary>
-        /// null  = Pending (not yet reviewed by admin)
-        /// true  = Approved
-        /// false = Rejected
-        /// </summary>
         public bool? IsApproved { get; set; }
 
         [Required]

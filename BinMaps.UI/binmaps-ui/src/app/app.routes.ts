@@ -15,24 +15,18 @@ import { authGuard } from './guards/auth.guard';
 import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
-  { path: '',            component: HomeComponent },
-  { path: 'login',       component: LoginComponent },
-  { path: 'register',    component: RegisterComponent },
-  { path: 'banned',      component: BannedComponent },
-  { path: 'terms',       component: TermsComponent },
-  { path: 'about',       component: AboutComponent },
-
-  // Protected — requires authentication
-  { path: 'map',           component: MapComponent,                 canActivate: [authGuard] },
-  { path: 'analytics',     component: AnalyticsDashboardComponent,  canActivate: [authGuard] },
-  { path: 'profile',       component: ProfileComponent,             canActivate: [authGuard] },
-  { path: 'notifications', component: NotificationsComponent,       canActivate: [authGuard] },
-
-  // Admin-only — non-admins see 403 page
-  { path: 'admin',         component: AdminDashboardComponent,      canActivate: [adminGuard] },
-
-  // Error pages
+  { path: '', component: HomeComponent },
+  { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
+  { path: 'banned', component: BannedComponent },
+  { path: 'terms', component: TermsComponent },
+  { path: 'about',component: AboutComponent },
+  { path: 'map', component: MapComponent, canActivate: [authGuard] },
+  { path: 'analytics', component: AnalyticsDashboardComponent,  canActivate: [authGuard] },
+  { path: 'profile',  component: ProfileComponent, canActivate: [authGuard] },
+  { path: 'notifications', component: NotificationsComponent,  canActivate: [authGuard] },
+  { path: 'admin', component: AdminDashboardComponent,canActivate: [adminGuard] },
   { path: 'forbidden',   component: ErrorPageComponent, data: { type: '403' } },
-  { path: 'home',        redirectTo: '' },
-  { path: '**',          component: ErrorPageComponent, data: { type: '404' } },
+  { path: 'home', redirectTo: '' },
+  { path: '**',component: ErrorPageComponent, data: { type: '404' } },
 ];

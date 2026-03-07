@@ -14,15 +14,15 @@ import { NotificationService } from '../services/notification.service';
   encapsulation: ViewEncapsulation.None 
 })
 export class LoginComponent {
-  readonly email    = signal('');
+  readonly email = signal('');
   readonly password = signal('');
-  readonly error    = signal('');
-  readonly loading  = signal(false);
+  readonly error = signal('');
+  readonly loading = signal(false);
   readonly showPassword = signal(false);
  
   constructor(
-    private readonly auth:         AuthService,
-    private readonly router:       Router,
+    private readonly auth: AuthService,
+    private readonly router: Router,
     private readonly notifService: NotificationService
   ) {}
   
@@ -59,7 +59,6 @@ export class LoginComponent {
   private navigateByRole(): void {
     this.loading.set(false);
 
-    // Banned users: login succeeded but account is restricted → show ban page
     if (this.auth.isBanned) {
       this.router.navigate(['/banned']);
       return;
@@ -69,14 +68,14 @@ export class LoginComponent {
     if (sessionStorage.getItem('welcomeUser') === '1') {
       sessionStorage.removeItem('welcomeUser');
       this.notifService.push({
-        type:        'report',
-        severity:    'info',
-        iconType:    'eco',
-        title:       'Добре дошъл!',
-        description: 'Регистрацията е успешна. Добре дошъл в BinMaps!',
-        timeAgo:     'Сега',
-        filter:      'all',
-        forRoles:    ['User']
+        type:'report',
+        severity:'info',
+        iconType: 'eco',
+        title:'Добре дошъл!',
+        description:'Регистрацията е успешна. Добре дошъл в BinMaps!',
+        timeAgo:'Сега',
+        filter: 'all',
+        forRoles: ['User']
       });
     }
     this.router.navigate([destination]);

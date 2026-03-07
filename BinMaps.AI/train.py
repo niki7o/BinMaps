@@ -33,33 +33,19 @@ import torchvision.models as tv_models
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from torchvision import transforms
-
-# ---------------------------------------------------------------------------
-# Constants — MUST stay in sync with app.py
-# ---------------------------------------------------------------------------
 CLASSES      = ["clean", "moderate", "full", "fire", "damaged"]
 CLASS_TO_IDX = {c: i for i, c in enumerate(CLASSES)}
-
-
-# ---------------------------------------------------------------------------
-# Model factory — identical to _build_model() in app.py
-# ---------------------------------------------------------------------------
 
 def build_model(num_classes: int = 5, pretrained: bool = True) -> nn.Module:
     weights = tv_models.MobileNet_V2_Weights.IMAGENET1K_V1 if pretrained else None
     model   = tv_models.mobilenet_v2(weights=weights)
-    in_feat = model.classifier[1].in_features   # 1280 for MobileNetV2
-    # Dropout before final layer reduces overfitting on small datasets
+    in_feat = model.classifier[1].in_features 
+    
     model.classifier = nn.Sequential(
         nn.Dropout(p=0.4),
         nn.Linear(in_feat, num_classes),
     )
     return model
-
-
-# ---------------------------------------------------------------------------
-# Transforms — aggressive augmentation to compensate for small dataset
-# ---------------------------------------------------------------------------
 TRAIN_TRANSFORM = transforms.Compose([
     transforms.Resize((256, 256)),
     transforms.RandomCrop(224),
@@ -81,11 +67,6 @@ VAL_TRANSFORM = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406],
                          std=[0.229, 0.224, 0.225]),
 ])
-
-
-# ---------------------------------------------------------------------------
-# Dataset
-# ---------------------------------------------------------------------------
 
 class BinDataset(Dataset):
     def __init__(self, csv_file: str, image_dir: str, transform=None):
@@ -121,10 +102,6 @@ class BinDataset(Dataset):
         return image, torch.tensor(label_idx, dtype=torch.long)
 
 
-# ---------------------------------------------------------------------------
-# Stratified split — ensures EVERY class appears in both train AND val
-# ---------------------------------------------------------------------------
-
 def stratified_split(data: list, val_fraction: float, seed: int = 42):
     """
     Split data so each class is proportionally represented in both splits.
@@ -141,9 +118,9 @@ def stratified_split(data: list, val_fraction: float, seed: int = 42):
     for label, items in by_class.items():
         shuffled = items[:]
         rng.shuffle(shuffled)
-        # Always keep at least 1 in training; val gets floor(n * frac) min 1
+        
         if len(shuffled) == 1:
-            train_items.extend(shuffled)   # too few to split
+            train_items.extend(shuffled)
         else:
             n_val = max(1, round(len(shuffled) * val_fraction))
             val_items.extend(shuffled[:n_val])
@@ -152,11 +129,6 @@ def stratified_split(data: list, val_fraction: float, seed: int = 42):
     rng.shuffle(train_items)
     rng.shuffle(val_items)
     return train_items, val_items
-
-
-# ---------------------------------------------------------------------------
-# Simple dataset from a pre-split list
-# ---------------------------------------------------------------------------
 
 class SubsetDataset(Dataset):
     def __init__(self, data: list, image_dir: str, transform=None):
@@ -174,11 +146,6 @@ class SubsetDataset(Dataset):
         if self.transform:
             image = self.transform(image)
         return image, torch.tensor(label_idx, dtype=torch.long)
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 def _freeze_backbone(model: nn.Module) -> None:
     for param in model.parameters():
@@ -203,40 +170,34 @@ def _run_epoch(model, loader, criterion, optimizer, device, training: bool):
             if training:
                 optimizer.zero_grad()
             logits = model(images)
-            loss   = criterion(logits, labels)
+            loss = criterion(logits, labels)
             if training:
                 loss.backward()
                 optimizer.step()
             total_loss += loss.item()
-            correct    += (logits.argmax(dim=1) == labels).sum().item()
-            total      += labels.size(0)
+            correct += (logits.argmax(dim=1) == labels).sum().item()
+            total += labels.size(0)
 
     return total_loss / max(len(loader), 1), 100.0 * correct / max(total, 1)
 
-
-# ---------------------------------------------------------------------------
-# Main training function
-# ---------------------------------------------------------------------------
-
 def train(
-    csv_file:    str   = "data/labels.csv",
-    image_dir:   str   = "data/images",
-    output_path: str   = "bin_fill_model.pth",
+    csv_file:str= "data/labels.csv",
+    image_dir: str = "data/images",
+    output_path: str  = "bin_fill_model.pth",
     phase1_epochs: int = 10,
     phase2_epochs: int = 25,
-    batch_size:  int   = 8,
-    lr_head:     float = 1e-3,
+    batch_size:  int  = 8,
+    lr_head:   float = 1e-3,
     lr_finetune: float = 1e-4,
-    val_split:   float = 0.2,
-    seed:        int   = 42,
+    val_split: float = 0.2,
+    seed: int= 42,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
-    # ── Load all data ────────────────────────────────────────────────────────
     full_dataset = BinDataset(csv_file, image_dir, transform=None)
-    all_data     = full_dataset.data
-    n_total      = len(all_data)
+    all_data = full_dataset.data
+    n_total = len(all_data)
 
     print(f"Dataset: {n_total} total samples")
     print("Class distribution:")
@@ -244,7 +205,6 @@ def train(
     for i, cls in enumerate(CLASSES):
         print(f"  [{i}] {cls:10s}  {counts.get(i, 0):4d} samples")
 
-    # ── Stratified split — every class in both splits ────────────────────────
     train_data, val_data = stratified_split(all_data, val_fraction=val_split, seed=seed)
     print(f"\nStratified split  ->  train={len(train_data)}, val={len(val_data)}")
 
@@ -253,8 +213,6 @@ def train(
     print("  Train:", {CLASSES[k]: v for k, v in sorted(train_counts.items())})
     print("  Val:  ", {CLASSES[k]: v for k, v in sorted(val_counts.items())})
 
-    # ── Class weights — penalise errors on rare classes more ─────────────────
-    # With 3 fire vs 16 full, fire loss gets ~5x more weight than full.
     class_weights = torch.tensor(
         [len(train_data) / max(train_counts.get(i, 1), 1) for i in range(len(CLASSES))],
         dtype=torch.float
@@ -263,29 +221,24 @@ def train(
     print(f"\n  Class weights: ", end="")
     print(", ".join(f"{CLASSES[i]}={class_weights[i].item():.2f}" for i in range(len(CLASSES))))
 
-    # ── WeightedRandomSampler — oversample rare classes each batch ───────────
     sample_weights = [class_weights[label].item() for _, label in train_data]
     sampler = WeightedRandomSampler(
         weights=sample_weights, num_samples=len(train_data), replacement=True
     )
 
     train_ds = SubsetDataset(train_data, image_dir, TRAIN_TRANSFORM)
-    val_ds   = SubsetDataset(val_data,   image_dir, VAL_TRANSFORM)
+    val_ds = SubsetDataset(val_data,   image_dir, VAL_TRANSFORM)
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, sampler=sampler,  num_workers=0)
-    val_loader   = DataLoader(val_ds,   batch_size=batch_size, shuffle=False,    num_workers=0)
+    val_loader  = DataLoader(val_ds,   batch_size=batch_size, shuffle=False,    num_workers=0)
 
-    # ── Model ────────────────────────────────────────────────────────────────
-    model     = build_model(num_classes=len(CLASSES), pretrained=True).to(device)
+    model = build_model(num_classes=len(CLASSES), pretrained=True).to(device)
     criterion = nn.CrossEntropyLoss(weight=class_weights)
 
     best_val_acc = 0.0
-    best_epoch   = 0
+    best_epoch  = 0
     total_epochs = phase1_epochs + phase2_epochs
 
-    # ======================================================================
-    # Phase 1 — freeze backbone, train classifier head only
-    # ======================================================================
     if phase1_epochs > 0:
         print(f"\n{'─'*60}")
         print(f"Phase 1 — frozen backbone ({phase1_epochs} epochs, LR={lr_head})")
@@ -312,10 +265,6 @@ def train(
             print(f"  P1 Epoch {epoch:3d}/{phase1_epochs}  "
                   f"train loss={tr_loss:.4f} acc={tr_acc:.1f}%  "
                   f"val loss={va_loss:.4f} acc={va_acc:.1f}%{marker}")
-
-    # ======================================================================
-    # Phase 2 — unfreeze all, fine-tune at lower LR
-    # ======================================================================
     if phase2_epochs > 0:
         print(f"\n{'─'*60}")
         print(f"Phase 2 — full fine-tuning ({phase2_epochs} epochs, LR={lr_finetune})")
@@ -340,11 +289,9 @@ def train(
                   f"train loss={tr_loss:.4f} acc={tr_acc:.1f}%  "
                   f"val loss={va_loss:.4f} acc={va_acc:.1f}%{marker}")
 
-    # ── Summary ──────────────────────────────────────────────────────────────
     print(f"\nBest val accuracy: {best_val_acc:.1f}%  (epoch {best_epoch}/{total_epochs})")
     print(f"Model saved to: {output_path}")
 
-    # ── Per-class accuracy on val set ─────────────────────────────────────────
     print("\nPer-class accuracy on validation set:")
     state = torch.load(output_path, map_location=device, weights_only=True)
     model.load_state_dict(state)
@@ -372,21 +319,16 @@ def train(
     print("\nNOTE: With < 50 samples per class the model will still overfit.")
     print("      Add more labeled images (aim for 30+ per class) for reliable accuracy.")
 
-
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
-
 def _parse_args():
     p = argparse.ArgumentParser(description="Train BinMaps AI (MobileNetV2 transfer learning)")
-    p.add_argument("--csv",     default="data/labels.csv",   help="Path to labels CSV")
-    p.add_argument("--images",  default="data/images",        help="Directory with training images")
-    p.add_argument("--output",  default="bin_fill_model.pth", help="Output .pth file")
-    p.add_argument("--phase1",  type=int,   default=10,       help="Frozen backbone epochs")
-    p.add_argument("--phase2",  type=int,   default=25,       help="Full fine-tuning epochs")
-    p.add_argument("--batch",   type=int,   default=8,        help="Batch size")
-    p.add_argument("--lr-head", type=float, default=1e-3,     help="LR for phase 1 (head only)")
-    p.add_argument("--lr-fine", type=float, default=1e-4,     help="LR for phase 2 (full model)")
+    p.add_argument("--csv",default="data/labels.csv", help="Path to labels CSV")
+    p.add_argument("--images", default="data/images",  help="Directory with training images")
+    p.add_argument("--output", default="bin_fill_model.pth", help="Output .pth file")
+    p.add_argument("--phase1", type=int, default=10, help="Frozen backbone epochs")
+    p.add_argument("--phase2",type=int, default=25, help="Full fine-tuning epochs")
+    p.add_argument("--batch", type=int, default=8, help="Batch size")
+    p.add_argument("--lr-head", type=float, default=1e-3,help="LR for phase 1 (head only)")
+    p.add_argument("--lr-fine", type=float, default=1e-4, help="LR for phase 2 (full model)")
     return p.parse_args()
 
 
@@ -403,12 +345,12 @@ if __name__ == "__main__":
         sys.exit(1)
 
     train(
-        csv_file      = args.csv,
-        image_dir     = args.images,
-        output_path   = args.output,
+        csv_file  = args.csv,
+        image_dir= args.images,
+        output_path= args.output,
         phase1_epochs = args.phase1,
         phase2_epochs = args.phase2,
-        batch_size    = args.batch,
-        lr_head       = getattr(args, "lr_head"),
-        lr_finetune   = getattr(args, "lr_fine"),
+        batch_size  = args.batch,
+        lr_head  = getattr(args, "lr_head"),
+        lr_finetune = getattr(args, "lr_fine"),
     )

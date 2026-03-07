@@ -1,14 +1,11 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=DM+Mono:wght@300;400;500&display=swap');
 
-/* ── Design Tokens ────────────────────────────────────────── */
 :root {
-  /* -- Core Palette -- */
-  --eco-primary:     #10b981;   /* Emerald — main brand green */
-  --eco-bright:      #34d399;   /* Lighter green for hover / glow */
-  --eco-dim:         #059669;   /* Darker green for active states */
-  --eco-ghost:       rgba(16, 185, 129, 0.08);  /* Very subtle green tint */
-  --eco-glow:        rgba(16, 185, 129, 0.35);  /* Glow shadows */
+  --eco-primary:     #10b981;
+  --eco-bright:      #34d399;
+  --eco-dim:         #059669;
+  --eco-ghost:       rgba(16, 185, 129, 0.08);
+  --eco-glow:        rgba(16, 185, 129, 0.35);
   --eco-glow-soft:   rgba(16, 185, 129, 0.15);
 
   --tech-blue:       #3b82f6;
@@ -16,69 +13,60 @@
   --cyan:            #06b6d4;
   --cyan-glow:       rgba(6, 182, 212, 0.3);
 
-  /* -- Status Colors -- */
-  --status-ok:       #10b981;   /* <40% — green */
-  --status-warn:     #f59e0b;   /* 40–60% — amber */
-  --status-high:     #f97316;   /* 60–80% — orange */
-  --status-critical: #ef4444;   /* >80% — red */
+  --status-ok:       #10b981;
+  --status-warn:     #f59e0b;
+  --status-high:     #f97316;
+  --status-critical: #ef4444;
   --status-fire:     #ef4444;
   --status-offline:  #6b7280;
 
-  /* -- Background Layers -- */
-  --bg-root:         #050a0e;   /* Deepest — body background */
-  --bg-base:         #0a1118;   /* Base surface */
-  --bg-surface:      #0f1923;   /* Cards, panels */
-  --bg-elevated:     #162030;   /* Modals, dropdowns */
-  --bg-hover:        #1c2a3a;   /* Row hover, interactive hover */
-  --bg-input:        #111d28;   /* Form inputs */
+  --bg-root:         #050a0e;
+  --bg-base:         #0a1118;
+  --bg-surface:      #0f1923;
+  --bg-elevated:     #162030;
+  --bg-hover:        #1c2a3a;
+  --bg-input:        #111d28;
 
-  /* -- Border Colors -- */
   --border-subtle:   rgba(255, 255, 255, 0.06);
   --border-default:  rgba(255, 255, 255, 0.10);
   --border-emphasis: rgba(255, 255, 255, 0.18);
   --border-eco:      rgba(16, 185, 129, 0.30);
   --border-eco-soft: rgba(16, 185, 129, 0.15);
 
-  /* -- Text Colors -- */
-  --text-primary:    #f0f4f8;   /* Main text */
-  --text-secondary:  #8a9bb0;   /* Subdued text */
-  --text-muted:      #4a5d70;   /* Placeholder, disabled */
-  --text-inverse:    #050a0e;   /* Text on bright backgrounds */
+  --text-primary:    #f0f4f8;
+  --text-secondary:  #8a9bb0;
+  --text-muted:      #4a5d70;
+  --text-inverse:    #050a0e;
   --text-eco:        #10b981;
   --text-warn:       #f59e0b;
   --text-danger:     #ef4444;
 
-  /* -- Typography -- */
   --font-display:    'Syne', sans-serif;
   --font-body:       'DM Sans', sans-serif;
   --font-mono:       'DM Mono', monospace;
 
-  /* -- Font Sizes (fluid scale) -- */
-  --text-xs:    0.6875rem;   /* 11px */
-  --text-sm:    0.8125rem;   /* 13px */
-  --text-base:  0.9375rem;   /* 15px */
-  --text-md:    1.0625rem;   /* 17px */
-  --text-lg:    1.25rem;     /* 20px */
-  --text-xl:    1.5rem;      /* 24px */
-  --text-2xl:   2rem;        /* 32px */
-  --text-3xl:   2.75rem;     /* 44px */
-  --text-4xl:   3.75rem;     /* 60px */
+  --text-xs:    0.6875rem;
+  --text-sm:    0.8125rem;
+  --text-base:  0.9375rem;
+  --text-md:    1.0625rem;
+  --text-lg:    1.25rem;
+  --text-xl:    1.5rem;
+  --text-2xl:   2rem;
+  --text-3xl:   2.75rem;
+  --text-4xl:   3.75rem;
   --text-hero:  clamp(3rem, 7vw, 5.5rem);
 
-  /* -- Line Heights -- */
   --leading-tight:   1.15;
   --leading-snug:    1.35;
   --leading-normal:  1.6;
   --leading-relaxed: 1.75;
 
-  /* -- Letter Spacing -- */
   --tracking-tight:  -0.03em;
   --tracking-normal:  0;
   --tracking-wide:    0.06em;
   --tracking-wider:   0.12em;
   --tracking-widest:  0.18em;
 
-  /* -- Spacing -- */
   --space-1:   0.25rem;
   --space-2:   0.5rem;
   --space-3:   0.75rem;
@@ -92,7 +80,6 @@
   --space-20:  5rem;
   --space-24:  6rem;
 
-  /* -- Border Radius -- */
   --radius-sm:   6px;
   --radius-md:   10px;
   --radius-lg:   14px;
@@ -100,7 +87,6 @@
   --radius-2xl:  28px;
   --radius-full: 9999px;
 
-  /* -- Shadows -- */
   --shadow-sm:   0 1px 3px rgba(0,0,0,0.4);
   --shadow-md:   0 4px 16px rgba(0,0,0,0.5);
   --shadow-lg:   0 8px 32px rgba(0,0,0,0.6);
@@ -110,7 +96,6 @@
   --shadow-blue: 0 0 20px var(--tech-blue-glow);
   --shadow-red:  0 0 20px rgba(239,68,68,0.35);
 
-  /* -- Transitions -- */
   --ease-out:    cubic-bezier(0.0, 0.0, 0.2, 1.0);
   --ease-in-out: cubic-bezier(0.4, 0.0, 0.2, 1.0);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1.0);
@@ -121,14 +106,12 @@
   --duration-slow:   380ms;
   --duration-slower: 600ms;
 
-  /* -- Layout -- */
   --navbar-height:      64px;
   --sidebar-width:      320px;
   --sidebar-collapsed:  60px;
   --max-content-width:  1440px;
   --content-padding:    clamp(1rem, 3vw, 2.5rem);
 
-  /* -- Z-Index Scale -- */
   --z-base:     1;
   --z-raised:   10;
   --z-overlay:  100;
@@ -139,7 +122,6 @@
   --z-tooltip:  600;
 }
 
-/* ── Reset & Base ─────────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -166,7 +148,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Subtle grain overlay on body for depth */
 body::before {
   content: '';
   position: fixed;
@@ -177,7 +158,6 @@ body::before {
   z-index: var(--z-tooltip);
 }
 
-/* ── Custom Scrollbar ─────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -193,7 +173,6 @@ body::before {
   background: var(--eco-dim);
 }
 
-/* ── Typography ───────────────────────────────────────────── */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   font-weight: 700;
@@ -223,14 +202,12 @@ code, pre {
   font-size: 0.9em;
 }
 
-/* ── Focus / Accessibility ────────────────────────────────── */
 :focus-visible {
   outline: 2px solid var(--eco-primary);
   outline-offset: 3px;
   border-radius: var(--radius-sm);
 }
 
-/* ── Layout Containers ────────────────────────────────────── */
 .container {
   width: 100%;
   max-width: var(--max-content-width);
@@ -246,13 +223,11 @@ code, pre {
   max-width: 1600px;
 }
 
-/* App shell — accounts for fixed navbar */
 .app-shell {
   padding-top: var(--navbar-height);
   min-height: 100vh;
 }
 
-/* Dashboard layout — navbar + sidebar */
 .dashboard-layout {
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr;
@@ -260,7 +235,6 @@ code, pre {
   min-height: 100vh;
 }
 
-/* ── Glass Morphism ───────────────────────────────────────── */
 .glass {
   background: rgba(15, 25, 35, 0.72);
   backdrop-filter: blur(20px) saturate(180%);
@@ -282,7 +256,6 @@ code, pre {
   border: 1px solid var(--border-emphasis);
 }
 
-/* ── Card Component ───────────────────────────────────────── */
 .card {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
@@ -347,7 +320,6 @@ code, pre {
   margin-top: var(--space-1);
 }
 
-/* ── Button System ────────────────────────────────────────── */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -376,7 +348,6 @@ code, pre {
   user-select: none;
 }
 
-/* Ripple shimmer on hover */
 .btn::after {
   content: '';
   position: absolute;
@@ -405,7 +376,6 @@ code, pre {
   pointer-events: none;
 }
 
-/* Primary — eco green gradient */
 .btn--primary {
   background: linear-gradient(135deg, var(--eco-dim) 0%, var(--eco-primary) 60%, var(--eco-bright) 100%);
   color: var(--bg-root);
@@ -421,7 +391,6 @@ code, pre {
   box-shadow: var(--shadow-eco-sm);
 }
 
-/* Secondary — ghost with eco border */
 .btn--secondary {
   background: var(--eco-ghost);
   color: var(--eco-primary);
@@ -432,7 +401,6 @@ code, pre {
   box-shadow: var(--shadow-eco-sm);
 }
 
-/* Ghost — no background */
 .btn--ghost {
   background: transparent;
   color: var(--text-secondary);
@@ -444,7 +412,6 @@ code, pre {
   border-color: var(--border-default);
 }
 
-/* Danger */
 .btn--danger {
   background: rgba(239,68,68,0.12);
   color: var(--status-critical);
@@ -455,7 +422,6 @@ code, pre {
   box-shadow: var(--shadow-red);
 }
 
-/* Sizes */
 .btn--sm {
   font-size: var(--text-xs);
   padding: 0.4375rem 0.875rem;
@@ -472,7 +438,6 @@ code, pre {
   aspect-ratio: 1;
 }
 
-/* ── Form Elements ────────────────────────────────────────── */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -539,7 +504,6 @@ code, pre {
   gap: var(--space-1);
 }
 
-/* ── Badge / Chip ─────────────────────────────────────────── */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -562,7 +526,6 @@ code, pre {
 .badge--blue    { background: rgba(59,130,246,0.12); color: var(--tech-blue);         border-color: rgba(59,130,246,0.25); }
 .badge--cyan    { background: rgba(6,182,212,0.12);  color: var(--cyan);              border-color: rgba(6,182,212,0.25); }
 
-/* ── Progress Bar ─────────────────────────────────────────── */
 .progress {
   height: 6px;
   background: var(--bg-hover);
@@ -578,7 +541,6 @@ code, pre {
   transition: width var(--duration-slower) var(--ease-out);
 }
 
-/* Shine animation on progress fill */
 .progress__fill::after {
   content: '';
   position: absolute;
@@ -594,16 +556,13 @@ code, pre {
   100% { left: 200%; }
 }
 
-/* Progress color variants based on fill */
 .progress__fill--ok       { background: linear-gradient(90deg, var(--eco-dim), var(--eco-primary)); }
 .progress__fill--warn     { background: linear-gradient(90deg, #d97706, var(--status-warn)); }
 .progress__fill--high     { background: linear-gradient(90deg, #ea580c, var(--status-high)); }
 .progress__fill--critical { background: linear-gradient(90deg, #dc2626, var(--status-critical)); }
 
-/* Tall progress variant */
 .progress--lg { height: 10px; border-radius: var(--radius-md); }
 
-/* ── Live / Pulsing Dot ───────────────────────────────────── */
 .live-dot {
   display: inline-block;
   width: 8px;
@@ -635,7 +594,6 @@ code, pre {
 .live-dot--warn { background: var(--status-warn); }
 .live-dot--warn::before { background: var(--status-warn); }
 
-/* ── Divider ──────────────────────────────────────────────── */
 .divider {
   height: 1px;
   background: var(--border-subtle);
@@ -647,7 +605,6 @@ code, pre {
   background: linear-gradient(90deg, transparent, var(--border-eco), transparent);
 }
 
-/* ── Section Label ────────────────────────────────────────── */
 .section-label {
   font-size: var(--text-xs);
   font-weight: 600;
@@ -668,7 +625,6 @@ code, pre {
   border-radius: var(--radius-full);
 }
 
-/* ── KPI Card ─────────────────────────────────────────────── */
 .kpi-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
@@ -685,7 +641,6 @@ code, pre {
     box-shadow var(--duration-base) var(--ease-out);
 }
 
-/* Glowing top accent line */
 .kpi-card::before {
   content: '';
   position: absolute;
@@ -743,7 +698,6 @@ code, pre {
   gap: var(--space-1);
 }
 
-/* ── Table System ─────────────────────────────────────────── */
 .table-wrapper {
   overflow-x: auto;
   border-radius: var(--radius-lg);
@@ -794,7 +748,6 @@ code, pre {
   border-bottom: none;
 }
 
-/* ── Modal ────────────────────────────────────────────────── */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -845,7 +798,6 @@ code, pre {
   font-weight: 700;
 }
 
-/* ── Notification / Toast ─────────────────────────────────── */
 .toast-container {
   position: fixed;
   bottom: var(--space-6);
@@ -892,7 +844,6 @@ code, pre {
   line-height: var(--leading-snug);
 }
 
-/* ── Notification Panel (in-app) ──────────────────────────── */
 .notif-panel {
   position: fixed;
   top: var(--navbar-height);
@@ -983,7 +934,6 @@ code, pre {
   margin-top: var(--space-1);
 }
 
-/* ── Tabs ─────────────────────────────────────────────────── */
 .tabs {
   display: flex;
   gap: 2px;
@@ -1022,7 +972,6 @@ code, pre {
   box-shadow: var(--shadow-sm);
 }
 
-/* ── Skeleton Loader ──────────────────────────────────────── */
 .skeleton {
   background: linear-gradient(
     90deg,
@@ -1040,9 +989,6 @@ code, pre {
   100% { background-position: -200% 0; }
 }
 
-/* ── Utility Classes ──────────────────────────────────────── */
-
-/* Text */
 .text-primary   { color: var(--text-primary) !important; }
 .text-secondary { color: var(--text-secondary) !important; }
 .text-muted     { color: var(--text-muted) !important; }
@@ -1058,7 +1004,6 @@ code, pre {
 .uppercase      { text-transform: uppercase !important; }
 .tracking-wide  { letter-spacing: var(--tracking-wide) !important; }
 
-/* Flex */
 .flex           { display: flex; }
 .flex-col       { flex-direction: column; }
 .items-center   { align-items: center; }
@@ -1071,13 +1016,11 @@ code, pre {
 .gap-6          { gap: var(--space-6); }
 .flex-1         { flex: 1; }
 
-/* Grid */
 .grid           { display: grid; }
 .grid-2         { grid-template-columns: repeat(2, 1fr); }
 .grid-3         { grid-template-columns: repeat(3, 1fr); }
 .grid-4         { grid-template-columns: repeat(4, 1fr); }
 
-/* Spacing */
 .mt-2  { margin-top: var(--space-2); }
 .mt-4  { margin-top: var(--space-4); }
 .mt-6  { margin-top: var(--space-6); }
@@ -1087,7 +1030,6 @@ code, pre {
 .p-4   { padding: var(--space-4); }
 .p-6   { padding: var(--space-6); }
 
-/* Display */
 .hidden         { display: none !important; }
 .w-full         { width: 100%; }
 .h-full         { height: 100%; }
@@ -1096,7 +1038,6 @@ code, pre {
 .rounded        { border-radius: var(--radius-md); }
 .rounded-full   { border-radius: var(--radius-full); }
 
-/* ── Entrance Animations ──────────────────────────────────── */
 .animate-fade-in {
   animation: fade-in var(--duration-slow) var(--ease-out) both;
 }
@@ -1109,7 +1050,6 @@ code, pre {
   animation: slide-right var(--duration-slow) var(--ease-out) both;
 }
 
-/* Staggered children: add --delay to each child */
 .stagger > * {
   animation: slide-up var(--duration-slow) var(--ease-out) both;
   animation-delay: calc(var(--i, 0) * 80ms);
@@ -1130,7 +1070,6 @@ code, pre {
   to   { opacity: 1; transform: translateX(0); }
 }
 
-/* Float animation for hero decorative elements */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50%       { transform: translateY(-12px); }
@@ -1140,7 +1079,6 @@ code, pre {
   animation: float 4s ease-in-out infinite;
 }
 
-/* ── Reduced Motion ───────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -1149,7 +1087,6 @@ code, pre {
   }
 }
 
-/* ── Responsive Helpers ───────────────────────────────────── */
 @media (max-width: 1024px) {
   :root {
     --sidebar-width: 280px;

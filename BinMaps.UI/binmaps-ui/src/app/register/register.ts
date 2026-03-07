@@ -24,23 +24,23 @@ export class RegisterComponent {
     private readonly auth: AuthService
   ) {
     this.registerForm = this.fb.group({
-      userName:        ['', [Validators.required, Validators.minLength(3), Validators.maxLength(50)]],
-      email:           ['', [Validators.required, Validators.email]],
-      phoneNumber:     ['', [Validators.pattern(/^(\+359|0)[0-9]{9}$/)]],
-      password:        ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', Validators.required],
-      acceptTerms:     [false, Validators.requiredTrue]
+      userName:['', [Validators.required, Validators.minLength(3), Validators.maxLength(50)]],
+      email: ['', [Validators.required, Validators.email]],
+      phoneNumber: ['', [Validators.pattern(/^(\+359|0)[0-9]{9}$/)]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword:['', Validators.required],
+      acceptTerms:[false, Validators.requiredTrue]
     }, { validators: this.passwordMatchValidator });
   }
 
-  get userNameControl()        { return this.registerForm.get('userName'); }
-  get emailControl()           { return this.registerForm.get('email'); }
-  get phoneNumberControl()     { return this.registerForm.get('phoneNumber'); }
-  get passwordControl()        { return this.registerForm.get('password'); }
+  get userNameControl(){ return this.registerForm.get('userName'); }
+  get emailControl(){ return this.registerForm.get('email'); }
+  get phoneNumberControl(){ return this.registerForm.get('phoneNumber'); }
+  get passwordControl() { return this.registerForm.get('password'); }
   get confirmPasswordControl() { return this.registerForm.get('confirmPassword'); }
 
   togglePasswordVisibility(): void { this.showPassword = !this.showPassword; }
-  navigateToLogin(): void          { this.router.navigate(['/login']); }
+  navigateToLogin(): void  { this.router.navigate(['/login']); }
 
   onSubmit(): void {
     if (this.registerForm.invalid) {
@@ -48,21 +48,21 @@ export class RegisterComponent {
       return;
     }
 
-    this.isLoading      = true;
-    this.generalError   = null;
+    this.isLoading= true;
+    this.generalError = null;
     this.successMessage = null;
 
     const payload = {
-      userName:    this.registerForm.value.userName,
-      email:       this.registerForm.value.email,
+      userName:this.registerForm.value.userName,
+      email: this.registerForm.value.email,
       phoneNumber: this.registerForm.value.phoneNumber || null,
-      password:    this.registerForm.value.password,
+      password: this.registerForm.value.password,
       acceptTerms: this.registerForm.value.acceptTerms
     };
 
     this.auth.register(payload).subscribe({
       next: (response) => {
-        this.isLoading      = false;
+        this.isLoading = false;
         this.successMessage = response.message || 'Успешна регистрация! Пренасочване към входа...';
         sessionStorage.setItem('welcomeUser', '1');
         setTimeout(() => this.router.navigate(['/login']), 2000);

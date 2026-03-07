@@ -52,7 +52,6 @@ TRANSFORM = transforms.Compose([
     ),
 ])
 
-# Global flag — set to False when weights don't match the current architecture
 _weights_loaded: bool = False
 
 def load_model() -> nn.Module:
@@ -142,14 +141,10 @@ def predict(image_bytes: bytes) -> dict:
         confidence = round(float(probs[best_idx]) * 100, 2)
         best_class = CLASSES[best_idx]
 
-    # A well-trained model should reach > 40 % confidence for a clear bin photo.
-    # If weights are incompatible (random init), all classes score ~20 % —
-    # in that case we optimistically report container_detected=True so the
-    # user is not blocked, and mark the result as untrusted via weights_loaded.
     if _weights_loaded:
         container_detected = confidence >= 35.0
     else:
-        container_detected = True   # can't trust random-weight predictions
+        container_detected = True 
 
     return {
         "confidence": confidence,
@@ -157,7 +152,7 @@ def predict(image_bytes: bytes) -> dict:
         "fire_detected": best_class == "fire",
         "fill_percentage": _estimate_fill(best_class),
         "container_detected": container_detected,
-        "weights_loaded": _weights_loaded,   # False = model needs retraining
+        "weights_loaded": _weights_loaded,
         "all_scores": {
             cls: round(float(probs[i]) * 100, 2)
             for i, cls in enumerate(CLASSES)
@@ -187,7 +182,7 @@ async def health():
     return {
         "status":          "ready" if _model is not None else "loading",
         "model_loaded":    _model is not None,
-        "weights_loaded":  _weights_loaded,    # False = architecture mismatch, needs retrain
+        "weights_loaded":  _weights_loaded, 
         "device":          str(DEVICE),
         "model_path":      MODEL_PATH,
         "file_exists":     os.path.exists(MODEL_PATH),

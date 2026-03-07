@@ -46,9 +46,6 @@ public sealed class AuthController : ControllerBase
 
         if (!success || result is null)
             return Unauthorized(new { message = "Невалиден имейл или парола." });
-
-        // When result.IsBanned=true the frontend redirects to /banned.
-        // We always return 200 so the UX feels like a login, not an error.
         return Ok(result);
     }
 

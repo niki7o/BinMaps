@@ -2,12 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
-/**
- * Allows only Admin users.
- * Unauthenticated → /login
- * Banned → /banned
- * Authenticated but wrong role → /forbidden (403 page)
- */
+
 export const adminGuard: CanActivateFn = () => {
   const auth   = inject(AuthService);
   const router = inject(Router);

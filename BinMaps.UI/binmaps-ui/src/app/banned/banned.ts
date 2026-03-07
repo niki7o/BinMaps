@@ -19,7 +19,7 @@ export class BannedComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Ban reason comes from the stored AuthUser (set during login)
+    
     const reason = this.auth.currentUser?.banReason;
     if (reason) this.banReason = reason;
   }

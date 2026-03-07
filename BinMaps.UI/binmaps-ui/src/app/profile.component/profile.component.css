@@ -54,7 +54,6 @@
   color: var(--bg-root);
 }
 
-/* Profile picture image variant — same size/shape as the initials avatar */
 .profile__avatar--img {
   object-fit: cover;
   background: none;
@@ -475,7 +474,6 @@
   gap: var(--space-4);
 }
 
-/* ── Single UFO badge ── */
 .ufo-badge {
   display: flex;
   flex-direction: column;
@@ -489,7 +487,6 @@
   transform: translateY(-6px);
 }
 
-/* Pod (dome) */
 .ufo-badge__pod {
   width: 72px;
   height: 72px;
@@ -509,7 +506,6 @@
     inset 0 -1px 0 rgba(0,0,0,.3);
 }
 
-/* Legend rainbow spin */
 .ufo-badge[data-tier="legend"]:not(.ufo-badge--locked) .ufo-badge__pod {
   animation: legend-hue 3s linear infinite;
 }
@@ -517,8 +513,6 @@
   from { filter: hue-rotate(0deg) brightness(1.15); }
   to   { filter: hue-rotate(360deg) brightness(1.15); }
 }
-
-/* Shine spot inside pod */
 .ufo-badge__shine {
   position: absolute;
   top: 13%;
@@ -530,7 +524,6 @@
   pointer-events: none;
 }
 
-/* Saucer (flat disc below pod) */
 .ufo-badge__saucer {
   width: 92px;
   height: 24px;
@@ -569,7 +562,6 @@
   50%      { opacity: 1;  transform: scale(1.15); box-shadow: 0 0 10px var(--bc); }
 }
 
-/* Text */
 .ufo-badge__name {
   font-size: 11px;
   font-weight: 700;
@@ -588,7 +580,6 @@
   line-height: 1.3;
 }
 
-/* Locked state */
 .ufo-badge--locked .ufo-badge__pod,
 .ufo-badge--locked .ufo-badge__saucer {
   filter: grayscale(1) brightness(.35);
@@ -596,7 +587,6 @@
 }
 .ufo-badge--locked .ufo-badge__name { color: var(--text-muted); }
 
-/* Responsive */
 @media (max-width: 900px) {
   .badges-grid { grid-template-columns: repeat(4, 1fr); }
 }

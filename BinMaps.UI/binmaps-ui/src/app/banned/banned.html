@@ -1,11 +1,11 @@
 <div class="ban-screen">
-  <!-- Animated background particles -->
+  
   <div class="ban-particles">
     <span class="particle" *ngFor="let p of [1,2,3,4,5,6]"></span>
   </div>
 
   <div class="ban-card">
-    <!-- Icon -->
+
     <div class="ban-icon-wrap">
       <svg class="ban-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
         <circle cx="12" cy="12" r="10" stroke-width="1.5"/>
@@ -14,11 +14,10 @@
       <div class="ban-icon-ring"></div>
     </div>
 
-    <!-- Title -->
     <h1 class="ban-title">Акаунтът е блокиран</h1>
     <p class="ban-subtitle">Достъпът до BinMaps е ограничен за вашия профил</p>
 
-    <!-- Reason box -->
+    
     <div class="ban-reason-box">
       <div class="ban-reason-label">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -31,12 +30,11 @@
       <p class="ban-reason-text">{{ banReason }}</p>
     </div>
 
-    <!-- Help text -->
     <p class="ban-help">
       Смятате, че това е грешка? Свържете се с администратора на системата.
     </p>
 
-    <!-- Logout button -->
+    
     <button class="ban-btn" (click)="logout()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
