@@ -14,7 +14,7 @@ public sealed class ReportService : IReportService
     private const double AiWeight = 0.6;
     private const double ReputationWeight = 0.4;
     private const double AutoApproveThreshold = 85.0;
-    private const int AutoRejectBelowReputation = 25;
+    
 
     private readonly IRepository<Report, int>  _reportRepo;
     private readonly IAIService _aiService;

@@ -13,18 +13,33 @@ namespace BinMaps.Infrastructure.Services;
 
 public sealed class ContainerDynamicsService : BackgroundService
 {
-    private static readonly TimeSpan UpdateInterval = TimeSpan.FromSeconds(10);
+    #region Constants
+
+    private static readonly TimeSpan UpdateInterval = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan WeatherCacheDuration = TimeSpan.FromMinutes(30);
     private const int BatchSize = 50;
     private const double SofiaLat = 42.6977;
     private const double SofiaLng  = 23.3219;
     private const double FallbackAmbient = 20.0;
     private const double LowBatteryThreshold = 20.0;
 
+    #endregion
+
+    #region Fields
+
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IHubContext<ContainerHub> _hubContext;
     private readonly ILogger<ContainerDynamicsService> _logger;
 
     private readonly HashSet<int> _lowBatteryNotified = new();
+
+    
+    private double _cachedTemp = FallbackAmbient;
+    private DateTime _tempCachedAt = DateTime.MinValue;
+
+    #endregion
+
+    #region Constructor
 
     public ContainerDynamicsService(
         IServiceScopeFactory scopeFactory,
@@ -36,6 +51,10 @@ public sealed class ContainerDynamicsService : BackgroundService
         _logger  = logger;
     }
 
+    #endregion
+
+    #region Background Service
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
@@ -44,6 +63,10 @@ public sealed class ContainerDynamicsService : BackgroundService
             await Task.Delay(UpdateInterval, stoppingToken);
         }
     }
+
+    #endregion
+
+    #region Cycle
 
     private async Task RunCycleAsync(CancellationToken token)
     {
@@ -61,12 +84,16 @@ public sealed class ContainerDynamicsService : BackgroundService
                 .ToListAsync(token);
 
             var notifications = new List<object>();
+            var changedIds = new HashSet<int>();
 
             foreach (var c in containers)
-                ApplyUpdates(c, simulator, ambientTemp, notifications);
+            {
+                var changed = ApplyUpdates(c, simulator, ambientTemp, notifications);
+                if (changed) changedIds.Add(c.Id);
+            }
 
             await SaveBatchedAsync(db, containers, token);
-            await BroadcastAsync(containers, token);
+            await BroadcastAsync(containers, changedIds, token);
 
             if (notifications.Count > 0)
                 await _hubContext.Clients.All.SendAsync("AdminNotification", notifications, token);
@@ -77,42 +104,80 @@ public sealed class ContainerDynamicsService : BackgroundService
         }
     }
 
-    private static async Task<double> ResolveAmbientAsync(IExternalWeatherService weather)
+    #endregion
+
+    #region Weather
+
+    
+    private async Task<double> ResolveAmbientAsync(IExternalWeatherService weather)
     {
-        try { 
-            return await weather.GetAmbientTemperatureAsync(SofiaLat, SofiaLng) ?? FallbackAmbient; }
-        catch 
-        { 
-            return FallbackAmbient; }
+        if (DateTime.UtcNow - _tempCachedAt < WeatherCacheDuration)
+            return _cachedTemp;
+
+        try
+        {
+            _cachedTemp = await weather.GetAmbientTemperatureAsync(SofiaLat, SofiaLng) ?? FallbackAmbient;
+            _tempCachedAt = DateTime.UtcNow;
+            return _cachedTemp;
+        }
+        catch
+        {
+            return FallbackAmbient;
+        }
     }
 
-    private void ApplyUpdates(
+    #endregion
+
+    #region Updates
+
+    
+    private bool ApplyUpdates(
         TrashContainer container,
         FillageSimulator simulator,
         double ambientTemp,
         List<object> notifications)
     {
+        var changed = false;
         var zoneMultiplier = container.Area?.FillMultiplier ?? 1.0;
 
-        container.FillPercentage = Math.Clamp(
+        var newFill = Math.Clamp(
             container.FillPercentage + simulator.CalculateFillIncrement(container, zoneMultiplier),
             0, 100);
 
+        if (newFill != container.FillPercentage)
+        {
+            container.FillPercentage = newFill;
+            changed = true;
+        }
+
         if (container.HasSensor && container.Status != TrashContainerStatus.SensorBroken)
         {
-            container.Temperature = container.Temperature == null
+            var newTemp = container.Temperature == null
                 ? ambientTemp
                 : simulator.SimulateTemperature(container, ambientTemp);
+
+            if (newTemp != container.Temperature)
+            {
+                container.Temperature = newTemp;
+                changed = true;
+            }
 
             if (container.BatteryPercentage == null || container.BatteryPercentage == 0)
             {
                 container.BatteryPercentage = 100;
+                changed = true;
             }
             else
             {
-                container.BatteryPercentage = Math.Max(
+                var newBattery = Math.Max(
                     0,
                     container.BatteryPercentage.Value - FillageSimulator.CalculateBatteryDrain(container));
+
+                if (newBattery != container.BatteryPercentage)
+                {
+                    container.BatteryPercentage = newBattery;
+                    changed = true;
+                }
 
                 if (container.BatteryPercentage <= 0)
                 {
@@ -123,6 +188,7 @@ public sealed class ContainerDynamicsService : BackgroundService
                         container.Status = TrashContainerStatus.Active;
 
                     _lowBatteryNotified.Remove(container.Id);
+                    changed = true;
 
                     notifications.Add(new
                     {
@@ -154,47 +220,75 @@ public sealed class ContainerDynamicsService : BackgroundService
         }
         else
         {
-            container.Temperature = null;
+            if (container.Temperature != null)
+            {
+                container.Temperature = null;
+                changed = true;
+            }
         }
 
         if (container.Status != TrashContainerStatus.Active)
-            return;
+            return changed;
 
-        container.Status = FillageSimulator.DetermineStatus(container);
+        var newStatus = FillageSimulator.DetermineStatus(container);
+        if (newStatus != container.Status)
+        {
+            container.Status = newStatus;
+            changed = true;
+        }
+
+        return changed;
     }
+
+    #endregion
+
+    #region Persistence
 
     private static async Task SaveBatchedAsync(
         BinMapsDbContext db,
         List<TrashContainer> containers,
         CancellationToken token)
     {
-        for (int i = 0; i < containers.Count; i += BatchSize)
+        foreach (var c in containers)
         {
-            foreach (var c in containers.Skip(i).Take(BatchSize))
-            {
-                var entry = db.Entry(c);
-                entry.Property(x => x.FillPercentage).IsModified = true;
-                entry.Property(x => x.Temperature).IsModified   = true;
-                entry.Property(x => x.BatteryPercentage).IsModified = true;
-                entry.Property(x => x.HasSensor).IsModified = true;
-                if (c.Status != TrashContainerStatus.Offline)
-                    entry.Property(x => x.Status).IsModified = true;
-            }
-            await db.SaveChangesAsync(token);
+            var entry = db.Entry(c);
+            entry.Property(x => x.FillPercentage).IsModified = true;
+            entry.Property(x => x.Temperature).IsModified   = true;
+            entry.Property(x => x.BatteryPercentage).IsModified = true;
+            entry.Property(x => x.HasSensor).IsModified = true;
+            if (c.Status != TrashContainerStatus.Offline)
+                entry.Property(x => x.Status).IsModified = true;
         }
+
+        await db.SaveChangesAsync(token);
     }
 
-    private async Task BroadcastAsync(List<TrashContainer> containers, CancellationToken token)
+    #endregion
+
+    #region Broadcast
+
+    
+    private async Task BroadcastAsync(
+        List<TrashContainer> containers,
+        HashSet<int> changedIds,
+        CancellationToken token)
     {
-        var payload = containers.Select(c => new
-        {
-            c.Id,
-            c.FillPercentage,
-            c.Temperature,
-            c.BatteryPercentage,
-            c.HasSensor,
-            Status = (int?)c.Status
-        });
+        if (changedIds.Count == 0) return;
+
+        var payload = containers
+            .Where(c => changedIds.Contains(c.Id))
+            .Select(c => new
+            {
+                c.Id,
+                c.FillPercentage,
+                c.Temperature,
+                c.BatteryPercentage,
+                c.HasSensor,
+                Status = (int?)c.Status
+            });
+
         await _hubContext.Clients.All.SendAsync("ContainersUpdated", payload, token);
-        
-}}
+    }
+
+    #endregion
+}
