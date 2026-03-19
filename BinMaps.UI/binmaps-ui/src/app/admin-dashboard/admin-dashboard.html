@@ -229,6 +229,16 @@
         </div>
         <span class="text-muted text-xs">{{ filteredContainers.length }} контейнера</span>
         <span class="text-muted text-xs" *ngIf="containerTotalPages > 1">Стр. {{ containerPage }}/{{ containerTotalPages }}</span>
+        <button class="btn btn--ghost btn--sm" (click)="resetAllSensors()" [disabled]="isResettingSensors"
+          title="Рестартира батерията на всички счупени сензорни контейнери и ги връща в активен статус">
+          <svg *ngIf="!isResettingSensors" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+          <svg *ngIf="isResettingSensors" class="spinner-inline" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+          </svg>
+          {{ isResettingSensors ? 'Рестартиране…' : '🔋 Рестартирай сензори' }}
+        </button>
       </div>
 
       <div class="table-wrapper">

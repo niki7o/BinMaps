@@ -125,6 +125,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   private toastCounter = 0;
 
   isLoading = false;
+  isResettingSensors = false;
 
   currentPage = 1;
   pageSize = 10;
@@ -432,6 +433,52 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         },
         error: () => this.showToast('Грешка при изпразване', 'error')
       });
+  }
+
+  resetAllSensors(): void {
+    if (this.isResettingSensors) return;
+    this.isResettingSensors = true;
+
+    const brokenSensors = this.containers.filter(
+      c => c.hasSensor && (c.status === 3 || (c.batteryPercentage !== null && c.batteryPercentage <= 0))
+    );
+
+    if (brokenSensors.length === 0) {
+      this.showToast('Няма счупени сензори', 'info');
+      this.isResettingSensors = false;
+      return;
+    }
+
+    let completed = 0;
+    let hasError = false;
+
+    brokenSensors.forEach(c => {
+      this.http.put(
+        `${this.API}/containers/${c.id}`,
+        { fillPercentage: c.fillPercentage, status: 0, hasSensor: true },
+        this.authHeaders()
+      ).pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            completed++;
+            if (completed === brokenSensors.length) {
+              if (!hasError) this.showToast(`${completed} сензора са рестартирани 🔋`);
+              this.isResettingSensors = false;
+              this.loadContainers();
+              this.loadStats();
+            }
+          },
+          error: () => {
+            hasError = true;
+            completed++;
+            if (completed === brokenSensors.length) {
+              this.showToast('Някои сензори не бяха рестартирани', 'error');
+              this.isResettingSensors = false;
+              this.loadContainers();
+            }
+          }
+        });
+    });
   }
 
   changeUserRole(user: User, newRole: string): void {
