@@ -178,24 +178,21 @@ public sealed class ContainerDynamicsService : BackgroundService
                     container.BatteryPercentage = newBattery;
                     changed = true;
                 }
-
                 if (container.BatteryPercentage <= 0)
                 {
-                    container.HasSensor = false;
-                    container.Temperature = null;
-                    container.BatteryPercentage = null;
-                    if (container.Status == TrashContainerStatus.SensorBroken)
-                        container.Status = TrashContainerStatus.Active;
+                   
 
+                    container.BatteryPercentage = 100;
+                    container.Status = TrashContainerStatus.Active;
                     _lowBatteryNotified.Remove(container.Id);
                     changed = true;
 
                     notifications.Add(new
                     {
-                        Type= "battery_dead",
-                        ContainerId= container.Id,
+                        Type = "battery_recharged",
+                        ContainerId = container.Id,
                         AreaId = container.AreaId,
-                        Message= $"Сензорът на контейнер #{container.Id} ({container.AreaId}) е изтощен и е деактивиран."
+                        Message = $"Батерията на сензор #{container.Id} ({container.AreaId}) е подменена — рестартиран на 100%."
                     });
                 }
                 else if (container.BatteryPercentage < LowBatteryThreshold
