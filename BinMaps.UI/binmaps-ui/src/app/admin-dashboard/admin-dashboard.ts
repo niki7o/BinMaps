@@ -125,8 +125,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   private toastCounter = 0;
 
   isLoading = false;
-  isResettingSensors = false;
-
+ isResettingSensors = false;
   currentPage = 1;
   pageSize = 10;
   totalReports = 0;
@@ -435,16 +434,16 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
-  resetAllSensors(): void {
+  rechargeAllBatteries(): void {
     if (this.isResettingSensors) return;
     this.isResettingSensors = true;
 
-    const brokenSensors = this.containers.filter(
-      c => c.hasSensor && (c.status === 3 || (c.batteryPercentage !== null && c.batteryPercentage <= 0))
+    const targets = this.containers.filter(
+      c => c.trashType !== 0 && c.batteryPercentage !== null
     );
 
-    if (brokenSensors.length === 0) {
-      this.showToast('Няма счупени сензори', 'info');
+    if (targets.length === 0) {
+      this.showToast('Няма IoT сензори за презареждане', 'info');
       this.isResettingSensors = false;
       return;
     }
@@ -452,7 +451,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     let completed = 0;
     let hasError = false;
 
-    brokenSensors.forEach(c => {
+    targets.forEach(c => {
       this.http.put(
         `${this.API}/containers/${c.id}`,
         { fillPercentage: c.fillPercentage, status: 0, hasSensor: true },
@@ -461,8 +460,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         .subscribe({
           next: () => {
             completed++;
-            if (completed === brokenSensors.length) {
-              if (!hasError) this.showToast(`${completed} сензора са рестартирани 🔋`);
+            if (completed === targets.length) {
+              if (!hasError) {
+                this.showToast(`Батериите на ${completed} IoT сензора са презаредени до 100%`);
+              }
               this.isResettingSensors = false;
               this.loadContainers();
               this.loadStats();
@@ -471,8 +472,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           error: () => {
             hasError = true;
             completed++;
-            if (completed === brokenSensors.length) {
-              this.showToast('Някои сензори не бяха рестартирани', 'error');
+            if (completed === targets.length) {
+              this.showToast('Някои сензори не бяха презаредени', 'error');
               this.isResettingSensors = false;
               this.loadContainers();
             }
