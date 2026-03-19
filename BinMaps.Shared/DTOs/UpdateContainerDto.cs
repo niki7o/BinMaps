@@ -11,4 +11,8 @@ public sealed class UpdateContainerDTO
     public TrashContainerStatus Status { get; set; }
 
     public bool HasSensor { get; set; }
+
+
+    [Range(0, 100)]
+    public double? BatteryPercentage { get; set; }
 }

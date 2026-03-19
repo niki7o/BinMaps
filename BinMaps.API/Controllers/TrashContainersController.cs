@@ -144,11 +144,10 @@ public sealed class TrashContainersController : ControllerBase
         container.FillPercentage = dto.FillPercentage;
         container.Status = dto.Status;
 
-        if (dto.HasSensor && !container.HasSensor)
-        {
-            container.HasSensor  = true;
-            container.BatteryPercentage = 100;
-            container.Temperature = null;
+      if (dto.HasSensor)
+       {
+    container.HasSensor = true;
+    container.BatteryPercentage = dto.BatteryPercentage ?? 100;
         }
         else if (!dto.HasSensor)
         {
