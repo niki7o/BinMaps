@@ -228,6 +228,16 @@
               </div>
             </div>
 
+            <div class="speed-controls">
+              <span class="speed-label">Скорост</span>
+              <div class="speed-btns">
+                <button *ngFor="let s of speedOptions"
+                        class="speed-btn"
+                        [class.speed-btn--active]="speedMultiplier === s"
+                        (click)="speedMultiplier = s">×{{ s }}</button>
+              </div>
+            </div>
+
             
             <div class="step-controls" *ngIf="navigationMode === 'step' && stepPending && currentCollectedStop">
               <div class="step-controls__header">
@@ -276,9 +286,20 @@
         <button *ngFor="let style of mapStyles"
                 [class.active]="currentMapStyle === style.key"
                 (click)="changeMapStyle(style.key)">{{ style.label }}</button>
+        <span class="style-sep"></span>
+        <button class="btn-3d-toggle" [class.active]="show3DView" (click)="toggle3DView()"
+                title="Превключи 3D изглед">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+          3D
+        </button>
       </div>
 
-      <div id="map"></div>
+      <div id="map" [class.map-hidden-by-3d]="show3DView"></div>
+      <div id="map-3d" [class.map-3d-active]="show3DView"></div>
 
       <div class="map-legend map-legend--br">
         

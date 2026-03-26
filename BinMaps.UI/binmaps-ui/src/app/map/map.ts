@@ -158,6 +158,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     { key: 'light',     label: 'Светла'      }
   ];
 
+  // ── 3D view ──────────────────────────────────────────────────────────────
+  show3DView = false;
+  private map3d: any = null;
+  private map3dStyleLoaded = false;
+
+  // ── Speed control ─────────────────────────────────────────────────────────
+  speedMultiplier = 1;
+  readonly speedOptions = [1, 5, 10, 20, 50];
+
 
   private binIcon(type: number): string {
     return `${this.ICONS_DIR}/bin-${['mixed', 'plastic', 'paper', 'glass'][type] ?? 'mixed'}.svg`;
@@ -649,7 +658,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       }
       if (needsRerender) this.renderBins(this.filtered());
 
-      await new Promise(r => setTimeout(r, 22));
+      await new Promise(r => setTimeout(r, Math.max(4, Math.floor(22 / this.speedMultiplier))));
     }
 
     while (si < route.length) { this.doCollectStop(si, route, token); si++; }
@@ -696,7 +705,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
         if (i % 20 === 0) this.panIfNearEdge(path[i]);
 
-        await new Promise(r => setTimeout(r, 22));
+        await new Promise(r => setTimeout(r, Math.max(4, Math.floor(22 / this.speedMultiplier))));
       }
 
       if (!this.navigationActive) break;
@@ -1666,6 +1675,337 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   private getToken(): string | null {
     return this.authService.getToken();
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // 3D MAP  (MapLibre GL JS — overlay over Leaflet)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  async toggle3DView(): Promise<void> {
+    this.show3DView = !this.show3DView;
+
+    if (this.show3DView) {
+      if (!this.map3d) {
+        await this.init3DMap();
+      } else {
+        // Sync camera from Leaflet
+        const c = this.map.getCenter();
+        this.map3d.setCenter([c.lng, c.lat]);
+        this.map3d.setZoom(this.map.getZoom() - 0.5);
+        this.refresh3DLayers();
+      }
+    }
+  }
+
+  private async loadMapLibreScript(): Promise<void> {
+    if ((window as any).maplibregl) return;
+
+    const link = document.createElement('link');
+    link.rel  = 'stylesheet';
+    link.href = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';
+    document.head.appendChild(link);
+
+    await new Promise<void>((resolve, reject) => {
+      const script   = document.createElement('script');
+      script.src     = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js';
+      script.onload  = () => resolve();
+      script.onerror = () => reject(new Error('MapLibre GL failed to load'));
+      document.head.appendChild(script);
+    });
+  }
+
+  private async init3DMap(): Promise<void> {
+    try {
+      await this.loadMapLibreScript();
+    } catch {
+      console.error('MapLibre GL could not be loaded');
+      this.show3DView = false;
+      return;
+    }
+
+    const mgl    = (window as any).maplibregl;
+    const center = this.map.getCenter();
+
+    this.map3d = new mgl.Map({
+      container: 'map-3d',
+      style: {
+        version: 8,
+        glyphs:  'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+        sources: {
+          'carto': {
+            type:        'raster',
+            tiles:       [
+              'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+              'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+              'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+            ],
+            tileSize:    256,
+            attribution: '© CARTO © OpenStreetMap contributors'
+          }
+        },
+        layers: [{
+          id:    'carto-layer',
+          type:  'raster',
+          source:'carto',
+          paint: { 'raster-opacity': 1 }
+        }]
+      },
+      center:     [center.lng, center.lat],
+      zoom:        this.map.getZoom() - 0.5,
+      pitch:       50,
+      bearing:    -15,
+      maxBounds:  [[23.15, 42.55], [23.50, 42.85]],
+      attributionControl: false
+    });
+
+    this.map3d.addControl(new mgl.AttributionControl({ compact: true }), 'bottom-right');
+    this.map3d.addControl(new mgl.NavigationControl({ showCompass: true }), 'top-right');
+
+    this.map3d.on('load', () => {
+      this.map3dStyleLoaded = true;
+      this.load3DBuildings();
+      this.sync3DBins();
+      if (this.routeActive && this.realRouteCoords.length) this.sync3DRoute();
+    });
+
+    // Reload buildings when user pans/zooms
+    this.map3d.on('moveend', () => {
+      if (this.map3dStyleLoaded && this.map3d.getZoom() >= 13) {
+        this.load3DBuildings();
+      }
+    });
+  }
+
+  private async load3DBuildings(): Promise<void> {
+    if (!this.map3d || !this.map3dStyleLoaded) return;
+
+    const b    = this.map3d.getBounds();
+    const bbox = `${b.getSouth().toFixed(5)},${b.getWest().toFixed(5)},${b.getNorth().toFixed(5)},${b.getEast().toFixed(5)}`;
+    const query = `[out:json][timeout:12];way["building"](${bbox});out geom qt;`;
+
+    try {
+      const res  = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+      const data = await res.json();
+
+      const features = (data.elements as any[])
+        .filter(e => e.type === 'way' && Array.isArray(e.geometry) && e.geometry.length >= 3)
+        .map(e => {
+          const coords = [...e.geometry.map((p: any) => [p.lon, p.lat])];
+          if (coords[0][0] !== coords[coords.length - 1][0] ||
+              coords[0][1] !== coords[coords.length - 1][1]) {
+            coords.push(coords[0]);  // close ring
+          }
+          const levels = parseFloat(e.tags?.['building:levels'] ?? e.tags?.['levels'] ?? '3');
+          return {
+            type: 'Feature' as const,
+            geometry: { type: 'Polygon' as const, coordinates: [coords] },
+            properties: { height: (isNaN(levels) ? 3 : levels) * 3.5, base: 0 }
+          };
+        });
+
+      const geojson = { type: 'FeatureCollection' as const, features };
+
+      if (this.map3d.getSource('osm-buildings')) {
+        (this.map3d.getSource('osm-buildings') as any).setData(geojson);
+        return;
+      }
+
+      this.map3d.addSource('osm-buildings', { type: 'geojson', data: geojson });
+
+      // Shadow layer (wider, darker)
+      this.map3d.addLayer({
+        id:     'buildings-shadow',
+        type:   'fill-extrusion',
+        source: 'osm-buildings',
+        paint: {
+          'fill-extrusion-color':   '#050d1a',
+          'fill-extrusion-height':  ['get', 'height'],
+          'fill-extrusion-base':    ['get', 'base'],
+          'fill-extrusion-opacity': 0.55,
+          'fill-extrusion-translate': [3, 3]
+        }
+      });
+
+      // Main building layer
+      this.map3d.addLayer({
+        id:     'buildings-3d',
+        type:   'fill-extrusion',
+        source: 'osm-buildings',
+        paint: {
+          'fill-extrusion-color': [
+            'interpolate', ['linear'], ['get', 'height'],
+            0,  '#1e293b',
+            10, '#243044',
+            30, '#1a3a52',
+            60, '#0f2d47'
+          ],
+          'fill-extrusion-height':       ['get', 'height'],
+          'fill-extrusion-base':         ['get', 'base'],
+          'fill-extrusion-opacity':      0.88,
+          'fill-extrusion-ambient-occlusion-intensity': 0.5,
+          'fill-extrusion-ambient-occlusion-radius': 3
+        }
+      });
+
+    } catch (err) {
+      console.warn('3D buildings load failed:', err);
+    }
+  }
+
+  private sync3DBins(): void {
+    if (!this.map3d || !this.map3dStyleLoaded) return;
+
+    const fillColor = (pct: number) =>
+      pct >= 85 ? '#ef4444' : pct >= 65 ? '#f97316' : pct >= 45 ? '#f59e0b' : '#10b981';
+
+    const features = this.allBins.map(b => ({
+      type: 'Feature' as const,
+      geometry: { type: 'Point' as const, coordinates: [b.locationX, b.locationY] },
+      properties: {
+        id:    b.id,
+        fill:  b.fillPercentage,
+        type:  b.trashType,
+        color: fillColor(b.fillPercentage),
+        status: b.status ?? 0
+      }
+    }));
+
+    const geojson = { type: 'FeatureCollection' as const, features };
+
+    if (this.map3d.getSource('bins-3d')) {
+      (this.map3d.getSource('bins-3d') as any).setData(geojson);
+      return;
+    }
+
+    const mgl = (window as any).maplibregl;
+    this.map3d.addSource('bins-3d', { type: 'geojson', data: geojson, cluster: false });
+
+    // Glow ring
+    this.map3d.addLayer({
+      id:     'bins-glow',
+      type:   'circle',
+      source: 'bins-3d',
+      paint: {
+        'circle-radius':        12,
+        'circle-color':         ['get', 'color'],
+        'circle-opacity':       0.25,
+        'circle-stroke-width':  0
+      }
+    });
+
+    // Main dot
+    this.map3d.addLayer({
+      id:     'bins-dot',
+      type:   'circle',
+      source: 'bins-3d',
+      paint: {
+        'circle-radius':         7,
+        'circle-color':          ['get', 'color'],
+        'circle-stroke-width':   1.5,
+        'circle-stroke-color':   '#0f172a',
+        'circle-opacity':        0.95
+      }
+    });
+
+    // Popup on click
+    this.map3d.on('click', 'bins-dot', (e: any) => {
+      const p    = e.features[0].properties;
+      const fill = parseFloat(p.fill);
+      const col  = fillColor(fill);
+      const types = ['Смесен', 'Пластмаса', 'Хартия', 'Стъкло'];
+      new mgl.Popup({ maxWidth: '220px', className: 'ml-popup' })
+        .setLngLat(e.lngLat)
+        .setHTML(`
+          <div style="font-family:Inter,sans-serif;padding:10px 12px;background:#1e293b;border-radius:10px;color:#f1f5f9">
+            <div style="font-weight:700;font-size:13px;margin-bottom:6px">Контейнер #${p.id}</div>
+            <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">${types[p.type] ?? 'Смесен'}</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+              <div style="flex:1;height:6px;background:#0f172a;border-radius:3px;overflow:hidden">
+                <div style="width:${fill.toFixed(0)}%;height:100%;background:${col};border-radius:3px"></div>
+              </div>
+              <span style="font-weight:700;color:${col};font-size:13px">${fill.toFixed(0)}%</span>
+            </div>
+          </div>`)
+        .addTo(this.map3d);
+    });
+
+    this.map3d.on('mouseenter', 'bins-dot', () => { this.map3d.getCanvas().style.cursor = 'pointer'; });
+    this.map3d.on('mouseleave', 'bins-dot', () => { this.map3d.getCanvas().style.cursor = ''; });
+  }
+
+  private sync3DRoute(): void {
+    if (!this.map3d || !this.map3dStyleLoaded || !this.routeResult || !this.realRouteCoords.length) return;
+
+    // realRouteCoords are [lat, lng]; MapLibre needs [lng, lat]
+    const lineCoords = this.realRouteCoords.map(c => [c[1], c[0]]);
+
+    const routeGeoJSON = {
+      type: 'Feature' as const,
+      geometry: { type: 'LineString' as const, coordinates: lineCoords },
+      properties: {}
+    };
+
+    const avg  = this.routeResult.route.reduce((s, r) => s + r.fillPercentage, 0) / this.routeResult.route.length;
+    const lineColor = this.routeColor(avg);
+
+    const stopsGeoJSON = {
+      type: 'FeatureCollection' as const,
+      features: this.routeResult.route.map(s => ({
+        type: 'Feature' as const,
+        geometry: { type: 'Point' as const, coordinates: [s.locationX, s.locationY] },
+        properties: { stop: s.stopNumber, fill: s.fillPercentage }
+      }))
+    };
+
+    // If sources exist just update data
+    if (this.map3d.getSource('route-3d')) {
+      (this.map3d.getSource('route-3d') as any).setData(routeGeoJSON);
+      (this.map3d.getSource('stops-3d') as any).setData(stopsGeoJSON);
+      return;
+    }
+
+    this.map3d.addSource('route-3d', { type: 'geojson', data: routeGeoJSON });
+    this.map3d.addSource('stops-3d', { type: 'geojson', data: stopsGeoJSON });
+
+    // Wide glow underneath
+    this.map3d.addLayer({
+      id: 'route-glow-3d', type: 'line', source: 'route-3d',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': lineColor, 'line-width': 14, 'line-opacity': 0.18, 'line-blur': 6 }
+    });
+
+    // Solid main line
+    this.map3d.addLayer({
+      id: 'route-line-3d', type: 'line', source: 'route-3d',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': lineColor, 'line-width': 4.5, 'line-opacity': 0.92 }
+    });
+
+    // Stop outer circle
+    this.map3d.addLayer({
+      id: 'stops-outer-3d', type: 'circle', source: 'stops-3d',
+      paint: { 'circle-radius': 13, 'circle-color': '#0f172a', 'circle-stroke-width': 2, 'circle-stroke-color': lineColor }
+    });
+
+    // Stop number label
+    this.map3d.addLayer({
+      id: 'stops-label-3d', type: 'symbol', source: 'stops-3d',
+      layout: {
+        'text-field':      ['to-string', ['get', 'stop']],
+        'text-font':       ['Open Sans Bold', 'Arial Unicode MS Bold'],
+        'text-size':       11,
+        'text-allow-overlap': true
+      },
+      paint: { 'text-color': '#f1f5f9' }
+    });
+  }
+
+  /** Refresh all 3D layers with latest data (called on toggle) */
+  private refresh3DLayers(): void {
+    if (!this.map3dStyleLoaded) return;
+    this.load3DBuildings();
+    this.sync3DBins();
+    if (this.routeActive && this.realRouteCoords.length) this.sync3DRoute();
   }
 
 }
