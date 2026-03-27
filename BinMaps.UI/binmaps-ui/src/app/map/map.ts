@@ -163,6 +163,26 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private map3d: any = null;
   private map3dStyleLoaded = false;
 
+  /** Tile URLs per style key — kept in sync with baseLayers */
+  private readonly map3dTiles: Record<string, string[]> = {
+    standard:  [
+      'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+    ],
+    voyager:   [
+      'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+    ],
+    satellite: [
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+    ],
+    light: [
+      'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+      'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+    ]
+  };
+
   // ── Speed control ─────────────────────────────────────────────────────────
   speedMultiplier = 1;
   readonly speedOptions = [1, 5, 10, 20, 50];
@@ -298,6 +318,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.baseLayers[key].addTo(this.map);
     this.currentMapStyle = key;
     localStorage.setItem('mapStyle', key);
+
+    // Sync tile source in the 3D map if it is active
+    if (this.map3d && this.map3dStyleLoaded) {
+      const src = this.map3d.getSource('carto') as any;
+      if (src) src.setTiles(this.map3dTiles[key] ?? this.map3dTiles['standard']);
+    }
   }
 
 
@@ -649,6 +675,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       }
 
       if (i % 20 === 0) this.panIfNearEdge(path[i]);
+      if (i % 5  === 0) this.updateTruck3D(path[i][0], path[i][1]);
 
       let needsRerender = false;
       while (si < route.length && i >= stopIndices[si]) {
@@ -704,6 +731,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         }
 
         if (i % 20 === 0) this.panIfNearEdge(path[i]);
+        if (i % 5  === 0) this.updateTruck3D(path[i][0], path[i][1]);
 
         await new Promise(r => setTimeout(r, Math.max(4, Math.floor(22 / this.speedMultiplier))));
       }
@@ -788,6 +816,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.routeMarkers = [];
     this.realRouteCoords = [];
     this.clearSearch();
+    this.clear3DRouteLayers();
+  }
+
+  private clear3DRouteLayers(): void {
+    if (!this.map3d) return;
+    ['route-glow-3d', 'route-line-3d', 'stops-outer-3d', 'stops-label-3d', 'truck-layer-3d']
+      .forEach(id => { try { if (this.map3d.getLayer(id)) this.map3d.removeLayer(id); } catch {} });
+    ['route-3d', 'stops-3d', 'truck-src-3d']
+      .forEach(id => { try { if (this.map3d.getSource(id)) this.map3d.removeSource(id); } catch {} });
   }
 
   toggleReportPanel(show: boolean) {
@@ -1698,8 +1735,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   private async loadMapLibreScript(): Promise<void> {
+    // Already loaded via index.html <script> tag — just resolve immediately
     if ((window as any).maplibregl) return;
 
+    // Fallback dynamic load (dev without index.html change)
     const link = document.createElement('link');
     link.rel  = 'stylesheet';
     link.href = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';
@@ -1711,6 +1750,47 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       script.onload  = () => resolve();
       script.onerror = () => reject(new Error('MapLibre GL failed to load'));
       document.head.appendChild(script);
+    });
+  }
+
+  /** Move the truck marker on the 3D map during navigation */
+  private updateTruck3D(lat: number, lng: number): void {
+    if (!this.map3d || !this.map3dStyleLoaded) return;
+
+    const point = { type: 'Feature' as const,
+                    geometry: { type: 'Point' as const, coordinates: [lng, lat] },
+                    properties: {} };
+
+    const src = this.map3d.getSource('truck-src-3d') as any;
+    if (src) {
+      src.setData(point);
+      return;
+    }
+
+    // First call — create source + layer
+    this.map3d.addSource('truck-src-3d', { type: 'geojson', data: point });
+
+    // Glow pulse
+    this.map3d.addLayer({
+      id: 'truck-glow-3d', type: 'circle', source: 'truck-src-3d',
+      paint: {
+        'circle-radius':       18,
+        'circle-color':        '#10b981',
+        'circle-opacity':      0.20,
+        'circle-stroke-width': 0
+      }
+    });
+
+    // Solid truck dot
+    this.map3d.addLayer({
+      id: 'truck-layer-3d', type: 'circle', source: 'truck-src-3d',
+      paint: {
+        'circle-radius':         9,
+        'circle-color':          '#10b981',
+        'circle-stroke-width':   2,
+        'circle-stroke-color':   '#047857',
+        'circle-opacity':        1
+      }
     });
   }
 
@@ -1862,42 +1942,39 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       type: 'Feature' as const,
       geometry: { type: 'Point' as const, coordinates: [b.locationX, b.locationY] },
       properties: {
-        id:    b.id,
-        fill:  b.fillPercentage,
-        type:  b.trashType,
-        color: fillColor(b.fillPercentage),
-        status: b.status ?? 0
+        id:         b.id,
+        fill:       b.fillPercentage,
+        color:      fillColor(b.fillPercentage),
+        status:     b.status ?? 0,
+        hasSensor:  b.hasSensor
       }
     }));
 
     const geojson = { type: 'FeatureCollection' as const, features };
 
+    // If source already exists just refresh the data
     if (this.map3d.getSource('bins-3d')) {
       (this.map3d.getSource('bins-3d') as any).setData(geojson);
       return;
     }
 
     const mgl = (window as any).maplibregl;
-    this.map3d.addSource('bins-3d', { type: 'geojson', data: geojson, cluster: false });
+    this.map3d.addSource('bins-3d', { type: 'geojson', data: geojson });
 
     // Glow ring
     this.map3d.addLayer({
-      id:     'bins-glow',
-      type:   'circle',
-      source: 'bins-3d',
+      id: 'bins-glow', type: 'circle', source: 'bins-3d',
       paint: {
-        'circle-radius':        12,
+        'circle-radius':        14,
         'circle-color':         ['get', 'color'],
-        'circle-opacity':       0.25,
+        'circle-opacity':       0.20,
         'circle-stroke-width':  0
       }
     });
 
     // Main dot
     this.map3d.addLayer({
-      id:     'bins-dot',
-      type:   'circle',
-      source: 'bins-3d',
+      id: 'bins-dot', type: 'circle', source: 'bins-3d',
       paint: {
         'circle-radius':         7,
         'circle-color':          ['get', 'color'],
@@ -1907,26 +1984,27 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       }
     });
 
-    // Popup on click
+    // Click — identical popup HTML + report selection as in 2D
     this.map3d.on('click', 'bins-dot', (e: any) => {
-      const p    = e.features[0].properties;
-      const fill = parseFloat(p.fill);
-      const col  = fillColor(fill);
-      const types = ['Смесен', 'Пластмаса', 'Хартия', 'Стъкло'];
-      new mgl.Popup({ maxWidth: '220px', className: 'ml-popup' })
-        .setLngLat(e.lngLat)
-        .setHTML(`
-          <div style="font-family:Inter,sans-serif;padding:10px 12px;background:#1e293b;border-radius:10px;color:#f1f5f9">
-            <div style="font-weight:700;font-size:13px;margin-bottom:6px">Контейнер #${p.id}</div>
-            <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">${types[p.type] ?? 'Смесен'}</div>
-            <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
-              <div style="flex:1;height:6px;background:#0f172a;border-radius:3px;overflow:hidden">
-                <div style="width:${fill.toFixed(0)}%;height:100%;background:${col};border-radius:3px"></div>
-              </div>
-              <span style="font-weight:700;color:${col};font-size:13px">${fill.toFixed(0)}%</span>
-            </div>
-          </div>`)
-        .addTo(this.map3d);
+      const id  = e.features[0].properties.id;
+      const bin = this.allBins.find(b => b.id === id);
+      if (!bin) return;
+
+      // Set report target (same as Leaflet click handler)
+      if ((this.isUser || this.isDriver) && !this.navigationActive) {
+        this.selectedBinForReport = bin;
+        this.reportResult = null;
+        this.reportSubmitting = false;
+        const el = document.getElementById('selected-bin-id') as HTMLInputElement;
+        if (el) el.value = `Контейнер #${bin.id}`;
+      }
+
+      if (!this.isGuest) {
+        new mgl.Popup({ maxWidth: '300px', className: 'bpp-container' })
+          .setLngLat(e.lngLat)
+          .setHTML(this.createPopup(bin))
+          .addTo(this.map3d);
+      }
     });
 
     this.map3d.on('mouseenter', 'bins-dot', () => { this.map3d.getCanvas().style.cursor = 'pointer'; });
@@ -2000,7 +2078,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
-  /** Refresh all 3D layers with latest data (called on toggle) */
+
   private refresh3DLayers(): void {
     if (!this.map3dStyleLoaded) return;
     this.load3DBuildings();
