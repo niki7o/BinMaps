@@ -3649,6 +3649,55 @@
 }
 
 
+/* Fix: truck marker host — transparent background so only the SVG shows */
+.truck-marker-host {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Fix: Leaflet cluster zoom animation causes transparent flicker —
+   remove the opacity transition, keep only transform */
+.leaflet-cluster-anim .leaflet-zoom-animated {
+  transition: transform 0.3s ease-out !important;
+}
+
+/* Fix: clean up Leaflet attribution at the bottom (remove the flag logo,
+   style the text subtly so it doesn't look like a marker) */
+.leaflet-attribution-flag {
+  display: none !important;
+}
+.leaflet-control-attribution {
+  font-size: 10px !important;
+  background: rgba(10, 15, 28, 0.70) !important;
+  backdrop-filter: blur(8px) !important;
+  color: #334155 !important;
+  border-radius: 6px 0 0 0 !important;
+  padding: 2px 7px !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.leaflet-control-attribution a {
+  color: #475569 !important;
+}
+
+/* Fix: edge handle responsive — hide on mobile since sidebars go full-width absolute */
+@media (max-width: 480px) {
+  .edge-handle {
+    display: none !important;
+  }
+}
+
+/* Fix: edge handle min touch size on tablet */
+@media (max-width: 768px) and (min-width: 481px) {
+  .edge-handle:not(.is-open) {
+    width: 36px;
+    min-height: 48px;
+  }
+  .edge-label {
+    font-size: 9px;
+  }
+}
+
 /* ══════════════════════════════════════════════════════════════════════════
    3D MAP OVERLAY
    ══════════════════════════════════════════════════════════════════════════ */
