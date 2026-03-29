@@ -277,7 +277,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.cluster = L.markerClusterGroup({
       maxClusterRadius: 60,
       spiderfyOnMaxZoom: true,
-      showCoverageOnHover: false,   // Fix: prevents transparent blue polygon during zoom
+      showCoverageOnHover: true,
       zoomToBoundsOnClick: true,
       disableClusteringAtZoom: 15,
       chunkedLoading: true,
@@ -298,18 +298,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       minZoom: 11,
       maxZoom: 18,
       maxBounds: [[42.55, 23.15], [42.85, 23.50]],
-      maxBoundsViscosity: 0.8,
-      boxZoom: false,            // Fix: disable shift+drag zoom box (caused black glitch)
-      attributionControl: false  // Fix: remove default attribution marker at bottom
+      maxBoundsViscosity: 0.8
     });
 
-    this.baseLayers['standard']  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { className: 'map-tiles', maxZoom: 18 });
-    this.baseLayers['voyager']   = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 18 });
-    this.baseLayers['satellite'] = L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      { maxNativeZoom: 18, maxZoom: 18 }  // Fix: prevents "Map data not yet available" beyond zoom 18
-    );
-    this.baseLayers['light']     = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 });
+    this.baseLayers['standard']  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { className: 'map-tiles' });
+    this.baseLayers['voyager']   = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png');
+    this.baseLayers['satellite'] = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+    this.baseLayers['light']     = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png');
 
     const saved = localStorage.getItem('mapStyle') || 'standard';
     this.currentMapStyle = saved;
@@ -398,11 +393,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
       this.routeResult = res;
       this.routeActive = true;
-
-      // Fix: wait for Angular to update the DOM (sidebar content change) then resize map
-      await new Promise(r => setTimeout(r, 80));
-      this.map.invalidateSize();
-
       await this.visualizeRoute();
 
     } catch (e: any) {
@@ -600,7 +590,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       </div>`;
 
     const truckIcon = L.divIcon({
-      className: 'truck-marker-host', html: truckHtml, iconSize: [56, 56], iconAnchor: [28, 28]
+      className: '', html: truckHtml, iconSize: [56, 56], iconAnchor: [28, 28]
     });
 
     return { truckIcon, path, stopIndices, FRAMES };
@@ -1733,16 +1723,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     if (this.show3DView) {
       if (!this.map3d) {
-        // Fix: wait for Angular to show #map-3d div before initializing MapLibre
-        await new Promise(r => setTimeout(r, 60));
         await this.init3DMap();
       } else {
         // Sync camera from Leaflet
         const c = this.map.getCenter();
         this.map3d.setCenter([c.lng, c.lat]);
         this.map3d.setZoom(this.map.getZoom() - 0.5);
-        // Fix: force resize so MapLibre fills the full container
-        setTimeout(() => { this.map3d?.resize(); this.refresh3DLayers(); }, 60);
+        this.refresh3DLayers();
       }
     }
   }
@@ -1819,9 +1806,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const mgl    = (window as any).maplibregl;
     const center = this.map.getCenter();
 
-    // Fix: use the currently selected map style tiles (not always dark CartoDB)
-    const tiles = this.map3dTiles[this.currentMapStyle] ?? this.map3dTiles['standard'];
-
     this.map3d = new mgl.Map({
       container: 'map-3d',
       style: {
@@ -1830,9 +1814,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         sources: {
           'carto': {
             type:        'raster',
-            tiles:       tiles,
+            tiles:       [
+              'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+              'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+              'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+            ],
             tileSize:    256,
-            maxzoom:     18,       // Fix: prevents "Map data not yet available" beyond zoom 18
             attribution: '© CARTO © OpenStreetMap contributors'
           }
         },
@@ -1848,7 +1835,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       pitch:       50,
       bearing:    -15,
       maxBounds:  [[23.15, 42.55], [23.50, 42.85]],
-      boxZoom:    false,           // Fix: disable shift+drag zoom box
       attributionControl: false
     });
 
@@ -1857,7 +1843,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     this.map3d.on('load', () => {
       this.map3dStyleLoaded = true;
-      this.map3d.resize();   // Fix: force fill full container after style loads
       this.load3DBuildings();
       this.sync3DBins();
       if (this.routeActive && this.realRouteCoords.length) this.sync3DRoute();
@@ -1907,7 +1892,21 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
       this.map3d.addSource('osm-buildings', { type: 'geojson', data: geojson });
 
-      // Main building layer — realistic warm-gray tones (similar to Google Maps 3D)
+      // Shadow layer (wider, darker)
+      this.map3d.addLayer({
+        id:     'buildings-shadow',
+        type:   'fill-extrusion',
+        source: 'osm-buildings',
+        paint: {
+          'fill-extrusion-color':   '#050d1a',
+          'fill-extrusion-height':  ['get', 'height'],
+          'fill-extrusion-base':    ['get', 'base'],
+          'fill-extrusion-opacity': 0.55,
+          'fill-extrusion-translate': [3, 3]
+        }
+      });
+
+      // Main building layer
       this.map3d.addLayer({
         id:     'buildings-3d',
         type:   'fill-extrusion',
@@ -1915,15 +1914,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         paint: {
           'fill-extrusion-color': [
             'interpolate', ['linear'], ['get', 'height'],
-            0,  '#d4d0ca',   // ground floor: warm light gray
-            10, '#c8c4be',   // 3–4 storeys: medium gray
-            30, '#bfbbb5',   // 8–10 storeys: slightly deeper
-            60, '#b5b1ab'    // tall buildings: darkest tone
+            0,  '#1e293b',
+            10, '#243044',
+            30, '#1a3a52',
+            60, '#0f2d47'
           ],
           'fill-extrusion-height':       ['get', 'height'],
           'fill-extrusion-base':         ['get', 'base'],
           'fill-extrusion-opacity':      0.88,
-          'fill-extrusion-ambient-occlusion-intensity': 0.55,
+          'fill-extrusion-ambient-occlusion-intensity': 0.5,
           'fill-extrusion-ambient-occlusion-radius': 3
         }
       });
@@ -2066,7 +2065,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       paint: { 'circle-radius': 13, 'circle-color': '#0f172a', 'circle-stroke-width': 2, 'circle-stroke-color': lineColor }
     });
 
-    // Stop number label
+
+    
     this.map3d.addLayer({
       id: 'stops-label-3d', type: 'symbol', source: 'stops-3d',
       layout: {
