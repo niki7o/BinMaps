@@ -626,6 +626,7 @@
   right: 12px;
   z-index: 500;
   display: flex;
+  flex-wrap: wrap;       /* Bug fix: prevents overflow on narrow screens */
   gap: 2px;
   background: linear-gradient(160deg,
     rgba(10, 15, 28, 0.96) 0%,
@@ -639,6 +640,7 @@
     0 8px 24px rgba(0,0,0,0.55),
     inset 0 1px 0 rgba(255,255,255,0.04);
   overflow: visible;
+  max-width: calc(100vw - 24px); /* Bug fix: never overflow the viewport */
 }
 
 .map-style-switcher::after {
@@ -3671,14 +3673,21 @@
   visibility: hidden;
 }
 
-/* 3D div hidden until activated */
+/* 3D div — keep it in the layout flow so MapLibre always reads real dimensions,
+   but hide it visually until activated.  display:none gave MapLibre a 0×0
+   canvas on first open, causing the "quarter-screen" bug. */
 #map-3d {
   z-index: 0;
-  display: none;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
 }
 
 #map-3d.map-3d-active {
-  display: block;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
   z-index: 5;
 }
 

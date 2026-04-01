@@ -298,12 +298,22 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       minZoom: 11,
       maxZoom: 18,
       maxBounds: [[42.55, 23.15], [42.85, 23.50]],
-      maxBoundsViscosity: 0.8
+      maxBoundsViscosity: 0.8,
+      // Bug fix: Shift+drag box-zoom creates a translucent selection rect and
+      // can leave the map black after release — disable it entirely.
+      boxZoom: false,
+      // Bug fix: remove the default Leaflet attribution link at the bottom.
+      attributionControl: false
     });
 
     this.baseLayers['standard']  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { className: 'map-tiles' });
     this.baseLayers['voyager']   = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png');
-    this.baseLayers['satellite'] = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+    // Bug fix: maxNativeZoom:17 prevents "map data not yet available" on
+    // ESRI's satellite layer when zoomed to 18 — tiles are stretched instead.
+    this.baseLayers['satellite'] = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { maxNativeZoom: 17 }
+    );
     this.baseLayers['light']     = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png');
 
     const saved = localStorage.getItem('mapStyle') || 'standard';
@@ -396,6 +406,20 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.routeResult = res;
       this.routeActive = true;
       await this.visualizeRoute();
+
+      // Bug fix: Angular may have resized the DOM (sidebar content swap) while
+      // the async chain was running, so Leaflet's internal size can be stale.
+      // invalidateSize() corrects the canvas, then we re-apply fitBounds so the
+      // route is always visible immediately — no restart required.
+      setTimeout(() => {
+        this.map.invalidateSize();
+        if (this.routeResult?.route?.length) {
+          this.map.fitBounds(
+            L.latLngBounds(this.routeResult.route.map(s => [s.locationY, s.locationX] as [number, number])),
+            { padding: [40, 40] }
+          );
+        }
+      }, 60);
 
     } catch (e: any) {
       if (e.status === 401) {
@@ -834,7 +858,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   private clear3DRouteLayers(): void {
     if (!this.map3d) return;
-    ['route-glow-3d', 'route-line-3d', 'stops-outer-3d', 'stops-label-3d', 'truck-layer-3d']
+    ['route-glow-3d', 'route-line-3d', 'stops-outer-3d', 'stops-label-3d', 'truck-layer-3d', 'truck-glow-3d']
       .forEach(id => { try { if (this.map3d.getLayer(id)) this.map3d.removeLayer(id); } catch {} });
     ['route-3d', 'stops-3d', 'truck-src-3d']
       .forEach(id => { try { if (this.map3d.getSource(id)) this.map3d.removeSource(id); } catch {} });
@@ -1736,14 +1760,18 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     if (this.show3DView) {
       if (!this.map3d) {
+        // Bug fix: give Angular one tick to apply [class.map-3d-active] so the
+        // #map-3d div has real dimensions before MapLibre reads the container.
+        await new Promise(r => setTimeout(r, 0));
         await this.init3DMap();
       } else {
-        // Sync camera from Leaflet
         const c = this.map.getCenter();
         this.map3d.setCenter([c.lng, c.lat]);
         this.map3d.setZoom(this.map.getZoom() - 0.5);
         this.refresh3DLayers();
       }
+      // Always force a resize so the canvas fills the now-visible container.
+      setTimeout(() => this.map3d?.resize(), 80);
     }
   }
 
@@ -1780,30 +1808,65 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
-    // First call — create source + layer
-    this.map3d.addSource('truck-src-3d', { type: 'geojson', data: point });
+    // First call — load the truck SVG as a MapLibre image, then add source + layers.
+    const truckSvg = `<svg width="26" height="50" viewBox="0 0 26 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3"    y="0"    width="20" height="3"   rx="1.5" fill="#047857"/>
+      <rect x="1"    y="3"    width="24" height="13"  rx="2"   fill="#059669"/>
+      <rect x="4"    y="4.5"  width="8"  height="9"   rx="1.5" fill="rgba(167,243,208,0.88)"/>
+      <rect x="14"   y="4.5"  width="8"  height="9"   rx="1.5" fill="rgba(167,243,208,0.88)"/>
+      <rect x="12"   y="4"    width="2"  height="10"  rx="1"   fill="#047857"/>
+      <rect x="0"    y="16"   width="26" height="2.5"          fill="#047857"/>
+      <rect x="1"    y="18.5" width="24" height="24"  rx="1.5" fill="#10b981"/>
+      <rect x="1"    y="24"   width="24" height="1.5"          fill="rgba(0,0,0,0.10)"/>
+      <rect x="1"    y="29.5" width="24" height="1.5"          fill="rgba(0,0,0,0.10)"/>
+      <rect x="1"    y="35"   width="24" height="1.5"          fill="rgba(0,0,0,0.10)"/>
+      <rect x="1"    y="42.5" width="24" height="6.5" rx="1.5" fill="#047857"/>
+      <rect x="5"    y="44"   width="16" height="3.5" rx="1"   fill="rgba(0,0,0,0.18)"/>
+      <rect x="-1"   y="6"    width="4"  height="9"   rx="2"   fill="#0f172a"/>
+      <rect x="-0.5" y="7"    width="3"  height="7"   rx="1.5" fill="#1e293b"/>
+      <rect x="23"   y="6"    width="4"  height="9"   rx="2"   fill="#0f172a"/>
+      <rect x="23.5" y="7"    width="3"  height="7"   rx="1.5" fill="#1e293b"/>
+      <rect x="-1"   y="21"   width="4"  height="8"   rx="2"   fill="#0f172a"/>
+      <rect x="-1"   y="31.5" width="4"  height="8"   rx="2"   fill="#0f172a"/>
+      <rect x="23"   y="21"   width="4"  height="8"   rx="2"   fill="#0f172a"/>
+      <rect x="23"   y="31.5" width="4"  height="8"   rx="2"   fill="#0f172a"/>
+    </svg>`;
 
-    // Glow pulse
-    this.map3d.addLayer({
-      id: 'truck-glow-3d', type: 'circle', source: 'truck-src-3d',
-      paint: {
-        'circle-radius':       18,
-        'circle-color':        '#10b981',
-        'circle-opacity':      0.20,
-        'circle-stroke-width': 0
-      }
-    });
+    const blob = new Blob([truckSvg], { type: 'image/svg+xml' });
+    const url  = URL.createObjectURL(blob);
 
-    // Solid truck dot
-    this.map3d.addLayer({
-      id: 'truck-layer-3d', type: 'circle', source: 'truck-src-3d',
-      paint: {
-        'circle-radius':         9,
-        'circle-color':          '#10b981',
-        'circle-stroke-width':   2,
-        'circle-stroke-color':   '#047857',
-        'circle-opacity':        1
+    this.map3d.loadImage(url, (err: any, image: any) => {
+      URL.revokeObjectURL(url);
+      if (err || !image) return;
+
+      if (!this.map3d.hasImage('icon3d-truck')) {
+        this.map3d.addImage('icon3d-truck', image, { pixelRatio: 2 });
       }
+
+      this.map3d.addSource('truck-src-3d', { type: 'geojson', data: point });
+
+      // Soft green glow ring.
+      this.map3d.addLayer({
+        id: 'truck-glow-3d', type: 'circle', source: 'truck-src-3d',
+        paint: {
+          'circle-radius':       20,
+          'circle-color':        '#10b981',
+          'circle-opacity':      0.18,
+          'circle-stroke-width': 0
+        }
+      });
+
+      // Truck SVG icon.
+      this.map3d.addLayer({
+        id: 'truck-layer-3d', type: 'symbol', source: 'truck-src-3d',
+        layout: {
+          'icon-image':            'icon3d-truck',
+          'icon-size':             0.65,
+          'icon-allow-overlap':    true,
+          'icon-ignore-placement': true,
+          'icon-anchor':           'center'
+        }
+      });
     });
   }
 
@@ -1827,11 +1890,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         sources: {
           'carto': {
             type:        'raster',
-            tiles:       [
-              'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-              'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-              'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-            ],
+            // Bug fix: use the style that is currently selected in the 2D style
+            // switcher bar instead of always defaulting to the dark CARTO theme.
+            tiles:       this.map3dTiles[this.currentMapStyle] ?? this.map3dTiles['voyager'],
             tileSize:    256,
             attribution: '© CARTO © OpenStreetMap contributors'
           }
@@ -1856,6 +1917,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     this.map3d.on('load', () => {
       this.map3dStyleLoaded = true;
+      // Bug fix: resize ensures the canvas fills the container after it is
+      // first displayed (handles the "quarter-screen" first-open issue).
+      this.map3d.resize();
       this.load3DBuildings();
       this.sync3DBins();
       if (this.routeActive && this.realRouteCoords.length) this.sync3DRoute();
@@ -1905,38 +1969,30 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
       this.map3d.addSource('osm-buildings', { type: 'geojson', data: geojson });
 
-      // Shadow layer (wider, darker)
-      this.map3d.addLayer({
-        id:     'buildings-shadow',
-        type:   'fill-extrusion',
-        source: 'osm-buildings',
-        paint: {
-          'fill-extrusion-color':   '#050d1a',
-          'fill-extrusion-height':  ['get', 'height'],
-          'fill-extrusion-base':    ['get', 'base'],
-          'fill-extrusion-opacity': 0.55,
-          'fill-extrusion-translate': [3, 3]
-        }
-      });
-
-      // Main building layer
+      // Single main building layer — warm concrete tones that read clearly on
+      // any base tile style, similar to Google Maps' 3D buildings.
       this.map3d.addLayer({
         id:     'buildings-3d',
         type:   'fill-extrusion',
         source: 'osm-buildings',
         paint: {
+          // Interpolate from a warm stone base → lighter facade at height.
           'fill-extrusion-color': [
             'interpolate', ['linear'], ['get', 'height'],
-            0,  '#1e293b',
-            10, '#243044',
-            30, '#1a3a52',
-            60, '#0f2d47'
+            0,   '#8a9aaa',   // cool-gray street level
+            8,   '#9baabb',
+            20,  '#adbccc',
+            40,  '#becedd',
+            70,  '#cedee8'    // pale sky blue for towers
           ],
-          'fill-extrusion-height':       ['get', 'height'],
-          'fill-extrusion-base':         ['get', 'base'],
-          'fill-extrusion-opacity':      0.88,
-          'fill-extrusion-ambient-occlusion-intensity': 0.5,
-          'fill-extrusion-ambient-occlusion-radius': 3
+          'fill-extrusion-height':  ['get', 'height'],
+          'fill-extrusion-base':    ['get', 'base'],
+          // Vertical gradient makes the lower wall darker (ground shadow).
+          'fill-extrusion-vertical-gradient': true,
+          'fill-extrusion-opacity': 0.88,
+          // Soft AO gives the buildings a grounded look without going black.
+          'fill-extrusion-ambient-occlusion-intensity': 0.35,
+          'fill-extrusion-ambient-occlusion-radius': 3.0
         }
       });
 
@@ -1948,80 +2004,96 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private sync3DBins(): void {
     if (!this.map3d || !this.map3dStyleLoaded) return;
 
-    const fillColor = (pct: number) =>
-      pct >= 85 ? '#ef4444' : pct >= 65 ? '#f97316' : pct >= 45 ? '#f59e0b' : '#10b981';
+    const typeNames = ['mixed', 'plastic', 'paper', 'glass'];
 
-    const features = this.allBins.map(b => ({
-      type: 'Feature' as const,
-      geometry: { type: 'Point' as const, coordinates: [b.locationX, b.locationY] },
-      properties: {
-        id:         b.id,
-        fill:       b.fillPercentage,
-        color:      fillColor(b.fillPercentage),
-        status:     b.status ?? 0,
-        hasSensor:  b.hasSensor
-      }
-    }));
+    const features = this.allBins.map(b => {
+      const isFire    = b.status === 2 || ((b.temperature ?? 0) > 55 && b.fillPercentage > 70);
+      const isBroken  = b.status === 1 || b.status === 3;
+      const iconImage = isFire ? 'icon3d-burning' : isBroken ? 'icon3d-broken'
+                        : `icon3d-bin-${typeNames[b.trashType] ?? 'mixed'}`;
+      return {
+        type: 'Feature' as const,
+        geometry: { type: 'Point' as const, coordinates: [b.locationX, b.locationY] },
+        properties: { id: b.id, fill: b.fillPercentage, iconImage }
+      };
+    });
 
     const geojson = { type: 'FeatureCollection' as const, features };
 
-    // If source already exists just refresh the data
+    // If source already exists, just refresh data.
     if (this.map3d.getSource('bins-3d')) {
       (this.map3d.getSource('bins-3d') as any).setData(geojson);
       return;
     }
 
-    const mgl = (window as any).maplibregl;
-    this.map3d.addSource('bins-3d', { type: 'geojson', data: geojson });
+    // Preload SVG icons, then add source + layers once all images are ready.
+    const icons: { id: string; url: string }[] = [
+      ...typeNames.map(n => ({ id: `icon3d-bin-${n}`, url: `assets/icons/bin-${n}.svg` })),
+      { id: 'icon3d-burning',  url: 'assets/icons/bin-burning.svg'       },
+      { id: 'icon3d-broken',   url: 'assets/icons/bin-broken.svg'        },
+    ];
 
-    // Glow ring
-    this.map3d.addLayer({
-      id: 'bins-glow', type: 'circle', source: 'bins-3d',
-      paint: {
-        'circle-radius':        14,
-        'circle-color':         ['get', 'color'],
-        'circle-opacity':       0.20,
-        'circle-stroke-width':  0
-      }
+    Promise.all(
+      icons.map(({ id, url }) => new Promise<void>(resolve => {
+        if (this.map3d.hasImage(id)) { resolve(); return; }
+        this.map3d.loadImage(url, (err: any, image: any) => {
+          if (!err && image) this.map3d.addImage(id, image, { pixelRatio: 2 });
+          resolve();
+        });
+      }))
+    ).then(() => {
+      if (!this.map3d || !this.map3dStyleLoaded) return;
+      this.map3d.addSource('bins-3d', { type: 'geojson', data: geojson });
+
+      // Soft glow ring under each icon.
+      this.map3d.addLayer({
+        id: 'bins-glow', type: 'circle', source: 'bins-3d',
+        paint: {
+          'circle-radius':  16,
+          'circle-color':   '#10b981',
+          'circle-opacity': 0.15,
+          'circle-stroke-width': 0
+        }
+      });
+
+      // The actual bin SVG icon.
+      this.map3d.addLayer({
+        id: 'bins-dot', type: 'symbol', source: 'bins-3d',
+        layout: {
+          'icon-image':            ['get', 'iconImage'],
+          'icon-size':             0.55,
+          'icon-allow-overlap':    true,
+          'icon-ignore-placement': true,
+          'icon-anchor':           'center'
+        }
+      });
+
+      const mgl = (window as any).maplibregl;
+      // Click — identical popup logic as 2D map.
+      this.map3d.on('click', 'bins-dot', (e: any) => {
+        const id  = e.features[0].properties.id;
+        const bin = this.allBins.find(b => b.id === id);
+        if (!bin) return;
+
+        if ((this.isUser || this.isDriver) && !this.navigationActive) {
+          this.selectedBinForReport = bin;
+          this.reportResult = null;
+          this.reportSubmitting = false;
+          const el = document.getElementById('selected-bin-id') as HTMLInputElement;
+          if (el) el.value = `Контейнер #${bin.id}`;
+        }
+
+        if (!this.isGuest) {
+          new mgl.Popup({ maxWidth: '300px', className: 'bpp-container' })
+            .setLngLat(e.lngLat)
+            .setHTML(this.createPopup(bin))
+            .addTo(this.map3d);
+        }
+      });
+
+      this.map3d.on('mouseenter', 'bins-dot', () => { this.map3d.getCanvas().style.cursor = 'pointer'; });
+      this.map3d.on('mouseleave', 'bins-dot', () => { this.map3d.getCanvas().style.cursor = ''; });
     });
-
-    // Main dot
-    this.map3d.addLayer({
-      id: 'bins-dot', type: 'circle', source: 'bins-3d',
-      paint: {
-        'circle-radius':         7,
-        'circle-color':          ['get', 'color'],
-        'circle-stroke-width':   1.5,
-        'circle-stroke-color':   '#0f172a',
-        'circle-opacity':        0.95
-      }
-    });
-
-    // Click — identical popup HTML + report selection as in 2D
-    this.map3d.on('click', 'bins-dot', (e: any) => {
-      const id  = e.features[0].properties.id;
-      const bin = this.allBins.find(b => b.id === id);
-      if (!bin) return;
-
-      // Set report target (same as Leaflet click handler)
-      if ((this.isUser || this.isDriver) && !this.navigationActive) {
-        this.selectedBinForReport = bin;
-        this.reportResult = null;
-        this.reportSubmitting = false;
-        const el = document.getElementById('selected-bin-id') as HTMLInputElement;
-        if (el) el.value = `Контейнер #${bin.id}`;
-      }
-
-      if (!this.isGuest) {
-        new mgl.Popup({ maxWidth: '300px', className: 'bpp-container' })
-          .setLngLat(e.lngLat)
-          .setHTML(this.createPopup(bin))
-          .addTo(this.map3d);
-      }
-    });
-
-    this.map3d.on('mouseenter', 'bins-dot', () => { this.map3d.getCanvas().style.cursor = 'pointer'; });
-    this.map3d.on('mouseleave', 'bins-dot', () => { this.map3d.getCanvas().style.cursor = ''; });
   }
 
   private sync3DRoute(): void {
