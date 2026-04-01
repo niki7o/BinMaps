@@ -13,13 +13,14 @@ describe('MapComponent', () => {
   let fixture: ComponentFixture<MapComponent>;
 
   beforeEach(async () => {
-    const mockAuthService = jasmine.createSpyObj('AuthService', ['getAuthHeaders', 'hasRole'], {
+    const mockAuthService = jasmine.createSpyObj('AuthService', ['getAuthHeaders', 'hasRole', 'getToken'], {
       currentUser$: of(null),
       currentUser: null,
       isAuthenticated: false
     });
     mockAuthService.getAuthHeaders.and.returnValue({ headers: {} as any });
     mockAuthService.hasRole.and.returnValue(false);
+    mockAuthService.getToken.and.returnValue(null);
 
     const mockSignalRService = jasmine.createSpyObj('ContainerSignalRService', ['start', 'stop'], {
       containerUpdates$: of([])

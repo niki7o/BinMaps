@@ -380,10 +380,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
 
     try {
-      const res = await this.http.get<RouteResult>(`${this.API_URL}/trucks/route`, {
-        params: { areaId: this.selectedAreaId, trashType: this.selectedTrashType.toString() },
-        headers: new HttpHeaders({ Authorization: `Bearer ${token}` })
-      }).toPromise();
+      const res = await firstValueFrom(
+        this.http.get<RouteResult>(`${this.API_URL}/trucks/route`, {
+          params: { areaId: this.selectedAreaId, trashType: this.selectedTrashType.toString() },
+          headers: new HttpHeaders({ Authorization: `Bearer ${token}` })
+        })
+      );
 
       if (!res?.route?.length) {
         alert(res?.message || 'Няма контейнери за събиране');
@@ -629,10 +631,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         bin.temperature = +(16 + Math.random() * 8).toFixed(1);
     }
 
-    this.http.put(
-      `${this.API_URL}/containers/${route[idx].id}/empty`, {},
-      token ? { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) } : {}
-    ).toPromise().catch(() => {});
+    firstValueFrom(
+      this.http.put(
+        `${this.API_URL}/containers/${route[idx].id}/empty`, {},
+        token ? { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) } : {}
+      )
+    ).catch(() => {});
   }
 
   private panIfNearEdge(coord: [number, number]): void {
@@ -694,6 +698,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.navigationActive = false;
     const load = this.currentTruckLoad;
     this.currentTruckLoad = 0;
+    this.currentCollectedStop = null;   // Bug 4 fix: clear stale UI data
     this.loadBins();   // refresh from server after emptying
 
     alert(`Маршрут завършен!\nСпирки: ${route.length}\nСъбран товар: ${load.toFixed(0)} л`);
@@ -755,6 +760,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.navigationActive = false;
       const load = this.currentTruckLoad;
       this.currentTruckLoad = 0;
+      this.currentCollectedStop = null;   // Bug 4 fix: clear stale UI data
       this.loadBins();   // refresh from server after emptying
 
       alert(`Маршрут завършен!\nСпирки: ${route.length}\nСъбран товар: ${load.toFixed(0)} л`);
@@ -800,6 +806,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   stopRoute() {
     this.navigationActive = false;
+    // Unblock runStepNavigation if it is awaiting user confirmation — without
+    // this the Promise created in confirmNextStep() never resolves, leaking a
+    // hung async loop.
+    this._stepResolve?.();
+    this._stepResolve = undefined;
+    this.stepPending = false;
+    this.currentCollectedStop = null;   // Bug 4: reset stale UI data
     this.clearRoute();
     this.routeResult = null;
     this.routeActive = false;
@@ -815,7 +828,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.routeMarkers.forEach(m => this.map.removeLayer(m));
     this.routeMarkers = [];
     this.realRouteCoords = [];
-    this.clearSearch();
+    // Bug 3 fix: search is an independent feature — do NOT call clearSearch() here.
     this.clear3DRouteLayers();
   }
 
@@ -1008,8 +1021,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
           <div class="bpp-row">
             <img src="${bin.status === 3 ? this.sensorBrokenIcon : this.sensorIcon}" width="16" height="16" alt="сензор" />
             <span>Сензор</span>
-            <span style="color:${bin.hasSensor ? (bin.status === 3 ? '#f59e0b' : '#22d3ee') : '#475569'};font-weight:700">
-              ${bin.hasSensor ? (bin.status === 3 ? 'Счупен' : 'Активен') : 'Без сензор'}
+            <span style="color:${bin.hasSensor ? (bin.status === 3 ? '#f59e0b' : bin.status === 1 ? '#ef4444' : '#22d3ee') : '#475569'};font-weight:700">
+              ${bin.hasSensor ? (bin.status === 3 ? 'Счупен' : bin.status === 1 ? 'Офлайн' : 'Активен') : 'Без сензор'}
             </span>
           </div>
           <div class="bpp-row">
