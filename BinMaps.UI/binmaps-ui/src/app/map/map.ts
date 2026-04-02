@@ -79,6 +79,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private searchMarker?: L.Marker;
   private searchCircles: L.Circle[] = [];
 
+  // 3D buildings throttle — prevents hammering Overpass API on every moveend
+  private _buildingsPending  = false;
+  private _buildingsLastMs   = 0;
+  private _buildingsDebounce: any = null;
+
   reportImagePreview:    string | null = null;
   selectedFile:          File | null = null;
   reportDescription = '';
@@ -1832,15 +1837,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       <rect x="23"   y="31.5" width="4"  height="8"   rx="2"   fill="#0f172a"/>
     </svg>`;
 
-    const blob = new Blob([truckSvg], { type: 'image/svg+xml' });
-    const url  = URL.createObjectURL(blob);
-
-    this.map3d.loadImage(url, (err: any, image: any) => {
-      URL.revokeObjectURL(url);
-      if (err || !image) return;
+    // Rasterize the inline truck SVG to a canvas — same fix as sync3DBins:
+    // MapLibre cannot decode SVG blobs via loadImage().
+    this.svgToCanvas(truckSvg, 52, 100).then(canvas => {
+      if (!this.map3d || !this.map3dStyleLoaded) return;
 
       if (!this.map3d.hasImage('icon3d-truck')) {
-        this.map3d.addImage('icon3d-truck', image, { pixelRatio: 2 });
+        this.map3d.addImage('icon3d-truck', canvas, { pixelRatio: 2 });
       }
 
       this.map3d.addSource('truck-src-3d', { type: 'geojson', data: point });
@@ -1867,7 +1870,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
           'icon-anchor':           'center'
         }
       });
-    });
+    }).catch(e => console.warn('Truck icon 3D load failed', e));
   }
 
   private async init3DMap(): Promise<void> {
@@ -1894,6 +1897,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
             // switcher bar instead of always defaulting to the dark CARTO theme.
             tiles:       this.map3dTiles[this.currentMapStyle] ?? this.map3dTiles['voyager'],
             tileSize:    256,
+            // Bug fix: cap at zoom 17 so ESRI satellite (and others) never
+            // request tiles beyond their native coverage — prevents the
+            // "Map data not yet available" watermark at zoom 18.
+            maxzoom:     17,
             attribution: '© CARTO © OpenStreetMap contributors'
           }
         },
@@ -1913,7 +1920,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
 
     this.map3d.addControl(new mgl.AttributionControl({ compact: true }), 'bottom-right');
-    this.map3d.addControl(new mgl.NavigationControl({ showCompass: true }), 'top-right');
+    // Bug fix: NavigationControl was at 'top-right', overlapping our style
+    // switcher bar — move it to bottom-left where there is no UI.
+    this.map3d.addControl(new mgl.NavigationControl({ showCompass: true, showZoom: false }), 'bottom-left');
 
     this.map3d.on('load', () => {
       this.map3dStyleLoaded = true;
@@ -1925,10 +1934,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       if (this.routeActive && this.realRouteCoords.length) this.sync3DRoute();
     });
 
-    // Reload buildings when user pans/zooms
+    // Reload buildings when user pans/zooms — debounced so we don't fire on
+    // every frame during a drag, and throttled to avoid hammering Overpass.
     this.map3d.on('moveend', () => {
       if (this.map3dStyleLoaded && this.map3d.getZoom() >= 13) {
-        this.load3DBuildings();
+        clearTimeout(this._buildingsDebounce);
+        this._buildingsDebounce = setTimeout(() => this.load3DBuildings(), 900);
       }
     });
   }
@@ -1936,12 +1947,29 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private async load3DBuildings(): Promise<void> {
     if (!this.map3d || !this.map3dStyleLoaded) return;
 
+    // Rate-limit: skip if a fetch is already in-flight or if we fetched less
+    // than 20 seconds ago.  This prevents the Overpass 429 that occurs when
+    // moveend fires repeatedly during a pan or zoom gesture.
+    const now = Date.now();
+    if (this._buildingsPending || now - this._buildingsLastMs < 20_000) return;
+    this._buildingsPending = true;
+    this._buildingsLastMs  = now;
+
     const b    = this.map3d.getBounds();
     const bbox = `${b.getSouth().toFixed(5)},${b.getWest().toFixed(5)},${b.getNorth().toFixed(5)},${b.getEast().toFixed(5)}`;
     const query = `[out:json][timeout:12];way["building"](${bbox});out geom qt;`;
 
     try {
-      const res  = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+      const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+
+      // Bug fix: on 429 or other errors Overpass returns XML, not JSON.
+      // Calling .json() on XML produces the "Unexpected token '<'" crash.
+      // Always check res.ok first and bail out gracefully.
+      if (!res.ok) {
+        console.warn(`3D buildings: Overpass returned ${res.status} — skipping`);
+        return;
+      }
+
       const data = await res.json();
 
       const features = (data.elements as any[])
@@ -1998,10 +2026,53 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     } catch (err) {
       console.warn('3D buildings load failed:', err);
+    } finally {
+      this._buildingsPending = false;
     }
   }
 
-  private sync3DBins(): void {
+  /**
+   * Rasterize an SVG to an HTMLCanvasElement so MapLibre's addImage() can
+   * consume it without the "source image could not be decoded" crash that
+   * occurs when passing raw SVG blobs directly to loadImage().
+   *
+   * @param source  Either a URL path ("assets/icons/bin-mixed.svg") or an
+   *                inline SVG string starting with "<svg".
+   * @param w/h     Output canvas dimensions in CSS pixels (pixelRatio handled
+   *                by the caller passing { pixelRatio: 2 } to addImage).
+   */
+  private async svgToCanvas(source: string, w = 64, h = 64): Promise<HTMLCanvasElement> {
+    const svgText = source.trimStart().startsWith('<')
+      ? source
+      : await fetch(source).then(r => r.text());
+
+    // Stamp explicit width/height so the browser can measure + decode the SVG.
+    const stamped = /\bwidth=/.test(svgText)
+      ? svgText
+      : svgText.replace('<svg', `<svg width="${w}" height="${h}"`);
+
+    const blob    = new Blob([stamped], { type: 'image/svg+xml' });
+    const blobUrl = URL.createObjectURL(blob);
+
+    return new Promise<HTMLCanvasElement>((resolve, reject) => {
+      const img = new Image(w, h);
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width  = w;
+        canvas.height = h;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(blobUrl);
+        resolve(canvas);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(blobUrl);
+        reject(new Error(`SVG decode failed: ${source.slice(0, 60)}`));
+      };
+      img.src = blobUrl;
+    });
+  }
+
+  private async sync3DBins(): Promise<void> {
     if (!this.map3d || !this.map3dStyleLoaded) return;
 
     const typeNames = ['mixed', 'plastic', 'paper', 'glass'];
@@ -2033,14 +2104,18 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       { id: 'icon3d-broken',   url: 'assets/icons/bin-broken.svg'        },
     ];
 
+    // Preload SVG icons via canvas rasterization — MapLibre's loadImage() cannot
+    // decode SVG files directly (InvalidStateError: source image could not be decoded).
     Promise.all(
-      icons.map(({ id, url }) => new Promise<void>(resolve => {
-        if (this.map3d.hasImage(id)) { resolve(); return; }
-        this.map3d.loadImage(url, (err: any, image: any) => {
-          if (!err && image) this.map3d.addImage(id, image, { pixelRatio: 2 });
-          resolve();
-        });
-      }))
+      icons.map(async ({ id, url }) => {
+        if (this.map3d.hasImage(id)) return;
+        try {
+          const canvas = await this.svgToCanvas(url, 64, 64);
+          if (!this.map3d.hasImage(id)) this.map3d.addImage(id, canvas, { pixelRatio: 2 });
+        } catch (e) {
+          console.warn(`3D icon load failed: ${id}`, e);
+        }
+      })
     ).then(() => {
       if (!this.map3d || !this.map3dStyleLoaded) return;
       this.map3d.addSource('bins-3d', { type: 'geojson', data: geojson });
