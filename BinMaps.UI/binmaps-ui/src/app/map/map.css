@@ -3691,7 +3691,55 @@
   z-index: 5;
 }
 
-/* MapLibre popup reset to match dark theme */
+/* Fullscreen 3D — covers the entire map-page including both sidebars */
+#map-3d.map-3d-fs {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 9000 !important;
+}
+
+/* Keep style-switcher on top of the fullscreen 3D canvas */
+.map-container .map-style-switcher {
+  z-index: 9100;
+}
+
+/* Fullscreen toggle button — slightly different accent to distinguish from 3D btn */
+.btn-3d-fullscreen-toggle {
+  border-color: rgba(59, 130, 246, 0.25) !important;
+}
+.btn-3d-fullscreen-toggle:hover {
+  border-color: rgba(59, 130, 246, 0.55) !important;
+  color: #60a5fa !important;
+  background: rgba(59, 130, 246, 0.08) !important;
+}
+.btn-3d-fullscreen-toggle.active {
+  background: rgba(59, 130, 246, 0.15) !important;
+  border-color: rgba(59, 130, 246, 0.55) !important;
+  color: #93c5fd !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.25) !important;
+}
+
+/* MapLibre attribution — hide the © text we don't want */
+.maplibregl-ctrl-attrib { display: none !important; }
+
+/* MapLibre compass control — dark theme to match the UI */
+.maplibregl-ctrl-group {
+  background: rgba(10, 15, 28, 0.92) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+  border-radius: 10px !important;
+}
+.maplibregl-ctrl-group button {
+  background: transparent !important;
+  border: none !important;
+  color: #94a3b8 !important;
+}
+.maplibregl-ctrl-group button:hover {
+  background: rgba(255,255,255,0.06) !important;
+  color: #e2e8f0 !important;
+}
 .maplibregl-popup-content {
   background: transparent !important;
   padding: 0 !important;

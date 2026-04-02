@@ -73,7 +73,7 @@
 
     </div>
   </div>
-  <div class="map-layout">
+  <div class="map-layout" [class.map-3d-fullscreen]="map3dFullscreen">
 
     <aside class="map-sidebar left" *ngIf="isDriver && showRoutePanel">
       <div class="sidebar-panel">
@@ -296,10 +296,23 @@
           </svg>
           3D
         </button>
+        <button *ngIf="show3DView" class="btn-3d-toggle btn-3d-fullscreen-toggle"
+                [class.active]="map3dFullscreen"
+                (click)="toggle3DFullscreen()"
+                [title]="map3dFullscreen ? 'Намали 3D изглед' : 'Увеличи 3D изглед'">
+          <svg *ngIf="!map3dFullscreen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+            <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+            <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+          </svg>
+          <svg *ngIf="map3dFullscreen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+            <polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/>
+            <line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/>
+          </svg>
+        </button>
       </div>
 
       <div id="map" [class.map-hidden-by-3d]="show3DView"></div>
-      <div id="map-3d" [class.map-3d-active]="show3DView"></div>
+      <div id="map-3d" [class.map-3d-active]="show3DView" [class.map-3d-fs]="map3dFullscreen"></div>
 
       <div class="map-legend map-legend--br">
         

@@ -165,6 +165,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   // ── 3D view ──────────────────────────────────────────────────────────────
   show3DView = false;
+  map3dFullscreen = false;
   private map3d: any = null;
   private map3dStyleLoaded = false;
 
@@ -1760,8 +1761,18 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   // 3D MAP  (MapLibre GL JS — overlay over Leaflet)
   // ══════════════════════════════════════════════════════════════════════════
 
+  toggle3DFullscreen(): void {
+    this.map3dFullscreen = !this.map3dFullscreen;
+    // Let the CSS transition finish then tell MapLibre the canvas changed size.
+    setTimeout(() => this.map3d?.resize(), 60);
+  }
+
   async toggle3DView(): Promise<void> {
     this.show3DView = !this.show3DView;
+
+    if (!this.show3DView) {
+      this.map3dFullscreen = false;
+    }
 
     if (this.show3DView) {
       if (!this.map3d) {
@@ -1839,11 +1850,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     // Rasterize the inline truck SVG to a canvas — same fix as sync3DBins:
     // MapLibre cannot decode SVG blobs via loadImage().
-    this.svgToCanvas(truckSvg, 52, 100).then(canvas => {
+    this.svgToCanvas(truckSvg, 52, 100).then(imageData => {
       if (!this.map3d || !this.map3dStyleLoaded) return;
 
       if (!this.map3d.hasImage('icon3d-truck')) {
-        this.map3d.addImage('icon3d-truck', canvas, { pixelRatio: 2 });
+        this.map3d.addImage('icon3d-truck', imageData);
       }
 
       this.map3d.addSource('truck-src-3d', { type: 'geojson', data: point });
@@ -1893,23 +1904,39 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         sources: {
           'carto': {
             type:        'raster',
-            // Bug fix: use the style that is currently selected in the 2D style
-            // switcher bar instead of always defaulting to the dark CARTO theme.
             tiles:       this.map3dTiles[this.currentMapStyle] ?? this.map3dTiles['voyager'],
             tileSize:    256,
-            // Bug fix: cap at zoom 17 so ESRI satellite (and others) never
-            // request tiles beyond their native coverage — prevents the
-            // "Map data not yet available" watermark at zoom 18.
             maxzoom:     17,
-            attribution: '© CARTO © OpenStreetMap contributors'
+            attribution: ''
+          },
+          // Free elevation tiles from AWS Open Data — terrarium encoding,
+          // no API key required. Gives real terrain relief like Google Maps.
+          'terrain-dem': {
+            type:     'raster-dem',
+            encoding: 'terrarium',
+            tiles:    ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+            tileSize:  256,
+            maxzoom:   15
           }
         },
-        layers: [{
-          id:    'carto-layer',
-          type:  'raster',
-          source:'carto',
-          paint: { 'raster-opacity': 1 }
-        }]
+        layers: [
+          {
+            id:    'carto-layer',
+            type:  'raster',
+            source:'carto',
+            paint: { 'raster-opacity': 1 }
+          },
+          // Sky layer — gives the horizon a realistic blue gradient
+          {
+            id:   'sky',
+            type: 'sky',
+            paint: {
+              'sky-type':           'atmosphere',
+              'sky-atmosphere-sun': [0, 90],
+              'sky-atmosphere-sun-intensity': 15
+            }
+          }
+        ]
       },
       center:     [center.lng, center.lat],
       zoom:        this.map.getZoom() - 0.5,
@@ -1919,13 +1946,18 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       attributionControl: false
     });
 
-    this.map3d.addControl(new mgl.AttributionControl({ compact: true }), 'bottom-right');
+    // Attribution removed — we don't want the © CARTO text.
     // Bug fix: NavigationControl was at 'top-right', overlapping our style
     // switcher bar — move it to bottom-left where there is no UI.
     this.map3d.addControl(new mgl.NavigationControl({ showCompass: true, showZoom: false }), 'bottom-left');
 
     this.map3d.on('load', () => {
       this.map3dStyleLoaded = true;
+
+      // Enable terrain relief — uses the raster-dem source added in the style.
+      // exaggeration:1.3 gives a clear sense of elevation without looking fake.
+      this.map3d.setTerrain({ source: 'terrain-dem', exaggeration: 1.3 });
+
       // Bug fix: resize ensures the canvas fills the container after it is
       // first displayed (handles the "quarter-screen" first-open issue).
       this.map3d.resize();
@@ -2017,10 +2049,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
           'fill-extrusion-base':    ['get', 'base'],
           // Vertical gradient makes the lower wall darker (ground shadow).
           'fill-extrusion-vertical-gradient': true,
-          'fill-extrusion-opacity': 0.88,
-          // Soft AO gives the buildings a grounded look without going black.
-          'fill-extrusion-ambient-occlusion-intensity': 0.35,
-          'fill-extrusion-ambient-occlusion-radius': 3.0
+          'fill-extrusion-opacity': 0.88
         }
       });
 
@@ -2041,7 +2070,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
    * @param w/h     Output canvas dimensions in CSS pixels (pixelRatio handled
    *                by the caller passing { pixelRatio: 2 } to addImage).
    */
-  private async svgToCanvas(source: string, w = 64, h = 64): Promise<HTMLCanvasElement> {
+  /**
+   * Rasterize an SVG (URL or inline string) to an ImageData object.
+   *
+   * We return ImageData — NOT HTMLCanvasElement — because MapLibre 4.x reads
+   * canvas.width/height as 0 internally in some environments, triggering
+   * "RangeError: mismatched image size. expected: 0 but got: N".
+   * ImageData carries explicit .width, .height, and .data fields that MapLibre
+   * reads without any ambiguity, so addImage() always gets the correct size.
+   */
+  private async svgToCanvas(source: string, w = 64, h = 64): Promise<ImageData> {
     const svgText = source.trimStart().startsWith('<')
       ? source
       : await fetch(source).then(r => r.text());
@@ -2054,15 +2092,18 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const blob    = new Blob([stamped], { type: 'image/svg+xml' });
     const blobUrl = URL.createObjectURL(blob);
 
-    return new Promise<HTMLCanvasElement>((resolve, reject) => {
+    return new Promise<ImageData>((resolve, reject) => {
       const img = new Image(w, h);
       img.onload = () => {
         const canvas = document.createElement('canvas');
         canvas.width  = w;
         canvas.height = h;
-        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, w, h);
         URL.revokeObjectURL(blobUrl);
-        resolve(canvas);
+        // Extract pixel data explicitly — ImageData.width/height/data are always
+        // correct, unlike HTMLCanvasElement which MapLibre may misread.
+        resolve(ctx.getImageData(0, 0, w, h));
       };
       img.onerror = () => {
         URL.revokeObjectURL(blobUrl);
@@ -2110,8 +2151,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       icons.map(async ({ id, url }) => {
         if (this.map3d.hasImage(id)) return;
         try {
-          const canvas = await this.svgToCanvas(url, 64, 64);
-          if (!this.map3d.hasImage(id)) this.map3d.addImage(id, canvas, { pixelRatio: 2 });
+          const imageData = await this.svgToCanvas(url, 64, 64);
+          if (!this.map3d.hasImage(id)) this.map3d.addImage(id, imageData);
         } catch (e) {
           console.warn(`3D icon load failed: ${id}`, e);
         }
@@ -2231,7 +2272,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       id: 'stops-label-3d', type: 'symbol', source: 'stops-3d',
       layout: {
         'text-field':      ['to-string', ['get', 'stop']],
-        'text-font':       ['Open Sans Bold', 'Arial Unicode MS Bold'],
+        'text-font':       ['Open Sans Semibold', 'Arial Unicode MS Regular'],
         'text-size':       11,
         'text-allow-overlap': true
       },
