@@ -3740,16 +3740,29 @@
   background: rgba(255,255,255,0.06) !important;
   color: #e2e8f0 !important;
 }
+/* MapLibre popup — match the Leaflet bpp-container dark card style exactly */
 .maplibregl-popup-content {
-  background: transparent !important;
-  padding: 0 !important;
-  box-shadow: none !important;
-  border-radius: 10px;
-  overflow: hidden;
+  background:    #0d1b2a !important;
+  border:        1px solid rgba(148,163,184,0.13) !important;
+  border-radius: 18px !important;
+  box-shadow:    0 12px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(16,185,129,0.08) !important;
+  padding:       0 !important;
+  overflow:      hidden;
+  font-family:   'DM Sans','Inter',sans-serif;
 }
 
+.maplibregl-popup-close-button {
+  color:      #475569 !important;
+  font-size:  17px !important;
+  top:        9px !important;
+  right:      11px !important;
+  background: transparent !important;
+  border:     none !important;
+}
+.maplibregl-popup-close-button:hover { color: #e2e8f0 !important; }
+
 .maplibregl-popup-tip {
-  border-top-color: #1e293b !important;
+  border-top-color: #0d1b2a !important;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════

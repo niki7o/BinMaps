@@ -413,10 +413,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.routeActive = true;
       await this.visualizeRoute();
 
-      // Bug fix: Angular may have resized the DOM (sidebar content swap) while
-      // the async chain was running, so Leaflet's internal size can be stale.
-      // invalidateSize() corrects the canvas, then we re-apply fitBounds so the
-      // route is always visible immediately — no restart required.
+      // If 3D view is open, draw the route there too.
+      if (this.show3DView && this.map3dStyleLoaded) {
+        this.sync3DRoute();
+      }
+
       setTimeout(() => {
         this.map.invalidateSize();
         if (this.routeResult?.route?.length) {
@@ -1908,17 +1909,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
             tileSize:    256,
             maxzoom:     17,
             attribution: ''
-          },
-          // Free elevation tiles from AWS Open Data.
-          // 'mapbox' encoding is used because the hillshade layer (which IS
-          // supported in this MapLibre version) requires it.
-          // setTerrain() and the 'sky' layer type are v2+ only — not available.
-          'terrain-dem': {
-            type:     'raster-dem',
-            encoding: 'mapbox',
-            tiles:    ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
-            tileSize:  256,
-            maxzoom:   15
           }
         },
         layers: [
@@ -1927,19 +1917,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
             type:  'raster',
             source:'carto',
             paint: { 'raster-opacity': 1 }
-          },
-          // Hillshade — supported in this MapLibre version and gives visible
-          // terrain relief shading directly on the map surface.
-          {
-            id:     'terrain-hillshade',
-            type:   'hillshade',
-            source: 'terrain-dem',
-            paint: {
-              'hillshade-exaggeration':    0.5,
-              'hillshade-shadow-color':    '#000000',
-              'hillshade-highlight-color': '#ffffff',
-              'hillshade-illumination-anchor': 'map'
-            }
           }
         ]
       },
@@ -1958,11 +1935,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     this.map3d.on('load', () => {
       this.map3dStyleLoaded = true;
-      // Hillshade terrain relief is baked into the style layers above.
-      // setTerrain() is a MapLibre v2+ API and is not available here.
-
-      // Bug fix: resize ensures the canvas fills the container after it is
-      // first displayed (handles the "quarter-screen" first-open issue).
       this.map3d.resize();
       this.load3DBuildings();
       this.sync3DBins();
@@ -1991,7 +1963,19 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this._buildingsLastMs  = now;
 
     const b    = this.map3d.getBounds();
-    const bbox = `${b.getSouth().toFixed(5)},${b.getWest().toFixed(5)},${b.getNorth().toFixed(5)},${b.getEast().toFixed(5)}`;
+    const cLat = (b.getNorth() + b.getSouth()) / 2;
+    const cLng = (b.getEast()  + b.getWest())  / 2;
+
+    // Clamp the query area to at most 1.5 km around the current center.
+    // Large viewport-covering bboxes cause Overpass 504/429 errors because
+    // Sofia has thousands of buildings and the free API has a tight timeout.
+    const DEG_KM = 0.0135; // ≈1.5 km in degrees at Sofia's latitude
+    const south = Math.max(b.getSouth(), cLat - DEG_KM);
+    const north = Math.min(b.getNorth(), cLat + DEG_KM);
+    const west  = Math.max(b.getWest(),  cLng - DEG_KM * 1.6);
+    const east  = Math.min(b.getEast(),  cLng + DEG_KM * 1.6);
+
+    const bbox  = `${south.toFixed(5)},${west.toFixed(5)},${north.toFixed(5)},${east.toFixed(5)}`;
     const query = `[out:json][timeout:12];way["building"](${bbox});out geom qt;`;
 
     try {
@@ -2039,20 +2023,21 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         type:   'fill-extrusion',
         source: 'osm-buildings',
         paint: {
-          // Interpolate from a warm stone base → lighter facade at height.
+          // Warm concrete tones that match Sofia's building stock:
+          // low buildings → earthy beige, taller blocks → pale blue-grey.
+          // This closely matches how Google Maps renders Sofia in 3D.
           'fill-extrusion-color': [
             'interpolate', ['linear'], ['get', 'height'],
-            0,   '#8a9aaa',   // cool-gray street level
-            8,   '#9baabb',
-            20,  '#adbccc',
-            40,  '#becedd',
-            70,  '#cedee8'    // pale sky blue for towers
+            0,   '#c8bfb0',   // warm sand / plaster at street level
+            8,   '#bbb5a8',
+            18,  '#a8adb5',   // mid-height — concrete grey
+            35,  '#9aa2ae',
+            60,  '#8d9bab'    // tall towers — cool steel-blue
           ],
           'fill-extrusion-height':  ['get', 'height'],
           'fill-extrusion-base':    ['get', 'base'],
-          // Vertical gradient makes the lower wall darker (ground shadow).
           'fill-extrusion-vertical-gradient': true,
-          'fill-extrusion-opacity': 0.88
+          'fill-extrusion-opacity': 0.90
         }
       });
 
@@ -2162,22 +2147,47 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       })
     ).then(() => {
       if (!this.map3d || !this.map3dStyleLoaded) return;
-      this.map3d.addSource('bins-3d', { type: 'geojson', data: geojson });
 
-      // Soft glow ring under each icon.
+      // Enable MapLibre's built-in clustering — mirrors Leaflet's
+      // MarkerClusterGroup from the 2D map so the 3D view isn't overwhelmed.
+      this.map3d.addSource('bins-3d', {
+        type: 'geojson',
+        data: geojson,
+        cluster:         true,
+        clusterMaxZoom:  15,   // unclusters at zoom 16+
+        clusterRadius:   50
+      });
+
+      // ── Cluster bubble ───────────────────────────────────────────────────
       this.map3d.addLayer({
-        id: 'bins-glow', type: 'circle', source: 'bins-3d',
+        id: 'bins-cluster', type: 'circle', source: 'bins-3d',
+        filter: ['has', 'point_count'],
         paint: {
-          'circle-radius':  16,
-          'circle-color':   '#10b981',
-          'circle-opacity': 0.15,
-          'circle-stroke-width': 0
+          'circle-color':        '#10b981',
+          'circle-radius':       ['step', ['get', 'point_count'], 18, 10, 24, 50, 30],
+          'circle-opacity':      0.90,
+          'circle-stroke-width': 3,
+          'circle-stroke-color': '#047857'
         }
       });
 
-      // The actual bin SVG icon.
+      // Cluster count label
+      this.map3d.addLayer({
+        id: 'bins-cluster-count', type: 'symbol', source: 'bins-3d',
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field':         ['get', 'point_count_abbreviated'],
+          'text-font':          ['Open Sans Semibold', 'Arial Unicode MS Regular'],
+          'text-size':          13,
+          'text-allow-overlap': true
+        },
+        paint: { 'text-color': '#ffffff' }
+      });
+
+      // ── Individual bin icon (unclustered) ────────────────────────────────
       this.map3d.addLayer({
         id: 'bins-dot', type: 'symbol', source: 'bins-3d',
+        filter: ['!', ['has', 'point_count']],
         layout: {
           'icon-image':            ['get', 'iconImage'],
           'icon-size':             0.55,
@@ -2188,6 +2198,19 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       });
 
       const mgl = (window as any).maplibregl;
+
+      // Clicking a cluster zooms in to expand it.
+      this.map3d.on('click', 'bins-cluster', (e: any) => {
+        const features = this.map3d.queryRenderedFeatures(e.point, { layers: ['bins-cluster'] });
+        const clusterId = features[0].properties['cluster_id'];
+        (this.map3d.getSource('bins-3d') as any).getClusterExpansionZoom(clusterId, (err: any, zoom: number) => {
+          if (err) return;
+          this.map3d.easeTo({ center: features[0].geometry.coordinates, zoom });
+        });
+      });
+      this.map3d.on('mouseenter', 'bins-cluster', () => { this.map3d.getCanvas().style.cursor = 'pointer'; });
+      this.map3d.on('mouseleave', 'bins-cluster', () => { this.map3d.getCanvas().style.cursor = ''; });
+
       // Click — identical popup logic as 2D map.
       this.map3d.on('click', 'bins-dot', (e: any) => {
         const id  = e.features[0].properties.id;
