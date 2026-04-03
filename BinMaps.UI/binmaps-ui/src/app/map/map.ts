@@ -1909,11 +1909,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
             maxzoom:     17,
             attribution: ''
           },
-          // Free elevation tiles from AWS Open Data — terrarium encoding,
-          // no API key required. Gives real terrain relief like Google Maps.
+          // Free elevation tiles from AWS Open Data.
+          // 'mapbox' encoding is used because the hillshade layer (which IS
+          // supported in this MapLibre version) requires it.
+          // setTerrain() and the 'sky' layer type are v2+ only — not available.
           'terrain-dem': {
             type:     'raster-dem',
-            encoding: 'terrarium',
+            encoding: 'mapbox',
             tiles:    ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
             tileSize:  256,
             maxzoom:   15
@@ -1926,14 +1928,17 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
             source:'carto',
             paint: { 'raster-opacity': 1 }
           },
-          // Sky layer — gives the horizon a realistic blue gradient
+          // Hillshade — supported in this MapLibre version and gives visible
+          // terrain relief shading directly on the map surface.
           {
-            id:   'sky',
-            type: 'sky',
+            id:     'terrain-hillshade',
+            type:   'hillshade',
+            source: 'terrain-dem',
             paint: {
-              'sky-type':           'atmosphere',
-              'sky-atmosphere-sun': [0, 90],
-              'sky-atmosphere-sun-intensity': 15
+              'hillshade-exaggeration':    0.5,
+              'hillshade-shadow-color':    '#000000',
+              'hillshade-highlight-color': '#ffffff',
+              'hillshade-illumination-anchor': 'map'
             }
           }
         ]
@@ -1953,10 +1958,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     this.map3d.on('load', () => {
       this.map3dStyleLoaded = true;
-
-      // Enable terrain relief — uses the raster-dem source added in the style.
-      // exaggeration:1.3 gives a clear sense of elevation without looking fake.
-      this.map3d.setTerrain({ source: 'terrain-dem', exaggeration: 1.3 });
+      // Hillshade terrain relief is baked into the style layers above.
+      // setTerrain() is a MapLibre v2+ API and is not available here.
 
       // Bug fix: resize ensures the canvas fills the container after it is
       // first displayed (handles the "quarter-screen" first-open issue).
