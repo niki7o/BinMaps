@@ -2,5 +2,5 @@ export const environment = {
   production: true,
   apiUrl: '/api',
   hubUrl: '/hubs/containers',
-  mapboxToken: 'pk.eyJ1IjoibmlrMXQwIiwiYSI6ImNtbmo5dTI1MDBka2oycHI2ajVwdGx2em4ifQ.p0vu1nTUkTthyP7uc7dAcA'
+  mapboxToken: 'pk.eyJ1IjoibmlrMXQwIiwiYSI6ImNtbmtxdWJvNDB6czMycXFzNnc0a2Fxd28ifQ.bxYODozyflCzkERqZHxX7Q'
 };
