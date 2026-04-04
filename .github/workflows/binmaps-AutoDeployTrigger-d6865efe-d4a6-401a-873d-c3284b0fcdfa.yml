@@ -4,7 +4,6 @@ on:
   push:
     branches: [ master ]
     paths:
-      # Rebuild the frontend image when UI source or nginx config changes
       - 'BinMaps.UI/**'
       - '.github/workflows/binmaps-AutoDeployTrigger-d6865efe-d4a6-401a-873d-c3284b0fcdfa.yml'
 
@@ -28,14 +27,30 @@ jobs:
           tenant-id: ${{ secrets.BINMAPS_AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.BINMAPS_AZURE_SUBSCRIPTION_ID }}
 
-      - name: Build and deploy to Container App
+      - name: Log in to Azure Container Registry
+        run: |
+          docker login binmapsacr.azurecr.io \
+            -u ${{ secrets.BINMAPS_REGISTRY_USERNAME }} \
+            -p ${{ secrets.BINMAPS_REGISTRY_PASSWORD }}
+
+      - name: Build Docker image with Mapbox token
+        run: |
+          docker build \
+            --build-arg MAPBOX_TOKEN=${{ secrets.MAPBOX_TOKEN }} \
+            -f BinMaps.UI/Dockerfile \
+            -t binmapsacr.azurecr.io/binmaps:${{ github.sha }} \
+            .
+
+      - name: Push Docker image to registry
+        run: |
+          docker push binmapsacr.azurecr.io/binmaps:${{ github.sha }}
+
+      - name: Deploy to Container App
         uses: azure/container-apps-deploy-action@v2
         with:
-          appSourcePath: ${{ github.workspace }}
-          dockerfilePath: BinMaps.UI/Dockerfile
+          containerAppName: binmaps
+          resourceGroup: binmaps-rg
+          imageToDeploy: binmapsacr.azurecr.io/binmaps:${{ github.sha }}
           registryUrl: binmapsacr.azurecr.io
           registryUsername: ${{ secrets.BINMAPS_REGISTRY_USERNAME }}
           registryPassword: ${{ secrets.BINMAPS_REGISTRY_PASSWORD }}
-          containerAppName: binmaps
-          resourceGroup: binmaps-rg
-          imageToBuild: binmapsacr.azurecr.io/binmaps:${{ github.sha }}

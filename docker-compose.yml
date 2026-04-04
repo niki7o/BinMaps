@@ -30,6 +30,8 @@ services:
     build:
       context: .
       dockerfile: BinMaps.UI/Dockerfile
+      args:
+        MAPBOX_TOKEN: ${MAPBOX_TOKEN}
     ports:
       - "4300:80"
   
