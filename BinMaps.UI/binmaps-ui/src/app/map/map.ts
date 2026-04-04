@@ -171,9 +171,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private readonly map3dStyles: Record<string, string> = {
     standard:  'mapbox://styles/mapbox/streets-v12',
     voyager:   'mapbox://styles/mapbox/outdoors-v12',
-    // standard-satellite is Mapbox's modern style — it renders terrain + satellite
-    // correctly at any pitch without warping the photo tiles.
-    satellite: 'mapbox://styles/mapbox/standard-satellite',
+    satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
     light:     'mapbox://styles/mapbox/light-v11'
   };
 
@@ -1964,13 +1962,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private addMapbox3DLayers(): void {
     if (!this.map3d) return;
 
-    const isSatellite = this.currentMapStyle === 'satellite';
-
     // ── Terrain (real elevation mesh) ──────────────────────────────────────
-    // For satellite: exaggeration = 0 — raster tiles draped over a raised
-    // terrain mesh get stretched and melted (Image 2 bug). Satellite photos
-    // already show the real-world perspective; flat terrain looks correct.
-    // For other styles: subtle exaggeration gives a sense of Sofia's hills.
     if (!this.map3d.getSource('mapbox-dem')) {
       this.map3d.addSource('mapbox-dem', {
         type:     'raster-dem',
@@ -1979,12 +1971,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         maxzoom:  14
       });
     }
-    this.map3d.setTerrain({
-      source:       'mapbox-dem',
-      // satellite: 0.4 — subtle hills without distorting photo tiles.
-      // vector styles (streets/outdoors/light): 1.0 — mountains visible clearly.
-      exaggeration: isSatellite ? 0.4 : 1.0
-    });
+    this.map3d.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
 
     // ── Sky layer ──────────────────────────────────────────────────────────
     if (!this.map3d.getLayer('sky')) {
@@ -1999,15 +1986,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       });
     }
 
-    // ── 3D buildings ───────────────────────────────────────────────────────
-    // satellite-streets-v12 already includes Mapbox's built-in 3D buildings
-    // rendered directly from their proprietary dataset — adding our custom
-    // fill-extrusion layer on top causes visual conflicts and double-drawing.
-    // For all other styles we add our own layer (streets-v12 / outdoors / light
-    // don't render buildings extruded by default).
-    if (!isSatellite) {
-      this.load3DBuildings();
-    }
+    // ── 3D buildings from Mapbox vector tiles (no Overpass needed) ─────────
+    this.load3DBuildings();
   }
 
   private load3DBuildings(): void {
