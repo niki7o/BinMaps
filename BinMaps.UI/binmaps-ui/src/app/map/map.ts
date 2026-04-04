@@ -1896,22 +1896,44 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
+    // Guard: if token is missing the map crashes mid-init and leaves the
+    // container dirty, causing "container not empty" + mouse-event crashes
+    // on every subsequent hover. Bail out cleanly instead.
+    if (!this.MAPBOX_TOKEN || this.MAPBOX_TOKEN === 'YOUR_MAPBOX_TOKEN_HERE') {
+      console.error('Mapbox token is missing — set mapboxToken in environment.ts');
+      this.show3DView = false;
+      alert('3D картата изисква Mapbox API ключ. Моля конфигурирайте environment.ts.');
+      return;
+    }
+
+    // Clear the container so Mapbox never sees stale DOM from a previous
+    // failed init (avoids the "container not empty" warning and vec4 crashes).
+    const container = document.getElementById('map-3d');
+    if (container) container.innerHTML = '';
+
     const mbx    = (window as any).mapboxgl;
     mbx.accessToken = this.MAPBOX_TOKEN;
 
     const center = this.map.getCenter();
 
-    this.map3d = new mbx.Map({
-      container:        'map-3d',
-      style:            this.map3dStyles[this.currentMapStyle] ?? this.map3dStyles['voyager'],
-      center:           [center.lng, center.lat],
-      zoom:             this.map.getZoom() - 0.5,
-      pitch:            50,
-      bearing:          -15,
-      maxBounds:        [[23.15, 42.55], [23.50, 42.85]],
-      attributionControl: false,
-      antialias:        true   // smoother building edges
-    });
+    try {
+      this.map3d = new mbx.Map({
+        container:          'map-3d',
+        style:              this.map3dStyles[this.currentMapStyle] ?? this.map3dStyles['voyager'],
+        center:             [center.lng, center.lat],
+        zoom:               this.map.getZoom() - 0.5,
+        pitch:              50,
+        bearing:            -15,
+        maxBounds:          [[23.15, 42.55], [23.50, 42.85]],
+        attributionControl: false,
+        antialias:          true
+      });
+    } catch (e) {
+      console.error('Mapbox Map init failed:', e);
+      this.map3d = null;
+      this.show3DView = false;
+      return;
+    }
 
     this.map3d.addControl(new mbx.NavigationControl({ showCompass: true, showZoom: false }), 'bottom-left');
 
@@ -1921,6 +1943,18 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.map3d.resize();
       this.sync3DBins();
       if (this.routeActive && this.realRouteCoords.length) this.sync3DRoute();
+    });
+
+    // If the map errors (e.g. invalid token), clean up so the next toggle
+    // attempt gets a fresh start rather than reusing the broken instance.
+    this.map3d.on('error', (e: any) => {
+      console.error('Mapbox map error:', e);
+      if (!this.map3dStyleLoaded) {
+        this.map3d?.remove?.();
+        this.map3d = null;
+        this.map3dStyleLoaded = false;
+        this.show3DView = false;
+      }
     });
   }
 
