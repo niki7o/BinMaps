@@ -171,7 +171,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private readonly map3dStyles: Record<string, string> = {
     standard:  'mapbox://styles/mapbox/streets-v12',
     voyager:   'mapbox://styles/mapbox/outdoors-v12',
-    satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
+    // standard-satellite is Mapbox's modern style — it renders terrain + satellite
+    // correctly at any pitch without warping the photo tiles.
+    satellite: 'mapbox://styles/mapbox/standard-satellite',
     light:     'mapbox://styles/mapbox/light-v11'
   };
 
@@ -1979,7 +1981,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
     this.map3d.setTerrain({
       source:       'mapbox-dem',
-      exaggeration: isSatellite ? 0 : 0.6
+      // satellite: 0.4 — subtle hills without distorting photo tiles.
+      // vector styles (streets/outdoors/light): 1.0 — mountains visible clearly.
+      exaggeration: isSatellite ? 0.4 : 1.0
     });
 
     // ── Sky layer ──────────────────────────────────────────────────────────
