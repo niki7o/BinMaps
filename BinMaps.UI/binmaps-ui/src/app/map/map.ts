@@ -1899,7 +1899,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     // Guard: if token is missing the map crashes mid-init and leaves the
     // container dirty, causing "container not empty" + mouse-event crashes
     // on every subsequent hover. Bail out cleanly instead.
-    if (!this.MAPBOX_TOKEN || this.MAPBOX_TOKEN === 'YOUR_MAPBOX_TOKEN_HERE') {
+    if (!this.MAPBOX_TOKEN) {
       console.error('Mapbox token is missing — set mapboxToken in environment.ts');
       this.show3DView = false;
       alert('3D картата изисква Mapbox API ключ. Моля конфигурирайте environment.ts.');
