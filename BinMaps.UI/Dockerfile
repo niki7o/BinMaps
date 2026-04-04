@@ -3,13 +3,6 @@ WORKDIR /app
 COPY BinMaps.UI/binmaps-ui/package*.json ./
 RUN npm ci --legacy-peer-deps
 COPY BinMaps.UI/binmaps-ui/ .
-
-
-ARG MAPBOX_TOKEN
-RUN sed -i "s/MAPBOX_TOKEN/${MAPBOX_TOKEN}/g" \
-    src/environments/environment.ts \
-    src/environments/environment.prod.ts
-
 RUN npm run build -- --configuration=production
 
 FROM nginx:alpine
