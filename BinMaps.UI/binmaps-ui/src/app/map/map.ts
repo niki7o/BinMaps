@@ -79,11 +79,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private searchMarker?: L.Marker;
   private searchCircles: L.Circle[] = [];
 
-  // 3D buildings throttle — prevents hammering Overpass API on every moveend
-  private _buildingsPending  = false;
-  private _buildingsLastMs   = 0;
-  private _buildingsDebounce: any = null;
-
   reportImagePreview:    string | null = null;
   selectedFile:          File | null = null;
   reportDescription = '';
@@ -169,24 +164,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private map3d: any = null;
   private map3dStyleLoaded = false;
 
-  /** Tile URLs per style key — kept in sync with baseLayers */
-  private readonly map3dTiles: Record<string, string[]> = {
-    standard:  [
-      'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
-    ],
-    voyager:   [
-      'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-    ],
-    satellite: [
-      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-    ],
-    light: [
-      'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-      'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-    ]
+  // Token comes from src/environments/environment.ts — never hardcode secrets.
+  private readonly MAPBOX_TOKEN = environment.mapboxToken;
+
+  /** Mapbox style URL per 2D style key */
+  private readonly map3dStyles: Record<string, string> = {
+    standard:  'mapbox://styles/mapbox/streets-v12',
+    voyager:   'mapbox://styles/mapbox/outdoors-v12',
+    satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
+    light:     'mapbox://styles/mapbox/light-v11'
   };
 
   // ── Speed control ─────────────────────────────────────────────────────────
@@ -335,10 +321,17 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.currentMapStyle = key;
     localStorage.setItem('mapStyle', key);
 
-    // Sync tile source in the 3D map if it is active
+    // Sync style in the Mapbox 3D map if it is active.
     if (this.map3d && this.map3dStyleLoaded) {
-      const src = this.map3d.getSource('carto') as any;
-      if (src) src.setTiles(this.map3dTiles[key] ?? this.map3dTiles['standard']);
+      this.map3dStyleLoaded = false;
+      this.clearAll3DLayers();
+      this.map3d.setStyle(this.map3dStyles[key] ?? this.map3dStyles['voyager']);
+      this.map3d.once('style.load', () => {
+        this.map3dStyleLoaded = true;
+        this.addMapbox3DLayers();
+        this.sync3DBins();
+        if (this.routeActive && this.realRouteCoords.length) this.sync3DRoute();
+      });
     }
   }
 
@@ -869,6 +862,20 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       .forEach(id => { try { if (this.map3d.getLayer(id)) this.map3d.removeLayer(id); } catch {} });
     ['route-3d', 'stops-3d', 'truck-src-3d']
       .forEach(id => { try { if (this.map3d.getSource(id)) this.map3d.removeSource(id); } catch {} });
+  }
+
+  /** Remove all BinMaps-added layers/sources from 3D map (called on style change) */
+  private clearAll3DLayers(): void {
+    if (!this.map3d) return;
+    [
+      'route-glow-3d', 'route-line-3d', 'stops-outer-3d', 'stops-label-3d',
+      'truck-layer-3d', 'truck-glow-3d',
+      'bins-cluster', 'bins-cluster-count', 'bins-dot',
+      'buildings-3d', 'sky'
+    ].forEach(id => { try { if (this.map3d.getLayer(id)) this.map3d.removeLayer(id); } catch {} });
+    [
+      'route-3d', 'stops-3d', 'truck-src-3d', 'bins-3d', 'mapbox-dem'
+    ].forEach(id => { try { if (this.map3d.getSource(id)) this.map3d.removeSource(id); } catch {} });
   }
 
   toggleReportPanel(show: boolean) {
@@ -1759,12 +1766,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // 3D MAP  (MapLibre GL JS — overlay over Leaflet)
+  // 3D MAP  (Mapbox GL JS — overlay over Leaflet)
   // ══════════════════════════════════════════════════════════════════════════
 
   toggle3DFullscreen(): void {
     this.map3dFullscreen = !this.map3dFullscreen;
-    // Let the CSS transition finish then tell MapLibre the canvas changed size.
     setTimeout(() => this.map3d?.resize(), 60);
   }
 
@@ -1777,8 +1783,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     if (this.show3DView) {
       if (!this.map3d) {
-        // Bug fix: give Angular one tick to apply [class.map-3d-active] so the
-        // #map-3d div has real dimensions before MapLibre reads the container.
         await new Promise(r => setTimeout(r, 0));
         await this.init3DMap();
       } else {
@@ -1792,21 +1796,19 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
   }
 
-  private async loadMapLibreScript(): Promise<void> {
-    // Already loaded via index.html <script> tag — just resolve immediately
-    if ((window as any).maplibregl) return;
+  private async loadMapboxScript(): Promise<void> {
+    if ((window as any).mapboxgl) return;
 
-    // Fallback dynamic load (dev without index.html change)
     const link = document.createElement('link');
     link.rel  = 'stylesheet';
-    link.href = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';
+    link.href = 'https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css';
     document.head.appendChild(link);
 
     await new Promise<void>((resolve, reject) => {
       const script   = document.createElement('script');
-      script.src     = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js';
+      script.src     = 'https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js';
       script.onload  = () => resolve();
-      script.onerror = () => reject(new Error('MapLibre GL failed to load'));
+      script.onerror = () => reject(new Error('Mapbox GL failed to load'));
       document.head.appendChild(script);
     });
   }
@@ -1825,7 +1827,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
-    // First call — load the truck SVG as a MapLibre image, then add source + layers.
+    // First call — load the truck SVG as a Mapbox image, then add source + layers.
     const truckSvg = `<svg width="26" height="50" viewBox="0 0 26 50" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="3"    y="0"    width="20" height="3"   rx="1.5" fill="#047857"/>
       <rect x="1"    y="3"    width="24" height="13"  rx="2"   fill="#059669"/>
@@ -1850,7 +1852,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     </svg>`;
 
     // Rasterize the inline truck SVG to a canvas — same fix as sync3DBins:
-    // MapLibre cannot decode SVG blobs via loadImage().
+    // Mapbox GL cannot decode SVG blobs via loadImage().
     this.svgToCanvas(truckSvg, 52, 100).then(imageData => {
       if (!this.map3d || !this.map3dStyleLoaded) return;
 
@@ -1887,185 +1889,114 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   private async init3DMap(): Promise<void> {
     try {
-      await this.loadMapLibreScript();
+      await this.loadMapboxScript();
     } catch {
-      console.error('MapLibre GL could not be loaded');
+      console.error('Mapbox GL could not be loaded');
       this.show3DView = false;
       return;
     }
 
-    const mgl    = (window as any).maplibregl;
+    const mbx    = (window as any).mapboxgl;
+    mbx.accessToken = this.MAPBOX_TOKEN;
+
     const center = this.map.getCenter();
 
-    this.map3d = new mgl.Map({
-      container: 'map-3d',
-      style: {
-        version: 8,
-        glyphs:  'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
-        sources: {
-          'carto': {
-            type:        'raster',
-            tiles:       this.map3dTiles[this.currentMapStyle] ?? this.map3dTiles['voyager'],
-            tileSize:    256,
-            maxzoom:     17,
-            attribution: ''
-          }
-        },
-        layers: [
-          {
-            id:    'carto-layer',
-            type:  'raster',
-            source:'carto',
-            paint: { 'raster-opacity': 1 }
-          }
-        ]
-      },
-      center:     [center.lng, center.lat],
-      zoom:        this.map.getZoom() - 0.5,
-      pitch:       50,
-      bearing:    -15,
-      maxBounds:  [[23.15, 42.55], [23.50, 42.85]],
-      attributionControl: false
+    this.map3d = new mbx.Map({
+      container:        'map-3d',
+      style:            this.map3dStyles[this.currentMapStyle] ?? this.map3dStyles['voyager'],
+      center:           [center.lng, center.lat],
+      zoom:             this.map.getZoom() - 0.5,
+      pitch:            50,
+      bearing:          -15,
+      maxBounds:        [[23.15, 42.55], [23.50, 42.85]],
+      attributionControl: false,
+      antialias:        true   // smoother building edges
     });
 
-    // Attribution removed — we don't want the © CARTO text.
-    // Bug fix: NavigationControl was at 'top-right', overlapping our style
-    // switcher bar — move it to bottom-left where there is no UI.
-    this.map3d.addControl(new mgl.NavigationControl({ showCompass: true, showZoom: false }), 'bottom-left');
+    this.map3d.addControl(new mbx.NavigationControl({ showCompass: true, showZoom: false }), 'bottom-left');
 
     this.map3d.on('load', () => {
       this.map3dStyleLoaded = true;
+      this.addMapbox3DLayers();
       this.map3d.resize();
-      this.load3DBuildings();
       this.sync3DBins();
       if (this.routeActive && this.realRouteCoords.length) this.sync3DRoute();
     });
+  }
 
-    // Reload buildings when user pans/zooms — debounced so we don't fire on
-    // every frame during a drag, and throttled to avoid hammering Overpass.
-    this.map3d.on('moveend', () => {
-      if (this.map3dStyleLoaded && this.map3d.getZoom() >= 13) {
-        clearTimeout(this._buildingsDebounce);
-        this._buildingsDebounce = setTimeout(() => this.load3DBuildings(), 900);
+  /** Add terrain, sky and 3D buildings — called after every style load/change */
+  private addMapbox3DLayers(): void {
+    if (!this.map3d) return;
+
+    // ── Terrain (real elevation mesh) ──────────────────────────────────────
+    if (!this.map3d.getSource('mapbox-dem')) {
+      this.map3d.addSource('mapbox-dem', {
+        type:     'raster-dem',
+        url:      'mapbox://mapbox.mapbox-terrain-dem-v1',
+        tileSize: 512,
+        maxzoom:  14
+      });
+    }
+    this.map3d.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+
+    // ── Sky layer ──────────────────────────────────────────────────────────
+    if (!this.map3d.getLayer('sky')) {
+      this.map3d.addLayer({
+        id:   'sky',
+        type: 'sky',
+        paint: {
+          'sky-type':                    'atmosphere',
+          'sky-atmosphere-sun':          [0.0, 0.0],
+          'sky-atmosphere-sun-intensity': 15
+        }
+      });
+    }
+
+    // ── 3D buildings from Mapbox vector tiles (no Overpass needed) ─────────
+    this.load3DBuildings();
+  }
+
+  private load3DBuildings(): void {
+    if (!this.map3d || !this.map3dStyleLoaded) return;
+    if (this.map3d.getLayer('buildings-3d')) return; // already present
+
+    // Mapbox vector tiles include building footprints + heights in the
+    // 'composite' source. No Overpass API call needed — buildings load
+    // instantly, pan/zoom smoothly, and never 429/504.
+    this.map3d.addLayer({
+      id:             'buildings-3d',
+      source:         'composite',
+      'source-layer': 'building',
+      filter:         ['==', 'extrude', 'true'],
+      type:           'fill-extrusion',
+      minzoom:        14,
+      paint: {
+        'fill-extrusion-color': [
+          'interpolate', ['linear'], ['get', 'height'],
+          0,   '#c8bfb0',
+          8,   '#bbb5a8',
+          18,  '#a8adb5',
+          35,  '#9aa2ae',
+          60,  '#8d9bab'
+        ],
+        // Fade buildings in as you zoom past 14 so they don't pop.
+        'fill-extrusion-height': [
+          'interpolate', ['linear'], ['zoom'],
+          14, 0, 14.5, ['get', 'height']
+        ],
+        'fill-extrusion-base': [
+          'interpolate', ['linear'], ['zoom'],
+          14, 0, 14.5, ['get', 'min_height']
+        ],
+        'fill-extrusion-vertical-gradient': true,
+        'fill-extrusion-opacity':           0.90
       }
     });
   }
 
-  private async load3DBuildings(): Promise<void> {
-    if (!this.map3d || !this.map3dStyleLoaded) return;
-
-    // Rate-limit: skip if a fetch is already in-flight or if we fetched less
-    // than 20 seconds ago.  This prevents the Overpass 429 that occurs when
-    // moveend fires repeatedly during a pan or zoom gesture.
-    const now = Date.now();
-    if (this._buildingsPending || now - this._buildingsLastMs < 20_000) return;
-    this._buildingsPending = true;
-    this._buildingsLastMs  = now;
-
-    const b    = this.map3d.getBounds();
-    const cLat = (b.getNorth() + b.getSouth()) / 2;
-    const cLng = (b.getEast()  + b.getWest())  / 2;
-
-    // Clamp the query area to at most 1.5 km around the current center.
-    // Large viewport-covering bboxes cause Overpass 504/429 errors because
-    // Sofia has thousands of buildings and the free API has a tight timeout.
-    const DEG_KM = 0.0135; // ≈1.5 km in degrees at Sofia's latitude
-    const south = Math.max(b.getSouth(), cLat - DEG_KM);
-    const north = Math.min(b.getNorth(), cLat + DEG_KM);
-    const west  = Math.max(b.getWest(),  cLng - DEG_KM * 1.6);
-    const east  = Math.min(b.getEast(),  cLng + DEG_KM * 1.6);
-
-    const bbox  = `${south.toFixed(5)},${west.toFixed(5)},${north.toFixed(5)},${east.toFixed(5)}`;
-    const query = `[out:json][timeout:12];way["building"](${bbox});out geom qt;`;
-
-    try {
-      const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
-
-      // Bug fix: on 429 or other errors Overpass returns XML, not JSON.
-      // Calling .json() on XML produces the "Unexpected token '<'" crash.
-      // Always check res.ok first and bail out gracefully.
-      if (!res.ok) {
-        console.warn(`3D buildings: Overpass returned ${res.status} — skipping`);
-        return;
-      }
-
-      const data = await res.json();
-
-      const features = (data.elements as any[])
-        .filter(e => e.type === 'way' && Array.isArray(e.geometry) && e.geometry.length >= 3)
-        .map(e => {
-          const coords = [...e.geometry.map((p: any) => [p.lon, p.lat])];
-          if (coords[0][0] !== coords[coords.length - 1][0] ||
-              coords[0][1] !== coords[coords.length - 1][1]) {
-            coords.push(coords[0]);  // close ring
-          }
-          const levels = parseFloat(e.tags?.['building:levels'] ?? e.tags?.['levels'] ?? '3');
-          return {
-            type: 'Feature' as const,
-            geometry: { type: 'Polygon' as const, coordinates: [coords] },
-            properties: { height: (isNaN(levels) ? 3 : levels) * 3.5, base: 0 }
-          };
-        });
-
-      const geojson = { type: 'FeatureCollection' as const, features };
-
-      if (this.map3d.getSource('osm-buildings')) {
-        (this.map3d.getSource('osm-buildings') as any).setData(geojson);
-        return;
-      }
-
-      this.map3d.addSource('osm-buildings', { type: 'geojson', data: geojson });
-
-      // Single main building layer — warm concrete tones that read clearly on
-      // any base tile style, similar to Google Maps' 3D buildings.
-      this.map3d.addLayer({
-        id:     'buildings-3d',
-        type:   'fill-extrusion',
-        source: 'osm-buildings',
-        paint: {
-          // Warm concrete tones that match Sofia's building stock:
-          // low buildings → earthy beige, taller blocks → pale blue-grey.
-          // This closely matches how Google Maps renders Sofia in 3D.
-          'fill-extrusion-color': [
-            'interpolate', ['linear'], ['get', 'height'],
-            0,   '#c8bfb0',   // warm sand / plaster at street level
-            8,   '#bbb5a8',
-            18,  '#a8adb5',   // mid-height — concrete grey
-            35,  '#9aa2ae',
-            60,  '#8d9bab'    // tall towers — cool steel-blue
-          ],
-          'fill-extrusion-height':  ['get', 'height'],
-          'fill-extrusion-base':    ['get', 'base'],
-          'fill-extrusion-vertical-gradient': true,
-          'fill-extrusion-opacity': 0.90
-        }
-      });
-
-    } catch (err) {
-      console.warn('3D buildings load failed:', err);
-    } finally {
-      this._buildingsPending = false;
-    }
-  }
-
-  /**
-   * Rasterize an SVG to an HTMLCanvasElement so MapLibre's addImage() can
-   * consume it without the "source image could not be decoded" crash that
-   * occurs when passing raw SVG blobs directly to loadImage().
-   *
-   * @param source  Either a URL path ("assets/icons/bin-mixed.svg") or an
-   *                inline SVG string starting with "<svg".
-   * @param w/h     Output canvas dimensions in CSS pixels (pixelRatio handled
-   *                by the caller passing { pixelRatio: 2 } to addImage).
-   */
   /**
    * Rasterize an SVG (URL or inline string) to an ImageData object.
-   *
-   * We return ImageData — NOT HTMLCanvasElement — because MapLibre 4.x reads
-   * canvas.width/height as 0 internally in some environments, triggering
-   * "RangeError: mismatched image size. expected: 0 but got: N".
-   * ImageData carries explicit .width, .height, and .data fields that MapLibre
-   * reads without any ambiguity, so addImage() always gets the correct size.
+   * Returns ImageData so Mapbox addImage() always gets explicit width/height/data.
    */
   private async svgToCanvas(source: string, w = 64, h = 64): Promise<ImageData> {
     const svgText = source.trimStart().startsWith('<')
@@ -2090,7 +2021,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         ctx.drawImage(img, 0, 0, w, h);
         URL.revokeObjectURL(blobUrl);
         // Extract pixel data explicitly — ImageData.width/height/data are always
-        // correct, unlike HTMLCanvasElement which MapLibre may misread.
+        // correct, unlike HTMLCanvasElement which Mapbox may misread.
         resolve(ctx.getImageData(0, 0, w, h));
       };
       img.onerror = () => {
@@ -2120,10 +2051,17 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     const geojson = { type: 'FeatureCollection' as const, features };
 
-    // If source already exists, just refresh data.
-    if (this.map3d.getSource('bins-3d')) {
+    // If source already exists AND layers are present, just refresh data.
+    if (this.map3d.getSource('bins-3d') && this.map3d.getLayer('bins-dot')) {
       (this.map3d.getSource('bins-3d') as any).setData(geojson);
       return;
+    }
+    // If source exists but layers were lost (e.g. after setStyle), remove source
+    // first so we can rebuild everything cleanly.
+    if (this.map3d.getSource('bins-3d')) {
+      ['bins-cluster', 'bins-cluster-count', 'bins-dot']
+        .forEach(id => { try { if (this.map3d.getLayer(id)) this.map3d.removeLayer(id); } catch {} });
+      try { this.map3d.removeSource('bins-3d'); } catch {}
     }
 
     // Preload SVG icons, then add source + layers once all images are ready.
@@ -2133,7 +2071,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       { id: 'icon3d-broken',   url: 'assets/icons/bin-broken.svg'        },
     ];
 
-    // Preload SVG icons via canvas rasterization — MapLibre's loadImage() cannot
+    // Preload SVG icons via canvas rasterization — Mapbox's loadImage() cannot
     // decode SVG files directly (InvalidStateError: source image could not be decoded).
     Promise.all(
       icons.map(async ({ id, url }) => {
@@ -2148,7 +2086,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     ).then(() => {
       if (!this.map3d || !this.map3dStyleLoaded) return;
 
-      // Enable MapLibre's built-in clustering — mirrors Leaflet's
+      // Enable Mapbox's built-in clustering — mirrors Leaflet's
       // MarkerClusterGroup from the 2D map so the 3D view isn't overwhelmed.
       this.map3d.addSource('bins-3d', {
         type: 'geojson',
@@ -2158,30 +2096,47 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         clusterRadius:   50
       });
 
-      // ── Cluster bubble ───────────────────────────────────────────────────
+      // ── Cluster bubble — matches the 2D Leaflet MarkerClusterGroup style ──
+      // Small (<10): r=20, Medium (10–49): r=25, Large (50+): r=30
+      // White border + green glow shadow exactly as in .marker-cluster CSS.
       this.map3d.addLayer({
         id: 'bins-cluster', type: 'circle', source: 'bins-3d',
         filter: ['has', 'point_count'],
         paint: {
-          'circle-color':        '#10b981',
-          'circle-radius':       ['step', ['get', 'point_count'], 18, 10, 24, 50, 30],
-          'circle-opacity':      0.90,
+          'circle-color': [
+            'step', ['get', 'point_count'],
+            '#10b981',  // small  < 10
+            10, '#10b981',  // medium 10–49
+            50, '#059669'   // large  50+
+          ],
+          'circle-radius': [
+            'step', ['get', 'point_count'],
+            20,   // small  < 10
+            10, 25,   // medium 10–49
+            50, 30    // large  50+
+          ],
           'circle-stroke-width': 3,
-          'circle-stroke-color': '#047857'
+          'circle-stroke-color': '#ffffff',
+          'circle-opacity':      1.0
         }
       });
 
-      // Cluster count label
+      // Cluster count label — bold white, same as the 2D cluster span
       this.map3d.addLayer({
         id: 'bins-cluster-count', type: 'symbol', source: 'bins-3d',
         filter: ['has', 'point_count'],
         layout: {
           'text-field':         ['get', 'point_count_abbreviated'],
           'text-font':          ['Open Sans Semibold', 'Arial Unicode MS Regular'],
-          'text-size':          13,
+          'text-size':          ['step', ['get', 'point_count'], 13, 10, 14, 50, 15],
           'text-allow-overlap': true
         },
-        paint: { 'text-color': '#ffffff' }
+        paint: {
+          'text-color': '#ffffff',
+          // Subtle halo so the number reads clearly over any tile style
+          'text-halo-color': 'rgba(5,150,105,0.6)',
+          'text-halo-width': 1
+        }
       });
 
       // ── Individual bin icon (unclustered) ────────────────────────────────
@@ -2197,7 +2152,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         }
       });
 
-      const mgl = (window as any).maplibregl;
+      const mbx = (window as any).mapboxgl;
 
       // Clicking a cluster zooms in to expand it.
       this.map3d.on('click', 'bins-cluster', (e: any) => {
@@ -2226,7 +2181,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         }
 
         if (!this.isGuest) {
-          new mgl.Popup({ maxWidth: '300px', className: 'bpp-container' })
+          new mbx.Popup({ maxWidth: '300px', className: 'bpp-container' })
             .setLngLat(e.lngLat)
             .setHTML(this.createPopup(bin))
             .addTo(this.map3d);
@@ -2241,7 +2196,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private sync3DRoute(): void {
     if (!this.map3d || !this.map3dStyleLoaded || !this.routeResult || !this.realRouteCoords.length) return;
 
-    // realRouteCoords are [lat, lng]; MapLibre needs [lng, lat]
+    // realRouteCoords are [lat, lng]; Mapbox needs [lng, lat]
     const lineCoords = this.realRouteCoords.map(c => [c[1], c[0]]);
 
     const routeGeoJSON = {
@@ -2309,7 +2264,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   private refresh3DLayers(): void {
     if (!this.map3dStyleLoaded) return;
-    this.load3DBuildings();
+    // Buildings are baked into the Mapbox style via addMapbox3DLayers() on
+    // every style.load event — no manual reload needed on camera changes.
     this.sync3DBins();
     if (this.routeActive && this.realRouteCoords.length) this.sync3DRoute();
   }

@@ -1,5 +1,6 @@
 export const environment = {
   production: false,
   apiUrl: '/api',
-  hubUrl: '/hubs/containers'
+  hubUrl: '/hubs/containers',
+  mapboxToken: ''
 };
