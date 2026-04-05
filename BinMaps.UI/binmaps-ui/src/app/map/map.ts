@@ -169,7 +169,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   /** Mapbox style URL per 2D style key */
   private readonly map3dStyles: Record<string, string> = {
-    standard:  'mapbox://styles/mapbox/streets-v12',
+    standard:  'mapbox://styles/nik1t0/cmnll3qxs000401qw6oph0qm3',
     voyager:   'mapbox://styles/mapbox/outdoors-v12',
     satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
     light:     'mapbox://styles/mapbox/light-v11'
