@@ -314,6 +314,86 @@
       <div id="map" [class.map-hidden-by-3d]="show3DView"></div>
       <div id="map-3d" [class.map-3d-active]="show3DView" [class.map-3d-fs]="map3dFullscreen"></div>
 
+      <div class="map-legend map-legend--br">
+        
+        <div class="leg-hdr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <span>Легенда</span>
+        </div>
+
+        <div class="leg-section">
+          <div class="leg-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+            <span>Видове кофи</span>
+          </div>
+          <div class="leg-bin-row">
+            <div class="leg-bin-icon" style="background:#475569"><img src="assets/icons/bin-mixed.svg" width="16" height="16" alt="смесен"/></div>
+            <span class="leg-bin-label">Смесен отпадък</span>
+          </div>
+          <div class="leg-bin-row">
+            <div class="leg-bin-icon" style="background:#92400e"><img src="assets/icons/bin-plastic.svg" width="16" height="16" alt="plastic"/></div>
+            <span class="leg-bin-label">Пластмаса</span>
+          </div>
+          <div class="leg-bin-row">
+            <div class="leg-bin-icon" style="background:#1e3a8a"><img src="assets/icons/bin-paper.svg" width="16" height="16" alt="paper"/></div>
+            <span class="leg-bin-label">Хартия и картон</span>
+          </div>
+          <div class="leg-bin-row">
+            <div class="leg-bin-icon" style="background:#164e63"><img src="assets/icons/bin-glass.svg" width="16" height="16" alt="стъкло"/></div>
+            <span class="leg-bin-label">Стъкло</span>
+          </div>
+        </div>
+        <div class="leg-section">
+          <div class="leg-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>Специален статус</span>
+          </div>
+          <div class="leg-bin-row">
+            <div class="leg-bin-icon" style="background:#7f1d1d"><img src="assets/icons/bin-burning.svg" width="16" height="16" alt="огън"/></div>
+            <span class="leg-bin-label" style="color:#f97316">Риск от пожар</span>
+          </div>
+          <div class="leg-bin-row">
+            <div class="leg-bin-icon" style="background:#1e293b"><img src="assets/icons/bin-broken.svg" width="16" height="16" alt="повреден"/></div>
+            <span class="leg-bin-label" style="color:#94a3b8">Повреда / авария</span>
+          </div>
+        </div>
+        <div class="leg-section" style="padding-bottom:10px">
+          <div class="leg-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
+            <span>Ниво на запълване</span>
+          </div>
+          <div class="leg-fill-row">
+            <div class="leg-fill-bar"><div class="leg-fill-inner" style="width:92%;background:#ef4444;box-shadow:0 0 5px rgba(239,68,68,0.7)"></div></div>
+            <span class="leg-fill-label" style="color:#ef4444">&gt;85% Критично</span>
+          </div>
+          <div class="leg-fill-row">
+            <div class="leg-fill-bar"><div class="leg-fill-inner" style="width:70%;background:#f97316;box-shadow:0 0 5px rgba(249,115,22,0.7)"></div></div>
+            <span class="leg-fill-label" style="color:#f97316">65–85% Високо</span>
+          </div>
+          <div class="leg-fill-row">
+            <div class="leg-fill-bar"><div class="leg-fill-inner" style="width:50%;background:#f59e0b;box-shadow:0 0 5px rgba(245,158,11,0.7)"></div></div>
+            <span class="leg-fill-label" style="color:#f59e0b">45–65% Средно</span>
+          </div>
+          <div class="leg-fill-row">
+            <div class="leg-fill-bar"><div class="leg-fill-inner" style="width:25%;background:#10b981;box-shadow:0 0 5px rgba(16,185,129,0.7)"></div></div>
+            <span class="leg-fill-label" style="color:#10b981">&lt;45% Нормално</span>
+          </div>
+        </div>
+      </div>
+
       <div class="map-overlay-info" *ngIf="isGuest && guestBannerVisible">
         <div class="guest-banner">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -334,102 +414,6 @@
         </div>
       </div>
     </main>
-
-    <!-- ── Legend panel — collapsible sidebar, same pattern as route/report ── -->
-    <button
-      class="edge-handle edge-handle--right edge-handle--legend"
-      [class.is-open]="showLegendPanel"
-      (click)="toggleLegendPanel(!showLegendPanel)">
-      <span class="edge-label">Легенда</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <polyline points="15 18 9 12 15 6"/>
-      </svg>
-    </button>
-    <aside class="map-sidebar right map-sidebar--legend" *ngIf="showLegendPanel">
-      <div class="sidebar-panel">
-        <div class="panel-header">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="16" x2="12" y2="12"/>
-            <line x1="12" y1="8" x2="12.01" y2="8"/>
-          </svg>
-          <h2>Легенда</h2>
-        </div>
-        <div class="panel-content" style="gap:0">
-
-          <div class="leg-section">
-            <div class="leg-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-              </svg>
-              <span>Видове кофи</span>
-            </div>
-            <div class="leg-bin-row">
-              <div class="leg-bin-icon" style="background:#475569"><img src="assets/icons/bin-mixed.svg" width="16" height="16" alt="смесен"/></div>
-              <span class="leg-bin-label">Смесен отпадък</span>
-            </div>
-            <div class="leg-bin-row">
-              <div class="leg-bin-icon" style="background:#92400e"><img src="assets/icons/bin-plastic.svg" width="16" height="16" alt="plastic"/></div>
-              <span class="leg-bin-label">Пластмаса</span>
-            </div>
-            <div class="leg-bin-row">
-              <div class="leg-bin-icon" style="background:#1e3a8a"><img src="assets/icons/bin-paper.svg" width="16" height="16" alt="paper"/></div>
-              <span class="leg-bin-label">Хартия и картон</span>
-            </div>
-            <div class="leg-bin-row">
-              <div class="leg-bin-icon" style="background:#164e63"><img src="assets/icons/bin-glass.svg" width="16" height="16" alt="стъкло"/></div>
-              <span class="leg-bin-label">Стъкло</span>
-            </div>
-          </div>
-
-          <div class="leg-section">
-            <div class="leg-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-              <span>Специален статус</span>
-            </div>
-            <div class="leg-bin-row">
-              <div class="leg-bin-icon" style="background:#7f1d1d"><img src="assets/icons/bin-burning.svg" width="16" height="16" alt="огън"/></div>
-              <span class="leg-bin-label" style="color:#f97316">Риск от пожар</span>
-            </div>
-            <div class="leg-bin-row">
-              <div class="leg-bin-icon" style="background:#1e293b"><img src="assets/icons/bin-broken.svg" width="16" height="16" alt="повреден"/></div>
-              <span class="leg-bin-label" style="color:#94a3b8">Повреда / авария</span>
-            </div>
-          </div>
-
-          <div class="leg-section" style="padding-bottom:10px">
-            <div class="leg-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="20" x2="18" y2="10"/>
-                <line x1="12" y1="20" x2="12" y2="4"/>
-                <line x1="6" y1="20" x2="6" y2="14"/>
-              </svg>
-              <span>Ниво на запълване</span>
-            </div>
-            <div class="leg-fill-row">
-              <div class="leg-fill-bar"><div class="leg-fill-inner" style="width:92%;background:#ef4444;box-shadow:0 0 5px rgba(239,68,68,0.7)"></div></div>
-              <span class="leg-fill-label" style="color:#ef4444">&gt;85% Критично</span>
-            </div>
-            <div class="leg-fill-row">
-              <div class="leg-fill-bar"><div class="leg-fill-inner" style="width:70%;background:#f97316;box-shadow:0 0 5px rgba(249,115,22,0.7)"></div></div>
-              <span class="leg-fill-label" style="color:#f97316">65–85% Високо</span>
-            </div>
-            <div class="leg-fill-row">
-              <div class="leg-fill-bar"><div class="leg-fill-inner" style="width:50%;background:#f59e0b;box-shadow:0 0 5px rgba(245,158,11,0.7)"></div></div>
-              <span class="leg-fill-label" style="color:#f59e0b">45–65% Средно</span>
-            </div>
-            <div class="leg-fill-row">
-              <div class="leg-fill-bar"><div class="leg-fill-inner" style="width:25%;background:#10b981;box-shadow:0 0 5px rgba(16,185,129,0.7)"></div></div>
-              <span class="leg-fill-label" style="color:#10b981">&lt;45% Нормално</span>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </aside>
 
     <button
       class="edge-handle edge-handle--right"

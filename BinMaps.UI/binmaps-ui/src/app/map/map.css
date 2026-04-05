@@ -3665,6 +3665,7 @@
   inset: 0;
   width: 100%;
   height: 100%;
+  background-color: #141e2e;
 }
 
 /* Leaflet stays rendered but invisible when 3D is on */
@@ -3867,55 +3868,4 @@
   border-color: rgba(16, 185, 129, 0.55) !important;
   color: #34d399 !important;
   box-shadow: 0 0 8px rgba(16, 185, 129, 0.20);
-}
-/* ══════════════════════════════════════════════════════════════════════════
-   LEGEND SIDEBAR — collapsible panel, same as route/report panels
-   ══════════════════════════════════════════════════════════════════════════ */
-
-/* Narrower than the full 380px sidebars — legend content is compact */
-.map-sidebar--legend {
-  width: 220px;
-  border-left: 1px solid rgba(6, 182, 212, 0.20);
-  box-shadow:
-    var(--shadow-lg),
-    inset 1px 0 0 rgba(6, 182, 212, 0.10);
-  overflow-y: auto;
-  height: 100%;
-}
-
-.map-sidebar--legend .panel-header::after {
-  background: linear-gradient(90deg, var(--accent-cyber), transparent);
-}
-
-.map-sidebar--legend .panel-header svg {
-  color: var(--accent-cyber);
-  filter: drop-shadow(var(--shadow-glow-cyan));
-}
-
-/* Stack multiple edge handles on the right side vertically */
-.edge-handle--legend {
-  /* position below the report edge handle */
-  top: calc(50% + 36px) !important;
-  border-color: rgba(6, 182, 212, 0.25) !important;
-  color: var(--accent-cyber) !important;
-}
-
-.edge-handle--legend.is-open {
-  background: rgba(6, 182, 212, 0.12) !important;
-  border-color: rgba(6, 182, 212, 0.45) !important;
-}
-
-.edge-handle--legend:hover {
-  background: rgba(6, 182, 212, 0.10) !important;
-  border-color: rgba(6, 182, 212, 0.40) !important;
-}
-
-/* On mobile legend sidebar goes full-width like the others */
-@media (max-width: 768px) {
-  .map-sidebar--legend {
-    width: 100%;
-    max-width: 100%;
-    height: auto;
-    max-height: 50vh;
-  }
 }
