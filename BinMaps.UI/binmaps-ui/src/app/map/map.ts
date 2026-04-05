@@ -916,6 +916,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
       this.cluster.addLayer(m);
     });
+
+    // Keep 3D map in sync with whatever filter/state produced this render.
+    if (this.show3DView && this.map3dStyleLoaded) {
+      this.sync3DBins();
+    }
   }
 
 
@@ -1935,7 +1940,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
-    this.map3d.addControl(new mbx.NavigationControl({ showCompass: true, showZoom: false }), 'bottom-left');
+    this.map3d.addControl(new mbx.NavigationControl({ showCompass: true, showZoom: true }), 'bottom-left');
 
     this.map3d.on('load', () => {
       this.map3dStyleLoaded = true;
@@ -2071,7 +2076,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     const typeNames = ['mixed', 'plastic', 'paper', 'glass'];
 
-    const features = this.allBins.map(b => {
+    // Use filtered() so zone/type/fill filters from the filter panel
+    // apply in 3D exactly as they do in the 2D Leaflet map.
+    const binsToShow = this.filtered();
+
+    const features = binsToShow.map(b => {
       const isFire    = b.status === 2 || ((b.temperature ?? 0) > 55 && b.fillPercentage > 70);
       const isBroken  = b.status === 1 || b.status === 3;
       const iconImage = isFire ? 'icon3d-burning' : isBroken ? 'icon3d-broken'
@@ -2275,23 +2284,30 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       paint: { 'line-color': lineColor, 'line-width': 4.5, 'line-opacity': 0.92 }
     });
 
-    // Stop outer circle
+    // Stop circles — same blue style as the 2D .route-stop-marker
     this.map3d.addLayer({
       id: 'stops-outer-3d', type: 'circle', source: 'stops-3d',
-      paint: { 'circle-radius': 13, 'circle-color': '#0f172a', 'circle-stroke-width': 2, 'circle-stroke-color': lineColor }
+      paint: {
+        'circle-radius':        16,
+        'circle-color':         '#3b82f6',
+        'circle-stroke-width':  3,
+        'circle-stroke-color':  '#ffffff'
+      }
     });
 
-
-    
     this.map3d.addLayer({
       id: 'stops-label-3d', type: 'symbol', source: 'stops-3d',
       layout: {
-        'text-field':      ['to-string', ['get', 'stop']],
-        'text-font':       ['Open Sans Semibold', 'Arial Unicode MS Regular'],
-        'text-size':       11,
+        'text-field':         ['to-string', ['get', 'stop']],
+        'text-font':          ['Open Sans Semibold', 'Arial Unicode MS Regular'],
+        'text-size':          12,
         'text-allow-overlap': true
       },
-      paint: { 'text-color': '#f1f5f9' }
+      paint: {
+        'text-color': '#ffffff',
+        'text-halo-color': 'rgba(37,99,235,0.5)',
+        'text-halo-width': 1
+      }
     });
   }
 
