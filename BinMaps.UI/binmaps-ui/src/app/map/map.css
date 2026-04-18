@@ -3888,3 +3888,42 @@
   color: #34d399 !important;
   box-shadow: 0 0 8px rgba(16, 185, 129, 0.20);
 }
+/* ───────────────────────────────────────────────────────────────
+   Missing-container FAB
+   Sits bottom-left of the map so it doesn't collide with the
+   legend in the bottom-right corner. Visible only to logged-in
+   citizens (User role) and drivers.
+   ─────────────────────────────────────────────────────────────── */
+.missing-container-fab {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35),
+              0 2px 4px rgba(0, 0, 0, 0.08);
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+  user-select: none;
+}
+.missing-container-fab:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.45),
+              0 3px 6px rgba(0, 0, 0, 0.10);
+}
+.missing-container-fab:active {
+  transform: translateY(0);
+}
+.missing-container-fab svg {
+  flex-shrink: 0;
+}

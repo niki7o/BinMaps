@@ -558,7 +558,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       Fire: 'Пожар',
       SensorBroken: 'Повреден сензор',
       TruckProblem: 'Проблем с камион',
-      ContainerDamage: 'Повреден контейнер'
+      ContainerDamage: 'Повреден контейнер',
+      MissingContainer: 'Заявка за нов контейнер'
     };
     return map[type] ?? type;
   }
@@ -568,6 +569,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     if (type === 'Full') return 'badge--warn';
     if (type === 'ContainerDamage') return 'badge--offline';
     if (type === 'TruckProblem') return 'badge--warn';
+    if (type === 'MissingContainer') return 'badge--cyan';
     return 'badge--offline';
   }
 

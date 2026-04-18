@@ -1,0 +1,138 @@
+<div class="request-container-page">
+  <header class="page-header">
+    <div>
+      <button type="button" class="back-btn" (click)="cancel()">← Назад към картата</button>
+      <h1>Предложи локация за нов контейнер</h1>
+      <p class="subtitle">
+        Маркирайте на картата къде според вас трябва да има контейнер.
+        Заявката ви ще бъде прегледана от администратор.
+      </p>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- ── Map ─────────────────────────────────────────────────── -->
+    <section class="map-panel">
+      <div class="map-hint" *ngIf="lat === null">
+        <span class="dot"></span>
+        <span>Кликнете на картата за да маркирате локация</span>
+      </div>
+      <div id="request-container-map" class="map"></div>
+      <div class="map-footer" *ngIf="lat !== null">
+        <div>
+          <label>Ширина (lat)</label>
+          <span>{{ lat | number:'1.5-5' }}</span>
+        </div>
+        <div>
+          <label>Дължина (lng)</label>
+          <span>{{ lng | number:'1.5-5' }}</span>
+        </div>
+        <button type="button" class="link-btn" (click)="clearLocation()">
+          Изчисти
+        </button>
+      </div>
+    </section>
+
+    <!-- ── Form ────────────────────────────────────────────────── -->
+    <section class="form-panel">
+      <form (ngSubmit)="onSubmit()" #form="ngForm" novalidate>
+        <!-- Info banner -->
+        <div class="info-banner">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <div>
+            <strong>Как работи?</strong>
+            <p>
+              Подавате заявка за нов контейнер. След одобрение от администратор,
+              контейнерът ще бъде добавен и ще получите репутационен бонус.
+            </p>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="field">
+          <label for="description">
+            Описание <span class="required">*</span>
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            rows="4"
+            placeholder="Защо е нужен контейнер тук? Напр. „На ъгъла на ул. Иван Вазов 10, до училището — на 200 м няма контейнер."
+            [maxlength]="descriptionMaxLength"
+            [(ngModel)]="description"
+            required></textarea>
+          <small>
+            {{ description.length }}/{{ descriptionMaxLength }}
+            <span *ngIf="description.length > 0 && description.length < descriptionMinLength"
+                  class="warn">
+              — минимум {{ descriptionMinLength }} символа
+            </span>
+          </small>
+        </div>
+
+        <!-- Suggested trash type -->
+        <div class="field">
+          <label for="type">Предложен тип отпадък <small>(незадължително)</small></label>
+          <select id="type" name="type" [(ngModel)]="suggestedTrashType">
+            <option *ngFor="let t of trashTypeOptions" [ngValue]="t.value">
+              {{ t.label }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Photo -->
+        <div class="field">
+          <label for="photo">Снимка на локацията <small>(незадължително)</small></label>
+          <input
+            id="photo"
+            type="file"
+            accept="image/*"
+            (change)="onPhotoSelected($event)" />
+          <div *ngIf="photoPreviewUrl" class="photo-preview">
+            <img [src]="photoPreviewUrl" alt="Преглед" />
+            <button type="button" class="link-btn" (click)="clearPhoto()">
+              Премахни
+            </button>
+          </div>
+        </div>
+
+        <!-- Location readback -->
+        <div class="field coords-field">
+          <label>Избрана локация</label>
+          <div *ngIf="lat === null" class="coords-empty">
+            Не е избрана — кликнете на картата
+          </div>
+          <div *ngIf="lat !== null" class="coords-filled">
+            <span>{{ lat | number:'1.5-5' }}, {{ lng | number:'1.5-5' }}</span>
+            <small *ngIf="!inBounds" class="warn">
+              ⚠ Извън пилотната зона (София)
+            </small>
+          </div>
+        </div>
+
+        <!-- Messages -->
+        <div class="msg msg-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+        <div class="msg msg-success" *ngIf="successMessage">
+          {{ successMessage }}
+        </div>
+
+        <!-- Actions -->
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" (click)="cancel()">
+            Отказ
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="!canSubmit">
+            {{ submitting ? 'Изпращане…' : 'Изпрати заявка' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
