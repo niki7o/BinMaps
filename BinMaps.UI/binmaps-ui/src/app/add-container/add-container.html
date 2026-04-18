@@ -1,0 +1,128 @@
+<div class="add-container-page">
+  <header class="page-header">
+    <div>
+      <button type="button" class="back-btn" (click)="cancel()">← Назад</button>
+      <h1>Добавяне на контейнер</h1>
+      <p class="subtitle">
+        Кликнете на картата за да изберете локацията, след това попълнете детайлите.
+      </p>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- ── Map ─────────────────────────────────────────────────── -->
+    <section class="map-panel">
+      <div class="map-hint" *ngIf="lat === null">
+        <span class="dot"></span>
+        <span>Кликнете някъде на картата</span>
+      </div>
+      <div id="add-container-map" class="map"></div>
+      <div class="map-footer" *ngIf="lat !== null">
+        <div>
+          <label>Ширина (lat)</label>
+          <span>{{ lat | number:'1.5-5' }}</span>
+        </div>
+        <div>
+          <label>Дължина (lng)</label>
+          <span>{{ lng | number:'1.5-5' }}</span>
+        </div>
+        <button type="button" class="link-btn" (click)="clearLocation()">
+          Изчисти
+        </button>
+      </div>
+    </section>
+
+    <!-- ── Form ────────────────────────────────────────────────── -->
+    <section class="form-panel">
+      <form (ngSubmit)="onSubmit()" #form="ngForm" novalidate>
+        <!-- Area -->
+        <div class="field">
+          <label for="area">Зона</label>
+          <select
+            id="area"
+            name="area"
+            [(ngModel)]="areaId"
+            required
+            [disabled]="loadingAreas">
+            <option value="" disabled>
+              {{ loadingAreas ? 'Зареждане…' : 'Изберете зона' }}
+            </option>
+            <option *ngFor="let a of areas" [value]="a.id">
+              {{ a.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Trash type -->
+        <div class="field">
+          <label for="type">Тип отпадък</label>
+          <select id="type" name="type" [(ngModel)]="trashType" required>
+            <option *ngFor="let t of trashTypeOptions" [ngValue]="t.value">
+              {{ t.label }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Capacity -->
+        <div class="field">
+          <label for="capacity">Капацитет (литри)</label>
+          <input
+            id="capacity"
+            name="capacity"
+            type="number"
+            min="100"
+            max="100000"
+            step="10"
+            [(ngModel)]="capacity"
+            required />
+          <small>Между 100 и 100 000 л.</small>
+        </div>
+
+        <!-- Sensor -->
+        <div class="field checkbox-field">
+          <label>
+            <input
+              type="checkbox"
+              name="hasSensor"
+              [(ngModel)]="hasSensor" />
+            Има IoT сензор
+          </label>
+          <small>Ако е активирано, контейнерът започва със 100% батерия.</small>
+        </div>
+
+        <!-- Location readback (read-only, populated by map click) -->
+        <div class="field coords-field">
+          <label>Локация</label>
+          <div *ngIf="lat === null" class="coords-empty">
+            Не е избрана — кликнете на картата
+          </div>
+          <div *ngIf="lat !== null" class="coords-filled">
+            <span>{{ lat | number:'1.5-5' }}, {{ lng | number:'1.5-5' }}</span>
+            <small *ngIf="!inBounds" class="warn">
+              ⚠ Извън пилотната зона (София)
+            </small>
+          </div>
+        </div>
+
+        <!-- Messages -->
+        <div class="msg msg-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+        <div class="msg msg-success" *ngIf="successMessage">
+          {{ successMessage }}
+        </div>
+
+        <!-- Actions -->
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" (click)="cancel()">
+            Отказ
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="!canSubmit">
+            {{ submitting ? 'Запис…' : 'Добави контейнер' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>

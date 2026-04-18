@@ -4,6 +4,7 @@ import { RegisterComponent } from './register/register';
 import { MapComponent } from './map/map';
 import { HomeComponent } from './home/home';
 import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard';
+import { AddContainerComponent } from './add-container/add-container';
 import { AnalyticsDashboardComponent } from './bin-details/analytics-dashboard.component';
 import { ProfileComponent } from './profile.component/profile.component';
 import { AboutComponent } from './about/about';
@@ -26,6 +27,7 @@ export const routes: Routes = [
   { path: 'profile',  component: ProfileComponent, canActivate: [authGuard] },
   { path: 'notifications', component: NotificationsComponent,  canActivate: [authGuard] },
   { path: 'admin', component: AdminDashboardComponent,canActivate: [adminGuard] },
+  { path: 'admin/add-container', component: AddContainerComponent, canActivate: [adminGuard] },
   { path: 'forbidden',   component: ErrorPageComponent, data: { type: '403' } },
   { path: 'home', redirectTo: '' },
   { path: '**',component: ErrorPageComponent, data: { type: '404' } },
