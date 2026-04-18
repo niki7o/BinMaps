@@ -330,7 +330,7 @@ export class AnalyticsDashboardComponent implements OnInit, AfterViewInit, OnDes
     this.injectMapStyles();
 
     this.hotspotMap = L.map('hotspot-map', {
-      center: [42.6977, 23.3219],
+      center: environment.region.center,
       zoom: 12,
       zoomControl: false,
       scrollWheelZoom: false,

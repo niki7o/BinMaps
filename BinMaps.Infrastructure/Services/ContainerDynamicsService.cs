@@ -5,6 +5,7 @@ using BinMaps.Infrastructure.Hubs;
 using BinMaps.Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -18,8 +19,12 @@ public sealed class ContainerDynamicsService : BackgroundService
     private static readonly TimeSpan UpdateInterval = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan WeatherCacheDuration = TimeSpan.FromMinutes(30);
     private const int BatchSize = 50;
-    private const double SofiaLat = 42.6977;
-    private const double SofiaLng  = 23.3219;
+    // Fallback coordinates used only when Region:CenterLat/CenterLng are not
+    // configured in appsettings.json. In that case we default to Sofia center,
+    // which is the pilot region for this project, and log a warning so
+    // operators notice the missing config in other deployments.
+    private const double FallbackLat = 42.6977;
+    private const double FallbackLng = 23.3219;
     private const double FallbackAmbient = 20.0;
     private const double LowBatteryThreshold = 20.0;
 
@@ -30,10 +35,12 @@ public sealed class ContainerDynamicsService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IHubContext<ContainerHub> _hubContext;
     private readonly ILogger<ContainerDynamicsService> _logger;
+    private readonly double _regionLat;
+    private readonly double _regionLng;
 
     private readonly HashSet<int> _lowBatteryNotified = new();
 
-    
+
     private double _cachedTemp = FallbackAmbient;
     private DateTime _tempCachedAt = DateTime.MinValue;
 
@@ -44,11 +51,23 @@ public sealed class ContainerDynamicsService : BackgroundService
     public ContainerDynamicsService(
         IServiceScopeFactory scopeFactory,
         IHubContext<ContainerHub> hubContext,
-        ILogger<ContainerDynamicsService> logger)
+        ILogger<ContainerDynamicsService> logger,
+        IConfiguration configuration)
     {
         _scopeFactory = scopeFactory;
         _hubContext  = hubContext;
         _logger  = logger;
+
+        var regionSection = configuration.GetSection("Region");
+        _regionLat = regionSection.GetValue<double?>("CenterLat") ?? FallbackLat;
+        _regionLng = regionSection.GetValue<double?>("CenterLng") ?? FallbackLng;
+
+        if (!regionSection.Exists() || regionSection["CenterLat"] is null)
+        {
+            _logger.LogWarning(
+                "Region:CenterLat/CenterLng not configured — falling back to Sofia ({Lat}, {Lng}).",
+                FallbackLat, FallbackLng);
+        }
     }
 
     #endregion
@@ -116,7 +135,7 @@ public sealed class ContainerDynamicsService : BackgroundService
 
         try
         {
-            _cachedTemp = await weather.GetAmbientTemperatureAsync(SofiaLat, SofiaLng) ?? FallbackAmbient;
+            _cachedTemp = await weather.GetAmbientTemperatureAsync(_regionLat, _regionLng) ?? FallbackAmbient;
             _tempCachedAt = DateTime.UtcNow;
             return _cachedTemp;
         }

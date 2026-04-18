@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { Subscription } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 interface Zone {
   name: string;
@@ -51,7 +52,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
         boxZoom: false,
         keyboard: false,
         touchZoom: false
-      }).setView([42.6977, 23.3219], 13);
+      }).setView(environment.region.center, environment.region.defaultZoom);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
     } catch (e) { /* map container may not exist on some routes */ }

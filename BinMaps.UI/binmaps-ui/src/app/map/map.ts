@@ -285,7 +285,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
 
     this.map = L.map('map', {
-      center: [42.6977, 23.3219],
+      center: environment.region.center,
       zoom: 12,
       minZoom: 11,
       maxZoom: 18,
