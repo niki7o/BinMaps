@@ -38,6 +38,14 @@ namespace BinMaps.Data.Entities
         [MaxLength(500)]
         public string? PhotoURL { get; set; }
 
+        // ── Location (only used for ReportType.MissingContainer) ──
+        // null for all other report types (they reference a TrashContainerId instead).
+        [Range(-180, 180)]
+        public double? LocationX { get; set; }   // longitude
+
+        [Range(-90, 90)]
+        public double? LocationY { get; set; }   // latitude
+
         #endregion
 
         #region Scoring

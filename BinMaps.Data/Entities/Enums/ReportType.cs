@@ -8,8 +8,13 @@
         SensorBroken,
 
 
-        //for the driver 
+        //for the driver
         TruckProblem,
         ContainerDamage,
+
+        // for the citizen (User/Driver) — suggests a NEW container placement.
+        // No TrashContainerId; LocationX/Y on the Report are required.
+        // Does not run AI image scoring; always goes to admin review.
+        MissingContainer,
     }
 }

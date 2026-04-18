@@ -59,8 +59,9 @@ public sealed class ReportService : IReportService
         var isAdmin = role == "Admin";
         var isDriver = role == "Driver";
         var isTruckReport = dto.ReportType == ReportType.TruckProblem;
+        var isMissingContainerRequest = dto.ReportType == ReportType.MissingContainer;
 
-       
+
         var isAiApplicable = dto.ReportType == ReportType.Full ||
                              dto.ReportType == ReportType.Fire;
 
@@ -77,11 +78,18 @@ public sealed class ReportService : IReportService
             ? aiScore
             : CalculateConfidence(aiScore, userReputation, hasPhoto);
 
-     
+
         bool autoApprove;
-        if (isAdmin)
+        if (isMissingContainerRequest)
         {
-          
+            // A missing-container suggestion is a PROPOSAL. It must be reviewed
+            // by an admin who has domain knowledge (area, capacity, trash type).
+            // Never auto-approve — the admin creates the actual container.
+            autoApprove = false;
+        }
+        else if (isAdmin)
+        {
+
             autoApprove = true;
         }
         else if (isDriver)
@@ -110,8 +118,12 @@ public sealed class ReportService : IReportService
             ReportType = dto.ReportType,
             Description= dto.Description,
             PhotoURL  = dto.PhotoURL,
+            // Only MissingContainer carries coordinates on the Report itself;
+            // other types reference a container via TrashContainerId.
+            LocationX = isMissingContainerRequest ? dto.LocationX : null,
+            LocationY = isMissingContainerRequest ? dto.LocationY : null,
             AI_Score = aiScore,
-            UserReputationOnSubmit = isDriver ? 0 : userReputation,   
+            UserReputationOnSubmit = isDriver ? 0 : userReputation,
             FinalConfidence  = finalConfidence,
             IsApproved = autoApprove ? true : null
         };
@@ -120,8 +132,8 @@ public sealed class ReportService : IReportService
 
         if (autoApprove)
         {
-            if (dto.TrashContainerId > 0)
-                await _containerUpdateService.ApplyReportEffectAsync(dto.TrashContainerId, dto.ReportType);
+            if (dto.TrashContainerId is int containerId && containerId > 0)
+                await _containerUpdateService.ApplyReportEffectAsync(containerId, dto.ReportType);
             if (!isDriver)
                 await IncrementReputationAndNotifyAsync(userId, userName);
         }
@@ -150,11 +162,23 @@ public sealed class ReportService : IReportService
             });
         }
 
-        string message = autoApprove
-            ? "Сигналът е автоматично одобрен."
-            : hasPhoto && !containerDetected
-                ? "Не е открит контейнер на снимката — сигналът е изпратен за модерация."
-                : "Сигналът е изпратен за модерация.";
+        string message;
+        if (isMissingContainerRequest)
+        {
+            message = "Заявката за нов контейнер е изпратена за преглед от администратор.";
+        }
+        else if (autoApprove)
+        {
+            message = "Сигналът е автоматично одобрен.";
+        }
+        else if (hasPhoto && !containerDetected)
+        {
+            message = "Не е открит контейнер на снимката — сигналът е изпратен за модерация.";
+        }
+        else
+        {
+            message = "Сигналът е изпратен за модерация.";
+        }
 
         return new ReportResponseDto
         {

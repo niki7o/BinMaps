@@ -86,6 +86,7 @@ public sealed class Program
         #region Application Services
 
         builder.Services.AddMemoryCache();
+        builder.Services.AddSingleton<Random>(_ => new Random());
         builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
         builder.Services.AddScoped<ITruckRouteService, TruckRouteService>();
         builder.Services.AddScoped<IAuthService, AuthService>();

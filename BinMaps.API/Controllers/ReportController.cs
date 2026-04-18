@@ -1,7 +1,9 @@
-﻿using BinMaps.Infrastructure.Services.Interfaces;
+﻿using BinMaps.Data.Entities.Enums;
+using BinMaps.Infrastructure.Services.Interfaces;
 using BinMaps.Shared.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Security.Claims;
 
@@ -16,12 +18,18 @@ public sealed class ReportsController : ControllerBase
     private readonly IReportService _reportService;
     private readonly IAIService     _aiService;
     private readonly IWebHostEnvironment _environment;
+    private readonly IConfiguration _configuration;
 
-    public ReportsController(IReportService reportService, IAIService aiService, IWebHostEnvironment environment)
+    public ReportsController(
+        IReportService reportService,
+        IAIService aiService,
+        IWebHostEnvironment environment,
+        IConfiguration configuration)
     {
         _reportService = reportService;
         _aiService     = aiService;
         _environment   = environment;
+        _configuration = configuration;
     }
 
     #region Endpoints
@@ -34,12 +42,64 @@ public sealed class ReportsController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
+        // ── Type-specific validation ─────────────────────────────────
+        if (dto.ReportType == ReportType.MissingContainer)
+        {
+            if (dto.LocationX is null || dto.LocationY is null)
+            {
+                return Problem(
+                    title: "Missing location",
+                    detail: "A MissingContainer request requires map coordinates.",
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            if (dto.TrashContainerId is > 0)
+            {
+                return Problem(
+                    title: "Invalid payload",
+                    detail: "MissingContainer requests must NOT reference an existing container.",
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            // Region bounds check (same policy as POST /api/containers)
+            var bounds = _configuration.GetSection("Region:Bounds");
+            double? south = bounds.GetValue<double?>("South");
+            double? west  = bounds.GetValue<double?>("West");
+            double? north = bounds.GetValue<double?>("North");
+            double? east  = bounds.GetValue<double?>("East");
+            if (south is not null && west is not null && north is not null && east is not null)
+            {
+                if (dto.LocationY < south || dto.LocationY > north ||
+                    dto.LocationX < west  || dto.LocationX > east)
+                {
+                    return Problem(
+                        title: "Outside region bounds",
+                        detail: $"Coordinates ({dto.LocationY:F5}, {dto.LocationX:F5}) " +
+                                "are outside the configured pilot region.",
+                        statusCode: StatusCodes.Status400BadRequest);
+                }
+            }
+        }
+        else
+        {
+            if (dto.TrashContainerId is null or <= 0)
+            {
+                return Problem(
+                    title: "Missing container reference",
+                    detail: "This report type requires a TrashContainerId.",
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+        }
+
         try
         {
-    
+
             dto.PhotoURL = null;
             AIResultDto? aiResult = null;
-            if (dto.Photo is not null)
+            // Skip AI analysis for MissingContainer — the photo is of a street,
+            // not a trash bin, so the classifier would return noise.
+            bool runAi = dto.ReportType != ReportType.MissingContainer;
+            if (runAi && dto.Photo is not null)
             {
                 if (dto.PreComputedContainerDetected.HasValue)
                 {
