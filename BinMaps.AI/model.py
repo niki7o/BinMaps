@@ -1,30 +1,18 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+"""
+DEPRECATED — do not use.
 
+`BinFillCNN` was a from-scratch CNN architecture used in early prototyping.
+It was superseded by MobileNetV2 transfer learning (see `train.py` and `app.py`).
 
-class BinFillCNN(nn.Module):
-    def __init__(self):
-        super().__init__()
+The saved weights in `bin_fill_model.pth` are MobileNetV2 weights and are
+incompatible with this architecture. Importing this module for inference will
+produce random predictions because the state_dict keys do not match.
 
-        self.conv1 = nn.Conv2d(3, 16, 3, padding=1)
-        self.conv2 = nn.Conv2d(16, 32, 3, padding=1)
-        self.conv3 = nn.Conv2d(32, 64, 3, padding=1)
+If you see an ImportError from this module, it is intentional — update the
+calling code to use `app._build_model()` or the `/analyze` HTTP endpoint.
+"""
 
-        self.pool = nn.MaxPool2d(2, 2)
-
-        self.fc1 = nn.Linear(64 * 28 * 28, 128)
-        self.dropout = nn.Dropout(p=0.3)
-        self.fc2 = nn.Linear(128, 1)
-
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = self.pool(F.relu(self.conv3(x)))
-
-        x = x.view(x.size(0), -1)
-        x = F.relu(self.fc1(x))
-        x = self.dropout(x)
-        x = torch.sigmoid(self.fc2(x))
-
-        return x
+raise ImportError(
+    "BinMaps.AI.model is deprecated. The BinFillCNN architecture was replaced "
+    "by MobileNetV2 transfer learning. Use app.py / train.py instead."
+)
