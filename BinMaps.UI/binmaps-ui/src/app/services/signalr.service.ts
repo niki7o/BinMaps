@@ -3,6 +3,7 @@ import * as signalR from '@microsoft/signalr';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { NotificationService } from './notification.service';
+import { AuthService } from './auth.service';
 
 export interface ContainerUpdate {
   id: number;
@@ -58,7 +59,10 @@ export class ContainerSignalRService {
 
   private readonly _seenFires = new Set<number>();
 
-  constructor(private readonly notifService: NotificationService) {}
+  constructor(
+    private readonly notifService: NotificationService,
+    private readonly auth: AuthService
+  ) {}
 
   start(): void {
     if (this.hub) return;
@@ -97,6 +101,10 @@ export class ContainerSignalRService {
     const fullHubUrl = `${window.location.origin}${environment.hubUrl}`;
     return new signalR.HubConnectionBuilder()
       .withUrl(fullHubUrl, {
+        // Backend requires a JWT on /hubs/* — read from query string via
+        // JwtBearerEvents.OnMessageReceived. accessTokenFactory is what
+        // SignalR's client uses to append ?access_token=... on negotiate.
+        accessTokenFactory: () => this.auth.getToken() ?? '',
         transport:
           signalR.HttpTransportType.WebSockets |
           signalR.HttpTransportType.LongPolling
