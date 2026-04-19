@@ -21,15 +21,15 @@
     </div>
     <div class="admin__header-stats">
       <div class="admin__quick-stat">
-        <span class="admin__quick-stat-val text-warn">{{ stats.pendingReports ?? 0 }}</span>
+        <span class="admin__quick-stat-val text-warn">{{ stats.pendingReports }}</span>
         <span class="admin__quick-stat-label">Чакащи сигнали</span>
       </div>
       <div class="admin__quick-stat">
-        <span class="admin__quick-stat-val text-danger">{{ stats.criticalContainers ?? 0 }}</span>
+        <span class="admin__quick-stat-val text-danger">{{ stats.criticalContainers }}</span>
         <span class="admin__quick-stat-label">Критични контейнера</span>
       </div>
       <div class="admin__quick-stat">
-        <span class="admin__quick-stat-val text-eco">{{ stats.totalUsers ?? 0 }}</span>
+        <span class="admin__quick-stat-val text-eco">{{ stats.totalUsers }}</span>
         <span class="admin__quick-stat-label">Потребители</span>
       </div>
     </div>
@@ -444,7 +444,7 @@
                     <p class="font-semibold text-sm">{{ u.userName }}</p>
                     <p class="text-muted text-xs">{{ u.email }}</p>
                     <p class="ban-reason-inline text-xs" *ngIf="u.isBanned && u.banReason" title="{{ u.banReason }}">
-                      🚫 {{ u.banReason | slice:0:40 }}{{ (u.banReason?.length ?? 0) > 40 ? '…' : '' }}
+                      🚫 {{ u.banReason | slice:0:40 }}{{ u.banReason.length > 40 ? '…' : '' }}
                     </p>
                   </div>
                 </div>

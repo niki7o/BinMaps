@@ -50,6 +50,7 @@ export class ContainerSignalRService {
   private static readonly RECONNECT_MS = [0, 2000, 5000, 10000, 30000] as const;
 
   private hub!: signalR.HubConnection;
+  private intentionalStop = false;
 
   private readonly _updates$ = new BehaviorSubject<ContainerUpdate[]>([]);
   private readonly _truckProblems$ = new Subject<TruckProblemEvent>();
@@ -67,25 +68,41 @@ export class ContainerSignalRService {
   start(): void {
     if (this.hub) return;
 
+    if (!this.auth.getToken()) {
+      console.warn('SignalR start skipped — no auth token available.');
+      return;
+    }
+
+    this.intentionalStop = false;
     this.hub = this.buildHub();
     this.registerHandlers();
 
     this.hub.onclose(async () => {
+      if (this.intentionalStop) {
+        console.log('SignalR closed (intentional stop).');
+        return;
+      }
       console.warn('SignalR disconnected. Reconnecting...');
       await this.reconnectLoop();
     });
 
     this.hub.start().catch(err => {
       console.error('SignalR start error', err);
-      this.reconnectLoop();
+      if (!this.intentionalStop) this.reconnectLoop();
     });
   }
 
   private async reconnectLoop(): Promise<void> {
     let attempts = 0;
     while (attempts < 10) {
+      if (this.intentionalStop) return;
+      if (!this.auth.getToken()) {
+        console.warn('SignalR reconnect aborted — no auth token.');
+        return;
+      }
       try {
         await new Promise(r => setTimeout(r, 3000));
+        if (this.intentionalStop) return;
         await this.hub.start();
         console.log('SignalR reconnected');
         return;
@@ -95,7 +112,10 @@ export class ContainerSignalRService {
     }
   }
 
-  stop(): void { this.hub?.stop(); }
+  stop(): void {
+    this.intentionalStop = true;
+    this.hub?.stop();
+  }
 
   private buildHub(): signalR.HubConnection {
     const fullHubUrl = `${window.location.origin}${environment.hubUrl}`;
