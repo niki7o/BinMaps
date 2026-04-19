@@ -1121,3 +1121,78 @@ code, pre {
 @media (min-width: 769px) {
   .hide-desktop { display: none !important; }
 }
+
+/* ------------------------------------------------------------------
+ * Leaflet pin marker (CSS-only — no PNG dependency)
+ * Used by add-container + request-container pages where the admin /
+ * citizen places a pin on the map. The default Leaflet icon falls
+ * back to images/marker-icon.png which is not resolved correctly
+ * through Angular's bundler, so we ship a pure-CSS pin instead.
+ * ------------------------------------------------------------------ */
+.add-container-pin,
+.request-container-pin {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+.add-container-pin .pin-body,
+.request-container-pin .pin-body {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--eco-primary, #10b981);
+  box-shadow:
+    0 0 0 2px #fff,
+    0 6px 14px rgba(0, 0, 0, 0.35),
+    0 0 18px var(--eco-glow, rgba(16, 185, 129, 0.5));
+  animation: pin-drop 0.35s ease-out;
+}
+
+.add-container-pin .pin-dot,
+.request-container-pin .pin-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.add-container-pin .pin-shadow,
+.request-container-pin .pin-shadow {
+  position: absolute;
+  left: 8px;
+  top: 36px;
+  width: 16px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  filter: blur(2px);
+}
+
+/* Citizen pin — different colour so it's visually distinct from the
+ * admin "add" pin when the two pages are demoed back-to-back. */
+.request-container-pin .pin-body {
+  background: var(--tech-blue, #3b82f6);
+  box-shadow:
+    0 0 0 2px #fff,
+    0 6px 14px rgba(0, 0, 0, 0.35),
+    0 0 18px var(--tech-blue-glow, rgba(59, 130, 246, 0.5));
+}
+
+@keyframes pin-drop {
+  from {
+    transform: rotate(-45deg) translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(-45deg) translateY(0);
+    opacity: 1;
+  }
+}

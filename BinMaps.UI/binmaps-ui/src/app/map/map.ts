@@ -68,6 +68,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private map!: L.Map;
   private cluster!: any;
   private allBins: Bin[] = [];
+  /** Map bin id -> Leaflet marker. Used for in-place updates so that
+   *  clicking a bin doesn't close its popup on the next SignalR refresh. */
+  private binMarkers: Map<number, L.Marker> = new Map();
+  /** Leaflet layer group holding one polygon + one label per area. */
+  private areaLayer?: L.LayerGroup;
+  /** Signature of the last rendered area set, so we don't redraw every tick. */
+  private areaSignature = '';
   private activeFilter = { type: 'all', fill: 'all', zone: 'all', sort: 'none' };
   private filterEl?: HTMLElement;
   private routeLine?: L.Polyline;
@@ -890,37 +897,219 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
 
 
+  /**
+   * Diff-update markers on the cluster layer.
+   *
+   * Previously this method did `cluster.clearLayers()` followed by re-adding
+   * every marker. Every SignalR push (once per minute from the dynamics
+   * service) rebuilt the whole cluster — which closed any open popup and,
+   * combined with `chunkedLoading: true`, made the icons briefly disappear
+   * and "reload" on the map. Users perceived that as a loading spinner.
+   *
+   * The new version updates existing markers in place (icon + popup HTML)
+   * and only adds/removes markers whose id entered or left the filtered set.
+   * A marker with an open popup is preserved, so the popup stays visible
+   * while its numbers tick forward in real time.
+   */
   private renderBins(bins: Bin[]) {
-    this.cluster.clearLayers();
+    const nextIds = new Set(bins.map(b => b.id));
 
+    // 1) Remove markers that no longer belong to the filtered set.
+    for (const [id, marker] of this.binMarkers) {
+      if (!nextIds.has(id)) {
+        this.cluster.removeLayer(marker);
+        this.binMarkers.delete(id);
+      }
+    }
+
+    // 2) Add new markers, refresh existing ones in place.
     bins.forEach(bin => {
-      const m = L.marker(
-        [bin.locationY, bin.locationX],
-        { icon: this.createBinIcon(bin), binId: bin.id } as any
-      );
+      let marker = this.binMarkers.get(bin.id);
 
-      if (!this.isGuest) {
-        m.bindPopup(this.createPopup(bin), { maxWidth: 280, className: 'bpp-container' });
+      if (!marker) {
+        marker = L.marker(
+          [bin.locationY, bin.locationX],
+          { icon: this.createBinIcon(bin), binId: bin.id } as any
+        );
+
+        if (!this.isGuest) {
+          marker.bindPopup(
+            this.createPopup(bin),
+            { maxWidth: 280, className: 'bpp-container' }
+          );
+        }
+
+        if ((this.isUser || this.isDriver) && !this.navigationActive) {
+          marker.on('click', () => {
+            this.selectedBinForReport = bin;
+            this.reportResult = null;
+            this.reportSubmitting = false;
+
+            const el = document.getElementById('selected-bin-id') as HTMLInputElement;
+            if (el) el.value = `Контейнер #${bin.id}`;
+          });
+        }
+
+        this.binMarkers.set(bin.id, marker);
+        this.cluster.addLayer(marker);
+        return;
       }
 
-      if ((this.isUser || this.isDriver) && !this.navigationActive) {
-        m.on('click', () => {
-          this.selectedBinForReport = bin;
-          this.reportResult = null;
-          this.reportSubmitting = false;
+      // Existing marker — refresh icon and popup HTML in place, so the
+      // live numbers update without destroying the DOM or closing the popup.
+      marker.setIcon(this.createBinIcon(bin));
 
-          const el = document.getElementById('selected-bin-id') as HTMLInputElement;
-          if (el) el.value = `Контейнер #${bin.id}`;
-        });
+      const popup = marker.getPopup();
+      if (popup) {
+        popup.setContent(this.createPopup(bin));
       }
 
-      this.cluster.addLayer(m);
+      // If coordinates somehow changed (admin edit), reposition without
+      // re-adding to the cluster.
+      const ll = marker.getLatLng();
+      if (ll.lat !== bin.locationY || ll.lng !== bin.locationX) {
+        marker.setLatLng([bin.locationY, bin.locationX]);
+      }
     });
+
+    // Draw/refresh the zone boundary layer. Cheap — runs only when the
+    // set of areas or their bin positions actually changed.
+    this.renderAreaBoundaries(bins);
 
     // Keep 3D map in sync with whatever filter/state produced this render.
     if (this.show3DView && this.map3dStyleLoaded) {
       this.sync3DBins();
     }
+  }
+
+  // ---------------------------------------------------------------------
+  // Zone boundaries
+  // ---------------------------------------------------------------------
+
+  /**
+   * Draw a soft polygon around every zone's bins so users can see where
+   * one area ends and the next one begins. We build the hull from the
+   * visible bin positions instead of asking the backend for geometry —
+   * that keeps the feature client-side and avoids a new endpoint.
+   */
+  private renderAreaBoundaries(bins: Bin[]) {
+    // Group bins by areaId, skipping zones with fewer than 3 containers
+    // (a hull needs 3+ points and a 1-2-bin area isn't meaningful anyway).
+    const byArea = new Map<string, [number, number][]>();
+    for (const b of bins) {
+      if (!b.areaId) continue;
+      if (!byArea.has(b.areaId)) byArea.set(b.areaId, []);
+      byArea.get(b.areaId)!.push([b.locationY, b.locationX]);
+    }
+
+    // Build a cheap signature so we skip redrawing identical geometry.
+    const signature = [...byArea.entries()]
+      .map(([k, pts]) => `${k}:${pts.length}`)
+      .sort()
+      .join('|');
+
+    if (signature === this.areaSignature && this.areaLayer) return;
+    this.areaSignature = signature;
+
+    if (this.areaLayer) {
+      this.map.removeLayer(this.areaLayer);
+      this.areaLayer = undefined;
+    }
+
+    const group = L.layerGroup();
+
+    // Stable colour per area name — hash the string so the same zone keeps
+    // the same tint across reloads.
+    const zoneColor = (name: string): string => {
+      let h = 0;
+      for (let i = 0; i < name.length; i++) {
+        h = (h * 31 + name.charCodeAt(i)) | 0;
+      }
+      const hue = Math.abs(h) % 360;
+      return `hsl(${hue}, 70%, 60%)`;
+    };
+
+    for (const [areaId, points] of byArea) {
+      if (points.length < 3) continue;
+
+      const hull = this.convexHull(points);
+      if (hull.length < 3) continue;
+
+      const color = zoneColor(areaId);
+
+      const polygon = L.polygon(hull, {
+        color,
+        weight: 2.5,
+        opacity: 0.85,
+        fillColor: color,
+        fillOpacity: 0.08,
+        dashArray: '6 4',
+        interactive: false,
+        className: 'area-boundary',
+      } as any);
+
+      group.addLayer(polygon);
+
+      // Zone name at the centroid.
+      const cx = hull.reduce((s, p) => s + p[0], 0) / hull.length;
+      const cy = hull.reduce((s, p) => s + p[1], 0) / hull.length;
+      const label = L.marker([cx, cy], {
+        interactive: false,
+        keyboard: false,
+        icon: L.divIcon({
+          className: 'area-label',
+          html: `<span style="background:rgba(15,23,42,0.78);color:${color};` +
+                `border:1px solid ${color};padding:2px 8px;border-radius:10px;` +
+                `font:600 11px 'DM Sans','Inter',sans-serif;white-space:nowrap;` +
+                `text-shadow:0 1px 2px rgba(0,0,0,0.6);` +
+                `">${areaId}</span>`,
+          iconSize: [1, 1],
+          iconAnchor: [0, 0],
+        }),
+      });
+      group.addLayer(label);
+    }
+
+    group.addTo(this.map);
+    // Keep zone polygons visually underneath the cluster markers.
+    (group as any).eachLayer?.((l: any) => l.bringToBack?.());
+    this.areaLayer = group;
+  }
+
+  /**
+   * Andrew's monotone chain convex hull. O(n log n). Input/output points
+   * are [lat, lng] pairs, which is exactly what Leaflet expects.
+   */
+  private convexHull(pts: [number, number][]): [number, number][] {
+    if (pts.length < 3) return pts.slice();
+
+    const sorted = [...pts].sort((a, b) =>
+      a[0] === b[0] ? a[1] - b[1] : a[0] - b[0]
+    );
+
+    const cross = (o: [number, number], a: [number, number], b: [number, number]) =>
+      (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+
+    const lower: [number, number][] = [];
+    for (const p of sorted) {
+      while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) {
+        lower.pop();
+      }
+      lower.push(p);
+    }
+
+    const upper: [number, number][] = [];
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      const p = sorted[i];
+      while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) {
+        upper.pop();
+      }
+      upper.push(p);
+    }
+
+    lower.pop();
+    upper.pop();
+    return lower.concat(upper);
   }
 
 

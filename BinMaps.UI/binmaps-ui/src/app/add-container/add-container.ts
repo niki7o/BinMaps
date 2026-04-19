@@ -51,6 +51,22 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
   private map?: any;
   private placedMarker?: any;
 
+  // Custom CSS-based marker — avoids Leaflet's default PNG icons,
+  // which do not bundle reliably through Angular (the default image
+  // path resolves relative to the CSS, not to the final built asset).
+  private readonly pinIcon = () =>
+    L.divIcon({
+      className: 'add-container-pin',
+      html:
+        '<div class="pin-body">' +
+          '<div class="pin-dot"></div>' +
+        '</div>' +
+        '<div class="pin-shadow"></div>',
+      iconSize: [32, 42],
+      iconAnchor: [16, 40],   // tip of the pin
+      popupAnchor: [0, -36]
+    });
+
   // ── Area polygons (loaded from assets/data/areas.geojson) ─────────
   // Used to derive the Area from map click: the admin should not be
   // able to place a bin in the city centre while tagging it as
@@ -110,7 +126,8 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
       this.placedMarker.setLatLng([lat, lng]);
     } else {
       this.placedMarker = L.marker([lat, lng], {
-        draggable: true
+        draggable: true,
+        icon: this.pinIcon()
       }).addTo(this.map);
 
       this.placedMarker.on('dragend', (e: any) => {

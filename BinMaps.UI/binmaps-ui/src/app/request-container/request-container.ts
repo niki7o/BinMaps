@@ -47,6 +47,21 @@ export class RequestContainerComponent implements AfterViewInit, OnDestroy {
   private map?: any;
   private placedMarker?: any;
 
+  // Same CSS-only pin as the admin add-container page — avoids the
+  // default Leaflet PNG icon which doesn't resolve through Angular.
+  private readonly pinIcon = () =>
+    L.divIcon({
+      className: 'request-container-pin',
+      html:
+        '<div class="pin-body">' +
+          '<div class="pin-dot"></div>' +
+        '</div>' +
+        '<div class="pin-shadow"></div>',
+      iconSize: [32, 42],
+      iconAnchor: [16, 40],
+      popupAnchor: [0, -36]
+    });
+
   readonly trashTypeOptions = [
     { value: null, label: 'Няма предпочитание' },
     { value: 0, label: 'Смесен' },
@@ -103,7 +118,8 @@ export class RequestContainerComponent implements AfterViewInit, OnDestroy {
       this.placedMarker.setLatLng([lat, lng]);
     } else {
       this.placedMarker = L.marker([lat, lng], {
-        draggable: true
+        draggable: true,
+        icon: this.pinIcon()
       }).addTo(this.map);
 
       this.placedMarker.on('dragend', (e: any) => {

@@ -3927,3 +3927,19 @@
 .missing-container-fab svg {
   flex-shrink: 0;
 }
+
+/* ───────────────────────────────────────────────────────────────
+   Zone boundary overlay
+   Drawn by MapComponent.renderAreaBoundaries() — a dashed polygon
+   per areaId with the zone name floating at its centroid. Kept
+   pointer-transparent so marker clicks still reach the cluster.
+   ─────────────────────────────────────────────────────────────── */
+.area-boundary {
+  pointer-events: none;
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.35));
+}
+.leaflet-marker-icon.area-label {
+  pointer-events: none !important;
+  background: transparent !important;
+  border: none !important;
+}
