@@ -70,7 +70,8 @@ public sealed class TrashContainersController : ControllerBase
             c.Status,
             c.HasSensor,
             c.Temperature,
-            c.BatteryPercentage
+            c.BatteryPercentage,
+            c.IsSeeded
         }).ToListAsync();
 
         return Ok(result);
@@ -328,18 +329,59 @@ public sealed class TrashContainersController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Removes a container from the map. Seeded containers are soft-deleted
+    /// (row stays, hidden via query filter, can be restored by admin). User-
+    /// created containers are hard-deleted together with any reports that
+    /// reference them.
+    /// </summary>
     [HttpDelete("{id:int}")]
     [Authorize(Roles = "Admin")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete([FromRoute] int id)
+    public async Task<IActionResult> Delete(
+        [FromRoute] int id,
+        [FromServices] BinMaps.Data.BinMapsDbContext db,
+        [FromServices] IHubContext<ContainerHub> hubContext)
     {
-        var container = await _containerRepo.GetByIdAsync(id);
-        if (container is null)
-            return NotFound();
+        var container = await db.TrashContainers
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Id == id);
+        if (container is null) return NotFound();
+        if (container.IsDeleted)
+            return BadRequest(new { message = "Контейнерът вече е изтрит." });
 
-        await _containerRepo.DeleteAsync(container);
-        return NoContent();
+        string mode;
+        int reportsRemoved = 0;
+
+        if (container.IsSeeded)
+        {
+            container.IsDeleted = true;
+            container.DeletedAt = DateTime.UtcNow;
+            container.DeletedByUserId = User.Identity?.Name;
+            mode = "soft";
+        }
+        else
+        {
+            var reports = await db.Reports
+                .Where(r => r.TrashContainerId == id)
+                .ToListAsync();
+            reportsRemoved = reports.Count;
+            if (reports.Count > 0) db.Reports.RemoveRange(reports);
+            db.TrashContainers.Remove(container);
+            mode = "hard";
+        }
+
+        await db.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Admin {Actor} {Mode}-deleted container #{Id} (seeded={Seeded}, reportsRemoved={R})",
+            User.Identity?.Name ?? "unknown", mode, id, container.IsSeeded, reportsRemoved);
+
+        // Tell every connected client to drop this marker from the map.
+        await hubContext.Clients.All.SendAsync("ContainerRemoved", new { id });
+
+        return Ok(new { id, mode, reportsRemoved });
     }
 
     #endregion

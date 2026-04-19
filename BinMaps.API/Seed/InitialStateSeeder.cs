@@ -165,7 +165,8 @@ namespace BinMaps.API.Seed
                     Status = TrashContainerStatus.Active,
                     Temperature = c.HasSensor ? CalculateInitialTemperature(weather, type, fill, now.Hour) : null,
                     BatteryPercentage = c.HasSensor ? _random.Next(60, 101) : null,
-                    LastSensorReadAt = c.HasSensor ? now : null
+                    LastSensorReadAt = c.HasSensor ? now : null,
+                    IsSeeded = true
                 };
             }).ToList();
 

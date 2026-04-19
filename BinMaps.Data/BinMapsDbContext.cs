@@ -56,6 +56,14 @@ namespace BinMaps.Data
 
                 entity.HasIndex(tc => new { tc.LocationX, tc.LocationY })
                     .HasDatabaseName("IX_Containers_Location");
+
+                entity.HasIndex(tc => tc.IsDeleted)
+                    .HasDatabaseName("IX_Containers_IsDeleted");
+
+                // Hide soft-deleted containers from every query by default.
+                // Admin endpoints that manage the trash bin (restore/list deleted)
+                // must call .IgnoreQueryFilters() explicitly.
+                entity.HasQueryFilter(tc => !tc.IsDeleted);
             });
         }
 

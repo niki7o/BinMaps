@@ -51,6 +51,7 @@ public sealed class AdminController : ControllerBase
     [HttpGet("containers")]
     public async Task<IActionResult> GetContainers()
     {
+        // Global query filter already hides soft-deleted containers.
         var containers = await _context.TrashContainers
             .AsNoTracking()
             .Select(c => new
@@ -62,11 +63,111 @@ public sealed class AdminController : ControllerBase
                 c.Status,
                 c.HasSensor,
                 c.Temperature,
-                c.BatteryPercentage
+                c.BatteryPercentage,
+                c.IsSeeded
             })
             .ToListAsync();
 
         return Ok(containers);
+    }
+
+    /// <summary>
+    /// Soft-deletes seeded containers (admin can restore them) and hard-deletes
+    /// everything else. Reports referencing the container are also removed on
+    /// hard-delete to respect the FK Restrict rule.
+    /// </summary>
+    [HttpDelete("containers/{id:int}")]
+    public async Task<IActionResult> DeleteContainer([FromRoute] int id)
+    {
+        var container = await _context.TrashContainers
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Id == id);
+        if (container is null) return NotFound();
+
+        if (container.IsDeleted)
+            return BadRequest(new { message = "Контейнерът вече е изтрит." });
+
+        if (container.IsSeeded)
+        {
+            // Soft-delete: keep row, hide via global query filter, allow restore.
+            container.IsDeleted = true;
+            container.DeletedAt = DateTime.UtcNow;
+            container.DeletedByUserId = _userManager.GetUserId(User);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                mode = "soft",
+                id = container.Id,
+                message = "Seed контейнерът е архивиран и може да бъде възстановен."
+            });
+        }
+
+        // Hard-delete: user-added container. Clean up related reports first
+        // because Report.TrashContainerId is Restrict-on-delete.
+        var reports = await _context.Reports
+            .Where(r => r.TrashContainerId == id)
+            .ToListAsync();
+        if (reports.Count > 0)
+            _context.Reports.RemoveRange(reports);
+
+        _context.TrashContainers.Remove(container);
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            mode = "hard",
+            id,
+            reportsRemoved = reports.Count,
+            message = "Контейнерът е премахнат окончателно."
+        });
+    }
+
+    [HttpGet("containers/deleted")]
+    public async Task<IActionResult> GetDeletedContainers()
+    {
+        var items = await _context.TrashContainers
+            .IgnoreQueryFilters()
+            .Where(c => c.IsDeleted)
+            .AsNoTracking()
+            .OrderByDescending(c => c.DeletedAt)
+            .Select(c => new
+            {
+                c.Id,
+                c.AreaId,
+                c.TrashType,
+                c.LocationX,
+                c.LocationY,
+                c.Capacity,
+                c.HasSensor,
+                c.DeletedAt,
+                c.DeletedByUserId
+            })
+            .ToListAsync();
+
+        return Ok(items);
+    }
+
+    [HttpPost("containers/{id:int}/restore")]
+    public async Task<IActionResult> RestoreContainer([FromRoute] int id)
+    {
+        var container = await _context.TrashContainers
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Id == id);
+        if (container is null) return NotFound();
+
+        if (!container.IsDeleted)
+            return BadRequest(new { message = "Контейнерът не е изтрит." });
+
+        if (!container.IsSeeded)
+            return BadRequest(new { message = "Само seed контейнери могат да бъдат възстановявани." });
+
+        container.IsDeleted = false;
+        container.DeletedAt = null;
+        container.DeletedByUserId = null;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { id, message = "Контейнерът е възстановен." });
     }
     #endregion
 
