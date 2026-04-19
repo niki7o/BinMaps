@@ -51,6 +51,12 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
   private map?: any;
   private placedMarker?: any;
 
+  // ── Area polygons (loaded from assets/data/areas.geojson) ─────────
+  // Used to derive the Area from map click: the admin should not be
+  // able to place a bin in the city centre while tagging it as
+  // "Надежда север". Area membership is a pure function of location.
+  private areaFeatures: { id: string; ring: number[][] }[] = [];
+
   readonly trashTypeOptions = [
     { value: 0 as const, label: 'Смесен' },
     { value: 1 as const, label: 'Пластмаса' },
@@ -67,6 +73,7 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.initMap();
     this.loadAreas();
+    this.loadAreaFeatures();
   }
 
   ngOnDestroy(): void {
@@ -96,6 +103,9 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
     this.lat = +lat.toFixed(6);
     this.lng = +lng.toFixed(6);
 
+    // Area is derived from coordinates — admin cannot override.
+    this.areaId = this.findAreaForPoint(this.lat, this.lng) ?? '';
+
     if (this.placedMarker) {
       this.placedMarker.setLatLng([lat, lng]);
     } else {
@@ -107,8 +117,59 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
         const p = e.target.getLatLng();
         this.lat = +p.lat.toFixed(6);
         this.lng = +p.lng.toFixed(6);
+        this.areaId = this.findAreaForPoint(this.lat, this.lng) ?? '';
       });
     }
+  }
+
+  // ── Area detection from coordinates ───────────────────────────────
+  private loadAreaFeatures(): void {
+    this.http.get<any>('assets/data/areas.geojson').subscribe({
+      next: gj => {
+        this.areaFeatures = (gj?.features ?? [])
+          .map((f: any) => ({
+            id: f?.properties?.id as string,
+            ring: (f?.geometry?.coordinates?.[0] ?? []) as number[][]
+          }))
+          .filter((x: { id: string; ring: number[][] }) =>
+            !!x.id && x.ring.length >= 3
+          );
+      },
+      error: err => console.warn('Failed to load areas.geojson', err)
+    });
+  }
+
+  private findAreaForPoint(lat: number, lng: number): string | null {
+    for (const f of this.areaFeatures) {
+      if (this.pointInPolygon(lat, lng, f.ring)) return f.id;
+    }
+    return null;
+  }
+
+  /** Ray-casting point-in-polygon. `ring` is GeoJSON [[lng, lat], ...]. */
+  private pointInPolygon(lat: number, lng: number, ring: number[][]): boolean {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const xi = ring[i][0], yi = ring[i][1];
+      const xj = ring[j][0], yj = ring[j][1];
+      const intersect =
+        ((yi > lat) !== (yj > lat)) &&
+        (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  // Helper for the template (shows the derived area's name).
+  get derivedAreaName(): string | null {
+    if (!this.areaId) return null;
+    return this.areas.find(a => a.id === this.areaId)?.name ?? this.areaId;
+  }
+
+  // True when the admin has placed a pin but the pin falls outside
+  // every known area polygon — submission must be blocked.
+  get locationOutsideAreas(): boolean {
+    return this.lat !== null && this.lng !== null && !this.areaId;
   }
 
   // ── Areas ─────────────────────────────────────────────────────────
@@ -118,9 +179,8 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
       next: areas => {
         this.areas = areas;
         this.loadingAreas = false;
-        if (areas.length > 0 && !this.areaId) {
-          this.areaId = areas[0].id;
-        }
+        // Do NOT auto-select an area here — area is derived from the
+        // clicked map location. See setLocation() / findAreaForPoint().
       },
       error: err => {
         this.loadingAreas = false;
@@ -212,6 +272,7 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
     }
     this.lat = null;
     this.lng = null;
+    this.areaId = '';
   }
 
   // ── Helpers ───────────────────────────────────────────────────────
@@ -229,6 +290,7 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
     }
     this.lat = null;
     this.lng = null;
+    this.areaId = '';
   }
 
   cancel(): void {

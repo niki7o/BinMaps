@@ -35,22 +35,23 @@
     <!-- ── Form ────────────────────────────────────────────────── -->
     <section class="form-panel">
       <form (ngSubmit)="onSubmit()" #form="ngForm" novalidate>
-        <!-- Area -->
+        <!-- Area — derived automatically from the clicked map location -->
         <div class="field">
-          <label for="area">Зона</label>
-          <select
-            id="area"
-            name="area"
-            [(ngModel)]="areaId"
-            required
-            [disabled]="loadingAreas">
-            <option value="" disabled>
-              {{ loadingAreas ? 'Зареждане…' : 'Изберете зона' }}
-            </option>
-            <option *ngFor="let a of areas" [value]="a.id">
-              {{ a.name }}
-            </option>
-          </select>
+          <label>Зона <small>(определя се от локацията)</small></label>
+          <div *ngIf="lat === null" class="coords-empty">
+            Ще бъде определена след клик на картата
+          </div>
+          <div *ngIf="lat !== null && derivedAreaName" class="coords-filled">
+            <span>{{ derivedAreaName }}</span>
+          </div>
+          <div *ngIf="locationOutsideAreas" class="coords-filled">
+            <small class="warn">
+              ⚠ Локацията е извън познатите зони — изберете точка вътре в
+              някоя от зоните на картата.
+            </small>
+          </div>
+          <!-- Keep the real value in the form for ngModel consistency -->
+          <input type="hidden" name="area" [(ngModel)]="areaId" />
         </div>
 
         <!-- Trash type -->
