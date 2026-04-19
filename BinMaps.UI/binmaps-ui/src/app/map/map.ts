@@ -20,6 +20,7 @@ interface Bin {
   status: number | null;
   locationX: number;
   locationY: number;
+  isSeeded?: boolean;
 }
 
 interface RouteResult {
@@ -71,10 +72,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   /** Map bin id -> Leaflet marker. Used for in-place updates so that
    *  clicking a bin doesn't close its popup on the next SignalR refresh. */
   private binMarkers: Map<number, L.Marker> = new Map();
-  /** Leaflet layer group holding one polygon + one label per area. */
-  private areaLayer?: L.LayerGroup;
-  /** Signature of the last rendered area set, so we don't redraw every tick. */
-  private areaSignature = '';
   private activeFilter = { type: 'all', fill: 'all', zone: 'all', sort: 'none' };
   private filterEl?: HTMLElement;
   private routeLine?: L.Polyline;
@@ -225,6 +222,35 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
       this.renderBins(this.filtered());
     });
+
+    // Admin deleted a container somewhere (here or another tab) — drop the
+    // marker from the map immediately so no-one keeps interacting with a
+    // container that no longer exists.
+    this.signalR.containerRemoved$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(id => this.removeBinLocally(id));
+
+    this.signalR.containerAdded$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(payload => {
+        if (!this.allBins.find(b => b.id === payload.id)) {
+          this.allBins.push(payload as Bin);
+          this.renderBins(this.filtered());
+        }
+      });
+  }
+
+  private removeBinLocally(id: number) {
+    const before = this.allBins.length;
+    this.allBins = this.allBins.filter(b => b.id !== id);
+    const marker = this.binMarkers.get(id);
+    if (marker) {
+      this.map?.removeLayer(marker);
+      this.binMarkers.delete(id);
+    }
+    if (this.allBins.length !== before) {
+      this.renderBins(this.filtered());
+    }
   }
 
   ngAfterViewInit() {
@@ -319,6 +345,21 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.currentMapStyle = saved;
     this.baseLayers[this.currentMapStyle].addTo(this.map);
     this.map.addLayer(this.cluster);
+
+    // Wire admin delete button (rendered inside popup HTML) once, using
+    // event delegation so we don't need to rebind on every popup open.
+    this.map.on('popupopen', (e: any) => {
+      const root: HTMLElement | undefined = e?.popup?.getElement?.();
+      if (!root) return;
+      const btn = root.querySelector<HTMLButtonElement>('.bpp-delete-btn');
+      if (!btn || btn.dataset['wired'] === '1') return;
+      btn.dataset['wired'] = '1';
+      btn.addEventListener('click', () => {
+        const id = Number(btn.dataset['binId']);
+        const seeded = btn.dataset['seeded'] === '1';
+        if (Number.isFinite(id)) this.deleteContainerFromPopup(id, seeded);
+      });
+    });
   }
 
   changeMapStyle(key: string) {
@@ -972,147 +1013,14 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       }
     });
 
-    // Draw/refresh the zone boundary layer. Cheap — runs only when the
-    // set of areas or their bin positions actually changed.
-    this.renderAreaBoundaries(bins);
-
     // Keep 3D map in sync with whatever filter/state produced this render.
     if (this.show3DView && this.map3dStyleLoaded) {
       this.sync3DBins();
     }
   }
 
-  // ---------------------------------------------------------------------
-  // Zone boundaries
-  // ---------------------------------------------------------------------
-
-  /**
-   * Draw a soft polygon around every zone's bins so users can see where
-   * one area ends and the next one begins. We build the hull from the
-   * visible bin positions instead of asking the backend for geometry —
-   * that keeps the feature client-side and avoids a new endpoint.
-   */
-  private renderAreaBoundaries(bins: Bin[]) {
-    // Group bins by areaId, skipping zones with fewer than 3 containers
-    // (a hull needs 3+ points and a 1-2-bin area isn't meaningful anyway).
-    const byArea = new Map<string, [number, number][]>();
-    for (const b of bins) {
-      if (!b.areaId) continue;
-      if (!byArea.has(b.areaId)) byArea.set(b.areaId, []);
-      byArea.get(b.areaId)!.push([b.locationY, b.locationX]);
-    }
-
-    // Build a cheap signature so we skip redrawing identical geometry.
-    const signature = [...byArea.entries()]
-      .map(([k, pts]) => `${k}:${pts.length}`)
-      .sort()
-      .join('|');
-
-    if (signature === this.areaSignature && this.areaLayer) return;
-    this.areaSignature = signature;
-
-    if (this.areaLayer) {
-      this.map.removeLayer(this.areaLayer);
-      this.areaLayer = undefined;
-    }
-
-    const group = L.layerGroup();
-
-    // Stable colour per area name — hash the string so the same zone keeps
-    // the same tint across reloads.
-    const zoneColor = (name: string): string => {
-      let h = 0;
-      for (let i = 0; i < name.length; i++) {
-        h = (h * 31 + name.charCodeAt(i)) | 0;
-      }
-      const hue = Math.abs(h) % 360;
-      return `hsl(${hue}, 70%, 60%)`;
-    };
-
-    for (const [areaId, points] of byArea) {
-      if (points.length < 3) continue;
-
-      const hull = this.convexHull(points);
-      if (hull.length < 3) continue;
-
-      const color = zoneColor(areaId);
-
-      const polygon = L.polygon(hull, {
-        color,
-        weight: 2.5,
-        opacity: 0.85,
-        fillColor: color,
-        fillOpacity: 0.08,
-        dashArray: '6 4',
-        interactive: false,
-        className: 'area-boundary',
-      } as any);
-
-      group.addLayer(polygon);
-
-      // Zone name at the centroid.
-      const cx = hull.reduce((s, p) => s + p[0], 0) / hull.length;
-      const cy = hull.reduce((s, p) => s + p[1], 0) / hull.length;
-      const label = L.marker([cx, cy], {
-        interactive: false,
-        keyboard: false,
-        icon: L.divIcon({
-          className: 'area-label',
-          html: `<span style="background:rgba(15,23,42,0.78);color:${color};` +
-                `border:1px solid ${color};padding:2px 8px;border-radius:10px;` +
-                `font:600 11px 'DM Sans','Inter',sans-serif;white-space:nowrap;` +
-                `text-shadow:0 1px 2px rgba(0,0,0,0.6);` +
-                `">${areaId}</span>`,
-          iconSize: [1, 1],
-          iconAnchor: [0, 0],
-        }),
-      });
-      group.addLayer(label);
-    }
-
-    group.addTo(this.map);
-    // Keep zone polygons visually underneath the cluster markers.
-    (group as any).eachLayer?.((l: any) => l.bringToBack?.());
-    this.areaLayer = group;
-  }
-
-  /**
-   * Andrew's monotone chain convex hull. O(n log n). Input/output points
-   * are [lat, lng] pairs, which is exactly what Leaflet expects.
-   */
-  private convexHull(pts: [number, number][]): [number, number][] {
-    if (pts.length < 3) return pts.slice();
-
-    const sorted = [...pts].sort((a, b) =>
-      a[0] === b[0] ? a[1] - b[1] : a[0] - b[0]
-    );
-
-    const cross = (o: [number, number], a: [number, number], b: [number, number]) =>
-      (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-
-    const lower: [number, number][] = [];
-    for (const p of sorted) {
-      while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) {
-        lower.pop();
-      }
-      lower.push(p);
-    }
-
-    const upper: [number, number][] = [];
-    for (let i = sorted.length - 1; i >= 0; i--) {
-      const p = sorted[i];
-      while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) {
-        upper.pop();
-      }
-      upper.push(p);
-    }
-
-    lower.pop();
-    upper.pop();
-    return lower.concat(upper);
-  }
-
-
+  // Zone boundaries were removed — the map no longer draws polygons around
+  // area groups. Area filtering still works via the zone dropdown.
 
   private createBinIcon(bin: Bin): L.DivIcon {
     const f = Math.round(bin.fillPercentage);
@@ -1267,7 +1175,41 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
           </div>
         </div>
 
+        ${this.isAdmin ? `
+          <button class="bpp-delete-btn" data-bin-id="${bin.id}" data-seeded="${bin.isSeeded ? '1' : '0'}">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+            <span>${bin.isSeeded ? 'Архивирай (soft)' : 'Изтрий окончателно'}</span>
+          </button>
+        ` : ''}
+
       </div>`;
+  }
+
+  /**
+   * Called from inside the popup when the admin hits the delete button.
+   * Backend picks soft vs hard based on IsSeeded; we just confirm + call.
+   */
+  deleteContainerFromPopup(id: number, seeded: boolean) {
+    const msg = seeded
+      ? `Архивирай seed контейнер #${id}? Може да бъде възстановен от админ панела.`
+      : `ИЗТРИЙ контейнер #${id} ОКОНЧАТЕЛНО? Това действие е необратимо.`;
+    if (!confirm(msg)) return;
+
+    this.http.delete<{ id: number; mode: string; reportsRemoved?: number }>(
+      `${this.API_URL}/containers/${id}`,
+    ).subscribe({
+      next: res => {
+        this.removeBinLocally(id);
+        console.log(`Container ${id} ${res.mode}-deleted`, res);
+      },
+      error: err => {
+        console.error('Delete failed', err);
+        alert(`Грешка при изтриване: ${err?.error?.message ?? err.message ?? 'неизвестна'}`);
+      }
+    });
   }
 
 

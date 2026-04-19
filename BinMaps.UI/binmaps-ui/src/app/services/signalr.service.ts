@@ -54,9 +54,13 @@ export class ContainerSignalRService {
 
   private readonly _updates$ = new BehaviorSubject<ContainerUpdate[]>([]);
   private readonly _truckProblems$ = new Subject<TruckProblemEvent>();
+  private readonly _removed$ = new Subject<number>();
+  private readonly _added$ = new Subject<any>();
 
   readonly containerUpdates$ = this._updates$.asObservable();
   readonly truckProblems$  = this._truckProblems$.asObservable();
+  readonly containerRemoved$ = this._removed$.asObservable();
+  readonly containerAdded$ = this._added$.asObservable();
 
   private readonly _seenFires = new Set<number>();
 
@@ -163,6 +167,14 @@ export class ContainerSignalRService {
           this._seenFires.delete(u.id);
         }
       });
+    });
+
+    this.hub.on('ContainerRemoved', (ev: { id: number }) => {
+      if (ev?.id != null) this._removed$.next(ev.id);
+    });
+
+    this.hub.on('ContainerAdded', (payload: any) => {
+      if (payload?.id != null) this._added$.next(payload);
     });
 
     this.hub.on('TruckProblemReported', (ev: TruckProblemEvent) => {

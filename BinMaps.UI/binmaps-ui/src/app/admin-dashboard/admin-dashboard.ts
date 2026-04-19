@@ -31,6 +31,19 @@ interface Container {
   hasSensor: boolean;
   temperature: number | null;
   batteryPercentage: number | null;
+  isSeeded?: boolean;
+}
+
+interface DeletedContainer {
+  id: number;
+  areaId: string;
+  trashType: number;
+  locationX: number;
+  locationY: number;
+  capacity: number;
+  hasSensor: boolean;
+  deletedAt: string;
+  deletedByUserId: string | null;
 }
 
 interface Truck {
@@ -77,7 +90,7 @@ interface PagedResponse {
   items: Report[];
 }
 
-type ActiveTab = 'reports' | 'containers' | 'trucks' | 'users';
+type ActiveTab = 'reports' | 'containers' | 'trucks' | 'users' | 'deleted';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -96,6 +109,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   filteredReports: Report[] = [];
   containers: Container[] = [];
   filteredContainers: Container[] = [];
+  deletedContainers: DeletedContainer[] = [];
   trucks: Truck[] = [];
   users: User[] = [];
   filteredUsers: User[] = [];
@@ -220,9 +234,61 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       reports: () => this.loadReports(),
       containers: () => this.loadContainers(),
       trucks: () => this.loadTrucks(),
-      users: () => this.loadUsers()
+      users: () => this.loadUsers(),
+      deleted: () => this.loadDeletedContainers()
     };
     loaders[tab]();
+  }
+
+  loadDeletedContainers(): void {
+    this.http.get<DeletedContainer[]>(`${this.API}/admin/containers/deleted`, this.authHeaders())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: data => { this.deletedContainers = data; },
+        error: () => this.showToast('Грешка при зареждане на архивираните контейнери', 'error')
+      });
+  }
+
+  restoreContainer(id: number): void {
+    if (!confirm(`Възстанови контейнер #${id}?`)) return;
+    this.http.post(`${this.API}/admin/containers/${id}/restore`, {}, this.authHeaders())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.deletedContainers = this.deletedContainers.filter(c => c.id !== id);
+          this.showToast(`Контейнер #${id} е възстановен`, 'success');
+          this.loadStats();
+        },
+        error: () => this.showToast('Грешка при възстановяване', 'error')
+      });
+  }
+
+  deleteContainerFromAdmin(c: Container): void {
+    const msg = c.isSeeded
+      ? `Архивирай seed контейнер #${c.id}? Може да бъде възстановен.`
+      : `ИЗТРИЙ контейнер #${c.id} ОКОНЧАТЕЛНО? Това действие е необратимо.`;
+    if (!confirm(msg)) return;
+
+    this.http.delete<{ id: number; mode: string }>(
+      `${this.API}/containers/${c.id}`, this.authHeaders()
+    )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: res => {
+          this.containers = this.containers.filter(x => x.id !== c.id);
+          this.filteredContainers = this.filteredContainers.filter(x => x.id !== c.id);
+          this.showToast(
+            res.mode === 'soft'
+              ? `Контейнер #${c.id} е архивиран`
+              : `Контейнер #${c.id} е изтрит окончателно`,
+            'success'
+          );
+          this.loadStats();
+        },
+        error: err => this.showToast(
+          `Грешка: ${err?.error?.message ?? 'неуспешно изтриване'}`, 'error'
+        )
+      });
   }
 
   loadStats(): void {
