@@ -314,6 +314,55 @@
       <div id="map" [class.map-hidden-by-3d]="show3DView"></div>
       <div id="map-3d" [class.map-3d-active]="show3DView" [class.map-3d-fs]="map3dFullscreen"></div>
 
+      <!--
+        Live drivers panel (Admin only). Shows every driver that is
+        currently pushing position updates via SignalR. Click an entry
+        to re-center the map on that driver.
+      -->
+      <aside
+        *ngIf="isAdmin && showLiveDriversPanel && liveDrivers.size > 0"
+        class="live-drivers-panel"
+        aria-label="Активни шофьори">
+        <div class="live-drivers-panel__header">
+          <span class="live-drivers-panel__title">
+            На живо · {{ liveDrivers.size }} шофьор{{ liveDrivers.size === 1 ? '' : 'и' }}
+          </span>
+          <button
+            type="button"
+            class="live-drivers-panel__close"
+            (click)="showLiveDriversPanel = false"
+            aria-label="Скрий панела">✕</button>
+        </div>
+        <ng-container *ngFor="let d of liveDriverList()">
+          <div class="live-driver-item" (click)="centerOnLiveDriver(d.id)">
+            <span class="live-driver-item__name">{{ d.name }}</span>
+            <span class="live-driver-item__meta">
+              Зона {{ d.areaId }} · спирка {{ d.stopIndex }}/{{ d.totalStops }} · {{ d.load.toFixed(0) }} л
+            </span>
+            <div class="live-driver-item__progress">
+              <div
+                class="live-driver-item__progress-fill"
+                [style.width.%]="d.totalStops > 0 ? (d.stopIndex / d.totalStops) * 100 : 0">
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </aside>
+
+      <button
+        *ngIf="isAdmin && !showLiveDriversPanel && liveDrivers.size > 0"
+        type="button"
+        class="live-drivers-fab"
+        (click)="showLiveDriversPanel = true"
+        aria-label="Покажи активните шофьори"
+        title="Активни шофьори">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a7.97 7.97 0 0 0 0-6l2-1.2-2-3.5-2.1 1.2a8 8 0 0 0-5.3-3V0h-4v2.5a8 8 0 0 0-5.3 3l-2.1-1.2-2 3.5 2 1.2a7.97 7.97 0 0 0 0 6l-2 1.2 2 3.5 2.1-1.2a8 8 0 0 0 5.3 3V24h4v-2.5a8 8 0 0 0 5.3-3l2.1 1.2 2-3.5z"/>
+        </svg>
+        <span class="live-drivers-fab__badge">{{ liveDrivers.size }}</span>
+      </button>
+
       <div class="map-legend map-legend--br">
         
         <div class="leg-hdr">

@@ -54,6 +54,9 @@
       Изтрити
       <span class="tab-count" *ngIf="deletedContainers.length > 0">{{ deletedContainers.length }}</span>
     </button>
+    <button class="tab" [class.is-active]="activeTab === 'routes'" (click)="setActiveTab('routes')">
+      Маршрути
+    </button>
   </div>
 
   
@@ -590,8 +593,185 @@
       </div>
     </div>
 
+    <!-- Routes (driver course log) -->
+    <div *ngSwitchCase="'routes'" class="admin__panel animate-fade-in">
+      <div class="admin__toolbar">
+        <div class="admin__toolbar-filters">
+          <select class="form-select" style="width:auto"
+            [(ngModel)]="routeFilter.status" (change)="applyRouteFilters()">
+            <option value="">Всички статуси</option>
+            <option value="Active">Активен</option>
+            <option value="Completed">Завършен</option>
+            <option value="Cancelled">Отказан</option>
+          </select>
+          <input class="form-input" type="text" placeholder="Име на шофьор…"
+            [(ngModel)]="routeFilter.driver" (ngModelChange)="applyRouteFilters()"
+            style="max-width:220px">
+          <input class="form-input" type="text" placeholder="Зона (напр. sofia-01)"
+            [(ngModel)]="routeFilter.areaId" (ngModelChange)="applyRouteFilters()"
+            style="max-width:200px">
+        </div>
+        <div class="admin__toolbar-actions">
+          <button class="btn btn--sm btn--secondary" (click)="loadRouteHistory()">
+            Обнови
+          </button>
+          <span class="text-muted text-xs" style="margin-left:8px">
+            {{ filteredRoutes.length }} от {{ routeHistory.length }}
+          </span>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Шофьор</th>
+              <th>Зона</th>
+              <th>Отпадък</th>
+              <th>Статус</th>
+              <th>Старт</th>
+              <th>Продълж.</th>
+              <th>Спирки</th>
+              <th>Събрано</th>
+              <th>Разст.</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of filteredRoutes">
+              <td class="text-muted text-mono text-xs">{{ r.id }}</td>
+              <td class="font-semibold text-sm">{{ r.driverName || r.driverId }}</td>
+              <td>{{ r.areaId }}</td>
+              <td><span class="badge badge--cyan">{{ trashTypeLabel(r.trashType) }}</span></td>
+              <td>
+                <span class="badge"
+                  [ngClass]="{
+                    'badge--success': r.status === 'Completed',
+                    'badge--warning': r.status === 'Active',
+                    'badge--offline': r.status === 'Cancelled'
+                  }">{{ r.status }}</span>
+              </td>
+              <td class="text-muted text-xs">{{ formatDate(r.startedAt) }}</td>
+              <td class="text-mono text-sm">
+                <ng-container *ngIf="r.status === 'Active'">—</ng-container>
+                <ng-container *ngIf="r.status !== 'Active'">{{ r.durationMinutes | number:'1.1-1' }} мин</ng-container>
+              </td>
+              <td class="text-mono text-sm">{{ r.stopsCompleted }} / {{ r.stopsPlanned }}</td>
+              <td class="text-mono text-sm">{{ r.collectedLoad | number:'1.0-0' }} L</td>
+              <td class="text-mono text-sm">{{ r.plannedDistanceKm | number:'1.1-1' }} km</td>
+              <td>
+                <button class="btn btn--sm btn--secondary" (click)="openRunDetail(r.id)">
+                  Детайли
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="filteredRoutes.length === 0 && !isLoadingRoutes">
+              <td colspan="11">
+                <div class="admin__empty">
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+                  <p>Няма маршрути за избраните филтри</p>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="isLoadingRoutes">
+              <td colspan="11">
+                <div class="admin__empty"><p>Зареждане…</p></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
+</div>
+
+<!-- Route detail modal -->
+<div class="modal-backdrop" *ngIf="selectedRun" (click)="closeRunDetail()">
+  <div class="modal" (click)="$event.stopPropagation()" style="max-width:760px">
+    <div class="modal__header">
+      <h2 class="modal__title">
+        Маршрут #{{ selectedRun.id }}
+        <span class="badge"
+          [ngClass]="{
+            'badge--success': selectedRun.status === 'Completed',
+            'badge--warning': selectedRun.status === 'Active',
+            'badge--offline': selectedRun.status === 'Cancelled'
+          }">{{ selectedRun.status }}</span>
+      </h2>
+      <button class="btn btn--sm btn--secondary" (click)="closeRunDetail()">Затвори</button>
+    </div>
+    <div class="modal__body">
+      <div class="grid grid--2" style="gap:16px">
+        <div>
+          <div class="text-muted text-xs">Шофьор</div>
+          <div class="font-semibold">{{ selectedRun.driverName || selectedRun.driverId }}</div>
+        </div>
+        <div>
+          <div class="text-muted text-xs">Зона</div>
+          <div class="font-semibold">{{ selectedRun.areaId }}</div>
+        </div>
+        <div>
+          <div class="text-muted text-xs">Започнат</div>
+          <div>{{ formatDate(selectedRun.startedAt) }}</div>
+        </div>
+        <div>
+          <div class="text-muted text-xs">Завършен</div>
+          <div>{{ selectedRun.completedAt ? formatDate(selectedRun.completedAt) : '—' }}</div>
+        </div>
+        <div>
+          <div class="text-muted text-xs">Продължителност</div>
+          <div class="text-mono">{{ selectedRun.durationMinutes | number:'1.1-1' }} мин</div>
+        </div>
+        <div>
+          <div class="text-muted text-xs">Отпадък</div>
+          <div>{{ trashTypeLabel(selectedRun.trashType) }}</div>
+        </div>
+        <div>
+          <div class="text-muted text-xs">Планирано разстояние</div>
+          <div class="text-mono">{{ selectedRun.plannedDistanceKm | number:'1.2-2' }} km</div>
+        </div>
+        <div>
+          <div class="text-muted text-xs">Събрано</div>
+          <div class="text-mono">{{ selectedRun.collectedLoad | number:'1.0-0' }} L</div>
+        </div>
+        <div>
+          <div class="text-muted text-xs">Спирки</div>
+          <div class="text-mono">{{ selectedRun.stopsCompleted }} / {{ selectedRun.stopsPlanned }}</div>
+        </div>
+        <div>
+          <div class="text-muted text-xs">Камион</div>
+          <div class="text-mono">#{{ selectedRun.truckId ?? '—' }}</div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:20px;margin-bottom:8px">Планирани спирки ({{ selectedRun.stops.length }})</h3>
+      <div class="table-wrapper" style="max-height:280px;overflow:auto">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>№</th>
+              <th>ID</th>
+              <th>Координати</th>
+              <th>Пълнене</th>
+              <th>Капацитет</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of selectedRun.stops; let i = index">
+              <td class="text-muted text-xs">{{ i + 1 }}</td>
+              <td class="text-mono text-xs">{{ s.id }}</td>
+              <td class="text-mono text-xs">{{ s.lat | number:'1.4-4' }}, {{ s.lng | number:'1.4-4' }}</td>
+              <td class="text-mono text-sm">{{ s.fill | number:'1.0-0' }}%</td>
+              <td class="text-mono text-sm">{{ s.capacity }} L</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
 
 

@@ -3,12 +3,13 @@ import { RouterOutlet, RouterModule, Router, NavigationEnd } from '@angular/rout
 import { CommonModule } from '@angular/common';
 import { Header } from './header/header';
 import { filter } from 'rxjs/operators';
+import { ConfirmDialogComponent } from './shared/confirm-dialog/confirm-dialog.component';
 
 const SHELL_HIDDEN_ROUTES = ['/login', '/register', '/terms', '/banned', '/forbidden'];
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterModule, Header, CommonModule],
+  imports: [RouterOutlet, RouterModule, Header, CommonModule, ConfirmDialogComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

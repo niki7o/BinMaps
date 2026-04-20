@@ -44,6 +44,38 @@ export interface ReputationIncreasedEvent {
   newReputation:number;
 }
 
+/** Telemetry emitted by a driver's client while they are on an active route.
+ *  Admins receive these via the `DriverPosition` hub event. */
+export interface DriverPositionEvent {
+  driverId:   string;
+  driverName: string;
+  runId:      number;
+  areaId:     string;
+  lat:        number;
+  lng:        number;
+  heading:    number;   // degrees, 0 = north
+  speedKmh:   number;
+  stopIndex:  number;
+  totalStops: number;
+  load:       number;
+  phase:      'start' | 'move' | 'stop' | 'end';
+  at:         string;   // ISO UTC
+}
+
+/** Payload the driver sends via the `DriverPosition` hub method. */
+export interface DriverPositionPayload {
+  runId:      number;
+  areaId:     string;
+  lat:        number;
+  lng:        number;
+  heading:    number;
+  speedKmh:   number;
+  stopIndex:  number;
+  totalStops: number;
+  load:       number;
+  phase:      'start' | 'move' | 'stop' | 'end';
+}
+
 @Injectable({ providedIn: 'root' })
 export class ContainerSignalRService {
 
@@ -56,11 +88,14 @@ export class ContainerSignalRService {
   private readonly _truckProblems$ = new Subject<TruckProblemEvent>();
   private readonly _removed$ = new Subject<number>();
   private readonly _added$ = new Subject<any>();
+  private readonly _driverPositions$ = new Subject<DriverPositionEvent>();
 
   readonly containerUpdates$ = this._updates$.asObservable();
   readonly truckProblems$  = this._truckProblems$.asObservable();
   readonly containerRemoved$ = this._removed$.asObservable();
   readonly containerAdded$ = this._added$.asObservable();
+  /** Admins receive a stream of driver telemetry. Others get nothing. */
+  readonly driverPositions$ = this._driverPositions$.asObservable();
 
   private readonly _seenFires = new Set<number>();
 
@@ -119,6 +154,19 @@ export class ContainerSignalRService {
   stop(): void {
     this.intentionalStop = true;
     this.hub?.stop();
+  }
+
+  /**
+   * Driver client → server → admins. Safe to call at high frequency
+   * (hub method just forwards to the `admins` group); the server
+   * silently ignores the call from non-Driver/non-Admin users.
+   *
+   * Errors (hub disconnected, network blip) are swallowed — we don't
+   * want driver navigation to crash because telemetry is flaky.
+   */
+  sendDriverPosition(payload: DriverPositionPayload): void {
+    if (!this.hub || this.hub.state !== signalR.HubConnectionState.Connected) return;
+    this.hub.invoke('DriverPosition', payload).catch(() => {});
   }
 
   private buildHub(): signalR.HubConnection {
@@ -260,6 +308,10 @@ export class ContainerSignalRService {
         forRoles: ['User'],
         targetUserId: ev.userId
       });
+    });
+
+    this.hub.on('DriverPosition', (ev: DriverPositionEvent) => {
+      this._driverPositions$.next(ev);
     });
 
     this.hub.on('AdminNotification', (items: any[]) => {

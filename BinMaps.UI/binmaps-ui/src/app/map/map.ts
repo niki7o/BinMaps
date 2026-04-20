@@ -7,6 +7,7 @@ import { Subject, takeUntil, timeout, firstValueFrom } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { AuthUser } from '../services/auth.models';
 import { ContainerSignalRService } from '../services/signalr.service';
+import { ConfirmService } from '../shared/confirm-dialog/confirm.service';
 import { environment } from '../../environments/environment';
 
 
@@ -83,6 +84,21 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private searchMarker?: L.Marker;
   private searchCircles: L.Circle[] = [];
 
+  // Live admin view of other drivers that are currently on a route.
+  //  key: driverId, value: the Leaflet marker shown for that driver.
+  private liveDriverMarkers: Map<string, L.Marker> = new Map();
+  //  key: driverId, value: the full latest event (for panel info).
+  liveDrivers = new Map<string, {
+    name: string; areaId: string; lat: number; lng: number;
+    stopIndex: number; totalStops: number; load: number; at: string;
+  }>();
+  showLiveDriversPanel = true;
+
+  // Current driver's telemetry state (for broadcasting).
+  private driverRunId = 0;
+  private driverLastBroadcastAt = 0;
+  private driverLastLatLng: [number, number] | null = null;
+
   reportImagePreview:    string | null = null;
   selectedFile:          File | null = null;
   reportDescription = '';
@@ -136,6 +152,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
   private signalR = inject(ContainerSignalRService);
+  private confirmSvc = inject(ConfirmService);
 
   currentUser: AuthUser | null = null;
   isAdmin = false;
@@ -238,6 +255,93 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
           this.renderBins(this.filtered());
         }
       });
+
+    // Admins see all drivers that are currently on a route, live.
+    // The server only sends `DriverPosition` events to the `admins` group,
+    // so this subscription is effectively a no-op for drivers/users.
+    this.signalR.driverPositions$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(ev => this.onDriverPosition(ev));
+  }
+
+  private onDriverPosition(ev: {
+    driverId: string; driverName: string; lat: number; lng: number;
+    heading: number; stopIndex: number; totalStops: number; load: number;
+    phase: string; areaId: string; at: string;
+  }): void {
+    if (!this.isAdmin || !this.map) return;
+
+    if (ev.phase === 'end') {
+      const m = this.liveDriverMarkers.get(ev.driverId);
+      if (m) { this.map.removeLayer(m); this.liveDriverMarkers.delete(ev.driverId); }
+      this.liveDrivers.delete(ev.driverId);
+      return;
+    }
+
+    this.liveDrivers.set(ev.driverId, {
+      name:       ev.driverName || 'Шофьор',
+      areaId:     ev.areaId,
+      lat:        ev.lat,
+      lng:        ev.lng,
+      stopIndex:  ev.stopIndex,
+      totalStops: ev.totalStops,
+      load:       ev.load,
+      at:         ev.at,
+    });
+
+    let marker = this.liveDriverMarkers.get(ev.driverId);
+    const latlng: L.LatLngExpression = [ev.lat, ev.lng];
+
+    if (!marker) {
+      marker = L.marker(latlng, {
+        icon: this.makeLiveDriverIcon(ev.driverName, ev.heading),
+        zIndexOffset: 1800,
+      }).addTo(this.map);
+      marker.bindTooltip(
+        `${ev.driverName || 'Шофьор'} · зона ${ev.areaId} · спирка ${ev.stopIndex}/${ev.totalStops}`,
+        { direction: 'top', offset: [0, -22] }
+      );
+      this.liveDriverMarkers.set(ev.driverId, marker);
+    } else {
+      marker.setLatLng(latlng);
+      marker.setIcon(this.makeLiveDriverIcon(ev.driverName, ev.heading));
+      marker.setTooltipContent(
+        `${ev.driverName || 'Шофьор'} · зона ${ev.areaId} · спирка ${ev.stopIndex}/${ev.totalStops}`
+      );
+    }
+  }
+
+  private makeLiveDriverIcon(name: string, heading: number): L.DivIcon {
+    const initial = (name || '?').trim().charAt(0).toUpperCase() || '?';
+    const deg = Number.isFinite(heading) ? Math.round(heading) : 0;
+    return L.divIcon({
+      className: '',
+      iconSize: [44, 44],
+      iconAnchor: [22, 22],
+      html: `
+        <div class="live-driver-marker" title="${name || 'Шофьор'}">
+          <div class="live-driver-pulse"></div>
+          <div class="live-driver-body" style="transform: rotate(${deg}deg)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 2 L18 10 H14 V22 H10 V10 H6 Z" fill="#fbbf24" stroke="#0f172a" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="live-driver-label">${initial}</div>
+        </div>`,
+    });
+  }
+
+  centerOnLiveDriver(driverId: string): void {
+    const d = this.liveDrivers.get(driverId);
+    if (d && this.map) {
+      this.map.setView([d.lat, d.lng], Math.max(this.map.getZoom(), 15), { animate: true });
+    }
+  }
+
+  liveDriverList(): Array<{ id: string; name: string; stopIndex: number; totalStops: number; areaId: string; load: number; }> {
+    return Array.from(this.liveDrivers.entries()).map(([id, d]) => ({
+      id, name: d.name, stopIndex: d.stopIndex, totalStops: d.totalStops, areaId: d.areaId, load: d.load,
+    }));
   }
 
   private removeBinLocally(id: number) {
@@ -275,7 +379,19 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+
+    // Notify admins that this driver's run ended if we were navigating.
+    if (this.navigationActive && this.driverLastLatLng) {
+      this.broadcastDriverPhase('end', this.driverLastLatLng);
+    }
     this.navigationActive = false;
+
+    for (const m of this.liveDriverMarkers.values()) {
+      try { this.map?.removeLayer(m); } catch { /* map already torn down */ }
+    }
+    this.liveDriverMarkers.clear();
+    this.liveDrivers.clear();
+
     this.signalR.stop();
   }
 
@@ -425,13 +541,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   async generateRoute() {
     if (!this.selectedAreaId) {
-      alert('Моля изберете зона');
+      await this.confirmSvc.notify({ title: 'Изберете зона', message: 'Моля изберете зона преди да генерирате маршрут.', variant: 'warning' });
       return;
     }
 
     const token = this.getToken();
     if (!token) {
-      alert('Сесията ви е изтекла');
+      await this.confirmSvc.notify({ title: 'Сесията изтече', message: 'Моля, влезте отново.', variant: 'warning' });
       this.router.navigate(['/login']);
       return;
     }
@@ -445,7 +561,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       );
 
       if (!res?.route?.length) {
-        alert(res?.message || 'Няма контейнери за събиране');
+        await this.confirmSvc.notify({ title: 'Няма маршрут', message: res?.message || 'Няма контейнери за събиране в тази зона.', variant: 'info' });
         return;
       }
 
@@ -471,12 +587,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     } catch (e: any) {
       if (e.status === 401) {
-        alert('Сесията ви е изтекла');
+        await this.confirmSvc.notify({ title: 'Сесията изтече', message: 'Моля, влезте отново.', variant: 'warning' });
         this.router.navigate(['/login']);
       } else if (e.status === 404) {
-        alert('Няма камион в тази зона');
+        await this.confirmSvc.notify({ title: 'Няма камион', message: 'В тази зона няма активен камион.', variant: 'warning' });
       } else {
-        alert('Грешка при генериране на маршрут');
+        await this.confirmSvc.notify({ title: 'Грешка', message: 'Възникна грешка при генериране на маршрут.', variant: 'danger' });
       }
     }
   }
@@ -588,7 +704,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   async startNavigation() {
     if (!this.routeResult?.route.length || !this.realRouteCoords.length) {
-      alert('Маршрутът не е готов');
+      await this.confirmSvc.notify({ title: 'Маршрутът не е готов', message: 'Генерирайте маршрут преди да стартирате навигация.', variant: 'warning' });
       return;
     }
 
@@ -597,13 +713,165 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.currentTruckLoad = 0;
     this.stepPending = false;
 
+    // Persist the run on the server BEFORE the animation starts so admins
+    // viewing history can see it even if the driver closes the tab mid-run.
+    // Falls back to a local-only correlation id if the request fails — live
+    // tracking still works, only history is lost.
+    this.driverRunId = Date.now();
+    this.driverLastBroadcastAt = 0;
+    this.driverLastLatLng = null;
+
+    try {
+      const persistedId = await this.openRouteRun();
+      if (persistedId > 0) this.driverRunId = persistedId;
+    } catch {
+      // Non-fatal: keep local id, admins still see live telemetry.
+    }
+
     const { truckIcon, path, stopIndices } = this.buildNavSetup();
+
+    // Announce to admins that a route has started.
+    this.broadcastDriverPhase('start', path[0]);
 
     if (this.navigationMode === 'step') {
       await this.runStepNavigation(truckIcon, path, stopIndices);
     } else {
       await this.runAutoNavigation(truckIcon, path, stopIndices);
     }
+
+    // Always announce end, even if navigation was cancelled mid-way.
+    this.broadcastDriverPhase('end', this.driverLastLatLng ?? path[0]);
+
+    // Close the persisted run. Only attempts if we have a real server id
+    // (driverRunId > 1e12 means it's the local timestamp fallback).
+    if (this.driverRunId > 0 && this.driverRunId < 1e12) {
+      try { await this.closeRouteRun(); } catch { /* non-fatal */ }
+    }
+  }
+
+  /**
+   * POST the planned route to the server and return the generated runId.
+   * Returns 0 if the call fails or is not applicable.
+   */
+  private async openRouteRun(): Promise<number> {
+    const token = this.getToken();
+    if (!token || !this.routeResult) return 0;
+
+    const stops = (this.routeResult.route ?? []).map(s => ({
+      id: s.id,
+      areaId: s.areaId ?? this.routeResult!.areaId,
+      lat: s.locationX,
+      lng: s.locationY,
+      fill: s.fillPercentage ?? 0,
+      capacity: s.capacity ?? 0,
+    }));
+
+    const body = {
+      areaId: this.routeResult.areaId,
+      trashType: this.selectedTrashType,
+      truckId: this.routeResult.truckId ?? null,
+      plannedDistanceKm: this.routeResult.totalDistance ?? 0,
+      plannedMinutes: this.routeResult.estimatedTimeMinutes ?? 0,
+      stopsPlanned: this.routeResult.route.length,
+      stops,
+    };
+
+    const res = await firstValueFrom(
+      this.http.post<{ runId: number }>(
+        `${this.API_URL}/trucks/route/start`,
+        body,
+        { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) },
+      ),
+    );
+    return res?.runId ?? 0;
+  }
+
+  /**
+   * Mark the persisted run as completed (or cancelled if the driver
+   * quit early). Called once at the end of startNavigation().
+   */
+  private async closeRouteRun(): Promise<void> {
+    const token = this.getToken();
+    if (!token) return;
+
+    const totalStops = this.routeResult?.route.length ?? 0;
+    const outcome = this.currentStop >= totalStops ? 'completed' : 'cancelled';
+
+    const body = {
+      stopsCompleted: this.currentStop,
+      collectedLoad: this.currentTruckLoad,
+      outcome,
+    };
+
+    await firstValueFrom(
+      this.http.post(
+        `${this.API_URL}/trucks/route/${this.driverRunId}/complete`,
+        body,
+        { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) },
+      ),
+    );
+  }
+
+  /**
+   * Throttled broadcast of current driver position. Called from the
+   * animation loops every frame — only actually sends if enough time
+   * has elapsed since the last broadcast (default 700ms).
+   */
+  private broadcastDriverTelemetry(
+    coord: [number, number],
+    prevCoord: [number, number] | null,
+    phase: 'move' | 'stop',
+  ): void {
+    if (!this.isDriver && !this.isAdmin) return;
+
+    const now = Date.now();
+    if (phase === 'move' && now - this.driverLastBroadcastAt < 700) return;
+    this.driverLastBroadcastAt = now;
+
+    const heading = prevCoord ? this.bearing(prevCoord, coord) : 0;
+
+    // Approximate speed from frame-to-frame delta. Rough but good enough
+    // for a status indicator.
+    let speedKmh = 0;
+    if (prevCoord && this.driverLastBroadcastAt > 0) {
+      const km = this.dist(prevCoord, coord);
+      const dtH = Math.max(0.0001, 0.7 / 3600); // 700ms assumption
+      speedKmh = Math.min(90, km / dtH);
+    }
+
+    this.signalR.sendDriverPosition({
+      runId:      this.driverRunId,
+      areaId:     this.routeResult?.areaId ?? '',
+      lat:        coord[0],
+      lng:        coord[1],
+      heading,
+      speedKmh,
+      stopIndex:  this.currentStop,
+      totalStops: this.routeResult?.route.length ?? 0,
+      load:       this.currentTruckLoad,
+      phase,
+    });
+
+    this.driverLastLatLng = coord;
+  }
+
+  /** Announce a discrete phase change (start / end). Not throttled. */
+  private broadcastDriverPhase(phase: 'start' | 'end', coord: [number, number]): void {
+    if (!this.isDriver && !this.isAdmin) return;
+    this.signalR.sendDriverPosition({
+      runId:      this.driverRunId,
+      areaId:     this.routeResult?.areaId ?? '',
+      lat:        coord[0],
+      lng:        coord[1],
+      heading:    0,
+      speedKmh:   0,
+      stopIndex:  this.currentStop,
+      totalStops: this.routeResult?.route.length ?? 0,
+      load:       this.currentTruckLoad,
+      phase,
+    });
+    this.driverLastBroadcastAt = Date.now();
+    this.driverLastLatLng = coord;
   }
 
   private buildNavSetup() {
@@ -758,8 +1026,14 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         this.doCollectStop(si, route, token);
         needsRerender = true;
         si++;
+        // A stop was reached — broadcast once at the stop point so admins
+        // see the "pause" phase explicitly, not just a throttled move.
+        this.broadcastDriverTelemetry(path[i], i > 0 ? path[i - 1] : null, 'stop');
       }
       if (needsRerender) this.renderBins(this.filtered());
+
+      // Throttled (700ms) telemetry to admins.
+      this.broadcastDriverTelemetry(path[i], i > 0 ? path[i - 1] : null, 'move');
 
       await new Promise(r => setTimeout(r, Math.max(4, Math.floor(22 / this.speedMultiplier))));
     }
@@ -773,7 +1047,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.currentCollectedStop = null;   // Bug 4 fix: clear stale UI data
     this.loadBins();   // refresh from server after emptying
 
-    alert(`Маршрут завършен!\nСпирки: ${route.length}\nСъбран товар: ${load.toFixed(0)} л`);
+    this.confirmSvc.notify({
+      title: 'Маршрут завършен',
+      message: `Посетени спирки: ${route.length}`,
+      detail: `Събран товар: ${load.toFixed(0)} л`,
+      variant: 'info',
+      okText: 'Готово'
+    });
   }
 
   private async runStepNavigation(
@@ -810,12 +1090,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         if (i % 20 === 0) this.panIfNearEdge(path[i]);
         if (i % 5  === 0) this.updateTruck3D(path[i][0], path[i][1]);
 
+        this.broadcastDriverTelemetry(path[i], i > 0 ? path[i - 1] : null, 'move');
+
         await new Promise(r => setTimeout(r, Math.max(4, Math.floor(22 / this.speedMultiplier))));
       }
 
       if (!this.navigationActive) break;
 
       this.doCollectStop(si, route, token);
+      this.broadcastDriverTelemetry(path[toFrame], toFrame > 0 ? path[toFrame - 1] : null, 'stop');
       this.renderBins(this.filtered());
 
       if (si < route.length - 1) {
@@ -835,7 +1118,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.currentCollectedStop = null;   // Bug 4 fix: clear stale UI data
       this.loadBins();   // refresh from server after emptying
 
-      alert(`Маршрут завършен!\nСпирки: ${route.length}\nСъбран товар: ${load.toFixed(0)} л`);
+      this.confirmSvc.notify({
+      title: 'Маршрут завършен',
+      message: `Посетени спирки: ${route.length}`,
+      detail: `Събран товар: ${load.toFixed(0)} л`,
+      variant: 'info',
+      okText: 'Готово'
+    });
     }
 
     this.stepPending = false;
@@ -1192,11 +1481,23 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
    * Called from inside the popup when the admin hits the delete button.
    * Backend picks soft vs hard based on IsSeeded; we just confirm + call.
    */
-  deleteContainerFromPopup(id: number, seeded: boolean) {
-    const msg = seeded
-      ? `Архивирай seed контейнер #${id}? Може да бъде възстановен от админ панела.`
-      : `ИЗТРИЙ контейнер #${id} ОКОНЧАТЕЛНО? Това действие е необратимо.`;
-    if (!confirm(msg)) return;
+  async deleteContainerFromPopup(id: number, seeded: boolean): Promise<void> {
+    const ok = seeded
+      ? await this.confirmSvc.ask({
+          title: 'Архивиране на seed контейнер',
+          message: `Да архивирам ли контейнер #${id}?`,
+          detail: 'Може да бъде възстановен по-късно от админ панела.',
+          confirmText: 'Архивирай',
+          variant: 'warning',
+        })
+      : await this.confirmSvc.ask({
+          title: `Окончателно изтриване на контейнер #${id}`,
+          message: 'Това действие е необратимо. Контейнерът и историята му ще бъдат изтрити за постоянно.',
+          confirmText: 'Изтрий окончателно',
+          variant: 'danger',
+          requireText: `DELETE ${id}`,
+        });
+    if (!ok) return;
 
     this.http.delete<{ id: number; mode: string; reportsRemoved?: number }>(
       `${this.API_URL}/containers/${id}`,
@@ -1207,7 +1508,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       },
       error: err => {
         console.error('Delete failed', err);
-        alert(`Грешка при изтриване: ${err?.error?.message ?? err.message ?? 'неизвестна'}`);
+        this.confirmSvc.notify({
+          title: 'Грешка при изтриване',
+          message: err?.error?.message ?? err.message ?? 'Неизвестна грешка.',
+          variant: 'danger'
+        });
       }
     });
   }
@@ -1469,7 +1774,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     if (/^#\d+$/.test(q)) {
       const bin = this.allBins.find(b => b.id === parseInt(q.slice(1), 10));
       if (bin) { this.highlightBin(bin); return; }
-      alert(`Контейнер ${q} не е намерен`);
+      await this.confirmSvc.notify({ title: 'Не е намерен', message: `Контейнер ${q} не съществува.`, variant: 'warning' });
       return;
     }
 
@@ -1478,11 +1783,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     try {
       const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q + ', София, България')}&format=json&limit=1&accept-language=bg`;
       const res = await (await fetch(url)).json();
-      if (!res?.length) { alert('Адресът не е намерен'); return; }
+      if (!res?.length) { await this.confirmSvc.notify({ title: 'Адресът не е намерен', message: 'Опитайте с по-конкретен адрес.', variant: 'warning' }); return; }
       lat = parseFloat(res[0].lat);
       lon = parseFloat(res[0].lon);
     } catch {
-      alert('Грешка при геокодиране');
+      await this.confirmSvc.notify({ title: 'Геокодиране', message: 'Грешка при търсене на адреса.', variant: 'danger' });
       return;
     }
 
@@ -1577,12 +1882,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     if (!file) return;
 
     if (!['image/jpeg', 'image/jpg', 'image/png', 'image/gif'].includes(file.type)) {
-      alert('Само JPEG/PNG/GIF');
+      this.confirmSvc.notify({ title: 'Невалиден формат', message: 'Разрешени са само JPEG, PNG и GIF файлове.', variant: 'warning' });
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('Максимум 5MB');
+      this.confirmSvc.notify({ title: 'Файлът е твърде голям', message: 'Максималният размер е 5 MB.', variant: 'warning' });
       return;
     }
 
@@ -1631,7 +1936,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     if (this.reportSubmitting || this.reportCheckingPhoto) return;
 
     if (!this.currentUser) {
-      alert('Влезте в системата');
+      await this.confirmSvc.notify({ title: 'Нужна е регистрация', message: 'Моля, влезте в системата преди да подадете сигнал.', variant: 'warning' });
       this.router.navigate(['/login']);
       return;
     }
@@ -1641,13 +1946,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const isTruckProblem = reportType === 'TruckProblem';
 
     if (!isTruckProblem && !this.selectedBinForReport) {
-      alert('Изберете контейнер');
+      await this.confirmSvc.notify({ title: 'Контейнер не е избран', message: 'Изберете контейнер от картата преди да изпратите сигнал.', variant: 'warning' });
       return;
     }
 
     const token = this.getToken();
     if (!token) {
-      alert('Сесията ви е изтекла');
+      await this.confirmSvc.notify({ title: 'Сесията изтече', message: 'Моля, влезте отново.', variant: 'warning' });
       this.router.navigate(['/login']);
       return;
     }
@@ -1763,10 +2068,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
           this.reportSubmitting = false;
 
           if (e.status === 401) {
-            alert('Сесията изтекла');
+            this.confirmSvc.notify({ title: 'Сесията изтече', message: 'Моля, влезте отново.', variant: 'warning' });
             this.router.navigate(['/login']);
           } else {
-            alert('Грешка при изпращане');
+            this.confirmSvc.notify({ title: 'Грешка', message: 'Изпращането на сигнала не успя.', variant: 'danger' });
           }
         }
       });
@@ -2038,7 +2343,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     if (!this.MAPBOX_TOKEN) {
       console.error('Mapbox token is missing — set mapboxToken in environment.ts');
       this.show3DView = false;
-      alert('3D картата изисква Mapbox API ключ. Моля конфигурирайте environment.ts.');
+      await this.confirmSvc.notify({
+        title: '3D карта недостъпна',
+        message: 'Липсва Mapbox API ключ.',
+        detail: 'Конфигурирайте mapboxToken в environment.ts.',
+        variant: 'warning'
+      });
       return;
     }
 

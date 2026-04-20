@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { ConfirmService } from '../shared/confirm-dialog/confirm.service';
 import { environment } from '../../environments/environment';
 
 interface UserProfile {
@@ -97,7 +98,8 @@ export class ProfileComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private confirmSvc: ConfirmService
   ) {}
 
   ngOnInit() {
@@ -148,7 +150,7 @@ export class ProfileComponent implements OnInit {
       error: (err) => {
         this.loading = false;
         if (err.status === 401 || err.status === 403) {
-          alert('Сесията ви е изтекла. Моля влезте отново.');
+          this.confirmSvc.notify({ title: 'Сесията изтече', message: 'Моля, влезте отново.', variant: 'warning' });
           this.authService.logout();
           this.router.navigate(['/login']);
         }
@@ -198,16 +200,16 @@ export class ProfileComponent implements OnInit {
         this.loadProfile();
         this.editMode = false;
         this.savingProfile = false;
-        alert('Профилът е актуализиран успешно!');
+        this.confirmSvc.notify({ title: 'Готово', message: 'Профилът е актуализиран успешно.', variant: 'info' });
       },
       error: (err) => {
         this.savingProfile = false;
         if (err.status === 401 || err.status === 403) {
-          alert('Сесията ви е изтекла. Моля влезте отново.');
+          this.confirmSvc.notify({ title: 'Сесията изтече', message: 'Моля, влезте отново.', variant: 'warning' });
           this.authService.logout();
           this.router.navigate(['/login']);
         } else {
-          alert('Грешка при актуализация на профила');
+          this.confirmSvc.notify({ title: 'Грешка', message: 'Актуализацията на профила не успя.', variant: 'danger' });
         }
       }
     });
@@ -225,7 +227,7 @@ export class ProfileComponent implements OnInit {
 
   uploadPicture() {
     if (!this.selectedFile) {
-      alert('Моля изберете файл');
+      this.confirmSvc.notify({ title: 'Няма избран файл', message: 'Моля, изберете снимка преди да качите.', variant: 'warning' });
       return;
     }
 
@@ -242,36 +244,42 @@ export class ProfileComponent implements OnInit {
         this.selectedFile = null;
         this.previewUrl = null;
         this.uploadingPicture = false;
-        alert('Снимката е качена успешно!');
+        this.confirmSvc.notify({ title: 'Готово', message: 'Снимката е качена успешно.', variant: 'info' });
       },
       error: (err) => {
         this.uploadingPicture = false;
         if (err.status === 401 || err.status === 403) {
-          alert('Сесията ви е изтекла. Моля влезте отново.');
+          this.confirmSvc.notify({ title: 'Сесията изтече', message: 'Моля, влезте отново.', variant: 'warning' });
           this.authService.logout();
           this.router.navigate(['/login']);
         } else {
-          alert(err.error?.error || 'Грешка при качване на снимката');
+          this.confirmSvc.notify({ title: 'Грешка при качване', message: err.error?.error || 'Неуспешно качване на снимката.', variant: 'danger' });
         }
       }
     });
   }
 
-  deletePicture() {
-    if (!confirm('Сигурни ли сте, че искате да изтриете профилната си снимка?')) return;
+  async deletePicture() {
+    const ok = await this.confirmSvc.ask({
+      title: 'Изтриване на профилна снимка',
+      message: 'Сигурни ли сте, че искате да изтриете профилната си снимка?',
+      confirmText: 'Изтрий',
+      variant: 'warning',
+    });
+    if (!ok) return;
     this.http.delete(`${this.apiUrl}/UserProfile/picture`, { headers: this.getAuthHeaders() }).subscribe({
       next: () => {
         this.authService.updateProfilePicture(null);
         this.loadProfile();
-        alert('Снимката е изтрита');
+        this.confirmSvc.notify({ title: 'Готово', message: 'Снимката е изтрита.', variant: 'info' });
       },
       error: (err) => {
         if (err.status === 401 || err.status === 403) {
-          alert('Сесията ви е изтекла. Моля влезте отново.');
+          this.confirmSvc.notify({ title: 'Сесията изтече', message: 'Моля, влезте отново.', variant: 'warning' });
           this.authService.logout();
           this.router.navigate(['/login']);
         } else {
-          alert('Грешка при изтриване на снимката');
+          this.confirmSvc.notify({ title: 'Грешка', message: 'Изтриването на снимката не успя.', variant: 'danger' });
         }
       }
     });

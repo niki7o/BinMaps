@@ -5,6 +5,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { ConfirmService } from '../shared/confirm-dialog/confirm.service';
 import { environment } from '../../environments/environment';
 
 interface Report {
@@ -90,7 +91,38 @@ interface PagedResponse {
   items: Report[];
 }
 
-type ActiveTab = 'reports' | 'containers' | 'trucks' | 'users' | 'deleted';
+type ActiveTab = 'reports' | 'containers' | 'trucks' | 'users' | 'deleted' | 'routes';
+
+export interface RouteRunSummary {
+  id: number;
+  driverId: string;
+  driverName: string;
+  areaId: string;
+  trashType: number;
+  truckId: number | null;
+  startedAt: string;
+  completedAt: string | null;
+  status: string;
+  plannedDistanceKm: number;
+  plannedMinutes: number;
+  collectedLoad: number;
+  stopsCompleted: number;
+  stopsPlanned: number;
+  durationMinutes: number;
+}
+
+export interface RouteStopSnapshot {
+  id: number;
+  areaId: string;
+  lat: number;
+  lng: number;
+  fill: number;
+  capacity: number;
+}
+
+export interface RouteRunDetail extends RouteRunSummary {
+  stops: RouteStopSnapshot[];
+}
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -209,7 +241,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly http: HttpClient,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private readonly confirmSvc: ConfirmService
   ) {}
 
   ngOnInit(): void {
@@ -235,9 +268,73 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       containers: () => this.loadContainers(),
       trucks: () => this.loadTrucks(),
       users: () => this.loadUsers(),
-      deleted: () => this.loadDeletedContainers()
+      deleted: () => this.loadDeletedContainers(),
+      routes: () => this.loadRouteHistory()
     };
     loaders[tab]();
+  }
+
+  // ── Route history ────────────────────────────────────────────────────
+  routeHistory: RouteRunSummary[] = [];
+  filteredRoutes: RouteRunSummary[] = [];
+  routeFilter: { status: string; areaId: string; driver: string } = {
+    status: '',
+    areaId: '',
+    driver: '',
+  };
+  selectedRun: RouteRunDetail | null = null;
+  isLoadingRoutes = false;
+
+  loadRouteHistory(): void {
+    this.isLoadingRoutes = true;
+    const params: string[] = [];
+    if (this.routeFilter.status) params.push(`status=${this.routeFilter.status}`);
+    if (this.routeFilter.areaId) params.push(`areaId=${encodeURIComponent(this.routeFilter.areaId)}`);
+    if (this.routeFilter.driver) params.push(`driverId=${encodeURIComponent(this.routeFilter.driver)}`);
+    params.push('take=200');
+
+    const url = `${this.API}/trucks/route/history?${params.join('&')}`;
+    this.http.get<RouteRunSummary[]>(url, this.authHeaders())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: data => {
+          this.routeHistory = data ?? [];
+          this.applyRouteFilters();
+          this.isLoadingRoutes = false;
+        },
+        error: () => {
+          this.isLoadingRoutes = false;
+          this.showToast('Грешка при зареждане на маршрути', 'error');
+        }
+      });
+  }
+
+  applyRouteFilters(): void {
+    const term = (this.routeFilter.driver ?? '').trim().toLowerCase();
+    this.filteredRoutes = this.routeHistory.filter(r => {
+      if (this.routeFilter.status && r.status !== this.routeFilter.status) return false;
+      if (this.routeFilter.areaId && r.areaId !== this.routeFilter.areaId) return false;
+      if (term && !(r.driverName ?? '').toLowerCase().includes(term)
+          && !(r.driverId ?? '').toLowerCase().includes(term)) return false;
+      return true;
+    });
+  }
+
+  openRunDetail(runId: number): void {
+    this.http.get<RouteRunDetail>(`${this.API}/trucks/route/${runId}`, this.authHeaders())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: d => { this.selectedRun = d; },
+        error: () => this.showToast('Не мога да заредя детайлите за маршрута', 'error')
+      });
+  }
+
+  closeRunDetail(): void {
+    this.selectedRun = null;
+  }
+
+  trashTypeLabel(t: number): string {
+    return t === 0 ? 'Общ' : t === 1 ? 'Пластмаса' : t === 2 ? 'Хартия' : t === 3 ? 'Стъкло' : 'Неизв.';
   }
 
   loadDeletedContainers(): void {
@@ -249,8 +346,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
-  restoreContainer(id: number): void {
-    if (!confirm(`Възстанови контейнер #${id}?`)) return;
+  async restoreContainer(id: number): Promise<void> {
+    const ok = await this.confirmSvc.ask({
+      title: 'Възстановяване на контейнер',
+      message: `Да върна ли контейнер #${id} от архива?`,
+      confirmText: 'Възстанови',
+      cancelText: 'Отказ',
+      variant: 'info',
+    });
+    if (!ok) return;
     this.http.post(`${this.API}/admin/containers/${id}/restore`, {}, this.authHeaders())
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -263,11 +367,26 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
-  deleteContainerFromAdmin(c: Container): void {
-    const msg = c.isSeeded
-      ? `Архивирай seed контейнер #${c.id}? Може да бъде възстановен.`
-      : `ИЗТРИЙ контейнер #${c.id} ОКОНЧАТЕЛНО? Това действие е необратимо.`;
-    if (!confirm(msg)) return;
+  async deleteContainerFromAdmin(c: Container): Promise<void> {
+    const ok = c.isSeeded
+      ? await this.confirmSvc.ask({
+          title: 'Архивиране на seed контейнер',
+          message: `Да архивирам ли контейнер #${c.id}?`,
+          detail: 'Seed контейнерите могат да бъдат възстановени по-късно от таб „Архивирани".',
+          confirmText: 'Архивирай',
+          cancelText: 'Отказ',
+          variant: 'warning',
+        })
+      : await this.confirmSvc.ask({
+          title: `Окончателно изтриване на контейнер #${c.id}`,
+          message: 'Това действие е необратимо. Контейнерът и историята му ще бъдат изтрити за постоянно.',
+          detail: `Зона: ${c.areaId} · Пълнене: ${c.fillPercentage.toFixed(0)}%`,
+          confirmText: 'Изтрий окончателно',
+          cancelText: 'Отказ',
+          variant: 'danger',
+          requireText: `DELETE ${c.id}`,
+        });
+    if (!ok) return;
 
     this.http.delete<{ id: number; mode: string }>(
       `${this.API}/containers/${c.id}`, this.authHeaders()
@@ -717,8 +836,17 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
-  deleteUser(user: User): void {
-    if (!confirm(`Изтриване на профила на ${user.userName}?`)) return;
+  async deleteUser(user: User): Promise<void> {
+    const ok = await this.confirmSvc.ask({
+      title: `Изтриване на профила на ${user.userName}`,
+      message: 'Профилът и всички свързани данни ще бъдат изтрити. Това действие е необратимо.',
+      detail: `Email: ${user.email} · Репутация: ${user.reputation}`,
+      confirmText: 'Изтрий профила',
+      cancelText: 'Отказ',
+      variant: 'danger',
+      requireText: user.userName,
+    });
+    if (!ok) return;
     this.http.delete(`${this.API}/admin/users/${user.id}`, this.authHeaders())
       .pipe(takeUntil(this.destroy$))
       .subscribe({
