@@ -4,6 +4,8 @@ using BinMaps.Infrastructure.Services.Interfaces;
 using BinMaps.Shared.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace BinMaps.API.Controllers;
 
@@ -15,13 +17,16 @@ public sealed class TrucksController : ControllerBase
 {
     private readonly ITruckRouteService _routeService;
     private readonly IRouteRunService _routeRunService;
+    private readonly ILogger<TrucksController> _logger;
 
     public TrucksController(
         ITruckRouteService routeService,
-        IRouteRunService routeRunService)
+        IRouteRunService routeRunService,
+        ILogger<TrucksController> logger)
     {
         _routeService = routeService;
         _routeRunService = routeRunService;
+        _logger = logger;
     }
 
     #region Route generation
@@ -56,8 +61,11 @@ public sealed class TrucksController : ControllerBase
     [HttpPost("route/start")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> StartRun([FromBody] StartRouteRunDto dto)
+    public async Task<IActionResult> StartRun([FromBody] StartRouteRunDto? dto)
     {
+        if (dto is null)
+            return BadRequest(new { message = "Тялото на заявката липсва или е невалидно." });
+
         var driverId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var driverName = User.Identity?.Name ?? string.Empty;
         if (string.IsNullOrWhiteSpace(driverId))
@@ -70,7 +78,24 @@ public sealed class TrucksController : ControllerBase
         }
         catch (ArgumentException ex)
         {
+            _logger.LogWarning(ex, "StartRun validation failed for driver {DriverId}", driverId);
             return BadRequest(new { message = ex.Message });
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex,
+                "StartRun DB error for driver {DriverId}, areaId={AreaId}, truckId={TruckId}",
+                driverId, dto.AreaId, dto.TruckId);
+            return BadRequest(new
+            {
+                message = "Не може да се създаде маршрут: "
+                       + (ex.InnerException?.Message ?? ex.Message),
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "StartRun unexpected error for driver {DriverId}", driverId);
+            return StatusCode(500, new { message = "Неочаквана грешка при стартиране." });
         }
     }
 
@@ -98,8 +123,19 @@ public sealed class TrucksController : ControllerBase
         [FromQuery] string? status = null,
         [FromQuery] int take = 100)
     {
-        var list = await _routeRunService.GetHistoryAsync(driverId, areaId, status, take);
-        return Ok(list);
+        try
+        {
+            var list = await _routeRunService.GetHistoryAsync(driverId, areaId, status, take);
+            return Ok(list);
+        }
+        catch (Exception ex)
+        {
+            // Log and return an empty list rather than 500, so the admin dashboard
+            // can render cleanly even if the RouteRuns table isn't there yet
+            // (e.g. fresh deploy where the migration hasn't finished).
+            _logger.LogError(ex, "GetHistory failed — returning empty list");
+            return Ok(Array.Empty<RouteRunSummaryDto>());
+        }
     }
 
     /// <summary>Full detail of a single run (admin only).</summary>
@@ -109,10 +145,18 @@ public sealed class TrucksController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetRun(int id)
     {
-        var detail = await _routeRunService.GetByIdAsync(id);
-        return detail is null
-            ? NotFound(new { message = "Маршрутът не е намерен." })
-            : Ok(detail);
+        try
+        {
+            var detail = await _routeRunService.GetByIdAsync(id);
+            return detail is null
+                ? NotFound(new { message = "Маршрутът не е намерен." })
+                : Ok(detail);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetRun({Id}) failed", id);
+            return NotFound(new { message = "Маршрутът не е достъпен." });
+        }
     }
 
     #endregion
