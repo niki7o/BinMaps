@@ -89,6 +89,7 @@ public sealed class Program
         builder.Services.AddSingleton<Random>(_ => new Random());
         builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
         builder.Services.AddScoped<ITruckRouteService, TruckRouteService>();
+        builder.Services.AddScoped<IRouteRunService, RouteRunService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IReportService, ReportService>();
         builder.Services.AddScoped<IAIService, AIService>();
