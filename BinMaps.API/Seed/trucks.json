@@ -1,46 +1,34 @@
-﻿{
+{
+  "//": "Four trucks per zone — one per TrashType (0=Mixed, 1=Plastic, 2=Paper, 3=Glass). This matches real разделно събиране in Sofia: each waste stream has its own vehicle.",
   "trucks": [
-    {
-      "id": 1,
-      "areaId": "Зона 2 - Център",
-      "capacity": 12000,
-      "locationX": 23.3219,
-      "locationY": 42.6977
-    },
-    {
-      "id": 2,
-      "areaId": "Зона 1 - Надежда север",
-      "capacity": 12000,
-      "locationX": 23.3400,
-      "locationY": 42.7350
-    },
-    {
-      "id": 3,
-      "areaId": "Зона 3 - Люлин",
-      "capacity": 12000,
-      "locationX": 23.2750,
-      "locationY": 42.7400
-    },
-    {
-      "id": 4,
-      "areaId": "Зона 4 - Овча Купел",
-      "capacity": 12000,
-      "locationX": 23.2600,
-      "locationY": 42.6700
-    },
-    {
-      "id": 5,
-      "areaId": "Зона 6 - Изток",
-      "capacity": 12000,
-      "locationX": 23.3700,
-      "locationY": 42.6900
-    },
-    {
-      "id": 6,
-      "areaId": "Зона 5 - Юг и Витоша",
-      "capacity": 12000,
-      "locationX": 23.3300,
-      "locationY": 42.6500
-    }
+    { "id": 1,  "areaId": "Зона 1 - Надежда север", "trashType": 0, "capacity": 12000, "locationX": 23.3400, "locationY": 42.7350 },
+    { "id": 2,  "areaId": "Зона 1 - Надежда север", "trashType": 1, "capacity": 12000, "locationX": 23.3400, "locationY": 42.7350 },
+    { "id": 3,  "areaId": "Зона 1 - Надежда север", "trashType": 2, "capacity": 12000, "locationX": 23.3400, "locationY": 42.7350 },
+    { "id": 4,  "areaId": "Зона 1 - Надежда север", "trashType": 3, "capacity": 12000, "locationX": 23.3400, "locationY": 42.7350 },
+
+    { "id": 5,  "areaId": "Зона 2 - Център",         "trashType": 0, "capacity": 12000, "locationX": 23.3219, "locationY": 42.6977 },
+    { "id": 6,  "areaId": "Зона 2 - Център",         "trashType": 1, "capacity": 12000, "locationX": 23.3219, "locationY": 42.6977 },
+    { "id": 7,  "areaId": "Зона 2 - Център",         "trashType": 2, "capacity": 12000, "locationX": 23.3219, "locationY": 42.6977 },
+    { "id": 8,  "areaId": "Зона 2 - Център",         "trashType": 3, "capacity": 12000, "locationX": 23.3219, "locationY": 42.6977 },
+
+    { "id": 9,  "areaId": "Зона 3 - Люлин",          "trashType": 0, "capacity": 12000, "locationX": 23.2750, "locationY": 42.7400 },
+    { "id": 10, "areaId": "Зона 3 - Люлин",          "trashType": 1, "capacity": 12000, "locationX": 23.2750, "locationY": 42.7400 },
+    { "id": 11, "areaId": "Зона 3 - Люлин",          "trashType": 2, "capacity": 12000, "locationX": 23.2750, "locationY": 42.7400 },
+    { "id": 12, "areaId": "Зона 3 - Люлин",          "trashType": 3, "capacity": 12000, "locationX": 23.2750, "locationY": 42.7400 },
+
+    { "id": 13, "areaId": "Зона 4 - Овча Купел",     "trashType": 0, "capacity": 12000, "locationX": 23.2900, "locationY": 42.6700 },
+    { "id": 14, "areaId": "Зона 4 - Овча Купел",     "trashType": 1, "capacity": 12000, "locationX": 23.2900, "locationY": 42.6700 },
+    { "id": 15, "areaId": "Зона 4 - Овча Купел",     "trashType": 2, "capacity": 12000, "locationX": 23.2900, "locationY": 42.6700 },
+    { "id": 16, "areaId": "Зона 4 - Овча Купел",     "trashType": 3, "capacity": 12000, "locationX": 23.2900, "locationY": 42.6700 },
+
+    { "id": 17, "areaId": "Зона 5 - Юг и Витоша",    "trashType": 0, "capacity": 12000, "locationX": 23.3300, "locationY": 42.6500 },
+    { "id": 18, "areaId": "Зона 5 - Юг и Витоша",    "trashType": 1, "capacity": 12000, "locationX": 23.3300, "locationY": 42.6500 },
+    { "id": 19, "areaId": "Зона 5 - Юг и Витоша",    "trashType": 2, "capacity": 12000, "locationX": 23.3300, "locationY": 42.6500 },
+    { "id": 20, "areaId": "Зона 5 - Юг и Витоша",    "trashType": 3, "capacity": 12000, "locationX": 23.3300, "locationY": 42.6500 },
+
+    { "id": 21, "areaId": "Зона 6 - Изток",          "trashType": 0, "capacity": 12000, "locationX": 23.3700, "locationY": 42.6900 },
+    { "id": 22, "areaId": "Зона 6 - Изток",          "trashType": 1, "capacity": 12000, "locationX": 23.3700, "locationY": 42.6900 },
+    { "id": 23, "areaId": "Зона 6 - Изток",          "trashType": 2, "capacity": 12000, "locationX": 23.3700, "locationY": 42.6900 },
+    { "id": 24, "areaId": "Зона 6 - Изток",          "trashType": 3, "capacity": 12000, "locationX": 23.3700, "locationY": 42.6900 }
   ]
 }

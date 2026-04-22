@@ -115,7 +115,7 @@ public sealed class ContainerDynamicsService : BackgroundService
             await BroadcastAsync(containers, changedIds, token);
 
             if (notifications.Count > 0)
-                await _hubContext.Clients.All.SendAsync("AdminNotification", notifications, token);
+                await _hubContext.Clients.Group("admins").SendAsync("AdminNotification", notifications, token);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

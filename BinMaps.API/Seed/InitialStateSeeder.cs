@@ -3,6 +3,7 @@ using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System.Text.Json;
 
 namespace BinMaps.API.Seed
@@ -13,18 +14,24 @@ namespace BinMaps.API.Seed
         private readonly UserManager<User> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly Random _random;
+        private readonly IConfiguration _config;
 
         public InitialStateSeeder(
             BinMapsDbContext context,
             UserManager<User> userManager,
             RoleManager<IdentityRole> roleManager,
-            Random random)
+            Random random,
+            IConfiguration config)
         {
             _context = context;
             _userManager = userManager;
             _roleManager = roleManager;
             _random = random;
+            _config = config;
         }
+
+        private bool UseClusterGenerator =>
+            _config.GetValue("Seed:UseClusterGenerator", defaultValue: true);
 
         public async Task SeedAllAsync()
         {
@@ -137,18 +144,59 @@ namespace BinMaps.API.Seed
         {
             if (await _context.TrashContainers.AnyAsync()) return;
 
-            var jsonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Seed", "containers.json");
-            if (!File.Exists(jsonPath)) return;
+            IReadOnlyList<TrashContainer> containers = UseClusterGenerator
+                ? await GenerateContainersFromClustersAsync()
+                : await LoadContainersFromJsonAsync();
 
-            var json = await File.ReadAllTextAsync(jsonPath);
-            var data = JsonSerializer.Deserialize<ContainersJsonData>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (containers.Count == 0) return;
 
-            if (data?.Containers == null || data.Containers.Count == 0) return;
+            await _context.TrashContainers.AddRangeAsync(containers);
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Cluster-based generator: each collection point holds one bin per
+        /// <see cref="TrashType"/> placed side-by-side. Produces ~480 bins
+        /// across six zones so truck routes always have meaningful targets,
+        /// and the map renders like a real разделно събиране layout.
+        /// </summary>
+        private async Task<IReadOnlyList<TrashContainer>> GenerateContainersFromClustersAsync()
+        {
+            var areas = await _context.Areas.AsNoTracking().ToListAsync();
+            if (areas.Count == 0) return Array.Empty<TrashContainer>();
+
+            var generator = new ContainerClusterGenerator(_random);
+            var bins = generator.Generate(areas);
 
             var now = DateTime.UtcNow;
-            var weather = GetAmbientTemperature();
+            var ambient = GetAmbientTemperature();
 
-            var containers = data.Containers.Select(c =>
+            // Generator leaves Temperature null; set it here for sensor-backed
+            // bins so the initial map view has values to render (the
+            // FillageSimulator will take over from the next cycle onwards).
+            foreach (var bin in bins.Where(b => b.HasSensor))
+                bin.Temperature = CalculateInitialTemperature(ambient, bin.TrashType, bin.FillPercentage, now.Hour);
+
+            return bins;
+        }
+
+        private async Task<IReadOnlyList<TrashContainer>> LoadContainersFromJsonAsync()
+        {
+            var jsonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Seed", "containers.json");
+            if (!File.Exists(jsonPath)) return Array.Empty<TrashContainer>();
+
+            var json = await File.ReadAllTextAsync(jsonPath);
+            var data = JsonSerializer.Deserialize<ContainersJsonData>(
+                json,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            if (data?.Containers == null || data.Containers.Count == 0)
+                return Array.Empty<TrashContainer>();
+
+            var now = DateTime.UtcNow;
+            var ambient = GetAmbientTemperature();
+
+            return data.Containers.Select(c =>
             {
                 var type = (TrashType)c.TrashType;
                 var fill = CalculateInitialFill(c.AreaId, type, now.Hour, now.DayOfWeek);
@@ -163,15 +211,12 @@ namespace BinMaps.API.Seed
                     LocationY = c.LocationY,
                     HasSensor = c.HasSensor,
                     Status = TrashContainerStatus.Active,
-                    Temperature = c.HasSensor ? CalculateInitialTemperature(weather, type, fill, now.Hour) : null,
+                    Temperature = c.HasSensor ? CalculateInitialTemperature(ambient, type, fill, now.Hour) : null,
                     BatteryPercentage = c.HasSensor ? _random.Next(60, 101) : null,
                     LastSensorReadAt = c.HasSensor ? now : null,
                     IsSeeded = true
                 };
             }).ToList();
-
-            await _context.TrashContainers.AddRangeAsync(containers);
-            await _context.SaveChangesAsync();
         }
 
         private double CalculateInitialFill(string areaId, TrashType type, int hour, DayOfWeek day)

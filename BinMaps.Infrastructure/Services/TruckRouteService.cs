@@ -30,7 +30,7 @@ public sealed class TruckRouteService : ITruckRouteService
 
     public async Task<RouteResultDto> GenerateRouteAsync(string areaId, TrashType trashType)
     {
-        var truck = await FindTruckAsync(areaId);
+        var truck = await FindTruckAsync(areaId, trashType);
         var candidates = await GetCandidatesAsync(areaId, trashType);
         var selected = SelectByCapacity(candidates, truck.Capacity);
 
@@ -49,14 +49,21 @@ public sealed class TruckRouteService : ITruckRouteService
 
     #region Pipeline
 
-    private async Task<Truck> FindTruckAsync(string areaId)
+    /// <summary>
+    /// Finds the truck assigned to <paramref name="areaId"/> that collects
+    /// <paramref name="trashType"/>. Falls back to any truck in the area if
+    /// no type-specific vehicle is seeded — keeps legacy single-truck-per-area
+    /// deployments working.
+    /// </summary>
+    private async Task<Truck> FindTruckAsync(string areaId, TrashType trashType)
     {
-        var truck = await _truckRepo
-            .GetAllAttached()
-            .FirstOrDefaultAsync(t => t.AreaId == areaId);
+        var query = _truckRepo.GetAllAttached().Where(t => t.AreaId == areaId);
+
+        var truck = await query.FirstOrDefaultAsync(t => t.TrashType == trashType)
+                 ?? await query.FirstOrDefaultAsync();
 
         return truck ?? throw new InvalidOperationException(
-            $"No truck found for area '{areaId}'.");
+            $"No truck found for area '{areaId}' (type: {trashType}).");
     }
 
     private async Task<List<TrashContainer>> GetCandidatesAsync(string areaId, TrashType trashType)
