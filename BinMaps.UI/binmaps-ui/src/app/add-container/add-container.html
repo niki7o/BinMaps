@@ -16,6 +16,13 @@
         <span class="dot"></span>
         <span>Кликнете някъде на картата</span>
       </div>
+
+      <!-- Map legend: explains the red exclusion zones around existing bins -->
+      <div class="map-legend" *ngIf="!loadingContainers && existingContainersCount > 0">
+        <span class="legend-dot"></span>
+        <span>Сиви точки = съществуващи контейнери · червен кръг = 15m зона</span>
+      </div>
+
       <div id="add-container-map" class="map"></div>
       <div class="map-footer" *ngIf="lat !== null">
         <div>
@@ -101,6 +108,27 @@
             <span>{{ lat | number:'1.5-5' }}, {{ lng | number:'1.5-5' }}</span>
             <small *ngIf="!inBounds" class="warn">
               ⚠ Извън пилотната зона (София)
+            </small>
+          </div>
+        </div>
+
+        <!-- Nearby container readout -->
+        <div class="field" *ngIf="nearest">
+          <label>Най-близък контейнер</label>
+          <div
+            class="nearest-box"
+            [class.conflict]="hasConflict"
+            [class.warn-box]="hasWarning && !hasConflict">
+            <div class="nearest-line">{{ nearestText }}</div>
+            <small *ngIf="hasConflict" class="warn">
+              ⛔ Твърде близо — минимум {{ conflictDistanceMeters }} м.
+              Преместете пина по-далеч.
+            </small>
+            <small *ngIf="hasWarning && !hasConflict" class="warn">
+              ⚠ Има контейнер в близост — сигурни ли сте, че трябва втори тук?
+            </small>
+            <small *ngIf="!hasConflict && !hasWarning" class="ok">
+              ✓ Достатъчно разстояние от останалите.
             </small>
           </div>
         </div>

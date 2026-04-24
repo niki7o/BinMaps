@@ -353,6 +353,100 @@
   border-color: var(--border-default);
 }
 
+/* ── Map legend (under map-hint) ─────────────────────────── */
+.map-legend {
+  position: absolute;
+  top: calc(var(--space-4) + 34px);
+  left: var(--space-4);
+  z-index: 500;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-3);
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-shadow: var(--shadow-sm);
+  max-width: 360px;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(120, 140, 160, 0.85);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
+  flex-shrink: 0;
+}
+
+/* ── Nearest-container readout box ───────────────────────── */
+.nearest-box {
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  transition:
+    border-color var(--duration-base) var(--ease-out),
+    background var(--duration-base) var(--ease-out);
+}
+
+.nearest-box.conflict {
+  border-color: rgba(239, 68, 68, 0.55);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.nearest-box.warn-box {
+  border-color: rgba(245, 158, 11, 0.55);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.nearest-line {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.nearest-box small.ok {
+  color: var(--eco-bright);
+  font-weight: 500;
+}
+
+/* ── Pin conflict / warn halos (via .getElement class toggle) */
+:host ::ng-deep .add-container-pin.conflict {
+  filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.85));
+  animation: conflict-pulse 1.2s ease-in-out infinite;
+}
+
+:host ::ng-deep .add-container-pin.warn {
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.75));
+}
+
+@keyframes conflict-pulse {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.65)); }
+  50%      { filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.95)); }
+}
+
+/* ── Existing-container gray dots ─────────────────────────── */
+:host ::ng-deep .existing-container-dot {
+  pointer-events: auto;
+}
+
+:host ::ng-deep .existing-container-dot span {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--c, rgba(120,140,160,0.85));
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
 /* ── Leaflet controls tweaks for dark theme ──────────────── */
 :host ::ng-deep .leaflet-bar a {
   background-color: var(--bg-elevated);
