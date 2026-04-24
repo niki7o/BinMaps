@@ -1,12 +1,13 @@
+/* header-local aliases — kept for backward compatibility, now point at global tokens */
 :root {
-  --nav-height: 64px;
+  --nav-height: var(--navbar-height, 64px);
   --nav-bg:     rgba(10, 17, 30, 0.92);
-  --nav-border: rgba(16, 185, 129, 0.15);
-  --eco:        #10b981;
-  --eco-dim:    rgba(16, 185, 129, 0.12);
-  --text-1:     #f1f5f9;
-  --text-2:     #94a3b8;
-  --text-3:     #475569;
+  --nav-border: var(--border-eco-soft);
+  --eco:        var(--eco-primary);
+  --eco-dim:    var(--eco-ghost);
+  --text-1:     var(--text-primary);
+  --text-2:     var(--text-secondary);
+  --text-3:     var(--text-muted);
 }
 
 .navbar {
@@ -17,13 +18,14 @@
   backdrop-filter: blur(20px) saturate(1.4);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
   border-bottom: 1px solid var(--nav-border);
-  z-index: 2000;
-  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  z-index: var(--z-navbar, 300);
+  transition: box-shadow var(--duration-slow) var(--ease-out),
+              border-color var(--duration-slow) var(--ease-out);
 }
 
 .navbar.is-scrolled {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), 0 0 40px rgba(16, 185, 129, 0.06);
-  border-bottom-color: rgba(16, 185, 129, 0.25);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), 0 0 40px var(--eco-glow-soft);
+  border-bottom-color: var(--border-eco);
 }
 
 .navbar__inner {
@@ -263,7 +265,7 @@
   border-radius: 12px;
   box-shadow: 0 12px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(16,185,129,0.08);
   overflow: hidden;
-  z-index: 2100;
+  z-index: calc(var(--z-navbar, 300) + 1);
   animation: menuFade 0.18s ease-out;
   transform-origin: top right;
 }
@@ -334,7 +336,7 @@
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(16,185,129,0.12), inset 0 1px 0 rgba(255,255,255,0.03);
   overflow: hidden;
-  z-index: 2150;
+  z-index: calc(var(--z-navbar, 300) + 1);
   backdrop-filter: blur(16px);
   animation: notifPop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 }

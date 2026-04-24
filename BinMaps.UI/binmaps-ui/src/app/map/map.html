@@ -8,8 +8,21 @@
       <div class="ai-modal__header">
         <div class="ai-modal__icon"
              [class.ai-modal__icon--warn]="aiConflictModal!.variant === 'conflict'"
-             [class.ai-modal__icon--info]="aiConflictModal!.variant === 'noBin'">
-          <span>{{ aiConflictModal!.variant === 'conflict' ? '⚠️' : '🔍' }}</span>
+             [class.ai-modal__icon--info]="aiConflictModal!.variant === 'noBin'"
+             aria-hidden="true">
+          <svg *ngIf="aiConflictModal!.variant === 'conflict'"
+               viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <svg *ngIf="aiConflictModal!.variant === 'noBin'"
+               viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
         </div>
         <div class="ai-modal__titles">
           <span class="ai-modal__title">
@@ -64,7 +77,7 @@
       <div class="ai-modal__footer">
         <button class="ai-modal__btn ai-modal__btn--cancel" (click)="cancelAiModal()">Откажи</button>
         <button class="ai-modal__btn"
-                [class.ai-modal__btn--danger]="aiConflictModal!.variant === 'conflict'"
+                [class.ai-modal__btn--warn]="aiConflictModal!.variant === 'conflict'"
                 [class.ai-modal__btn--neutral]="aiConflictModal!.variant === 'noBin'"
                 (click)="confirmAiModal()">
           {{ aiConflictModal!.variant === 'conflict' ? 'Изпрати въпреки това' : 'Продължи' }}
@@ -171,17 +184,28 @@
           </div>
 
          
-          <div class="nav-mode-toggle" *ngIf="!isAdmin && !navigationActive">
-            <button class="mode-btn" [class.mode-btn--active]="navigationMode === 'auto'"
+          <div class="nav-mode-toggle"
+               [class.is-step]="navigationMode === 'step'"
+               role="tablist"
+               *ngIf="!isAdmin && !navigationActive">
+            <button class="mode-btn"
+                    type="button"
+                    role="tab"
+                    [attr.aria-selected]="navigationMode === 'auto'"
+                    [class.mode-btn--active]="navigationMode === 'auto'"
                     (click)="navigationMode = 'auto'">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" aria-hidden="true">
                 <polygon points="5 3 19 12 5 21 5 3"/>
               </svg>
               Наведнъж
             </button>
-            <button class="mode-btn" [class.mode-btn--active]="navigationMode === 'step'"
+            <button class="mode-btn"
+                    type="button"
+                    role="tab"
+                    [attr.aria-selected]="navigationMode === 'step'"
+                    [class.mode-btn--active]="navigationMode === 'step'"
                     (click)="navigationMode = 'step'">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" aria-hidden="true">
                 <line x1="5" y1="12" x2="19" y2="12"/>
                 <polyline points="13 6 19 12 13 18"/>
               </svg>

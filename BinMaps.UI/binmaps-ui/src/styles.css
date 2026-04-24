@@ -35,7 +35,8 @@
 
   --text-primary:    #f0f4f8;
   --text-secondary:  #8a9bb0;
-  --text-muted:      #4a5d70;
+  /* bumped from #4a5d70 (4.1:1) to meet WCAG AA 4.5:1 on --bg-root */
+  --text-muted:      #5a6f82;
   --text-inverse:    #050a0e;
   --text-eco:        #10b981;
   --text-warn:       #f59e0b;
@@ -146,7 +147,13 @@ body {
   background-color: var(--bg-root);
   min-height: 100vh;
   overflow-x: hidden;
+  /* DM Sans stylistic alternates for a more crafted look */
+  font-feature-settings: "ss01", "cv11";
 }
+
+/* Reusable brand utilities — replaces inline color hardcoding */
+.brand-accent { color: var(--eco-primary); }
+.text-tabular { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
 
 body::before {
   content: '';
@@ -737,11 +744,14 @@ code, pre {
 }
 
 .table tbody tr {
-  transition: background var(--duration-fast) var(--ease-out);
+  transition: background var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out);
 }
 
 .table tbody tr:hover {
   background: var(--bg-hover);
+  /* Inset left rail — small crafted touch that also scan-aids the eye across wide rows */
+  box-shadow: inset 3px 0 0 var(--eco-primary);
 }
 
 .table tbody tr:last-child td {

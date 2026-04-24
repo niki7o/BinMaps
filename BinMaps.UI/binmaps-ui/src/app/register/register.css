@@ -150,7 +150,15 @@
   opacity: 0.7;
 }
 
+/* Stacked by default — side-by-side password fields cause confirm-mistyping + autofill bugs.
+   Use .auth-row--side for other two-up layouts where it's safe (first/last name, etc.). */
 .auth-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.auth-row--side {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-4);
@@ -171,6 +179,13 @@
   stroke-width: 2;
   pointer-events: none;
   z-index: 1;
+  transition: color var(--duration-base) var(--ease-out),
+              transform var(--duration-base) var(--ease-spring);
+}
+
+.auth-input-group:focus-within .auth-icon {
+  color: var(--eco-primary);
+  transform: translateX(2px);
 }
 
 .auth-input {
@@ -213,22 +228,31 @@
 
 .auth-eye {
   position: absolute;
-  right: var(--space-3);
+  right: calc(var(--space-3) - var(--space-2));
   background: none;
   border: none;
-  padding: var(--space-2);
+  /* phantom padding expands tap target to ~44×44 without visual change */
+  padding: var(--space-3);
+  margin: 0;
   cursor: pointer;
   color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
-  transition: color var(--duration-base) var(--ease-out);
+  transition: color var(--duration-base) var(--ease-out),
+              background var(--duration-base) var(--ease-out);
   z-index: 1;
 }
 
 .auth-eye:hover {
   color: var(--eco-primary);
+}
+
+.auth-eye:focus-visible {
+  color: var(--eco-primary);
+  background: var(--eco-ghost);
+  outline: none;
 }
 
 .auth-eye svg {
@@ -396,7 +420,7 @@
 }
 
 @media (max-width: 640px) {
-  .auth-row {
+  .auth-row--side {
     grid-template-columns: 1fr;
     gap: var(--space-5);
   }

@@ -3121,6 +3121,16 @@
   background: rgba(239, 68, 68, 0.20);
   border-color: rgba(239, 68, 68, 0.50);
 }
+/* informational warning — user is disagreeing with AI, not doing something dangerous */
+.ai-modal__btn--warn {
+  background: rgba(245, 158, 11, 0.10);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  color: #fcd34d;
+}
+.ai-modal__btn--warn:hover {
+  background: rgba(245, 158, 11, 0.20);
+  border-color: rgba(245, 158, 11, 0.55);
+}
 .ai-modal__btn--neutral {
   background: rgba(99, 102, 241, 0.10);
   border: 1px solid rgba(99, 102, 241, 0.28);
@@ -3144,40 +3154,76 @@
   color: var(--text-primary);
   font-weight: 700;
 }
+/* Segmented control — pill container with a sliding active background indicator. */
 .nav-mode-toggle {
-  display: flex;
-  gap: 0.4rem;
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+  padding: 4px;
   margin-bottom: 0.75rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.nav-mode-toggle::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  background: var(--eco-ghost);
+  border: 1px solid var(--border-eco);
+  border-radius: var(--radius-full);
+  box-shadow: 0 0 12px var(--eco-glow-soft), inset 0 0 0 1px rgba(255,255,255,0.02);
+  transform: translateX(0);
+  transition: transform 320ms var(--ease-spring);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.nav-mode-toggle.is-step::before {
+  transform: translateX(100%);
 }
 
 .mode-btn {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.6rem;
-  border-radius: 8px;
-  font-size: 0.78rem;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.05);
-  color: var(--text-secondary, #94a3b8);
-  transition: background 0.18s, color 0.18s, border-color 0.18s;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  transition: color var(--duration-base) var(--ease-out);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .mode-btn:hover {
-  background: rgba(255,255,255,0.10);
-  color: var(--text-primary, #f1f5f9);
+  color: var(--text-primary);
 }
+
 .mode-btn--active {
-  background: rgba(16,185,129,0.15);
-  border-color: rgba(16,185,129,0.40);
-  color: #34d399;
+  color: var(--eco-bright);
+}
+
+.mode-btn:focus-visible {
+  outline: 2px solid var(--eco-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-full);
 }
 
 .btn-breakdown {
