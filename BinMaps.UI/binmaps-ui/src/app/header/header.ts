@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, signal, computed, effect } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
@@ -21,6 +21,10 @@ export class Header implements OnInit, OnDestroy {
   readonly showUserMenu   = signal(false);
   readonly showNotifPanel = signal(false);
   readonly currentUser    = signal<AuthUser | null>(null);
+  readonly justReceived   = signal(false);
+
+  private _prevUnreadCount = 0;
+  private _bellTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly isLoggedIn = computed(() => !!this.currentUser());
   readonly isAdmin    = computed(() => this.currentUser()?.role === 'Admin');
@@ -36,7 +40,20 @@ export class Header implements OnInit, OnDestroy {
     private readonly authService: AuthService,
     private readonly router: Router,
     private readonly notifService: NotificationService
-  ) {}
+  ) {
+    // Fire `justReceived` for 2 seconds whenever unreadCount increases,
+    // so the bell icon gets a `.just-received` ring animation class.
+    effect(() => {
+      const current = this.notifService.notifications()
+        .filter(n => !n.read).length;
+      if (current > this._prevUnreadCount) {
+        this.justReceived.set(true);
+        if (this._bellTimer) clearTimeout(this._bellTimer);
+        this._bellTimer = setTimeout(() => this.justReceived.set(false), 2000);
+      }
+      this._prevUnreadCount = current;
+    });
+  }
 
   ngOnInit(): void {
     this.authService.currentUser$
@@ -49,6 +66,7 @@ export class Header implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this._bellTimer) clearTimeout(this._bellTimer);
     this.destroy$.next();
     this.destroy$.complete();
   }
