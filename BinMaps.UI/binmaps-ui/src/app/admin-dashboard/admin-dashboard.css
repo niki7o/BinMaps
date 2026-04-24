@@ -688,3 +688,28 @@
   text-align: right;
   margin-top: 4px;
 }
+
+/* ───────── Bulk-delete row selection (reports tab) ───────── */
+
+.admin-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--eco-primary, #10b981);
+  margin: 0;
+}
+
+.admin-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.admin-report-row.is-selected {
+  background: color-mix(in srgb, var(--status-critical, #ef4444) 8%, transparent);
+  box-shadow: inset 3px 0 0 var(--status-critical, #ef4444);
+}
+
+.admin-report-row.is-selected:hover {
+  background: color-mix(in srgb, var(--status-critical, #ef4444) 14%, transparent);
+}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              

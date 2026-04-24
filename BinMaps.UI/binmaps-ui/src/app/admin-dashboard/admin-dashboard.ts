@@ -160,6 +160,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   reportSearch = '';
   reportFilter = { status: '', reportType: '' };
 
+  /** Reports selected by the admin for bulk delete. Keyed by report.id. */
+  selectedReportIds = new Set<number>();
+
   containerSearch = '';
   userSearch = '';
 
@@ -433,6 +436,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           this.reports = res.items;
           this.applyReportFilters();
           this.buildUserReportCounts();
+          this.pruneSelectedReports();
           this.isLoading = false;
         },
         error: () => {
@@ -567,6 +571,137 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           this.loadStats();
         },
         error: () => this.showToast('Грешка при отхвърляне', 'error')
+      });
+  }
+
+  // ───────────────────────────── Bulk delete ─────────────────────────────
+
+  /** True if the given report is currently checked. */
+  isReportSelected(reportId: number): boolean {
+    return this.selectedReportIds.has(reportId);
+  }
+
+  /** Toggle a single row's checkbox. */
+  toggleReportSelection(reportId: number): void {
+    if (this.selectedReportIds.has(reportId)) {
+      this.selectedReportIds.delete(reportId);
+    } else {
+      this.selectedReportIds.add(reportId);
+    }
+  }
+
+  /** True when every report in the current filtered view is selected. */
+  get allVisibleReportsSelected(): boolean {
+    if (this.filteredReports.length === 0) return false;
+    return this.filteredReports.every(r => this.selectedReportIds.has(r.id));
+  }
+
+  /** True when some but not all visible reports are selected — used for the
+   *  indeterminate state of the header checkbox. */
+  get someVisibleReportsSelected(): boolean {
+    const anySelected = this.filteredReports.some(r => this.selectedReportIds.has(r.id));
+    return anySelected && !this.allVisibleReportsSelected;
+  }
+
+  /** How many reports are currently checked (across all pages, not just visible). */
+  get selectedReportCount(): number {
+    return this.selectedReportIds.size;
+  }
+
+  /** Toggle "select all" — covers only the rows currently in view. */
+  toggleSelectAllReports(): void {
+    if (this.allVisibleReportsSelected) {
+      this.filteredReports.forEach(r => this.selectedReportIds.delete(r.id));
+    } else {
+      this.filteredReports.forEach(r => this.selectedReportIds.add(r.id));
+    }
+  }
+
+  /** Drop any checked reports that are no longer in the current page/filter.
+   *  Called after a reload so we don't keep stale IDs forever. */
+  private pruneSelectedReports(): void {
+    if (this.selectedReportIds.size === 0) return;
+    const visible = new Set(this.reports.map(r => r.id));
+    for (const id of this.selectedReportIds) {
+      if (!visible.has(id)) this.selectedReportIds.delete(id);
+    }
+  }
+
+  clearReportSelection(): void {
+    this.selectedReportIds.clear();
+  }
+
+  async bulkDeleteSelectedReports(): Promise<void> {
+    const ids = Array.from(this.selectedReportIds);
+    if (ids.length === 0) return;
+
+    const ok = await this.confirmSvc.ask({
+      title: `Изтриване на ${ids.length} ${ids.length === 1 ? 'сигнал' : 'сигнала'}`,
+      message: 'Избраните сигнали и техните снимки ще бъдат премахнати окончателно. Действието е необратимо.',
+      confirmText: 'Изтрий',
+      cancelText: 'Отказ',
+      variant: 'danger',
+    });
+    if (!ok) return;
+
+    this.http.post<{ deleted: number; photosRemoved: number; message?: string }>(
+      `${this.API}/admin/reports/bulk-delete`,
+      { ids },
+      this.authHeaders()
+    )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: res => {
+          this.showToast(res?.message ?? `Изтрити ${res?.deleted ?? ids.length} сигнала.`);
+          this.selectedReportIds.clear();
+          this.loadReports();
+          this.loadStats();
+        },
+        error: () => this.showToast('Грешка при изтриване на сигналите', 'error'),
+      });
+  }
+
+  /** Delete every report matching the current status / reportType filter
+   *  (across ALL pages — not just the visible one). */
+  async deleteAllFilteredReports(): Promise<void> {
+    const filterParts: string[] = [];
+    if (this.reportFilter.status) {
+      const labels: Record<string, string> = {
+        pending: 'чакащи',
+        approved: 'одобрени',
+        rejected: 'отхвърлени',
+      };
+      filterParts.push(labels[this.reportFilter.status] ?? this.reportFilter.status);
+    }
+    if (this.reportFilter.reportType) filterParts.push(`тип "${this.reportFilter.reportType}"`);
+    const scope = filterParts.length ? filterParts.join(', ') : 'ВСИЧКИ';
+
+    const ok = await this.confirmSvc.ask({
+      title: `Изчистване на ${scope} сигнали`,
+      message: `Това ще премахне окончателно ${scope === 'ВСИЧКИ' ? 'всички' : scope} сигнали и снимките им. Действието е необратимо.`,
+      confirmText: 'Изчисти',
+      cancelText: 'Отказ',
+      variant: 'danger',
+    });
+    if (!ok) return;
+
+    const qs = new URLSearchParams();
+    if (this.reportFilter.status) qs.set('status', this.reportFilter.status);
+    if (this.reportFilter.reportType) qs.set('reportType', this.reportFilter.reportType);
+    const url = `${this.API}/admin/reports/delete-all${qs.toString() ? '?' + qs.toString() : ''}`;
+
+    this.http.post<{ deleted: number; photosRemoved: number; message?: string }>(
+      url, {}, this.authHeaders()
+    )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: res => {
+          this.showToast(res?.message ?? `Изтрити ${res?.deleted ?? 0} сигнала.`);
+          this.selectedReportIds.clear();
+          this.loadReports(1);
+          this.loadStats();
+        },
+        error: () => this.showToast('Грешка при изчистване на сигналите', 'error'),
       });
   }
 

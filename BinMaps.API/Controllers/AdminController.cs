@@ -3,6 +3,7 @@ using BinMaps.Data.Entities;
 using BinMaps.Data.Entities.Enums;
 using BinMaps.Shared.DTOs;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -387,6 +388,126 @@ public sealed class AdminController : ControllerBase
             .ToListAsync();
 
         return Ok(pending);
+    }
+
+    public sealed class BulkDeleteReportsDto
+    {
+        public List<int> Ids { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Permanently deletes the given report IDs and their photo files.
+    /// Used by the admin "изтрий избраните" bulk action.
+    /// </summary>
+    [HttpPost("reports/bulk-delete")]
+    public async Task<IActionResult> BulkDeleteReports(
+        [FromBody] BulkDeleteReportsDto dto,
+        [FromServices] IWebHostEnvironment env)
+    {
+        if (dto is null || dto.Ids is null || dto.Ids.Count == 0)
+            return BadRequest(new { error = "Липсват идентификатори." });
+
+        // Cap to prevent accidental mass-deletion in one request.
+        var ids = dto.Ids.Distinct().Take(1000).ToList();
+
+        var reports = await _context.Reports
+            .Where(r => ids.Contains(r.Id))
+            .ToListAsync();
+
+        if (reports.Count == 0)
+            return Ok(new { deleted = 0, photosRemoved = 0 });
+
+        // Clean up photo files from disk before deleting DB rows so we don't
+        // leave orphans. Non-fatal — if the file is already gone we keep going.
+        var webRoot = env.WebRootPath
+            ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+        var photosRemoved = 0;
+
+        foreach (var r in reports)
+        {
+            if (string.IsNullOrWhiteSpace(r.PhotoURL)) continue;
+
+            // PhotoURL is stored as "/uploads/reports/{filename}" — convert to disk path.
+            var relative = r.PhotoURL.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+            var fullPath = Path.Combine(webRoot, relative);
+
+            try
+            {
+                if (System.IO.File.Exists(fullPath))
+                {
+                    System.IO.File.Delete(fullPath);
+                    photosRemoved++;
+                }
+            }
+            catch
+            {
+                // Swallow: photo cleanup is best-effort.
+            }
+        }
+
+        _context.Reports.RemoveRange(reports);
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            deleted = reports.Count,
+            photosRemoved,
+            message = $"Изтрити {reports.Count} сигнала."
+        });
+    }
+
+    /// <summary>
+    /// Permanently deletes ALL reports matching the optional status / reportType filter.
+    /// Use with care — confirmed by the admin in the UI.
+    /// </summary>
+    [HttpPost("reports/delete-all")]
+    public async Task<IActionResult> DeleteAllReports(
+        [FromQuery] string? status,
+        [FromQuery] string? reportType,
+        [FromServices] IWebHostEnvironment env)
+    {
+        var query = _context.Reports.AsQueryable();
+
+        if (status == "pending")       query = query.Where(r => r.IsApproved == null);
+        else if (status == "approved") query = query.Where(r => r.IsApproved == true);
+        else if (status == "rejected") query = query.Where(r => r.IsApproved == false);
+
+        if (!string.IsNullOrEmpty(reportType) && Enum.TryParse<ReportType>(reportType, out var rt))
+            query = query.Where(r => r.ReportType == rt);
+
+        var reports = await query.ToListAsync();
+        if (reports.Count == 0)
+            return Ok(new { deleted = 0, photosRemoved = 0 });
+
+        var webRoot = env.WebRootPath
+            ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+        var photosRemoved = 0;
+
+        foreach (var r in reports)
+        {
+            if (string.IsNullOrWhiteSpace(r.PhotoURL)) continue;
+            var relative = r.PhotoURL.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+            var fullPath = Path.Combine(webRoot, relative);
+            try
+            {
+                if (System.IO.File.Exists(fullPath))
+                {
+                    System.IO.File.Delete(fullPath);
+                    photosRemoved++;
+                }
+            }
+            catch { /* best effort */ }
+        }
+
+        _context.Reports.RemoveRange(reports);
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            deleted = reports.Count,
+            photosRemoved,
+            message = $"Изтрити {reports.Count} сигнала по зададения филтър."
+        });
     }
     #endregion
 }

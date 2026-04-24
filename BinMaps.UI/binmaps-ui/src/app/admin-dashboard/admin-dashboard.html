@@ -81,9 +81,31 @@
         </div>
         <div class="admin__toolbar-actions">
           <span class="text-muted text-xs" *ngIf="totalReports > 0">{{ totalReports }} резултата</span>
+
+          <!-- Bulk delete bar: shown only when at least one row is checked. -->
+          <ng-container *ngIf="selectedReportCount > 0">
+            <span class="text-xs" style="color:var(--status-critical); font-weight:600">
+              {{ selectedReportCount }} избрани
+            </span>
+            <button class="btn btn--sm btn--ghost" (click)="clearReportSelection()" title="Откажи селекцията">
+              Откажи
+            </button>
+            <button class="btn btn--sm btn--danger" (click)="bulkDeleteSelectedReports()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+              Изтрий избраните
+            </button>
+          </ng-container>
+
           <button class="btn btn--ghost btn--sm" (click)="exportReports()" [disabled]="filteredReports.length === 0">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Експорт CSV
+          </button>
+
+          <button class="btn btn--ghost btn--sm" (click)="deleteAllFilteredReports()"
+                  [disabled]="totalReports === 0"
+                  [title]="'Изчисти всички сигнали по текущия филтър (' + totalReports + ' записа)'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6"/></svg>
+            Изчисти всички
           </button>
         </div>
       </div>
@@ -96,6 +118,15 @@
         <table class="table" *ngIf="!isLoading">
           <thead>
             <tr>
+              <th style="width:36px; text-align:center">
+                <input type="checkbox"
+                       class="admin-checkbox"
+                       [checked]="allVisibleReportsSelected"
+                       [indeterminate]="someVisibleReportsSelected"
+                       (change)="toggleSelectAllReports()"
+                       [disabled]="filteredReports.length === 0"
+                       title="Маркирай всички от страницата" />
+              </th>
               <th style="width:48px">#</th>
               <th>Тип</th>
               <th>Контейнер</th>
@@ -111,7 +142,17 @@
           <tbody>
             <tr *ngFor="let r of filteredReports"
                 class="admin-report-row"
-                [class.is-fire]="r.reportType === 'Fire'">
+                [class.is-fire]="r.reportType === 'Fire'"
+                [class.is-selected]="isReportSelected(r.id)">
+
+              <td style="text-align:center">
+                <input type="checkbox"
+                       class="admin-checkbox"
+                       [checked]="isReportSelected(r.id)"
+                       (change)="toggleReportSelection(r.id)"
+                       (click)="$event.stopPropagation()"
+                       [title]="'Маркирай сигнал #' + r.id" />
+              </td>
 
               <td class="text-muted text-mono text-xs">{{ r.id }}</td>
 
@@ -186,7 +227,7 @@
             </tr>
 
             <tr *ngIf="filteredReports.length === 0">
-              <td colspan="10">
+              <td colspan="11">
                 <div class="admin__empty">
                   <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                   <p>Няма сигнали</p>
