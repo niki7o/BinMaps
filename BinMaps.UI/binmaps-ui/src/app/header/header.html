@@ -21,10 +21,14 @@
     <div class="navbar__right">
 
       <div class="navbar__dropdown">
+        <!-- FIX 5: just-received fires bellRing once on new notification.
+             In header.ts: track prevUnreadCount; when unreadCount() increases,
+             add 'just-received' via a signal/setTimeout(2000) then remove it. -->
         <button class="navbar__notif"
                 *ngIf="isLoggedIn()"
                 (click)="toggleNotifPanel($event)"
                 [class.has-unread]="unreadCount() > 0"
+                [class.just-received]="justReceived()"
                 title="Известия">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>

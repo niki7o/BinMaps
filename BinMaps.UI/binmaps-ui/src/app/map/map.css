@@ -1,41 +1,30 @@
-:root {
+/* FIX 1: Moved from :root to .map-page so these variables no longer
+   override the global design-token values (--shadow-sm/md, --radius-*,
+   --space-*) defined in styles.css. Local-only aliases kept for backward
+   compatibility with the rest of this file. */
+.map-page {
 
-  --primary-eco: #10b981;
-  --primary-tech: #3b82f6;
-  --primary-dark: #0f172a;
-  --accent-cyber: #06b6d4;
-  --accent-alert: #ef4444;
-  --accent-warning: #f59e0b;
-  
-  
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-tertiary: #94a3b8;
-  
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
+  --primary-eco: var(--eco-primary, #10b981);
+  --primary-tech: var(--tech-blue, #3b82f6);
+  --primary-dark: var(--bg-base, #0f172a);
+  --accent-cyber: var(--cyan, #06b6d4);
+  --accent-alert: var(--status-critical, #ef4444);
+  --accent-warning: var(--status-warn, #f59e0b);
+
+  --text-primary: var(--text-primary, #f1f5f9);
+  --text-secondary: var(--text-secondary, #cbd5e1);
+  --text-tertiary: var(--text-muted, #94a3b8);
+
+  --bg-primary: var(--bg-base, #0f172a);
+  --bg-secondary: var(--bg-elevated, #1e293b);
+  --bg-tertiary: var(--bg-hover, #334155);
   --bg-card: rgba(30, 41, 59, 0.90);
   --bg-glass: rgba(15, 23, 42, 0.75);
-  
- 
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px 0 rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 30px 0 rgba(0, 0, 0, 0.5);
+
+  /* glow shadows — map-specific, no conflict with global tokens */
   --shadow-glow-green: 0 0 20px rgba(16, 185, 129, 0.5);
-  --shadow-glow-blue: 0 0 20px rgba(59, 130, 246, 0.4);
-  --shadow-glow-cyan: 0 0 30px rgba(6, 182, 212, 0.6);
- 
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  
- 
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --shadow-glow-blue:  0 0 20px rgba(59, 130, 246, 0.4);
+  --shadow-glow-cyan:  0 0 30px rgba(6, 182, 212, 0.6);
 }
 
 
@@ -46,7 +35,8 @@
   overflow: hidden;
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* FIX 2: Removed 'Inter' font-family — Inter is not imported.
+     font-family now inherits DM Sans from the global body rule in styles.css. */
 }
 
 .map-layout {
@@ -111,6 +101,8 @@
   position: relative;
 }
 
+/* FIX 3: Removed looping shimmer animation — decorative motion with no
+   functional meaning. Replaced with a static eco-gradient accent line. */
 .panel-header::after {
   content: '';
   position: absolute;
@@ -119,12 +111,7 @@
   width: 60px;
   height: 2px;
   background: linear-gradient(90deg, var(--primary-eco), transparent);
-  animation: shimmer 3s infinite;
-}
-
-@keyframes shimmer {
-  0%, 100% { transform: translateX(0); opacity: 1; }
-  50% { transform: translateX(200%); opacity: 0.5; }
+  /* animation: shimmer 3s infinite; ← removed */
 }
 
 .panel-header svg {

@@ -61,6 +61,21 @@
   color: var(--text-muted);
 }
 
+/* FIX 9: Trend context chips under each quick-stat */
+.admin__quick-stat-trend {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  margin-top: 3px;
+  white-space: nowrap;
+}
+.admin__quick-stat-trend--warn   { background: rgba(245,158,11,0.10);  color: var(--status-warn);     border-color: rgba(245,158,11,0.25); }
+.admin__quick-stat-trend--danger { background: rgba(239,68,68,0.10);   color: var(--status-critical); border-color: rgba(239,68,68,0.25); }
+.admin__quick-stat-trend--eco    { background: var(--eco-ghost);       color: var(--eco-primary);     border-color: var(--border-eco-soft); }
+
 
 
 .admin__tabs {
@@ -354,63 +369,10 @@
 
  
 
-.toast-stack {
-  position: fixed;
-  top: var(--space-5);
-  right: var(--space-5);
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  pointer-events: none;
-}
-
-.toast {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-  pointer-events: auto;
-  animation: toast-in 0.2s var(--ease-spring);
-  max-width: 340px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-primary);
-}
-
-.toast--success { border-left: 3px solid var(--eco-primary); }
-.toast--success svg { color: var(--eco-primary); flex-shrink: 0; }
-
-.toast--error { border-left: 3px solid var(--status-critical); }
-.toast--error svg { color: var(--status-critical); flex-shrink: 0; }
-
-.toast--info { border-left: 3px solid var(--status-warn); }
-.toast--info svg { color: var(--status-warn); flex-shrink: 0; }
-
-.toast span { flex: 1; }
-
-.toast__close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-muted);
-  padding: 2px;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  transition: color var(--duration-base) var(--ease-out);
-}
-
-.toast__close:hover { color: var(--text-primary); }
-
-@keyframes toast-in {
-  from { opacity: 0; transform: translateX(16px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
+/* FIX 8: Removed local .toast-stack (was top-right, conflicting with the
+   global .toast-container in styles.css which is bottom-right).
+   Use the shared NotificationService + global .toast-container instead.
+   Also remove the <div class="toast-stack"> block from admin-dashboard.html. */
 
 
 .modal-backdrop {
@@ -664,15 +626,7 @@
   .modal__meta-label {
     min-width: 120px;
   }
-
-  .toast-stack {
-    right: var(--space-3);
-    left: var(--space-3);
-  }
-
-  .toast {
-    max-width: 100%;
-  }
+  /* FIX 8 (cont.): .toast-stack and .toast responsive overrides removed — use global system */
 }
 
 .user-row--banned {

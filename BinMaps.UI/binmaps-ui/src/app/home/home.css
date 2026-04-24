@@ -141,16 +141,8 @@
   position: relative;
 }
 
-.hero__stat-value::after {
-  content: '';
-  display: block;
-  width: 1.25rem;
-  height: 2px;
-  background: var(--eco-primary);
-  opacity: 0.45;
-  margin-top: 4px;
-  border-radius: 2px;
-}
+/* FIX 12: Removed ::after underline — the eco colour on the value
+   already carries the brand signal; the underline was redundant. */
 
 .hero__stat-label {
   font-size: var(--text-xs);
