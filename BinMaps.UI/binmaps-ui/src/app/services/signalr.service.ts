@@ -83,6 +83,10 @@ export class ContainerSignalRService {
 
   private hub!: signalR.HubConnection;
   private intentionalStop = false;
+  /** Promise resolved once the initial start() settles. Used by stop() so we
+   *  never tear down a half-built connection (which produces the noisy
+   *  "Failed to start the HttpConnection before stop() was called" error). */
+  private startPromise: Promise<void> | null = null;
 
   private readonly _updates$ = new BehaviorSubject<ContainerUpdate[]>([]);
   private readonly _truckProblems$ = new Subject<TruckProblemEvent>();
@@ -125,10 +129,18 @@ export class ContainerSignalRService {
       await this.reconnectLoop();
     });
 
-    this.hub.start().catch(err => {
-      console.error('SignalR start error', err);
-      if (!this.intentionalStop) this.reconnectLoop();
-    });
+    this.startPromise = this.hub.start()
+      .catch(err => {
+        // Race: stop() was called before start() finished.
+        // SignalR rejects with "Failed to start the HttpConnection before stop() was called".
+        // Don't log it as an error — it's a normal lifecycle event.
+        if (this.intentionalStop) return;
+        console.error('SignalR start error', err);
+        this.reconnectLoop();
+      })
+      .finally(() => {
+        this.startPromise = null;
+      });
   }
 
   private async reconnectLoop(): Promise<void> {
@@ -151,9 +163,15 @@ export class ContainerSignalRService {
     }
   }
 
-  stop(): void {
+  async stop(): Promise<void> {
     this.intentionalStop = true;
-    this.hub?.stop();
+    // If start() is still in flight, wait for it to settle before tearing
+    // down — otherwise the SignalR client throws the "before stop() was
+    // called" race error in the console.
+    if (this.startPromise) {
+      try { await this.startPromise; } catch { /* swallow */ }
+    }
+    try { await this.hub?.stop(); } catch { /* swallow */ }
   }
 
   /**
