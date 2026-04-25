@@ -80,31 +80,37 @@
           </div>
         </div>
         <div class="admin__toolbar-actions">
-          <span class="text-muted text-xs" *ngIf="totalReports > 0">{{ totalReports }} резултата</span>
+          <span class="text-muted text-xs" *ngIf="totalReports > 0 && !isReportSelectMode">{{ totalReports }} резултата</span>
 
-          <!-- Bulk delete bar: shown only when at least one row is checked. -->
-          <ng-container *ngIf="selectedReportCount > 0">
+          <!-- Select mode toolbar: shown while admin is picking which reports to delete -->
+          <ng-container *ngIf="isReportSelectMode">
             <span class="text-xs" style="color:var(--status-critical); font-weight:600">
               {{ selectedReportCount }} избрани
             </span>
-            <button class="btn btn--sm btn--ghost" (click)="clearReportSelection()" title="Откажи селекцията">
+            <button class="btn btn--sm btn--ghost" (click)="exitReportSelectMode()" title="Затвори режим за избор">
               Откажи
             </button>
-            <button class="btn btn--sm btn--danger" (click)="bulkDeleteSelectedReports()">
+            <button class="btn btn--sm btn--danger"
+                    (click)="bulkDeleteSelectedReports()"
+                    [disabled]="selectedReportCount === 0">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
               Изтрий избраните
             </button>
           </ng-container>
 
-          <button class="btn btn--ghost btn--sm" (click)="exportReports()" [disabled]="filteredReports.length === 0">
+          <button class="btn btn--ghost btn--sm"
+                  (click)="exportReports()"
+                  [disabled]="filteredReports.length === 0"
+                  *ngIf="!isReportSelectMode">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Експорт CSV
           </button>
 
-          <button class="btn btn--ghost btn--sm" (click)="enterReportSelectMode()"
+          <button class="btn btn--ghost btn--sm"
+                  (click)="enterReportSelectMode()"
                   [disabled]="filteredReports.length === 0"
-                  *ngIf="selectedReportCount === 0"
-                  title="Маркирай всички сигнали от страницата за изтриване">
+                  *ngIf="!isReportSelectMode"
+                  title="Влез в режим за избор и изтриване на сигнали">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
             Изчисти
           </button>
@@ -119,7 +125,7 @@
         <table class="table" *ngIf="!isLoading">
           <thead>
             <tr>
-              <th style="width:36px; text-align:center">
+              <th *ngIf="isReportSelectMode" style="width:36px; text-align:center">
                 <input type="checkbox"
                        class="admin-checkbox"
                        [checked]="allVisibleReportsSelected"
@@ -144,9 +150,9 @@
             <tr *ngFor="let r of filteredReports"
                 class="admin-report-row"
                 [class.is-fire]="r.reportType === 'Fire'"
-                [class.is-selected]="isReportSelected(r.id)">
+                [class.is-selected]="isReportSelectMode && isReportSelected(r.id)">
 
-              <td style="text-align:center">
+              <td *ngIf="isReportSelectMode" style="text-align:center">
                 <input type="checkbox"
                        class="admin-checkbox"
                        [checked]="isReportSelected(r.id)"

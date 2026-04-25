@@ -117,10 +117,12 @@
   --z-raised:   10;
   --z-overlay:  100;
   --z-sidebar:  200;
-  --z-navbar:   300;
-  --z-modal:    400;
-  --z-toast:    500;
-  --z-tooltip:  600;
+  /* Navbar must sit above any map control (Leaflet/Mapbox controls and our
+     own .map-style-switcher use z-index up to 9100). */
+  --z-navbar:   9500;
+  --z-modal:    9600;
+  --z-toast:    9700;
+  --z-tooltip:  9800;
 }
 
 *, *::before, *::after {

@@ -164,6 +164,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   /** Reports selected by the admin for bulk delete. Keyed by report.id. */
   selectedReportIds = new Set<number>();
 
+  /** When true, the reports table renders a checkbox column and the bulk-delete
+   *  bar is shown. Toggled on by clicking "Изчисти", off by "Откажи" or after
+   *  a successful delete. */
+  isReportSelectMode = false;
+
   containerSearch = '';
   userSearch = '';
 
@@ -633,15 +638,22 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.selectedReportIds.clear();
   }
 
+  /** Cancel select mode entirely — hides checkboxes and clears any picks. */
+  exitReportSelectMode(): void {
+    this.selectedReportIds.clear();
+    this.isReportSelectMode = false;
+  }
+
   /**
-   * "Изчисти" → enter select mode. Pre-checks every visible row so the
-   * user can tweak the selection (uncheck a few) before confirming, instead
-   * of nuking everything in one click. The bulk-delete bar appears
-   * automatically once anything is selected.
+   * "Изчисти" → enter select mode. The checkbox column appears so the admin
+   * can pick individual reports to delete. Nothing is pre-selected — the
+   * admin chooses each one explicitly. The header checkbox is still
+   * available as a "select all visible" shortcut for power users.
    */
   enterReportSelectMode(): void {
     if (this.filteredReports.length === 0) return;
-    this.filteredReports.forEach(r => this.selectedReportIds.add(r.id));
+    this.isReportSelectMode = true;
+    this.selectedReportIds.clear();
     // Scroll the toolbar into view so the user sees the new bulk-delete bar.
     queueMicrotask(() => {
       document.querySelector('.admin__toolbar-actions')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -671,6 +683,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         next: res => {
           this.showToast(res?.message ?? `Изтрити ${res?.deleted ?? ids.length} сигнала.`);
           this.selectedReportIds.clear();
+          this.isReportSelectMode = false;
           this.loadReports();
           this.loadStats();
         },
@@ -715,6 +728,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         next: res => {
           this.showToast(res?.message ?? `Изтрити ${res?.deleted ?? 0} сигнала.`);
           this.selectedReportIds.clear();
+          this.isReportSelectMode = false;
           this.loadReports(1);
           this.loadStats();
         },

@@ -14,9 +14,22 @@ public sealed class ReportService : IReportService
     private const double AiWeight = 0.6;
     private const double ReputationWeight = 0.4;
     private const double AutoApproveThreshold = 85.0;
-    
+
+    /// <summary>
+    /// Minimum allowed distance (in meters) between two trash containers.
+    /// Used both for the live add-container conflict check and for guarding
+    /// MissingContainer report approval — admin cannot approve a citizen
+    /// proposal if the suggested point already has a container nearby.
+    /// </summary>
+    private const double MinContainerDistanceMeters = 15.0;
+
+    /// <summary>Default capacity assigned to admin-approved citizen requests.</summary>
+    private const double DefaultRequestedCapacity = 1100.0;
+
 
     private readonly IRepository<Report, int>  _reportRepo;
+    private readonly IRepository<TrashContainer, int> _containerRepo;
+    private readonly IRepository<Area, string> _areaRepo;
     private readonly IAIService _aiService;
     private readonly IReputationService  _reputationService;
     private readonly IContainerUpdateService  _containerUpdateService;
@@ -27,6 +40,8 @@ public sealed class ReportService : IReportService
 
     public ReportService(
         IRepository<Report, int>  reportRepo,
+        IRepository<TrashContainer, int> containerRepo,
+        IRepository<Area, string> areaRepo,
         IAIService aiService,
         IReputationService reputationService,
         IContainerUpdateService containerUpdateService,
@@ -34,6 +49,8 @@ public sealed class ReportService : IReportService
         IHubContext<ContainerHub> hub)
     {
         _reportRepo = reportRepo;
+        _containerRepo = containerRepo;
+        _areaRepo = areaRepo;
         _aiService = aiService;
         _reputationService = reputationService;
         _containerUpdateService = containerUpdateService;
