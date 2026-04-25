@@ -39,6 +39,9 @@ public sealed class ContainerDynamicsService : BackgroundService
     private readonly double _regionLng;
 
     private readonly HashSet<int> _lowBatteryNotified = new();
+    // Track containers we've already alerted about being on fire so we don't
+    // spam admins every 60-second cycle while the fire persists.
+    private readonly HashSet<int> _fireNotified = new();
 
 
     private double _cachedTemp = FallbackAmbient;
@@ -236,21 +239,56 @@ public sealed class ContainerDynamicsService : BackgroundService
         }
         else
         {
+            // No sensor (or sensor broken) → there can be no battery or
+            // temperature reading. Null both so the UI shows them as N/A
+            // instead of stale values from when the sensor was active.
             if (container.Temperature != null)
             {
                 container.Temperature = null;
                 changed = true;
             }
+            if (container.BatteryPercentage != null)
+            {
+                container.BatteryPercentage = null;
+                changed = true;
+            }
+            // Drop any pending battery alert so it doesn't fire when the
+            // sensor is re-attached later.
+            _lowBatteryNotified.Remove(container.Id);
         }
 
-        if (container.Status != TrashContainerStatus.Active)
+        if (container.Status != TrashContainerStatus.Active &&
+            container.Status != TrashContainerStatus.Fire)
             return changed;
 
+        var oldStatus = container.Status;
         var newStatus = FillageSimulator.DetermineStatus(container);
         if (newStatus != container.Status)
         {
             container.Status = newStatus;
             changed = true;
+        }
+
+        // Fire-alert lifecycle: notify once on entry, clear when fire ends.
+        if (newStatus == TrashContainerStatus.Fire)
+        {
+            if (!_fireNotified.Contains(container.Id))
+            {
+                _fireNotified.Add(container.Id);
+                notifications.Add(new
+                {
+                    Type = "fire",
+                    ContainerId = container.Id,
+                    AreaId = container.AreaId,
+                    Temperature = container.Temperature,
+                    FillPercentage = Math.Round(container.FillPercentage, 1),
+                    Message = $"🔥 Пожар в контейнер #{container.Id} ({container.AreaId}) — температура {container.Temperature:F0}°C, запълване {container.FillPercentage:F0}%"
+                });
+            }
+        }
+        else if (oldStatus == TrashContainerStatus.Fire || _fireNotified.Contains(container.Id))
+        {
+            _fireNotified.Remove(container.Id);
         }
 
         return changed;

@@ -204,7 +204,7 @@
               </td>
 
               <td class="text-muted text-xs" style="white-space:nowrap">
-                {{ r.createdAt | date:'dd.MM HH:mm' : '+0200' }}
+                {{ r.createdAt | date:'dd.MM HH:mm' }}
               </td>
 
               <td>
@@ -652,9 +652,43 @@
           <button class="btn btn--sm btn--secondary" (click)="loadRouteHistory()">
             Обнови
           </button>
+          <button class="btn btn--sm btn--secondary" (click)="checkApiHealth()"
+                  [disabled]="isCheckingApiHealth"
+                  title="Проверява външните API-та (метео, маршрутизация, AI)">
+            {{ isCheckingApiHealth ? 'Проверявам…' : 'Провери API-та' }}
+          </button>
           <span class="text-muted text-xs" style="margin-left:8px">
             {{ filteredRoutes.length }} от {{ routeHistory.length }}
           </span>
+        </div>
+      </div>
+
+      <!-- External API health summary — only rendered after the admin clicks
+           "Провери API-та". Each row is a pill that's green when reachable
+           and amber when degraded, with the detail text and ping latency. -->
+      <div *ngIf="apiHealth" class="api-health-panel" style="margin: 0 0 16px 0;">
+        <div style="display:flex; flex-wrap:wrap; gap:10px;">
+          <div *ngFor="let svc of [apiHealth.weather, apiHealth.routing, apiHealth.ai]"
+               class="api-health-pill"
+               [class.api-health-pill--ok]="svc.ok"
+               [class.api-health-pill--warn]="!svc.ok"
+               style="flex:1; min-width:240px; padding:10px 14px; border-radius:10px;
+                      border:1px solid; display:flex; flex-direction:column; gap:2px;"
+               [style.border-color]="svc.ok ? 'rgba(16,185,129,0.35)' : 'rgba(245,158,11,0.4)'"
+               [style.background]="svc.ok ? 'rgba(16,185,129,0.06)' : 'rgba(245,158,11,0.06)'">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+              <span class="font-semibold text-sm">{{ svc.name }}</span>
+              <span class="badge"
+                    [ngClass]="svc.ok ? 'badge--success' : 'badge--warning'">
+                {{ svc.ok ? 'OK' : 'Issue' }}
+              </span>
+            </div>
+            <span class="text-muted text-xs">{{ svc.detail }}</span>
+            <span class="text-muted text-xs">{{ svc.elapsedMs }} ms</span>
+          </div>
+        </div>
+        <div class="text-muted text-xs" style="margin-top:6px;">
+          Проверено: {{ formatDate(apiHealth.checkedAt) }}
         </div>
       </div>
 
@@ -827,12 +861,26 @@
     </div>
 
     <div class="modal__body">
-      <div class="modal__photo-area" *ngIf="selectedReport.photoURL">
-        <img [src]="getPhotoFullUrl(selectedReport.photoURL)" alt="Снимка от сигнал" class="modal__photo">
+      <div class="modal__photo-area" *ngIf="selectedReport.photoURL && !photoLoadFailed">
+        <img [src]="getPhotoFullUrl(selectedReport.photoURL)"
+             alt="Снимка от сигнал"
+             class="modal__photo"
+             (error)="onPhotoError(selectedReport.photoURL)"
+             (load)="photoLoadFailed = false">
+        <a class="modal__photo-link"
+           [href]="getPhotoFullUrl(selectedReport.photoURL)"
+           target="_blank" rel="noopener">Отвори в нов раздел ↗</a>
       </div>
       <div class="modal__no-photo" *ngIf="!selectedReport.photoURL">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         <span class="text-muted text-sm">Без прикачена снимка</span>
+      </div>
+      <div class="modal__no-photo" *ngIf="selectedReport.photoURL && photoLoadFailed">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="3" x2="21" y2="21"/></svg>
+        <span class="text-muted text-sm">Снимката не е достъпна</span>
+        <a class="text-xs"
+           [href]="getPhotoFullUrl(selectedReport.photoURL)"
+           target="_blank" rel="noopener">Опитай директна връзка ↗</a>
       </div>
 
       <div class="modal__meta">

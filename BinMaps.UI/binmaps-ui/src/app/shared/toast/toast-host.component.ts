@@ -20,15 +20,24 @@ import { ToastService, Toast } from './toast.service';
           class="toast"
           [attr.data-variant]="t.variant"
           [class.is-leaving]="t.leaving"
+          [class.toast--prominent]="t.prominent"
           role="status">
 
           <span class="toast__icon" aria-hidden="true">
             @switch (t.variant) {
               @case ('success') {
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
+                @if (t.prominent) {
+                  <!-- Trophy/achievement glyph for celebratory completion toasts -->
+                  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/>
+                    <path d="M17 4h3a2 2 0 0 1 0 4h-3M7 4H4a2 2 0 0 0 0 4h3"/>
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                }
               }
               @case ('warning') {
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
@@ -282,16 +291,99 @@ import { ToastService, Toast } from './toast.service';
       to   { transform: scaleX(0); }
     }
 
+    /* ── Prominent (hero) variant ──────────────────────────────────────
+       Used for celebratory or important events that mustn't blend into
+       the corner-toast queue. Bigger card, larger type, soft pulse glow,
+       and a longer auto-dismiss (8s default in the service).            */
+    .toast--prominent {
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      padding: 22px 24px 22px 22px;
+      gap: 18px;
+      border-radius: 18px;
+      max-width: 460px;
+      min-width: 360px;
+      border-width: 1.5px;
+      background: linear-gradient(180deg, rgba(15, 35, 41, 0.985) 0%, rgba(8, 22, 26, 0.985) 100%);
+      animation:
+        toast-slide-in 360ms cubic-bezier(0.22, 1, 0.36, 1),
+        toast-prominent-glow 2.4s ease-in-out 360ms infinite;
+    }
+    .toast--prominent .toast__icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+    }
+    .toast--prominent .toast__title {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .toast--prominent .toast__message {
+      margin-top: 4px;
+      font-size: 14.5px;
+      color: #e2e8f0;
+      font-weight: 500;
+    }
+    .toast--prominent .toast__detail {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+    .toast--prominent .toast__close {
+      align-self: center;
+      width: 30px; height: 30px;
+    }
+    .toast--prominent .toast__progress { height: 3px; }
+
+    .toast--prominent[data-variant="success"] {
+      box-shadow:
+        0 32px 64px -22px rgba(16, 185, 129, 0.55),
+        0 0 0 1px rgba(52, 211, 153, 0.25),
+        0 1px 0 rgba(255, 255, 255, 0.06) inset;
+    }
+    .toast--prominent[data-variant="success"] .toast__icon {
+      background:
+        radial-gradient(circle at 30% 30%, rgba(16,185,129,0.45), rgba(16,185,129,0.12));
+      color: #6ee7b7;
+      box-shadow: 0 0 0 1.5px rgba(16,185,129,0.4), 0 0 24px rgba(16,185,129,0.25);
+    }
+
+    @keyframes toast-prominent-glow {
+      0%, 100% {
+        box-shadow:
+          0 32px 64px -22px rgba(16, 185, 129, 0.45),
+          0 0 0 1px rgba(52, 211, 153, 0.22),
+          0 1px 0 rgba(255, 255, 255, 0.06) inset;
+      }
+      50% {
+        box-shadow:
+          0 36px 72px -22px rgba(16, 185, 129, 0.65),
+          0 0 0 1px rgba(52, 211, 153, 0.45),
+          0 0 32px rgba(16, 185, 129, 0.18),
+          0 1px 0 rgba(255, 255, 255, 0.06) inset;
+      }
+    }
+
     @media (max-width: 480px) {
       .toast-stack { padding: 14px; max-width: calc(100vw - 16px); }
       .toast { padding: 12px 14px; gap: 12px; border-radius: 12px; }
       .toast__icon { width: 32px; height: 32px; }
+      .toast--prominent {
+        padding: 18px 18px 18px 16px;
+        gap: 14px;
+        min-width: 0;
+        max-width: 100%;
+      }
+      .toast--prominent .toast__icon { width: 44px; height: 44px; }
+      .toast--prominent .toast__title { font-size: 16px; }
+      .toast--prominent .toast__message { font-size: 13.5px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
       .toast { animation: none; }
       .toast.is-leaving { animation: none; opacity: 0; }
       .toast__progress { animation: none; opacity: 0; }
+      .toast--prominent { animation: none; }
     }
   `],
 })

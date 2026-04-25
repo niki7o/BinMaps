@@ -1050,10 +1050,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.loadBins();   // refresh from server after emptying
 
     this.toast.success({
-      title: 'Маршрут завършен',
+      title: '✅ Маршрут завършен',
       message: `Посетени спирки: ${route.length}`,
       detail: `Събран товар: ${load.toFixed(0)} л`,
-      duration: 5000,
+      prominent: true,
     });
   }
 
@@ -1120,10 +1120,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.loadBins();   // refresh from server after emptying
 
       this.toast.success({
-        title: 'Маршрут завършен',
+        title: '✅ Маршрут завършен',
         message: `Посетени спирки: ${route.length}`,
         detail: `Събран товар: ${load.toFixed(0)} л`,
-        duration: 5000,
+        prominent: true,
       });
     }
 

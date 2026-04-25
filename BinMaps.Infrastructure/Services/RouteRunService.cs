@@ -107,12 +107,89 @@ public sealed class RouteRunService : IRouteRunService
             return true;
 
         var outcome = (dto.Outcome ?? "completed").Trim().ToLowerInvariant();
-        run.Status = outcome == "cancelled" ? RouteRunStatus.Cancelled : RouteRunStatus.Completed;
+        var cancelled = outcome == "cancelled";
+
+        run.Status = cancelled ? RouteRunStatus.Cancelled : RouteRunStatus.Completed;
         run.CompletedAt = DateTime.UtcNow;
         run.StopsCompleted = Math.Max(0, dto.StopsCompleted);
         run.CollectedLoad = Math.Max(0, dto.CollectedLoad);
 
-        return await _repo.UpdateAsync(run);
+        var saved = await _repo.UpdateAsync(run);
+
+        // On a successful completion (not a cancellation), reset the
+        // fill % of every container that was visited. Without this the
+        // background simulator and route generator both still see the
+        // pre-collection fills and the driver can immediately re-run the
+        // same route. We do this server-side so it cannot be skipped by
+        // a flaky network request from the truck app.
+        if (saved && !cancelled)
+            await EmptyVisitedContainersAsync(run, dto);
+
+        return saved;
+    }
+
+    private async Task EmptyVisitedContainersAsync(RouteRun run, CompleteRouteRunDto dto)
+    {
+        // Two sources of truth for which containers were actually visited:
+        //   (1) dto.VisitedContainerIds — explicit list from the truck app
+        //   (2) the saved StopsJson snapshot, capped to StopsCompleted
+        // (1) is preferred when present, (2) is the safe fallback so this
+        // works even if the frontend doesn't supply the list.
+        IReadOnlyList<int> ids = Array.Empty<int>();
+
+        if (dto.VisitedContainerIds is { Count: > 0 } explicitIds)
+        {
+            ids = explicitIds.Where(id => id > 0).Distinct().ToList();
+        }
+        else if (!string.IsNullOrWhiteSpace(run.StopsJson))
+        {
+            try
+            {
+                var stops = JsonSerializer.Deserialize<List<RouteStopSnapshotDto>>(
+                    run.StopsJson!, JsonOpts) ?? new();
+                ids = stops
+                    .Take(Math.Max(0, run.StopsCompleted))
+                    .Select(s => s.Id)
+                    .Where(id => id > 0)
+                    .Distinct()
+                    .ToList();
+            }
+            catch
+            {
+                // StopsJson was somehow malformed — bail out silently.
+                ids = Array.Empty<int>();
+            }
+        }
+
+        if (ids.Count == 0) return;
+
+        try
+        {
+            var containers = await _db.TrashContainers
+                .Where(c => ids.Contains(c.Id))
+                .ToListAsync();
+
+            foreach (var c in containers)
+            {
+                // Tiny non-zero residual prevents "exactly 0%" snapping that
+                // looks fake; matches the 1-5% jitter the truck app already
+                // applied locally. Real-world parallel: even after pickup, a
+                // few liters of residue stay in the bin.
+                c.FillPercentage = Math.Round(Random.Shared.NextDouble() * 4 + 1, 1);
+            }
+
+            await _db.SaveChangesAsync();
+            _logger.LogInformation(
+                "Route {RunId} completed: emptied {Count} containers.",
+                run.Id, containers.Count);
+        }
+        catch (Exception ex)
+        {
+            // Don't fail the whole completion call if cleanup fails — the
+            // run was already persisted successfully.
+            _logger.LogWarning(ex,
+                "Route {RunId} completed but emptying containers failed.", run.Id);
+        }
     }
 
     #endregion

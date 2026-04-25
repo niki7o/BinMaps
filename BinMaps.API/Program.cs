@@ -1,3 +1,4 @@
+using BinMaps.API.Json;
 using BinMaps.API.Seed;
 using BinMaps.Data;
 using BinMaps.Data.Entities;
@@ -126,7 +127,16 @@ public sealed class Program
 
         #region Swagger
 
-        builder.Services.AddControllers();
+        builder.Services
+            .AddControllers()
+            .AddJsonOptions(o =>
+            {
+                // Always emit DateTime fields as ISO-8601 UTC with a trailing Z.
+                // Without this, EF returns Kind=Unspecified and the browser
+                // interprets the timestamp as local time (2-3h offset bug).
+                o.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
+                o.JsonSerializerOptions.Converters.Add(new UtcNullableDateTimeConverter());
+            });
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(o =>
         {

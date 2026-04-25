@@ -13,6 +13,13 @@ export interface ToastOptions {
   variant?: ToastVariant;
   /** Milliseconds before auto-dismiss. Default 4500. Pass 0 to keep it sticky. */
   duration?: number;
+  /**
+   * When true, the toast renders in a much larger, hero-style card with a
+   * bigger icon, larger type, a soft pulsing glow, and a longer default
+   * duration. Use this for celebratory or important events that the user
+   * shouldn't miss — e.g. "Маршрут завършен". Default false.
+   */
+  prominent?: boolean;
   /** Optional CTA — shown as a small button on the right. */
   action?: {
     label: string;
@@ -43,10 +50,14 @@ export class ToastService {
   readonly toasts = signal<Toast[]>([]);
 
   show(opts: ToastOptions): number {
+    // Prominent toasts default to a much longer dwell time (8s) so the user
+    // has time to read the celebratory message — but the caller can still
+    // override via `duration`.
+    const defaultDuration = opts.prominent ? 8000 : 4500;
     const t: Toast = {
       id: this.nextId++,
       variant: opts.variant ?? 'info',
-      duration: opts.duration ?? 4500,
+      duration: opts.duration ?? defaultDuration,
       ...opts,
     };
     this.toasts.update(list => [...list, t]);

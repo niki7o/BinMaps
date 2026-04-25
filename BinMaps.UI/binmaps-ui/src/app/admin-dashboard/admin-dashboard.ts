@@ -177,6 +177,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   reputationModal: { user: User; value: number } | null = null;
   banModal: { user: User; reason: string } | null = null;
 
+  /** Set to true if the report photo <img> emits an `error` event — typically
+   *  because the file is missing on the backend (Azure Container Apps volumes
+   *  are ephemeral). The template swaps to a "snapshot unavailable" fallback
+   *  with a direct link so the admin can still try to fetch it. */
+  photoLoadFailed = false;
+
   toasts: Toast[] = [];
   private toastCounter = 0;
 
@@ -341,6 +347,42 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   closeRunDetail(): void {
     this.selectedRun = null;
+  }
+
+  // ── External API health check ───────────────────────────────────────
+  apiHealth: {
+    weather:  { name: string; ok: boolean; detail: string; elapsedMs: number };
+    routing:  { name: string; ok: boolean; detail: string; elapsedMs: number };
+    ai:       { name: string; ok: boolean; detail: string; elapsedMs: number };
+    checkedAt: string;
+  } | null = null;
+  isCheckingApiHealth = false;
+
+  /** Hits the admin diagnostics endpoint and stores the result. Bound to the
+   *  "Провери API-та" button in the routes toolbar — the panel below the
+   *  table renders one row per service with its status pill and ping time. */
+  checkApiHealth(): void {
+    if (this.isCheckingApiHealth) return;
+    this.isCheckingApiHealth = true;
+    this.http.get<typeof this.apiHealth>(
+      `${this.API}/admin/diagnostics/apis`, this.authHeaders()
+    )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: data => {
+          this.apiHealth = data;
+          this.isCheckingApiHealth = false;
+          const allOk = data && data.weather.ok && data.routing.ok && data.ai.ok;
+          this.showToast(
+            allOk ? 'Всички API-та работят' : 'Някои API-та имат проблем',
+            allOk ? 'success' : 'info'
+          );
+        },
+        error: () => {
+          this.isCheckingApiHealth = false;
+          this.showToast('Не успях да проверя външните API-та', 'error');
+        }
+      });
   }
 
   trashTypeLabel(t: number): string {
@@ -738,10 +780,22 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   openReportModal(report: Report): void {
     this.selectedReport = report;
+    // Reset the photo error state every time a report is opened — otherwise
+    // a previous failed load would keep the fallback shown for the next one.
+    this.photoLoadFailed = false;
   }
 
   closeReportModal(): void {
     this.selectedReport = null;
+    this.photoLoadFailed = false;
+  }
+
+  /** Called from the report modal's <img (error)> binding. Logs the failed
+   *  URL so we can correlate against backend storage and flips the flag that
+   *  swaps the image for the fallback message + direct link. */
+  onPhotoError(photoURL: string | null): void {
+    console.warn('Report photo failed to load:', this.getPhotoFullUrl(photoURL));
+    this.photoLoadFailed = true;
   }
 
   openEditContainer(container: Container): void {

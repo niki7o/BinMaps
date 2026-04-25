@@ -12,7 +12,7 @@ public sealed class TomTomRoutingService : IExternalRoutingService
 
     private readonly HttpClient _http;
     private readonly ILogger<TomTomRoutingService> _logger;
-    private readonly string _apiKey;
+    private readonly string? _apiKey;
 
     public TomTomRoutingService(
         HttpClient http,
@@ -21,8 +21,18 @@ public sealed class TomTomRoutingService : IExternalRoutingService
     {
         _http = http;
         _logger = logger;
-        _apiKey = config["ExternalAPIs:TomTom:ApiKey"]
-            ?? throw new InvalidOperationException("ExternalAPIs:TomTom:ApiKey not configured.");
+
+        // Read the key but never throw at startup — the matrix call gracefully
+        // falls back to Haversine when the key is missing or placeholder. This
+        // way the API still boots in environments without a TomTom key.
+        var raw = config["ExternalAPIs:TomTom:ApiKey"];
+        _apiKey = string.IsNullOrWhiteSpace(raw) ||
+                  raw.Equals("YOUR_TOMTOM_API_KEY", StringComparison.OrdinalIgnoreCase)
+            ? null
+            : raw;
+
+        if (_apiKey is null)
+            _logger.LogWarning("TomTom API key not configured — routing will use Haversine fallback.");
     }
 
     #region IExternalRoutingService
@@ -32,6 +42,10 @@ public sealed class TomTomRoutingService : IExternalRoutingService
         IReadOnlyList<GeoCoordinate> destinations)
     {
         if (origins.Count == 0 || destinations.Count == 0)
+            return null;
+
+        // No key → don't call out, let the caller use the offline fallback.
+        if (_apiKey is null)
             return null;
 
         try

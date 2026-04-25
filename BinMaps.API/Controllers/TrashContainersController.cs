@@ -2,6 +2,7 @@
 using BinMaps.Data.Entities.Enums;
 using BinMaps.Infrastructure.Hubs;
 using BinMaps.Infrastructure.Repository;
+using BinMaps.Infrastructure.Services.Interfaces;
 using BinMaps.Shared.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -287,7 +288,8 @@ public sealed class TrashContainersController : ControllerBase
     public async Task<IActionResult> Update(
         [FromRoute] int id,
         [FromBody] UpdateContainerDTO dto,
-        [FromServices] IHubContext<ContainerHub> hubContext)
+        [FromServices] IHubContext<ContainerHub> hubContext,
+        [FromServices] IExternalWeatherService weather)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
@@ -296,6 +298,8 @@ public sealed class TrashContainersController : ControllerBase
         if (container is null)
             return NotFound();
 
+        var sensorJustEnabled = dto.HasSensor && !container.HasSensor;
+
         container.FillPercentage = dto.FillPercentage;
         container.Status = dto.Status;
 
@@ -303,8 +307,27 @@ public sealed class TrashContainersController : ControllerBase
         {
             container.HasSensor = true;
             container.BatteryPercentage = dto.BatteryPercentage ?? 100;
+
+            // Pull a fresh ambient reading so the row immediately shows a
+            // real temperature instead of waiting up to 60s for the next
+            // background cycle. If the API call fails we fall back to a
+            // sensible default rather than blocking the admin's edit.
+            if (sensorJustEnabled || container.Temperature is null)
+            {
+                try
+                {
+                    container.Temperature = await weather.GetAmbientTemperatureAsync(
+                        container.LocationX, container.LocationY) ?? 20.0;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex,
+                        "Could not fetch ambient temp for container {Id}; using fallback.", id);
+                    container.Temperature = 20.0;
+                }
+            }
         }
-        else if (!dto.HasSensor)
+        else
         {
             container.HasSensor = false;
             container.BatteryPercentage = null;
