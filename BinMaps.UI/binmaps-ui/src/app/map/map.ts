@@ -8,6 +8,7 @@ import { AuthService } from '../services/auth.service';
 import { AuthUser } from '../services/auth.models';
 import { ContainerSignalRService } from '../services/signalr.service';
 import { ConfirmService } from '../shared/confirm-dialog/confirm.service';
+import { ToastService } from '../shared/toast/toast.service';
 import { environment } from '../../environments/environment';
 
 
@@ -153,6 +154,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private authService = inject(AuthService);
   private signalR = inject(ContainerSignalRService);
   private confirmSvc = inject(ConfirmService);
+  private toast = inject(ToastService);
 
   currentUser: AuthUser | null = null;
   isAdmin = false;
@@ -1047,12 +1049,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.currentCollectedStop = null;   // Bug 4 fix: clear stale UI data
     this.loadBins();   // refresh from server after emptying
 
-    this.confirmSvc.notify({
+    this.toast.success({
       title: 'Маршрут завършен',
       message: `Посетени спирки: ${route.length}`,
       detail: `Събран товар: ${load.toFixed(0)} л`,
-      variant: 'info',
-      okText: 'Готово'
+      duration: 5000,
     });
   }
 
@@ -1118,13 +1119,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.currentCollectedStop = null;   // Bug 4 fix: clear stale UI data
       this.loadBins();   // refresh from server after emptying
 
-      this.confirmSvc.notify({
-      title: 'Маршрут завършен',
-      message: `Посетени спирки: ${route.length}`,
-      detail: `Събран товар: ${load.toFixed(0)} л`,
-      variant: 'info',
-      okText: 'Готово'
-    });
+      this.toast.success({
+        title: 'Маршрут завършен',
+        message: `Посетени спирки: ${route.length}`,
+        detail: `Събран товар: ${load.toFixed(0)} л`,
+        duration: 5000,
+      });
     }
 
     this.stepPending = false;

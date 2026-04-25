@@ -6,6 +6,7 @@ import { RouterLink } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { ConfirmService } from '../shared/confirm-dialog/confirm.service';
+import { ToastService } from '../shared/toast/toast.service';
 import { environment } from '../../environments/environment';
 
 interface Report {
@@ -245,7 +246,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   constructor(
     private readonly http: HttpClient,
     private readonly authService: AuthService,
-    private readonly confirmSvc: ConfirmService
+    private readonly confirmSvc: ConfirmService,
+    private readonly toastSvc: ToastService,
   ) {}
 
   ngOnInit(): void {
@@ -629,6 +631,21 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   clearReportSelection(): void {
     this.selectedReportIds.clear();
+  }
+
+  /**
+   * "Изчисти" → enter select mode. Pre-checks every visible row so the
+   * user can tweak the selection (uncheck a few) before confirming, instead
+   * of nuking everything in one click. The bulk-delete bar appears
+   * automatically once anything is selected.
+   */
+  enterReportSelectMode(): void {
+    if (this.filteredReports.length === 0) return;
+    this.filteredReports.forEach(r => this.selectedReportIds.add(r.id));
+    // Scroll the toolbar into view so the user sees the new bulk-delete bar.
+    queueMicrotask(() => {
+      document.querySelector('.admin__toolbar-actions')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
   }
 
   async bulkDeleteSelectedReports(): Promise<void> {
@@ -1034,15 +1051,21 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     URL.revokeObjectURL(url);
   }
 
+  /**
+   * Thin wrapper over the global ToastService — kept so the rest of the
+   * component can keep its short `this.showToast(...)` call sites.
+   *
+   *   showToast('Готово')                 → success toast
+   *   showToast('Грешка...', 'error')     → danger toast
+   *   showToast('Зареждам...', 'info')    → info toast
+   */
   showToast(message: string, type: 'success' | 'error' | 'info' = 'success'): void {
-    const id = ++this.toastCounter;
-    this.toasts.push({ id, type, message });
-    setTimeout(() => this.dismissToast(id), 3500);
+    const variant = type === 'error' ? 'danger' : type;
+    this.toastSvc.show({ title: message, variant });
   }
 
-  dismissToast(id: number): void {
-    this.toasts = this.toasts.filter(t => t.id !== id);
-  }
+  /** Legacy hook — toasts are now managed by ToastService and self-dismiss. */
+  dismissToast(_id: number): void { /* no-op */ }
 
   private authHeaders(): { headers: HttpHeaders } {
     return this.authService.getAuthHeaders();

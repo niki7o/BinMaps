@@ -4,12 +4,13 @@ import { CommonModule } from '@angular/common';
 import { Header } from './header/header';
 import { filter } from 'rxjs/operators';
 import { ConfirmDialogComponent } from './shared/confirm-dialog/confirm-dialog.component';
+import { ToastHostComponent } from './shared/toast/toast-host.component';
 
 const SHELL_HIDDEN_ROUTES = ['/login', '/register', '/terms', '/banned', '/forbidden'];
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterModule, Header, CommonModule, ConfirmDialogComponent],
+  imports: [RouterOutlet, RouterModule, Header, CommonModule, ConfirmDialogComponent, ToastHostComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

@@ -1,5 +1,6 @@
-<div class="npage">
+<div class="npage" [class.npage--selecting]="selectMode()">
 
+  <!-- ───────────────────────── Header ───────────────────────── -->
   <div class="npage-header">
     <div class="npage-header-left">
       <a class="npage-back" routerLink="/map" title="Обратно към картата">
@@ -9,50 +10,104 @@
       </a>
       <div>
         <h1 class="npage-title">Известия</h1>
-        <p class="npage-subtitle">
+        <p class="npage-subtitle" *ngIf="!selectMode()">
           <span *ngIf="unreadCount() > 0">{{ unreadCount() }} непрочетени</span>
           <span *ngIf="unreadCount() === 0">Всички прочетени</span>
           &nbsp;·&nbsp; {{ totalCount() }} общо
         </p>
+        <p class="npage-subtitle npage-subtitle--selecting" *ngIf="selectMode()">
+          <span *ngIf="selectedCount() === 0">Избери известия за изтриване</span>
+          <span *ngIf="selectedCount() > 0">{{ selectedCount() }} избрани</span>
+        </p>
       </div>
     </div>
 
-    <div class="npage-header-actions">
-      <button class="npage-btn npage-btn--ghost" *ngIf="unreadCount() > 0" (click)="markAllRead()">
+    <div class="npage-header-actions" *ngIf="!selectMode()">
+      <button class="npage-btn npage-btn--ghost"
+              *ngIf="unreadCount() > 0"
+              (click)="markAllRead()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
         Прочети всички
       </button>
-      <button class="npage-btn npage-btn--danger" *ngIf="totalCount() > 0" (click)="clearAll()">
+      <button class="npage-btn npage-btn--danger"
+              *ngIf="totalCount() > 0"
+              (click)="enterSelectMode()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="3 6 5 6 21 6"/>
           <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
           <path d="M10 11v6M14 11v6"/>
         </svg>
-        Изчисти всички
+        Изчисти
       </button>
     </div>
   </div>
 
-  <div class="npage-tabs">
+  <!-- ──────────────── Selection toolbar (replaces tabs) ──────────────── -->
+  <div class="npage-select-bar" *ngIf="selectMode()">
+    <label class="npage-master-check">
+      <input type="checkbox"
+             [checked]="allOnPageSelected()"
+             [indeterminate]="someSelected()"
+             (change)="toggleSelectAllOnPage()" />
+      <span class="npage-check-box"
+            [class.is-checked]="allOnPageSelected()"
+            [class.is-indeterminate]="someSelected()">
+        <svg *ngIf="allOnPageSelected()" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        <svg *ngIf="someSelected()" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </span>
+      <span class="npage-master-label">
+        {{ allOnPageSelected() ? 'Размаркирай всички' : 'Избери всички' }}
+      </span>
+    </label>
+
+    <div class="npage-select-actions">
+      <button class="npage-btn npage-btn--ghost" (click)="exitSelectMode()">
+        Отказ
+      </button>
+      <button class="npage-btn npage-btn--ghost-danger"
+              [disabled]="filtered().length === 0"
+              (click)="clearAllOnFilter()">
+        Изчисти всички
+      </button>
+      <button class="npage-btn npage-btn--solid-danger"
+              [disabled]="selectedCount() === 0"
+              (click)="confirmDeleteSelection()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+        </svg>
+        Изтрий ({{ selectedCount() }})
+      </button>
+    </div>
+  </div>
+
+  <!-- ───────────────────────── Filter tabs ───────────────────────── -->
+  <div class="npage-tabs" *ngIf="!selectMode()">
     <button class="npage-tab" [class.is-active]="activeFilter() === 'all'" (click)="setFilter('all')">
       Всички
       <span class="npage-tab-badge" *ngIf="totalCount() > 0">{{ totalCount() }}</span>
     </button>
     <button class="npage-tab npage-tab--critical" [class.is-active]="activeFilter() === 'critical'" (click)="setFilter('critical')">
-      🔥 Критични
+      <span class="npage-tab-emoji">🔥</span> Критични
       <span class="npage-tab-badge npage-tab-badge--critical" *ngIf="criticalCount() > 0">{{ criticalCount() }}</span>
     </button>
     <button class="npage-tab" [class.is-active]="activeFilter() === 'reports'" (click)="setFilter('reports')">
-      📋 Доклади
+      <span class="npage-tab-emoji">📋</span> Доклади
       <span class="npage-tab-badge" *ngIf="reportCount() > 0">{{ reportCount() }}</span>
     </button>
     <button class="npage-tab" [class.is-active]="activeFilter() === 'route'" (click)="setFilter('route')">
-      ⭐ Профил
+      <span class="npage-tab-emoji">⭐</span> Профил
       <span class="npage-tab-badge" *ngIf="routeCount() > 0">{{ routeCount() }}</span>
     </button>
   </div>
+
+  <!-- ───────────────────────── List ───────────────────────── -->
   <div class="npage-list">
 
     <div
@@ -62,8 +117,19 @@
       [class.npage-item--critical]="n.severity === 'critical'"
       [class.npage-item--warning]="n.severity === 'warning'"
       [class.npage-item--info]="n.severity === 'info'"
-      [class.npage-item--clickable]="!!n.actionUrl"
-      (click)="openNotification(n)">
+      [class.npage-item--clickable]="!!n.actionUrl || selectMode()"
+      [class.is-selected]="isChecked(n.id)"
+      (click)="onItemClick(n)">
+
+      <!-- Checkbox column (only in select mode) -->
+      <div class="npage-check-col" *ngIf="selectMode()" (click)="$event.stopPropagation(); toggleSelected(n.id)">
+        <span class="npage-check-box"
+              [class.is-checked]="isChecked(n.id)">
+          <svg *ngIf="isChecked(n.id)" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </span>
+      </div>
 
       <div class="npage-icon" [ngClass]="'npage-icon--' + n.iconType">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -79,7 +145,7 @@
         <p class="npage-item-desc">{{ n.description }}</p>
         <div class="npage-item-footer">
           <span class="npage-time">{{ n.timeAgo }}</span>
-          <span class="npage-navigate-hint" *ngIf="n.actionUrl">
+          <span class="npage-navigate-hint" *ngIf="n.actionUrl && !selectMode()">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
@@ -88,16 +154,18 @@
         </div>
       </div>
 
-      <button class="npage-remove" title="Премахни" (click)="removeNotif(n.id, $event)">
+      <button class="npage-remove" *ngIf="!selectMode()" title="Премахни"
+              (click)="removeNotif(n.id, $event)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 6L6 18M6 6l12 12"/>
         </svg>
       </button>
     </div>
 
+    <!-- ───────────────────────── Empty state ───────────────────────── -->
     <div class="npage-empty" *ngIf="filtered().length === 0">
       <div class="npage-empty-icon">
-        <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="1.2">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
           <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
           <path d="M13.73 21a2 2 0 01-3.46 0"/>
         </svg>

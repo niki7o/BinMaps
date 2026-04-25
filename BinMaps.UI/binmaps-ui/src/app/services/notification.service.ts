@@ -59,6 +59,13 @@ export class NotificationService {
     this.recalcUnread();
   }
 
+  removeMany(ids: ReadonlyArray<string>): void {
+    if (ids.length === 0) return;
+    const dropSet = new Set(ids);
+    this._notifications.update(list => list.filter(n => !dropSet.has(n.id)));
+    this.recalcUnread();
+  }
+
   clearAll(): void {
     this._notifications.set([]);
     this.unreadCount.set(0);

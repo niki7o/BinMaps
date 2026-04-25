@@ -101,11 +101,12 @@
             Експорт CSV
           </button>
 
-          <button class="btn btn--ghost btn--sm" (click)="deleteAllFilteredReports()"
-                  [disabled]="totalReports === 0"
-                  [title]="'Изчисти всички сигнали по текущия филтър (' + totalReports + ' записа)'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6"/></svg>
-            Изчисти всички
+          <button class="btn btn--ghost btn--sm" (click)="enterReportSelectMode()"
+                  [disabled]="filteredReports.length === 0"
+                  *ngIf="selectedReportCount === 0"
+                  title="Маркирай всички сигнали от страницата за изтриване">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Изчисти
           </button>
         </div>
       </div>
