@@ -17,6 +17,15 @@
         <span class="dot"></span>
         <span>Кликнете на картата за да маркирате локация</span>
       </div>
+
+      <!-- Map legend: explains the existing-bin overlay so the citizen knows
+           which dots are already-placed bins and where the 15m exclusion
+           zone falls. Hidden until the API responds. -->
+      <div class="map-legend" *ngIf="!loadingContainers && existingContainersCount > 0">
+        <span class="legend-dot"></span>
+        <span>Сиви точки = съществуващи контейнери · червен кръг = 15m зона</span>
+      </div>
+
       <div id="request-container-map" class="map"></div>
       <div class="map-footer" *ngIf="lat !== null">
         <div>

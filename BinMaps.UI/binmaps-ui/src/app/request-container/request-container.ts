@@ -14,6 +14,16 @@ interface ApiProblem {
   status?: number;
 }
 
+interface ExistingContainer {
+  id: number;
+  areaId: string;
+  locationX: number; // lng
+  locationY: number; // lat
+  trashType: number;
+  status: number;
+  hasSensor: boolean;
+}
+
 // Mirrors BinMaps.Data.Entities.Enums.ReportType
 const REPORT_TYPE_MISSING_CONTAINER = 'MissingContainer';
 
@@ -46,6 +56,22 @@ export class RequestContainerComponent implements AfterViewInit, OnDestroy {
   // ── Map refs ──────────────────────────────────────────────────────
   private map?: any;
   private placedMarker?: any;
+  private existingLayer?: any;
+
+  /** 15m exclusion zone — same threshold as add-container/backend. */
+  readonly conflictDistanceMeters = 15;
+
+  /** Loaded once on init for the visual orientation overlay. */
+  private existingContainers: ExistingContainer[] = [];
+  loadingContainers = true;
+
+  private readonly existingIcon = (color: string) =>
+    L.divIcon({
+      className: 'existing-container-dot',
+      html: `<span style="--c:${color}"></span>`,
+      iconSize: [14, 14],
+      iconAnchor: [7, 7]
+    });
 
   // Same CSS-only pin as the admin add-container page — avoids the
   // default Leaflet PNG icon which doesn't resolve through Angular.
@@ -82,6 +108,7 @@ export class RequestContainerComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.initMap();
+    this.loadExistingContainers();
   }
 
   ngOnDestroy(): void {
@@ -97,17 +124,88 @@ export class RequestContainerComponent implements AfterViewInit, OnDestroy {
       center: environment.region.center,
       zoom: environment.region.defaultZoom,
       minZoom: 11,
-      maxZoom: 18
+      maxZoom: 18,
+      // Drop the bottom-right "Leaflet | © OpenStreetMap" badge.
+      attributionControl: false,
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
+      attribution: ''
     }).addTo(this.map);
+
+    // LayerGroup for the static overlay of existing bins. Keeps the static
+    // orientation layer separate from the user's draggable pin so we can
+    // re-render only one without nuking the other.
+    this.existingLayer = L.layerGroup().addTo(this.map);
 
     this.map.on('click', (e: any) => {
       const { lat, lng } = e.latlng;
       this.setLocation(lat, lng);
     });
+  }
+
+  // ── Existing-container overlay ────────────────────────────────────
+  private loadExistingContainers(): void {
+    // /api/containers is AllowAnonymous — the bearer token is harmless if
+    // the user happens to be logged in.
+    this.http.get<ExistingContainer[]>(
+      `${environment.apiUrl}/containers`,
+      { headers: this.authHeaders() }
+    ).subscribe({
+      next: rows => {
+        this.existingContainers = rows ?? [];
+        this.loadingContainers = false;
+        this.renderExistingContainers();
+      },
+      error: err => {
+        this.loadingContainers = false;
+        console.warn('Failed to load existing containers', err);
+        // Non-fatal: the user can still propose a location, they just
+        // lose the visual orientation overlay.
+      }
+    });
+  }
+
+  private renderExistingContainers(): void {
+    if (!this.existingLayer) return;
+    this.existingLayer.clearLayers();
+
+    for (const c of this.existingContainers) {
+      const dot = L.marker([c.locationY, c.locationX], {
+        icon: this.existingIcon('rgba(120,140,160,0.85)'),
+        interactive: true,
+        keyboard: false,
+        riseOnHover: true
+      }).bindTooltip(
+        `Контейнер #${c.id} · ${this.trashTypeLabel(c.trashType)}`,
+        { direction: 'top', offset: [0, -6] }
+      );
+
+      // 15m exclusion ring matches backend rejection radius — gives the
+      // citizen a hint that placing a pin inside the red ring makes the
+      // proposal much less likely to be approved.
+      const exclusion = L.circle([c.locationY, c.locationX], {
+        radius: this.conflictDistanceMeters,
+        color: '#ef4444',
+        weight: 1,
+        opacity: 0.35,
+        fillColor: '#ef4444',
+        fillOpacity: 0.06,
+        interactive: false
+      });
+
+      this.existingLayer.addLayer(exclusion);
+      this.existingLayer.addLayer(dot);
+    }
+  }
+
+  private trashTypeLabel(t: number): string {
+    return this.trashTypeOptions.find(x => x.value === t)?.label ?? 'Неизв.';
+  }
+
+  /** Count of existing containers loaded from the API. */
+  get existingContainersCount(): number {
+    return this.existingContainers.length;
   }
 
   private setLocation(lat: number, lng: number): void {

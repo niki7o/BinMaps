@@ -146,6 +146,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   deletedContainers: DeletedContainer[] = [];
   trucks: Truck[] = [];
   users: User[] = [];
+  /** userId → role lookup so the reports tab knows whether the
+   *  submitter is an Admin/Driver (we hide reputation for those). */
+  userRoleById: Record<string, string> = {};
   filteredUsers: User[] = [];
   stats: AdminStats = {
     totalContainers: 0,
@@ -269,6 +272,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         if (user?.role === 'Admin') {
           this.loadStats();
           this.loadReports();
+          // Pre-load users so the userId → role map is ready when the
+          // reports table renders. Otherwise the reputation column would
+          // briefly show bars for Driver/Admin submitters until the
+          // "Потребители" tab is opened.
+          this.loadUsers();
         }
       });
   }
@@ -554,6 +562,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         next: data => {
           this.users = data;
           this.filteredUsers = [...data];
+          // Rebuild the userId → role map so the reports tab can suppress
+          // reputation for Admin/Driver submitters even if "Потребители"
+          // tab hasn't been visited yet.
+          this.userRoleById = {};
+          for (const u of data) this.userRoleById[u.id] = u.role;
           this.isLoading = false;
         },
         error: () => {
@@ -561,6 +574,18 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           this.isLoading = false;
         }
       });
+  }
+
+  /** True if a given role gets reputation hidden in admin tables. */
+  isPrivilegedRole(role: string | undefined | null): boolean {
+    return role === 'Admin' || role === 'Driver';
+  }
+
+  /** Lookup helper used by the template to decide whether to render
+   *  the reputation bar in the reports table. */
+  isPrivilegedUserId(userId: string | undefined | null): boolean {
+    if (!userId) return false;
+    return this.isPrivilegedRole(this.userRoleById[userId]);
   }
 
   applyReportFilters(): void {

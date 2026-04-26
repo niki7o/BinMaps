@@ -179,12 +179,17 @@
               </td>
 
               <td>
-                <div class="rep-mini">
-                  <div class="progress" style="width: 44px">
-                    <div class="progress__fill progress__fill--ok" [style.width.%]="r.userReputationOnSubmit"></div>
+                <ng-container *ngIf="!isPrivilegedUserId(r.userId); else noRep">
+                  <div class="rep-mini">
+                    <div class="progress" style="width: 44px">
+                      <div class="progress__fill progress__fill--ok" [style.width.%]="r.userReputationOnSubmit"></div>
+                    </div>
+                    <span class="text-mono text-xs">{{ r.userReputationOnSubmit }}</span>
                   </div>
-                  <span class="text-mono text-xs">{{ r.userReputationOnSubmit }}</span>
-                </div>
+                </ng-container>
+                <ng-template #noRep>
+                  <span class="text-muted">—</span>
+                </ng-template>
               </td>
 
               <td>
@@ -509,12 +514,17 @@
                 </select>
               </td>
               <td>
-                <div class="rep-mini">
-                  <div class="progress" style="width: 56px">
-                    <div class="progress__fill progress__fill--ok" [style.width.%]="u.reputation"></div>
+                <ng-container *ngIf="!isPrivilegedRole(u.role); else userNoRep">
+                  <div class="rep-mini">
+                    <div class="progress" style="width: 56px">
+                      <div class="progress__fill progress__fill--ok" [style.width.%]="u.reputation"></div>
+                    </div>
+                    <span class="text-mono text-xs">{{ u.reputation | number:'1.0-0' }}</span>
                   </div>
-                  <span class="text-mono text-xs">{{ u.reputation | number:'1.0-0' }}</span>
-                </div>
+                </ng-container>
+                <ng-template #userNoRep>
+                  <span class="text-muted">—</span>
+                </ng-template>
               </td>
               <td class="text-mono">{{ userReportCounts[u.id] || 0 }}</td>
               <td>
@@ -523,7 +533,10 @@
               </td>
               <td>
                 <div class="action-group">
-                  <button class="btn btn--icon btn--sm btn--ghost" (click)="openReputationModal(u)" title="Редактирай репутация">
+                  <button *ngIf="!isPrivilegedRole(u.role)"
+                          class="btn btn--icon btn--sm btn--ghost"
+                          (click)="openReputationModal(u)"
+                          title="Редактирай репутация">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   </button>
                   
@@ -913,7 +926,9 @@
         </div>
         <div class="modal__meta-row">
           <span class="modal__meta-label">Репутация при подаване</span>
-          <span class="text-mono">{{ selectedReport.userReputationOnSubmit }}</span>
+          <span class="text-mono">
+            {{ isPrivilegedUserId(selectedReport.userId) ? '—' : selectedReport.userReputationOnSubmit }}
+          </span>
         </div>
         <div class="modal__meta-row">
           <span class="modal__meta-label">Финална увереност</span>

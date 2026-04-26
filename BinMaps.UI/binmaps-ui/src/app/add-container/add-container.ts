@@ -144,11 +144,13 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
       center: environment.region.center,
       zoom: environment.region.defaultZoom,
       minZoom: 11,
-      maxZoom: 18
+      maxZoom: 18,
+      // Hide the default Leaflet attribution badge in the bottom-right.
+      attributionControl: false,
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
+      attribution: ''
     }).addTo(this.map);
 
     // LayerGroup for the static overlay of existing bins.

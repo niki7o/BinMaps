@@ -85,8 +85,9 @@
 
 .map-hint {
   position: absolute;
+  /* Top-right keeps the box clear of Leaflet's zoom controls (top-left). */
   top: var(--space-4);
-  left: var(--space-4);
+  right: var(--space-4);
   z-index: 500;
   background: var(--bg-elevated);
   border: 1px solid var(--border-default);
@@ -98,6 +99,36 @@
   align-items: center;
   gap: var(--space-2);
   box-shadow: var(--shadow-md);
+}
+
+/* ── Map legend — same styling as admin add-container ────── */
+.map-legend {
+  position: absolute;
+  /* Top-right, just below the map-hint. Avoids Leaflet zoom controls. */
+  top: calc(var(--space-4) + 34px);
+  right: var(--space-4);
+  z-index: 500;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-3);
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  box-shadow: var(--shadow-sm);
+  max-width: 360px;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(120, 140, 160, 0.85);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
+  flex-shrink: 0;
 }
 
 .dot {
@@ -425,6 +456,21 @@
   background: var(--bg-hover);
   color: var(--text-primary);
   border-color: var(--border-default);
+}
+
+/* ── Existing-container orientation dots ─────────────────── */
+:host ::ng-deep .existing-container-dot {
+  pointer-events: auto;
+}
+
+:host ::ng-deep .existing-container-dot span {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--c, rgba(120,140,160,0.85));
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 
 /* ── Leaflet controls tweaks for dark theme ──────────────── */

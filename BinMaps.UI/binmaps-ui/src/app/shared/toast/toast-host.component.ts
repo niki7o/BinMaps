@@ -104,7 +104,11 @@ import { ToastService, Toast } from './toast.service';
   styles: [`
     :host {
       position: fixed;
-      top: 0; right: 0;
+      /* Sit just below the fixed navbar so toasts never collide with the
+         user dropdown / notification bell in the header. Falls back to
+         64px when the variable isn't set. */
+      top: calc(var(--navbar-height, 64px) + 8px);
+      right: 0;
       z-index: 1200;
       pointer-events: none;
     }
