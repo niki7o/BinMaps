@@ -44,6 +44,7 @@ interface DeletedContainer {
   locationY: number;
   capacity: number;
   hasSensor: boolean;
+  isSeeded: boolean;
   deletedAt: string;
   deletedByUserId: string | null;
 }
@@ -420,24 +421,14 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   async deleteContainerFromAdmin(c: Container): Promise<void> {
-    const ok = c.isSeeded
-      ? await this.confirmSvc.ask({
-          title: 'Архивиране на seed контейнер',
-          message: `Да архивирам ли контейнер #${c.id}?`,
-          detail: 'Seed контейнерите могат да бъдат възстановени по-късно от таб „Архивирани".',
-          confirmText: 'Архивирай',
-          cancelText: 'Отказ',
-          variant: 'warning',
-        })
-      : await this.confirmSvc.ask({
-          title: `Окончателно изтриване на контейнер #${c.id}`,
-          message: 'Това действие е необратимо. Контейнерът и историята му ще бъдат изтрити за постоянно.',
-          detail: `Зона: ${c.areaId} · Пълнене: ${c.fillPercentage.toFixed(0)}%`,
-          confirmText: 'Изтрий окончателно',
-          cancelText: 'Отказ',
-          variant: 'danger',
-          requireText: `DELETE ${c.id}`,
-        });
+    const ok = await this.confirmSvc.ask({
+      title: 'Архивиране на контейнер',
+      message: `Да архивирам ли контейнер #${c.id}?`,
+      detail: 'Контейнерът ще бъде преместен в таб „Архивирани" откъдето може да бъде възстановен или изтрит окончателно.',
+      confirmText: 'Архивирай',
+      cancelText: 'Отказ',
+      variant: 'warning',
+    });
     if (!ok) return;
 
     this.http.delete<{ id: number; mode: string }>(
@@ -445,19 +436,44 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: res => {
+        next: () => {
           this.containers = this.containers.filter(x => x.id !== c.id);
           this.filteredContainers = this.filteredContainers.filter(x => x.id !== c.id);
-          this.showToast(
-            res.mode === 'soft'
-              ? `Контейнер #${c.id} е архивиран`
-              : `Контейнер #${c.id} е изтрит окончателно`,
-            'success'
-          );
+          this.showToast(`Контейнер #${c.id} е архивиран`, 'success');
+          this.loadStats();
+          // Refresh archive list if it's currently loaded so the count tab updates.
+          this.loadDeletedContainers();
+        },
+        error: err => this.showToast(
+          `Грешка: ${err?.error?.message ?? 'неуспешно архивиране'}`, 'error'
+        )
+      });
+  }
+
+  async purgeContainer(id: number): Promise<void> {
+    const ok = await this.confirmSvc.ask({
+      title: `Окончателно изтриване на контейнер #${id}`,
+      message: 'Това действие е необратимо. Контейнерът и всички свързани сигнали ще бъдат изтрити за постоянно.',
+      confirmText: 'Изтрий окончателно',
+      cancelText: 'Отказ',
+      variant: 'danger',
+      requireText: `DELETE ${id}`,
+    });
+    if (!ok) return;
+
+    this.http.delete<{ id: number; reportsRemoved: number }>(
+      `${this.API}/admin/containers/${id}/permanent`, this.authHeaders()
+    )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: res => {
+          this.deletedContainers = this.deletedContainers.filter(c => c.id !== id);
+          const extra = res?.reportsRemoved ? ` (${res.reportsRemoved} сигнала изтрити)` : '';
+          this.showToast(`Контейнер #${id} е изтрит окончателно${extra}`, 'success');
           this.loadStats();
         },
         error: err => this.showToast(
-          `Грешка: ${err?.error?.message ?? 'неуспешно изтриване'}`, 'error'
+          `Грешка: ${err?.error?.message ?? 'неуспешно окончателно изтриване'}`, 'error'
         )
       });
   }

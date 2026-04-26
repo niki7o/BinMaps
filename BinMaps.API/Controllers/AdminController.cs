@@ -77,9 +77,10 @@ public sealed class AdminController : ControllerBase
     }
 
     /// <summary>
-    /// Soft-deletes seeded containers (admin can restore them) and hard-deletes
-    /// everything else. Reports referencing the container are also removed on
-    /// hard-delete to respect the FK Restrict rule.
+    /// Soft-deletes any container (seeded or user-added). The row is hidden via
+    /// the global query filter and shows up in the "Архивирани" tab where the
+    /// admin can either restore it or remove it permanently via the dedicated
+    /// /permanent endpoint.
     /// </summary>
     [HttpDelete("containers/{id:int}")]
     public async Task<IActionResult> DeleteContainer([FromRoute] int id)
@@ -92,24 +93,39 @@ public sealed class AdminController : ControllerBase
         if (container.IsDeleted)
             return BadRequest(new { message = "Контейнерът вече е изтрит." });
 
-        if (container.IsSeeded)
+        // Soft-delete: keep row, hide via global query filter, allow restore.
+        container.IsDeleted = true;
+        container.DeletedAt = DateTime.UtcNow;
+        container.DeletedByUserId = _userManager.GetUserId(User);
+        await _context.SaveChangesAsync();
+
+        return Ok(new
         {
-            // Soft-delete: keep row, hide via global query filter, allow restore.
-            container.IsDeleted = true;
-            container.DeletedAt = DateTime.UtcNow;
-            container.DeletedByUserId = _userManager.GetUserId(User);
-            await _context.SaveChangesAsync();
+            mode = "soft",
+            id = container.Id,
+            isSeeded = container.IsSeeded,
+            message = "Контейнерът е архивиран и може да бъде възстановен."
+        });
+    }
 
-            return Ok(new
+    /// <summary>
+    /// Permanently removes an already-archived container and any reports that
+    /// reference it (FK is Restrict-on-delete, so we drop reports first).
+    /// </summary>
+    [HttpDelete("containers/{id:int}/permanent")]
+    public async Task<IActionResult> DeleteContainerPermanent([FromRoute] int id)
+    {
+        var container = await _context.TrashContainers
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Id == id);
+        if (container is null) return NotFound();
+
+        if (!container.IsDeleted)
+            return BadRequest(new
             {
-                mode = "soft",
-                id = container.Id,
-                message = "Seed контейнерът е архивиран и може да бъде възстановен."
+                message = "Контейнерът трябва първо да бъде архивиран."
             });
-        }
 
-        // Hard-delete: user-added container. Clean up related reports first
-        // because Report.TrashContainerId is Restrict-on-delete.
         var reports = await _context.Reports
             .Where(r => r.TrashContainerId == id)
             .ToListAsync();
@@ -145,6 +161,7 @@ public sealed class AdminController : ControllerBase
                 c.LocationY,
                 c.Capacity,
                 c.HasSensor,
+                c.IsSeeded,
                 c.DeletedAt,
                 c.DeletedByUserId
             })
@@ -163,9 +180,6 @@ public sealed class AdminController : ControllerBase
 
         if (!container.IsDeleted)
             return BadRequest(new { message = "Контейнерът не е изтрит." });
-
-        if (!container.IsSeeded)
-            return BadRequest(new { message = "Само seed контейнери могат да бъдат възстановявани." });
 
         container.IsDeleted = false;
         container.DeletedAt = null;

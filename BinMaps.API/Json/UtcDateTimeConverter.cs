@@ -3,13 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace BinMaps.API.Json;
 
-/// <summary>
-/// Forces every <see cref="DateTime"/> to be serialised as ISO-8601 UTC
-/// with a trailing "Z". EF Core reads <c>datetime2</c> values as
-/// <see cref="DateTimeKind.Unspecified"/>, and the default JSON serializer
-/// then emits them without a timezone marker — which the browser parses as
-/// local time, producing a 2–3 hour offset for Bulgarian users.
-/// </summary>
+
 public sealed class UtcDateTimeConverter : JsonConverter<DateTime>
 {
     public override DateTime Read(

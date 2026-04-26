@@ -353,10 +353,10 @@ public sealed class TrashContainersController : ControllerBase
     }
 
     /// <summary>
-    /// Removes a container from the map. Seeded containers are soft-deleted
-    /// (row stays, hidden via query filter, can be restored by admin). User-
-    /// created containers are hard-deleted together with any reports that
-    /// reference them.
+    /// Soft-deletes a container (seeded or user-added). The row is hidden from
+    /// the map via the global query filter and shows up in the admin's
+    /// "Архивирани" tab where it can be restored or removed permanently via
+    /// the AdminController's /permanent endpoint.
     /// </summary>
     [HttpDelete("{id:int}")]
     [Authorize(Roles = "Admin")]
@@ -374,37 +374,19 @@ public sealed class TrashContainersController : ControllerBase
         if (container.IsDeleted)
             return BadRequest(new { message = "Контейнерът вече е изтрит." });
 
-        string mode;
-        int reportsRemoved = 0;
-
-        if (container.IsSeeded)
-        {
-            container.IsDeleted = true;
-            container.DeletedAt = DateTime.UtcNow;
-            container.DeletedByUserId = User.Identity?.Name;
-            mode = "soft";
-        }
-        else
-        {
-            var reports = await db.Reports
-                .Where(r => r.TrashContainerId == id)
-                .ToListAsync();
-            reportsRemoved = reports.Count;
-            if (reports.Count > 0) db.Reports.RemoveRange(reports);
-            db.TrashContainers.Remove(container);
-            mode = "hard";
-        }
-
+        container.IsDeleted = true;
+        container.DeletedAt = DateTime.UtcNow;
+        container.DeletedByUserId = User.Identity?.Name;
         await db.SaveChangesAsync();
 
         _logger.LogInformation(
-            "Admin {Actor} {Mode}-deleted container #{Id} (seeded={Seeded}, reportsRemoved={R})",
-            User.Identity?.Name ?? "unknown", mode, id, container.IsSeeded, reportsRemoved);
+            "Admin {Actor} archived container #{Id} (seeded={Seeded})",
+            User.Identity?.Name ?? "unknown", id, container.IsSeeded);
 
         // Tell every connected client to drop this marker from the map.
         await hubContext.Clients.All.SendAsync("ContainerRemoved", new { id });
 
-        return Ok(new { id, mode, reportsRemoved });
+        return Ok(new { id, mode = "soft", isSeeded = container.IsSeeded });
     }
 
     #endregion

@@ -15,9 +15,7 @@ from PIL import Image
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Configuration
-# ---------------------------------------------------------------------------
+
 
 ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS",

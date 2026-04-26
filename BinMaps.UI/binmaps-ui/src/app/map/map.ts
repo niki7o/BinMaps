@@ -1470,7 +1470,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
               <polyline points="3 6 5 6 21 6"/>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
             </svg>
-            <span>${bin.isSeeded ? 'Архивирай (soft)' : 'Изтрий окончателно'}</span>
+            <span>Архивирай</span>
           </button>
         ` : ''}
 
@@ -1479,37 +1479,30 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   /**
    * Called from inside the popup when the admin hits the delete button.
-   * Backend picks soft vs hard based on IsSeeded; we just confirm + call.
+   * Always soft-deletes — the container moves to the admin "Архивирани" tab
+   * where it can be restored or removed permanently.
    */
   async deleteContainerFromPopup(id: number, seeded: boolean): Promise<void> {
-    const ok = seeded
-      ? await this.confirmSvc.ask({
-          title: 'Архивиране на seed контейнер',
-          message: `Да архивирам ли контейнер #${id}?`,
-          detail: 'Може да бъде възстановен по-късно от админ панела.',
-          confirmText: 'Архивирай',
-          variant: 'warning',
-        })
-      : await this.confirmSvc.ask({
-          title: `Окончателно изтриване на контейнер #${id}`,
-          message: 'Това действие е необратимо. Контейнерът и историята му ще бъдат изтрити за постоянно.',
-          confirmText: 'Изтрий окончателно',
-          variant: 'danger',
-          requireText: `DELETE ${id}`,
-        });
+    const ok = await this.confirmSvc.ask({
+      title: 'Архивиране на контейнер',
+      message: `Да архивирам ли контейнер #${id}?`,
+      detail: 'Контейнерът ще бъде преместен в таб „Архивирани" в админ панела, откъдето може да бъде възстановен или изтрит окончателно.',
+      confirmText: 'Архивирай',
+      variant: 'warning',
+    });
     if (!ok) return;
 
-    this.http.delete<{ id: number; mode: string; reportsRemoved?: number }>(
+    this.http.delete<{ id: number; mode: string }>(
       `${this.API_URL}/containers/${id}`,
     ).subscribe({
       next: res => {
         this.removeBinLocally(id);
-        console.log(`Container ${id} ${res.mode}-deleted`, res);
+        console.log(`Container ${id} archived`, res);
       },
       error: err => {
-        console.error('Delete failed', err);
+        console.error('Archive failed', err);
         this.confirmSvc.notify({
-          title: 'Грешка при изтриване',
+          title: 'Грешка при архивиране',
           message: err?.error?.message ?? err.message ?? 'Неизвестна грешка.',
           variant: 'danger'
         });
