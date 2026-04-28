@@ -34,7 +34,9 @@
             <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
             <path d="M13.73 21a2 2 0 01-3.46 0"/>
           </svg>
-          <span class="navbar__notif-count" *ngIf="unreadCount() > 0">{{ unreadCount() }}</span>
+          <span class="navbar__notif-count"
+                *ngIf="unreadCount() > 0"
+                [class.is-critical]="hasCriticalUnread()">{{ unreadCount() }}</span>
         </button>
 
         <div class="notif-dropdown" *ngIf="showNotifPanel() && isLoggedIn()">
@@ -121,7 +123,6 @@
   </ng-template>
   <div class="navbar__user-info">
     <span class="navbar__username">{{ currentUser()?.userName }}</span>
-    <span class="navbar__role">{{ currentUser()?.role }}</span>
   </div>
   <svg class="navbar__chevron" [class.is-open]="showUserMenu()" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
     <polyline points="6 9 12 15 18 9"/>
@@ -129,6 +130,11 @@
 </div>
 
         <div class="user-menu" *ngIf="showUserMenu()">
+          <div class="user-menu__identity">
+            <span class="user-menu__name">{{ currentUser()?.userName }}</span>
+            <span class="user-menu__role-chip">{{ currentUser()?.role }}</span>
+          </div>
+          <div class="user-menu__divider"></div>
           <a class="user-menu__item" routerLink="/profile" (click)="showUserMenu.set(false)">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>

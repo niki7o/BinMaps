@@ -10,6 +10,7 @@ interface Zone {
   avgFill: number;
   risk: string;
   riskLabel: string;
+  containerCount: number;
 }
 
 @Component({
@@ -25,12 +26,12 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   private map?: L.Map;
 
   zones: Zone[] = [
-    { name: 'Зона 1 — Надежда', avgFill: 67, risk: 'high', riskLabel: 'Високо' },
-    { name: 'Зона 2 — Център', avgFill: 82, risk: 'critical', riskLabel: 'Критично' },
-    { name: 'Зона 3 — Люлин', avgFill: 54, risk: 'medium', riskLabel: 'Умерено' },
-    { name: 'Зона 4 — Овча Купел', avgFill: 45, risk: 'medium', riskLabel: 'Умерено' },
-    { name: 'Зона 5 — Витоша', avgFill: 38, risk: 'low', riskLabel: 'Ниско' },
-    { name: 'Зона 6 — Изток', avgFill: 61, risk: 'medium', riskLabel: 'Умерено' }
+    { name: 'Зона 1 — Надежда',    avgFill: 67, risk: 'high',     riskLabel: 'Високо',   containerCount: 42 },
+    { name: 'Зона 2 — Център',      avgFill: 82, risk: 'critical', riskLabel: 'Критично', containerCount: 61 },
+    { name: 'Зона 3 — Люлин',       avgFill: 54, risk: 'medium',   riskLabel: 'Умерено',  containerCount: 48 },
+    { name: 'Зона 4 — Овча Купел', avgFill: 45, risk: 'medium',   riskLabel: 'Умерено',  containerCount: 33 },
+    { name: 'Зона 5 — Витоша',      avgFill: 38, risk: 'low',      riskLabel: 'Ниско',    containerCount: 27 },
+    { name: 'Зона 6 — Изток',       avgFill: 61, risk: 'medium',   riskLabel: 'Умерено',  containerCount: 35 }
   ];
 
   constructor(private router: Router, private authService: AuthService) {}

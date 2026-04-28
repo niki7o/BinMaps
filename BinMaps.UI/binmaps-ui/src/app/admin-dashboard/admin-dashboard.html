@@ -84,7 +84,7 @@
 
           <!-- Select mode toolbar: shown while admin is picking which reports to delete -->
           <ng-container *ngIf="isReportSelectMode">
-            <span class="text-xs" style="color:var(--status-critical); font-weight:600">
+            <span class="admin__select-count">
               {{ selectedReportCount }} избрани
             </span>
             <button class="btn btn--sm btn--ghost" (click)="exitReportSelectMode()" title="Затвори режим за избор">
@@ -688,9 +688,7 @@
         </div>
       </div>
 
-      <!-- External API health summary — only rendered after the admin clicks
-           "Провери API-та". Each row is a pill that's green when reachable
-           and amber when degraded, with the detail text and ping latency. -->
+      
       <div *ngIf="apiHealth" class="api-health-panel" style="margin: 0 0 16px 0;">
         <div style="display:flex; flex-wrap:wrap; gap:10px;">
           <div *ngFor="let svc of [apiHealth.weather, apiHealth.routing, apiHealth.ai]"

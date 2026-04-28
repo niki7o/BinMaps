@@ -24,8 +24,10 @@
 }
 
 .navbar.is-scrolled {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5), 0 0 40px var(--eco-glow-soft);
-  border-bottom-color: var(--border-eco);
+  /* Hairline + a clean shadow reads like Linear/Vercel. The 40px green
+     bloom that used to live here was the loudest thing on the page. */
+  box-shadow: 0 1px 0 var(--border-eco-soft), 0 8px 24px rgba(0, 0, 0, 0.4);
+  border-bottom-color: var(--border-eco-soft);
 }
 
 .navbar__inner {
@@ -168,21 +170,30 @@
   40%      { transform: rotate(0); }
 }
 
+/* Default badge is brand-eco. Red is earned: only when one of the
+   unread items is severity=critical (.is-critical). */
 .navbar__notif-count {
   position: absolute;
   top: -4px;
   right: -4px;
   min-width: 16px;
   height: 16px;
-  background: #ef4444;
+  background: var(--eco-primary);
   border-radius: 99px;
-  border: 2px solid #0a111e;
+  border: 2px solid var(--bg-root);
   font-size: 9px;
   font-weight: 800;
-  color: white;
+  color: var(--bg-root);
   text-align: center;
   line-height: 12px;
   padding: 0 3px;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.navbar__notif-count.is-critical {
+  background: var(--status-critical);
+  color: #fff;
 }
 
 .navbar__user {
@@ -225,21 +236,16 @@
 }
 
 .navbar__username {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--text-1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 120px;
-}
-
-.navbar__role {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--eco);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  /* Role moved into the dropdown so the username has the full pill width
+     to itself — important for real names that aren't 4 letters. */
+  max-width: 160px;
+  letter-spacing: -0.01em;
 }
 
 .navbar__chevron {
@@ -289,6 +295,37 @@
   border-right: 7px solid transparent;
   border-bottom: 7px solid var(--bg-surface, #0f1923);
   z-index: 1;
+}
+
+.user-menu__identity {
+  padding: 12px 16px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.user-menu__name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-menu__role-chip {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--eco-primary);
+  background: var(--eco-ghost);
+  border: 1px solid var(--border-eco-soft);
+  border-radius: var(--radius-full);
+  padding: 2px 8px;
 }
 
 .user-menu__item {

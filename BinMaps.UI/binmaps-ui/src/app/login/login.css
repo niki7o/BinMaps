@@ -213,6 +213,7 @@
 
 .auth-eye:hover {
   color: var(--eco-primary);
+  background: var(--eco-ghost);
 }
 
 .auth-eye:focus-visible {

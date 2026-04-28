@@ -36,6 +36,13 @@ export class Header implements OnInit, OnDestroy {
   get notifications() { return this.notifService.notifications(); }
   get unreadCount()   { return this.notifService.unreadCount;     }
 
+  /** Red is reserved for unread sets that contain a critical item.
+   *  Otherwise the count chip stays brand-eco — most apps cry wolf
+   *  by always painting the badge red, which dilutes the signal. */
+  readonly hasCriticalUnread = computed(() =>
+    this.notifService.notifications().some(n => !n.read && n.severity === 'critical')
+  );
+
   constructor(
     private readonly authService: AuthService,
     private readonly router: Router,

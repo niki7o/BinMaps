@@ -82,7 +82,19 @@
   align-self: flex-start;
 }
 
-/* Count badge stays visible but calm — active tabs already communicate focus. */
+.admin__select-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-wide);
+  color: var(--status-critical);
+}
+
+/* Count badge: any non-zero count is the *action signal* on this page,
+   so it carries the brand colour regardless of active state. The tab's
+   text colour still shifts on active/hover, but the count stays loud
+   so users can scan "where do I have work?" in one pass. */
 .tab-count {
   display: inline-flex;
   align-items: center;
@@ -90,22 +102,14 @@
   height: auto;
   padding: 0;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--eco-primary);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--tracking-wide);
   margin-left: var(--space-2);
   transition: color var(--duration-base) var(--ease-out);
-}
-
-.tab.is-active .tab-count {
-  color: var(--eco-primary);
-}
-
-.tab:hover .tab-count {
-  color: var(--text-secondary);
 }
 
 

@@ -63,10 +63,13 @@
       <div class="hero__visual animate-fade-in">
         <div class="hero__map-preview">
           <div class="hero__map-header">
-            <div class="hero__map-dots"><span></span><span></span><span></span></div>
-            <span class="hero__map-label">
+            <span class="hero__map-status">
               <div class="live-dot"></div>
-              Live — Зона 1 Надежда
+              <span>LIVE</span>
+              <span class="hero__map-status-sep">·</span>
+              <span>ЗОНА 1 — НАДЕЖДА</span>
+              <span class="hero__map-status-sep">·</span>
+              <span>246 КОНТЕЙНЕРА</span>
             </span>
           </div>
           <div class="map-overlay"></div>
@@ -121,11 +124,11 @@
           <h3 class="feat-card__title">Карта в реално време</h3>
           <p class="feat-card__desc">Leaflet карта с всички контейнери в София, цветово кодирани по запълване. Обновяване в реално време чрез WebSocket.</p>
           <div class="feat-card__bars">
-            <div class="feat-bar" style="--h:21%;--c:#10b981"><div class="feat-bar__fill"></div><span>21%</span></div>
-            <div class="feat-bar" style="--h:58%;--c:#f59e0b"><div class="feat-bar__fill"></div><span>58%</span></div>
-            <div class="feat-bar" style="--h:74%;--c:#f97316"><div class="feat-bar__fill"></div><span>74%</span></div>
+            <div class="feat-bar" style="--h:24%;--c:#10b981"><div class="feat-bar__fill"></div><span>24%</span></div>
+            <div class="feat-bar" style="--h:38%;--c:#10b981"><div class="feat-bar__fill"></div><span>38%</span></div>
+            <div class="feat-bar" style="--h:46%;--c:#10b981"><div class="feat-bar__fill"></div><span>46%</span></div>
+            <div class="feat-bar" style="--h:67%;--c:#f59e0b"><div class="feat-bar__fill"></div><span>67%</span></div>
             <div class="feat-bar" style="--h:91%;--c:#ef4444"><div class="feat-bar__fill"></div><span>91%</span></div>
-            <div class="feat-bar" style="--h:32%;--c:#10b981"><div class="feat-bar__fill"></div><span>32%</span></div>
           </div>
           <div class="feat-card__chip">
             <div class="live-dot"></div>
@@ -209,24 +212,33 @@
       </div>
       <div class="hiw-steps">
         <div class="hiw-step">
-          <div class="hiw-step__icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <div class="hiw-step__head">
+            <span class="hiw-step__num">01</span>
+            <div class="hiw-step__icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
           </div>
           <h4>Снимай проблема</h4>
           <p>Виждаш препълнена или наранена кофа? Снимай я и изпрати сигнал директно от приложението.</p>
         </div>
         <div class="hiw-connector"></div>
         <div class="hiw-step">
-          <div class="hiw-step__icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <div class="hiw-step__head">
+            <span class="hiw-step__num">02</span>
+            <div class="hiw-step__icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </div>
           </div>
           <h4>AI го проверява</h4>
           <p>Системата анализира снимката автоматично и оценява ситуацията. По-надеждните потребители имат по-голямо влияние.</p>
         </div>
         <div class="hiw-connector"></div>
         <div class="hiw-step">
-          <div class="hiw-step__icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          <div class="hiw-step__head">
+            <span class="hiw-step__num">03</span>
+            <div class="hiw-step__icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
           </div>
           <h4>Камионът идва</h4>
           <p>Системата генерира оптимален маршрут и изпраща камиона точно там, където трябва — без излишни обиколки.</p>
@@ -244,7 +256,6 @@
       </div>
       <div class="zones__grid">
         <div *ngFor="let zone of zones; let i = index" class="zone-card" [style.animation-delay]="(i * 60) + 'ms'">
-          <div class="zone-card__number">{{ i + 1 }}</div>
           <div class="zone-card__info">
             <p class="zone-card__name">{{ zone.name }}</p>
             <div class="zone-card__bar">
@@ -253,6 +264,10 @@
               </div>
               <span class="zone-card__pct">{{ zone.avgFill }}%</span>
             </div>
+          </div>
+          <div class="zone-card__count">
+            <span class="zone-card__count-num">{{ zone.containerCount }}</span>
+            <span class="zone-card__count-lbl">бр.</span>
           </div>
           <span class="badge" [ngClass]="riskBadge(zone.risk)">{{ zone.riskLabel }}</span>
         </div>

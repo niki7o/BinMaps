@@ -179,7 +179,7 @@ body::before {
   border-radius: var(--radius-full);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--eco-dim);
+  background: var(--text-muted);
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -276,10 +276,12 @@ code, pre {
     box-shadow var(--duration-base) var(--ease-out);
 }
 
-.card:hover {
-  transform: translateY(-3px);
-  border-color: var(--border-eco-soft);
-  box-shadow: var(--shadow-eco-sm), var(--shadow-lg);
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-eco-soft);
+    box-shadow: var(--shadow-lg);
+  }
 }
 .hero__real-map {
   height: 100%;
@@ -357,21 +359,28 @@ code, pre {
   user-select: none;
 }
 
-.btn::after {
+/* Shimmer sweep is reserved for primary CTAs only.
+   Applying it to every button is the kind of thing that makes a UI
+   feel like a premium template. Quiet hovers on secondary/ghost/icon
+   buttons read as professional. */
+.btn--primary::after {
   content: '';
   position: absolute;
   inset: 0;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255,255,255,0.06) 50%,
+    rgba(255,255,255,0.10) 50%,
     transparent 100%
   );
   transform: translateX(-100%);
   transition: transform var(--duration-slow) var(--ease-out);
+  pointer-events: none;
 }
-.btn:hover::after {
-  transform: translateX(100%);
+@media (hover: hover) and (pointer: fine) {
+  .btn--primary:hover::after {
+    transform: translateX(100%);
+  }
 }
 
 .btn:active {
@@ -391,9 +400,11 @@ code, pre {
   border-color: transparent;
   box-shadow: 0 0 0 0 var(--eco-glow);
 }
-.btn--primary:hover {
-  box-shadow: var(--shadow-eco);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .btn--primary:hover {
+    box-shadow: var(--shadow-eco);
+    transform: translateY(-1px);
+  }
 }
 .btn--primary:active {
   transform: scale(0.97);
@@ -405,9 +416,12 @@ code, pre {
   color: var(--eco-primary);
   border-color: var(--border-eco);
 }
-.btn--secondary:hover {
-  background: rgba(16, 185, 129, 0.14);
-  box-shadow: var(--shadow-eco-sm);
+/* Quieter secondary hover — no glow. Glow is a CTA-only signal. */
+@media (hover: hover) and (pointer: fine) {
+  .btn--secondary:hover {
+    background: rgba(16, 185, 129, 0.14);
+    border-color: var(--eco-primary);
+  }
 }
 
 .btn--ghost {
@@ -415,10 +429,12 @@ code, pre {
   color: var(--text-secondary);
   border-color: var(--border-subtle);
 }
-.btn--ghost:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-  border-color: var(--border-default);
+@media (hover: hover) and (pointer: fine) {
+  .btn--ghost:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-default);
+  }
 }
 
 .btn--danger {
@@ -426,9 +442,11 @@ code, pre {
   color: var(--status-critical);
   border-color: rgba(239,68,68,0.3);
 }
-.btn--danger:hover {
-  background: rgba(239,68,68,0.20);
-  box-shadow: var(--shadow-red);
+@media (hover: hover) and (pointer: fine) {
+  .btn--danger:hover {
+    background: rgba(239,68,68,0.20);
+    border-color: rgba(239,68,68,0.5);
+  }
 }
 
 .btn--sm {
@@ -497,6 +515,14 @@ code, pre {
   border-color: var(--eco-primary);
   box-shadow: 0 0 0 3px var(--eco-glow-soft);
   background: var(--bg-elevated);
+}
+
+/* The form fields draw their own focus ring (border tint + 3px glow);
+   the global :focus-visible would paint a second outline on top of it. */
+.form-input:focus-visible,
+.form-select:focus-visible,
+.form-textarea:focus-visible {
+  outline: none;
 }
 
 .form-textarea {
@@ -659,10 +685,12 @@ code, pre {
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
-.kpi-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--border-eco-soft);
-  box-shadow: var(--shadow-eco-sm), var(--shadow-lg);
+@media (hover: hover) and (pointer: fine) {
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-eco-soft);
+    box-shadow: var(--shadow-lg);
+  }
 }
 
 .kpi-card--danger  { --accent-gradient: linear-gradient(90deg, #991b1b, var(--status-critical)); }
@@ -741,8 +769,19 @@ code, pre {
 .table td {
   padding: var(--space-4) var(--space-5);
   color: var(--text-primary);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   vertical-align: middle;
+}
+
+/* Numeric / date columns right-align — left-aligned numbers in tables
+   read as amateur. Use .num on <th>/<td> or a parent <col> class. */
+.table th.num,
+.table td.num,
+.table th.date,
+.table td.date {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
 }
 
 .table tbody tr {
@@ -750,10 +789,12 @@ code, pre {
               box-shadow var(--duration-base) var(--ease-out);
 }
 
-.table tbody tr:hover {
-  background: var(--bg-hover);
-  /* Inset left rail — small crafted touch that also scan-aids the eye across wide rows */
-  box-shadow: inset 3px 0 0 var(--eco-primary);
+@media (hover: hover) and (pointer: fine) {
+  .table tbody tr:hover {
+    background: var(--bg-hover);
+    /* Inset left rail — small crafted touch that also scan-aids the eye across wide rows */
+    box-shadow: inset 3px 0 0 var(--eco-primary);
+  }
 }
 
 .table tbody tr:last-child td {
