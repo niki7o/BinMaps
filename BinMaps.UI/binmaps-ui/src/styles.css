@@ -341,7 +341,11 @@ code, pre {
   font-weight: 600;
   letter-spacing: 0.01em;
   line-height: 1;
-  padding: 0.6875rem 1.25rem;
+  /* Explicit min-height keeps every button on the same vertical rhythm
+     regardless of icon content — without this, an icon-only button is
+     2-3px shorter than a text button on the same row. */
+  min-height: 38px;
+  padding: 0 1.125rem;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -357,6 +361,13 @@ code, pre {
   overflow: hidden;
   -webkit-user-select: none;
   user-select: none;
+}
+
+/* SVGs inside buttons should never shrink under text pressure and
+   should sit on the same baseline as the label glyphs. */
+.btn > svg {
+  flex-shrink: 0;
+  display: block;
 }
 
 /* Shimmer sweep is reserved for primary CTAs only.
@@ -389,7 +400,8 @@ code, pre {
 
 .btn:disabled,
 .btn[disabled] {
-  opacity: 0.38;
+  opacity: 0.42;
+  filter: saturate(0.6);
   cursor: not-allowed;
   pointer-events: none;
 }
@@ -411,16 +423,20 @@ code, pre {
   box-shadow: var(--shadow-eco-sm);
 }
 
+/* Secondary: a confident outline button with a soft eco wash.
+   Slightly stronger border than the previous ghost variant so it reads
+   as a peer next to the primary CTA, not a faded afterthought. */
 .btn--secondary {
-  background: var(--eco-ghost);
-  color: var(--eco-primary);
-  border-color: var(--border-eco);
+  background: rgba(16, 185, 129, 0.10);
+  color: var(--eco-bright);
+  border-color: rgba(16, 185, 129, 0.45);
 }
 /* Quieter secondary hover — no glow. Glow is a CTA-only signal. */
 @media (hover: hover) and (pointer: fine) {
   .btn--secondary:hover {
-    background: rgba(16, 185, 129, 0.14);
+    background: rgba(16, 185, 129, 0.16);
     border-color: var(--eco-primary);
+    color: var(--eco-bright);
   }
 }
 
@@ -451,19 +467,26 @@ code, pre {
 
 .btn--sm {
   font-size: var(--text-xs);
-  padding: 0.4375rem 0.875rem;
+  min-height: 30px;
+  padding: 0 0.75rem;
   border-radius: var(--radius-sm);
+  gap: 6px;
 }
 .btn--lg {
   font-size: var(--text-md);
-  padding: 0.9375rem 2rem;
+  min-height: 50px;
+  padding: 0 1.75rem;
   border-radius: var(--radius-lg);
+  gap: 10px;
 }
 .btn--icon {
-  padding: 0.625rem;
+  min-height: 38px;
+  padding: 0;
+  width: 38px;
   border-radius: var(--radius-md);
-  aspect-ratio: 1;
 }
+.btn--icon.btn--sm { min-height: 30px; width: 30px; }
+.btn--icon.btn--lg { min-height: 50px; width: 50px; }
 
 .form-group {
   display: flex;

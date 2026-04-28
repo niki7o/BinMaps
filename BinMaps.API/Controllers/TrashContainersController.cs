@@ -192,8 +192,21 @@ public sealed class TrashContainersController : ControllerBase
         }
 
         // ── 4. Persist ────────────────────────────────────────────────
+        // The TrashContainer entity is configured with ValueGeneratedNever()
+        // (BinMapsDbContext line 47), so we must assign Id ourselves —
+        // otherwise EF defaults to 0 and we end up with "#0" containers.
+        // Pulling MAX(Id)+1 from the full set (including soft-deleted rows)
+        // so a previous hard-delete can't collide with a freed-up id.
+        int nextId = await _containerRepo
+            .GetAllAttached()
+            .IgnoreQueryFilters()
+            .Select(c => (int?)c.Id)
+            .MaxAsync() ?? 0;
+        nextId += 1;
+
         var container = new TrashContainer
         {
+            Id              = nextId,
             AreaId          = dto.AreaId,
             LocationX       = dto.LocationX,
             LocationY       = dto.LocationY,

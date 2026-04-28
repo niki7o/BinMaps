@@ -142,15 +142,36 @@ namespace BinMaps.API.Seed
 
         private async Task SeedContainersAsync()
         {
-            if (await _context.TrashContainers.AnyAsync()) return;
+            // First-time seed: table is empty → insert everything.
+            // Subsequent runs: backfill any seeded row whose Id was hard-deleted
+            // (admin "permanent delete" can wipe a seeded container; this lets
+            // it self-heal on the next startup without losing user data).
+            bool tableIsEmpty = !await _context.TrashContainers.AnyAsync();
 
-            IReadOnlyList<TrashContainer> containers = UseClusterGenerator
+            IReadOnlyList<TrashContainer> seedSet = UseClusterGenerator
                 ? await GenerateContainersFromClustersAsync()
                 : await LoadContainersFromJsonAsync();
 
-            if (containers.Count == 0) return;
+            if (seedSet.Count == 0) return;
 
-            await _context.TrashContainers.AddRangeAsync(containers);
+            if (tableIsEmpty)
+            {
+                await _context.TrashContainers.AddRangeAsync(seedSet);
+                await _context.SaveChangesAsync();
+                return;
+            }
+
+            // Backfill missing seeded rows. We compare against the FULL table
+            // including soft-deleted, so a soft-deleted seed bin isn't reinserted.
+            var existingIds = await _context.TrashContainers
+                .IgnoreQueryFilters()
+                .Select(c => c.Id)
+                .ToHashSetAsync();
+
+            var missing = seedSet.Where(c => !existingIds.Contains(c.Id)).ToList();
+            if (missing.Count == 0) return;
+
+            await _context.TrashContainers.AddRangeAsync(missing);
             await _context.SaveChangesAsync();
         }
 

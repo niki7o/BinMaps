@@ -358,42 +358,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.selectedRun = null;
   }
 
-  // ── External API health check ───────────────────────────────────────
-  apiHealth: {
-    weather:  { name: string; ok: boolean; detail: string; elapsedMs: number };
-    routing:  { name: string; ok: boolean; detail: string; elapsedMs: number };
-    ai:       { name: string; ok: boolean; detail: string; elapsedMs: number };
-    checkedAt: string;
-  } | null = null;
-  isCheckingApiHealth = false;
-
-  /** Hits the admin diagnostics endpoint and stores the result. Bound to the
-   *  "Провери API-та" button in the routes toolbar — the panel below the
-   *  table renders one row per service with its status pill and ping time. */
-  checkApiHealth(): void {
-    if (this.isCheckingApiHealth) return;
-    this.isCheckingApiHealth = true;
-    this.http.get<typeof this.apiHealth>(
-      `${this.API}/admin/diagnostics/apis`, this.authHeaders()
-    )
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: data => {
-          this.apiHealth = data;
-          this.isCheckingApiHealth = false;
-          const allOk = data && data.weather.ok && data.routing.ok && data.ai.ok;
-          this.showToast(
-            allOk ? 'Всички API-та работят' : 'Някои API-та имат проблем',
-            allOk ? 'success' : 'info'
-          );
-        },
-        error: () => {
-          this.isCheckingApiHealth = false;
-          this.showToast('Не успях да проверя външните API-та', 'error');
-        }
-      });
-  }
-
   trashTypeLabel(t: number): string {
     return t === 0 ? 'Общ' : t === 1 ? 'Пластмаса' : t === 2 ? 'Хартия' : t === 3 ? 'Стъкло' : 'Неизв.';
   }

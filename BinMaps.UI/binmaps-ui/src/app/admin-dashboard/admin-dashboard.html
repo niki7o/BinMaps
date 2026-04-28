@@ -677,41 +677,9 @@
           <button class="btn btn--sm btn--secondary" (click)="loadRouteHistory()">
             Обнови
           </button>
-          <button class="btn btn--sm btn--secondary" (click)="checkApiHealth()"
-                  [disabled]="isCheckingApiHealth"
-                  title="Проверява външните API-та (метео, маршрутизация, AI)">
-            {{ isCheckingApiHealth ? 'Проверявам…' : 'Провери API-та' }}
-          </button>
-          <span class="text-muted text-xs" style="margin-left:8px">
+          <span class="text-muted text-xs">
             {{ filteredRoutes.length }} от {{ routeHistory.length }}
           </span>
-        </div>
-      </div>
-
-      
-      <div *ngIf="apiHealth" class="api-health-panel" style="margin: 0 0 16px 0;">
-        <div style="display:flex; flex-wrap:wrap; gap:10px;">
-          <div *ngFor="let svc of [apiHealth.weather, apiHealth.routing, apiHealth.ai]"
-               class="api-health-pill"
-               [class.api-health-pill--ok]="svc.ok"
-               [class.api-health-pill--warn]="!svc.ok"
-               style="flex:1; min-width:240px; padding:10px 14px; border-radius:10px;
-                      border:1px solid; display:flex; flex-direction:column; gap:2px;"
-               [style.border-color]="svc.ok ? 'rgba(16,185,129,0.35)' : 'rgba(245,158,11,0.4)'"
-               [style.background]="svc.ok ? 'rgba(16,185,129,0.06)' : 'rgba(245,158,11,0.06)'">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-              <span class="font-semibold text-sm">{{ svc.name }}</span>
-              <span class="badge"
-                    [ngClass]="svc.ok ? 'badge--success' : 'badge--warning'">
-                {{ svc.ok ? 'OK' : 'Issue' }}
-              </span>
-            </div>
-            <span class="text-muted text-xs">{{ svc.detail }}</span>
-            <span class="text-muted text-xs">{{ svc.elapsedMs }} ms</span>
-          </div>
-        </div>
-        <div class="text-muted text-xs" style="margin-top:6px;">
-          Проверено: {{ formatDate(apiHealth.checkedAt) }}
         </div>
       </div>
 
