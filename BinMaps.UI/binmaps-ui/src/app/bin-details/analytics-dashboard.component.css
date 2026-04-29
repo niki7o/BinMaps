@@ -428,12 +428,87 @@
   transition: all .4s;
 }
 
+/* 4-tile mini-KPI strip under the gauge — gives the abstract density
+   score the operational context the user needs to act on. Each tile
+   gets a colour-coded left rail by status (good/warn/bad) so the user
+   can scan health in one glance. */
+.an-mini-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.an-mini-kpi {
+  position: relative;
+  padding: var(--space-3) var(--space-3) var(--space-3) calc(var(--space-3) + 6px);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: border-color var(--duration-base) var(--ease-out),
+              background var(--duration-base) var(--ease-out);
+}
+
+.an-mini-kpi::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 8px; bottom: 8px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--text-muted);
+  transition: background var(--duration-base) var(--ease-out);
+}
+
+.an-mini-kpi.is-good::before { background: #10b981; }
+.an-mini-kpi.is-good        { border-color: rgba(16, 185, 129, 0.20); }
+.an-mini-kpi.is-warn::before { background: #f59e0b; }
+.an-mini-kpi.is-warn        { border-color: rgba(245, 158, 11, 0.25); }
+.an-mini-kpi.is-bad::before  { background: #ef4444; }
+.an-mini-kpi.is-bad         { border-color: rgba(239, 68, 68, 0.30); }
+
+.an-mini-kpi__val {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.an-mini-kpi__val small {
+  font-size: 0.7em;
+  font-weight: 700;
+  margin-left: 1px;
+  color: var(--text-muted);
+}
+
+.an-mini-kpi__lbl {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  letter-spacing: -0.005em;
+}
+
+.an-mini-kpi__sub {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+
 .an-rs-grid {
   display: flex;
   flex-direction: column;
   gap: 2px;
   border-top: 1px solid var(--border-subtle);
   padding-top: var(--space-3);
+  margin-top: var(--space-3);
 }
 
 .an-rs-row {

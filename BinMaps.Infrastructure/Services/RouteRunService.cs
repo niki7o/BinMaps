@@ -71,14 +71,30 @@ public sealed class RouteRunService : IRouteRunService
         // A driver re-starting *their own* active run is allowed to fall
         // through (idempotent retry); we don't throw in that case — instead
         // we return the existing runId so the client converges.
-        var existingActive = await _repo.GetAllAttached()
-            .AsNoTracking()
-            .Where(r => r.Status == RouteRunStatus.Active
-                     && r.AreaId   == dto.AreaId
-                     && r.TrashType == dto.TrashType)
-            .OrderBy(r => r.StartedAt)
-            .Select(r => new { r.Id, r.DriverId, r.DriverName, r.StartedAt })
-            .FirstOrDefaultAsync();
+        //
+        // ⚠ Fail open: if the lock query itself errors (transient DB blip,
+        // schema drift on a fresh deploy where the migration hasn't fully
+        // applied, etc.) we LOG and proceed to insert. The alternative —
+        // 500'ing every start-route call when the lock is unavailable —
+        // is much worse than a vanishingly-rare double-start, which the
+        // truck app already handles defensively at the navigation layer.
+        RouteRun? existingActive = null;
+        try
+        {
+            existingActive = await _repo.GetAllAttached()
+                .AsNoTracking()
+                .Where(r => r.Status == RouteRunStatus.Active
+                         && r.AreaId   == dto.AreaId
+                         && r.TrashType == dto.TrashType)
+                .OrderBy(r => r.StartedAt)
+                .FirstOrDefaultAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex,
+                "StartAsync lock check failed (areaId={AreaId}, trashType={TrashType}); proceeding without lock.",
+                dto.AreaId, dto.TrashType);
+        }
 
         if (existingActive is not null)
         {

@@ -93,11 +93,11 @@
             </div>
           </div>
         </div>
-        <div class="hero__card hero__card--tl animate-float" style="animation-delay:0.2s">
+        <div class="hero__card hero__card--tl">
           <div class="live-dot live-dot--danger"></div>
           <div><p class="hero__card-title">Критичен контейнер</p><p class="hero__card-desc">Зона 2 — 91% запълнен</p></div>
         </div>
-        <div class="hero__card hero__card--br animate-float" style="animation-delay:0.8s">
+        <div class="hero__card hero__card--br">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           <div><p class="hero__card-title">Маршрут генериран</p><p class="hero__card-desc">8 спирки · 12.4 km</p></div>
         </div>
@@ -110,7 +110,7 @@
       <div class="features__header">
         <div class="section-label">Функционалности</div>
         <h2 class="features__title">Технологията зад<br><span class="features__title-grad">умния град</span></h2>
-        <p class="features__subtitle">Шест взаимосвързани модула, изградени върху реални алгоритми и данни.</p>
+        <p class="features__subtitle">Пет взаимосвързани модула, изградени върху реални алгоритми и данни.</p>
       </div>
 
       <div class="feat-bento">
@@ -169,13 +169,16 @@
             </div>
             <h3 class="feat-card__title">Аналитичен панел</h3>
             <p class="feat-card__desc">Интерактивни графики по зони и период. Hotspot анализ и тенденции.</p>
-            <div class="feat-minibar-row">
-              <div class="feat-minibar" style="height:60%;background:#10b981"></div>
-              <div class="feat-minibar" style="height:80%;background:#f59e0b"></div>
-              <div class="feat-minibar" style="height:45%;background:#10b981"></div>
-              <div class="feat-minibar" style="height:95%;background:#ef4444"></div>
-              <div class="feat-minibar" style="height:70%;background:#f97316"></div>
-              <div class="feat-minibar" style="height:30%;background:#10b981"></div>
+            <!-- Six bars = the six Sofia zones, height = avg fill, colour
+                 = status. Labels underneath make the chart parse as data
+                 instead of decoration. -->
+            <div class="feat-zonebar-row">
+              <div class="feat-zonebar"><div class="feat-zonebar__fill" style="height:67%;background:#f59e0b"></div><span>З1</span></div>
+              <div class="feat-zonebar"><div class="feat-zonebar__fill" style="height:82%;background:#ef4444"></div><span>З2</span></div>
+              <div class="feat-zonebar"><div class="feat-zonebar__fill" style="height:54%;background:#10b981"></div><span>З3</span></div>
+              <div class="feat-zonebar"><div class="feat-zonebar__fill" style="height:45%;background:#10b981"></div><span>З4</span></div>
+              <div class="feat-zonebar"><div class="feat-zonebar__fill" style="height:38%;background:#10b981"></div><span>З5</span></div>
+              <div class="feat-zonebar"><div class="feat-zonebar__fill" style="height:61%;background:#f59e0b"></div><span>З6</span></div>
             </div>
           </div>
 
@@ -253,6 +256,25 @@
         <div class="section-label">Покритие</div>
         <h2 class="zones__title">6 зони в София</h2>
         <p class="zones__sub">Текущо средно запълване по зони.</p>
+        <!-- Strip below the subtitle — *sums* what's already shown in the
+             grid of cards below, so the numbers are earned, not asserted.
+             Mono font deliberately separates these from prose. -->
+        <div class="zones__totals">
+          <span class="zones__totals-item">
+            <strong>{{ totalContainers }}</strong>
+            <span>контейнера</span>
+          </span>
+          <span class="zones__totals-sep">·</span>
+          <span class="zones__totals-item">
+            <strong>{{ zones.length }}</strong>
+            <span>зони</span>
+          </span>
+          <span class="zones__totals-sep">·</span>
+          <span class="zones__totals-item">
+            <strong>{{ avgZoneFill }}<small>%</small></strong>
+            <span>средно запълване</span>
+          </span>
+        </div>
       </div>
       <div class="zones__grid">
         <div *ngFor="let zone of zones; let i = index" class="zone-card" [style.animation-delay]="(i * 60) + 'ms'">

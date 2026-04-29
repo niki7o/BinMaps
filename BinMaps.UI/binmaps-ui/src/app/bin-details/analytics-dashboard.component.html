@@ -157,9 +157,9 @@
         <div>
           <h3 class="an-card-title">
             <span class="an-card-title-ico">📍</span>
-            Ефективност на маршрута
+            Маршрутна плътност
           </h3>
-          <p class="an-card-sub">Колко добре са покрити зоните в момента</p>
+          <p class="an-card-sub">Колко близо са критичните контейнери — по-висока плътност = по-кратки маршрути</p>
         </div>
       </div>
 
@@ -178,11 +178,38 @@
           </svg>
           <div class="an-gauge-inner">
             <span class="an-gauge-num" [style.color]="routeEfficiencyColor">{{ routeEfficiency }}</span>
-            <span class="an-gauge-sub">ефективност</span>
+            <span class="an-gauge-sub">плътност</span>
           </div>
         </div>
         <div class="an-gauge-badge" [style.background]="routeEfficiencyColor + '22'" [style.color]="routeEfficiencyColor" [style.border-color]="routeEfficiencyColor + '44'">
-          {{ routeEfficiency >= 72 ? 'Отлична' : routeEfficiency >= 48 ? 'Добра' : 'Ниска' }}
+          {{ routeEfficiency >= 72 ? 'Компактни' : routeEfficiency >= 48 ? 'Разпределени' : 'Разпръснати' }}
+        </div>
+      </div>
+
+      <!-- The gauge tells one specific story (route packing). These four
+           tiles round it out with the operational signals that actually
+           drive decisions: how full the average bin is, what % of bins
+           don't need action, sensor coverage, and active incidents. -->
+      <div class="an-mini-kpi-grid">
+        <div class="an-mini-kpi" [class.is-warn]="stats.avgFill >= 60" [class.is-bad]="stats.avgFill >= 80">
+          <span class="an-mini-kpi__val">{{ stats.avgFill }}<small>%</small></span>
+          <span class="an-mini-kpi__lbl">Среден капацитет</span>
+          <span class="an-mini-kpi__sub">през всички контейнери</span>
+        </div>
+        <div class="an-mini-kpi" [class.is-good]="underControlPct >= 70" [class.is-warn]="underControlPct < 70 && underControlPct >= 50" [class.is-bad]="underControlPct < 50">
+          <span class="an-mini-kpi__val">{{ underControlPct }}<small>%</small></span>
+          <span class="an-mini-kpi__lbl">Под контрол</span>
+          <span class="an-mini-kpi__sub">контейнери под 60%</span>
+        </div>
+        <div class="an-mini-kpi" [class.is-good]="stats.sensorCoverage >= 70" [class.is-warn]="stats.sensorCoverage >= 40 && stats.sensorCoverage < 70" [class.is-bad]="stats.sensorCoverage < 40">
+          <span class="an-mini-kpi__val">{{ stats.sensorCoverage }}<small>%</small></span>
+          <span class="an-mini-kpi__lbl">IoT покритие</span>
+          <span class="an-mini-kpi__sub">с активен сензор</span>
+        </div>
+        <div class="an-mini-kpi" [class.is-good]="incidentCount === 0" [class.is-bad]="incidentCount > 0">
+          <span class="an-mini-kpi__val">{{ incidentCount }}</span>
+          <span class="an-mini-kpi__lbl">Инциденти</span>
+          <span class="an-mini-kpi__sub">пожар или повреда</span>
         </div>
       </div>
 

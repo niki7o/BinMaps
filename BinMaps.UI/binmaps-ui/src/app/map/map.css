@@ -468,6 +468,9 @@
     rgba(59, 130, 246, 0.06) 100%);
 }
 
+/* Static hairline accent — replaces the previous infinite shimmer that
+   ran 4 stat-cards × 24 fps = 96 fps of layout work just sitting idle.
+   The hairline still gives the brand-tinted top edge without the cost. */
 .stat-card::before {
   content: '';
   position: absolute;
@@ -476,31 +479,29 @@
   right: 0;
   height: 1px;
   background: linear-gradient(90deg,
-    transparent,
-    var(--primary-eco),
-    var(--primary-tech),
-    transparent);
-  animation: shimmerBorder 4s infinite;
-}
-
-@keyframes shimmerBorder {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+    transparent 0%,
+    rgba(16, 185, 129, 0.50) 50%,
+    transparent 100%);
 }
 
 .stat-label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   display: block;
   margin-bottom: var(--space-2);
 }
 
 .stat-value {
+  font-family: var(--font-display);
   font-size: 1.4rem;
   font-weight: 800;
+  /* Tabular numerics so a stat changing from 12 → 8 doesn't shift the
+     card's center of mass on each tick. */
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
   background: linear-gradient(135deg, var(--primary-eco) 0%, #34d399 60%, #6ee7b7 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -515,17 +516,20 @@
   flex-direction: row;
   gap: var(--space-2);
   align-items: stretch;
+  flex-wrap: wrap;
 }
 
-
+/* Sized so two buttons fit side-by-side at any panel width ≥ 240px,
+   and gracefully wrap (each takes a full row) below that. The previous
+   ellipsis-truncate was clipping "Стартирай навигация" → "Стартирай навигаци"
+   mid-glyph, which read as a bug. */
 .route-actions .btn-simulate,
 .route-actions .btn-stop {
-  flex: 1;
+  flex: 1 1 110px;
   min-width: 0;
   width: auto;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding: 0.875rem 1rem;
 }
 
 

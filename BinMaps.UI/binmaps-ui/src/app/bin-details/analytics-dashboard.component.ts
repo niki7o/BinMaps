@@ -114,6 +114,22 @@ export class AnalyticsDashboardComponent implements OnInit, AfterViewInit, OnDes
     return '#ef4444';
   }
 
+  /** % of bins under 60% fill — i.e. don't need action right now.
+   *  This is the inverse of "needs collection" and is the single most
+   *  honest indicator of whether the city is on top of its waste. */
+  get underControlPct(): number {
+    const n = this.stats.totalBins || 0;
+    if (!n) return 0;
+    const stressed = this.stats.criticalBins + this.stats.heavyBins;
+    return Math.max(0, Math.min(100, Math.round(((n - stressed) / n) * 100)));
+  }
+
+  /** Active incidents = fires + currently-critical bins. Combined here
+   *  because operationally they're treated the same: dispatch immediately. */
+  get incidentCount(): number {
+    return (this.stats.onFireCount ?? 0);
+  }
+
   ngOnInit(): void {
     this.refreshTimer = setInterval(() => {
       if (this.mapReady && this.chartsReady) this.fetch();
