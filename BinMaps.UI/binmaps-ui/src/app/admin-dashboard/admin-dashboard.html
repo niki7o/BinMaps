@@ -657,6 +657,113 @@
 
     <!-- Routes (driver course log) -->
     <div *ngSwitchCase="'routes'" class="admin__panel animate-fade-in">
+
+      <!-- Sub-tabs: live fleet vs. history. Live shows what's running RIGHT
+           NOW; History is the audit log for completed/cancelled runs. -->
+      <div class="tabs admin__sub-tabs">
+        <button class="tab"
+                [class.is-active]="routesSubTab === 'live'"
+                (click)="routesSubTab = 'live'">
+          <span class="live-indicator" *ngIf="liveDrivers().length > 0">
+            <span class="live-indicator__dot"></span>
+          </span>
+          Активни (live)
+          <span class="tab-count" *ngIf="liveDrivers().length > 0">
+            {{ liveDrivers().length }}
+          </span>
+        </button>
+        <button class="tab"
+                [class.is-active]="routesSubTab === 'history'"
+                (click)="routesSubTab = 'history'">
+          История
+        </button>
+      </div>
+
+      <!-- LIVE FLEET PANEL ──────────────────────────────────────────── -->
+      <ng-container *ngIf="routesSubTab === 'live'">
+        <div *ngIf="liveDrivers().length === 0" class="admin__empty-state">
+          <div class="admin__empty-state__icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.5">
+              <rect x="1" y="3" width="15" height="13" rx="1"/>
+              <path d="M16 8h4l3 3v5h-7z"/>
+              <circle cx="5.5" cy="18.5" r="2.5"/>
+              <circle cx="18.5" cy="18.5" r="2.5"/>
+            </svg>
+          </div>
+          <h3>Няма активни маршрути</h3>
+          <p>Когато шофьор стартира маршрут, ще се появи тук в реално време.</p>
+        </div>
+
+        <div *ngIf="liveDrivers().length > 0" class="live-fleet-grid">
+          <div *ngFor="let d of liveDrivers(); trackBy: trackLiveDriver"
+               class="live-fleet-card"
+               [style.--driver-color]="d.color">
+            <div class="live-fleet-card__head">
+              <div class="live-fleet-card__id">
+                <span class="live-fleet-card__swatch"></span>
+                <div>
+                  <div class="live-fleet-card__name">{{ d.driverName }}</div>
+                  <div class="live-fleet-card__sub text-muted text-xs">
+                    {{ d.areaId }}
+                    <span *ngIf="d.truck"> · {{ d.truck.plate }}</span>
+                  </div>
+                </div>
+              </div>
+              <span class="live-fleet-card__phase"
+                    [ngClass]="'phase-' + d.phase">
+                {{ phaseLabel(d.phase) }}
+              </span>
+            </div>
+
+            <!-- Stops progress -->
+            <div class="live-fleet-card__row">
+              <span class="live-fleet-card__row-label">Спирки</span>
+              <span class="live-fleet-card__row-value text-mono">
+                {{ d.stopIndex }} / {{ d.totalStops }}
+              </span>
+            </div>
+            <div class="progress">
+              <div class="progress__fill progress__fill--ok"
+                   [style.width.%]="stopsProgress(d)"></div>
+            </div>
+
+            <!-- Capacity (only when truck is known — otherwise we'd be
+                 showing a bar with no meaningful denominator) -->
+            <ng-container *ngIf="d.truck">
+              <div class="live-fleet-card__row">
+                <span class="live-fleet-card__row-label">Капацитет</span>
+                <span class="live-fleet-card__row-value text-mono">
+                  {{ d.load | number:'1.0-0' }} / {{ d.truck.capacity | number:'1.0-0' }} L
+                </span>
+              </div>
+              <div class="progress">
+                <div class="progress__fill"
+                     [ngClass]="capacityClass(d)"
+                     [style.width.%]="capacityProgress(d)"></div>
+              </div>
+            </ng-container>
+
+            <div class="live-fleet-card__foot">
+              <span class="text-muted text-xs">
+                {{ d.speedKmh | number:'1.0-0' }} km/h · обновено {{ liveAgo(d.at) }}
+              </span>
+              <button class="btn btn--sm btn--ghost"
+                      (click)="goToDriverOnMap(d.driverId)"
+                      title="Виж на картата">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2">
+                  <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/>
+                </svg>
+                Карта
+              </button>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- HISTORY PANEL ─────────────────────────────────────────────── -->
+      <ng-container *ngIf="routesSubTab === 'history'">
       <div class="admin__toolbar">
         <div class="admin__toolbar-filters">
           <select class="form-select" style="width:auto"
@@ -744,6 +851,7 @@
           </tbody>
         </table>
       </div>
+      </ng-container>
     </div>
 
   </div>

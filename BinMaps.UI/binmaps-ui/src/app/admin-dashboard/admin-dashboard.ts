@@ -2,11 +2,12 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { ConfirmService } from '../shared/confirm-dialog/confirm.service';
 import { ToastService } from '../shared/toast/toast.service';
+import { LiveDriverTrackingService, LiveDriver } from '../services/live-driver-tracking.service';
 import { environment } from '../../environments/environment';
 
 interface Report {
@@ -263,7 +264,74 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     private readonly authService: AuthService,
     private readonly confirmSvc: ConfirmService,
     private readonly toastSvc: ToastService,
+    private readonly router: Router,
+    /** Injecting the service triggers its constructor — which subscribes
+     *  to SignalR DriverPosition events and pulls the active-runs snapshot
+     *  immediately. The "Активни (live)" sub-tab reads its `liveDrivers`
+     *  signal directly via the template binding below. */
+    private readonly liveDriverSvc: LiveDriverTrackingService,
   ) {}
+
+  // ── Routes sub-tab (live vs history) ──────────────────────────────────
+  routesSubTab: 'live' | 'history' = 'live';
+
+  /** Read-only view of the live-driver state, exposed as a callable signal
+   *  for the template (`liveDrivers()`). Using a getter — class-field
+   *  initialisers can fire before parameter-property assignment under
+   *  `useDefineForClassFields: true`, which would crash the component. */
+  get liveDrivers() { return this.liveDriverSvc.liveDrivers; }
+
+  trackLiveDriver = (_: number, d: LiveDriver) => d.driverId;
+
+  /** Localised label for the driver's current navigation phase. */
+  phaseLabel(phase: LiveDriver['phase']): string {
+    switch (phase) {
+      case 'start': return 'Старт';
+      case 'stop':  return 'Спирка';
+      case 'end':   return 'Край';
+      default:      return 'В движение';
+    }
+  }
+
+  /** 0–100 % of stops completed. Defensive — `totalStops` may be 0 the
+   *  very first tick if the driver pinged before stops were planned. */
+  stopsProgress(d: LiveDriver): number {
+    if (!d.totalStops || d.totalStops <= 0) return 0;
+    return Math.min(100, Math.round((d.stopIndex / d.totalStops) * 100));
+  }
+
+  /** 0–100 % of truck capacity used. Returns 0 when there's no truck so
+   *  the bar (which we hide in template anyway) wouldn't NaN. */
+  capacityProgress(d: LiveDriver): number {
+    if (!d.truck || d.truck.capacity <= 0) return 0;
+    return Math.min(100, Math.round((d.load / d.truck.capacity) * 100));
+  }
+
+  /** Colour the capacity bar by fullness so a near-full truck is visually
+   *  flagged (depot run incoming) without an extra status field. */
+  capacityClass(d: LiveDriver): string {
+    const pct = this.capacityProgress(d);
+    if (pct >= 90) return 'progress__fill--critical';
+    if (pct >= 70) return 'progress__fill--high';
+    if (pct >= 50) return 'progress__fill--warn';
+    return 'progress__fill--ok';
+  }
+
+  /** "преди 4 сек." — short relative time, recomputed every render. */
+  liveAgo(at: string): string {
+    const ms = Date.now() - new Date(at).getTime();
+    const sec = Math.max(0, Math.round(ms / 1000));
+    if (sec < 5)  return 'току-що';
+    if (sec < 60) return `преди ${sec} сек.`;
+    const min = Math.round(sec / 60);
+    return `преди ${min} мин.`;
+  }
+
+  /** Deep-link to /map with the driver pre-selected. Map.ts reads the
+   *  `focusDriver` query param and centers on that driver's marker. */
+  goToDriverOnMap(driverId: string): void {
+    this.router.navigate(['/map'], { queryParams: { focusDriver: driverId } });
+  }
 
   ngOnInit(): void {
     this.authService.currentUser$

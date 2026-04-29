@@ -26,6 +26,13 @@ namespace BinMaps.Infrastructure.Hubs
         private const string DriversGroup = "drivers";
         private const string UsersGroup   = "users";
 
+        private readonly LiveDriverTracker _tracker;
+
+        public ContainerHub(LiveDriverTracker tracker)
+        {
+            _tracker = tracker;
+        }
+
         public override async Task OnConnectedAsync()
         {
             var group = GetRoleGroup();
@@ -42,16 +49,51 @@ namespace BinMaps.Infrastructure.Hubs
 
         /// <summary>
         /// Driver pushes their current position while a route is active.
-        /// Broadcast is one-way to admins only (never back to other drivers
-        /// or the public group).
+        ///
+        /// Broadcast targets (changed): every authenticated client now sees
+        /// driver positions — admins to monitor the fleet, drivers to see
+        /// peers (and avoid double-starting a route), citizens to watch the
+        /// service in motion. Privacy is fine: payload is just truck
+        /// telemetry, no PII beyond a display name.
+        ///
+        /// Last-known position is also stashed in <see cref="LiveDriverTracker"/>
+        /// so a client that connects mid-route can catch up via the snapshot
+        /// endpoint instead of waiting up to a full update cycle.
         /// </summary>
         [Authorize(Roles = "Driver,Admin")]
-        public Task DriverPosition(DriverPositionPayload payload)
+        public async Task DriverPosition(DriverPositionPayload payload)
         {
-            if (payload is null) return Task.CompletedTask;
+            if (payload is null) return;
 
             var userId   = Context.UserIdentifier ?? string.Empty;
             var userName = Context.User?.Identity?.Name ?? string.Empty;
+            var now      = DateTime.UtcNow;
+
+            // Update server-side cache first so a snapshot fetched in the
+            // same millisecond as the broadcast already reflects this point.
+            if (string.Equals(payload.Phase, "end", StringComparison.OrdinalIgnoreCase))
+            {
+                _tracker.Remove(userId);
+            }
+            else
+            {
+                _tracker.Upsert(new LiveDriverEntry
+                {
+                    DriverId   = userId,
+                    DriverName = userName,
+                    RunId      = payload.RunId,
+                    AreaId     = payload.AreaId,
+                    Lat        = payload.Lat,
+                    Lng        = payload.Lng,
+                    Heading    = payload.Heading,
+                    SpeedKmh   = payload.SpeedKmh,
+                    StopIndex  = payload.StopIndex,
+                    TotalStops = payload.TotalStops,
+                    Load       = payload.Load,
+                    Phase      = payload.Phase ?? "move",
+                    At         = now,
+                });
+            }
 
             var evt = new
             {
@@ -67,10 +109,15 @@ namespace BinMaps.Infrastructure.Hubs
                 totalStops = payload.TotalStops,
                 load       = payload.Load,
                 phase      = payload.Phase,  // "start" | "move" | "stop" | "end"
-                at         = DateTime.UtcNow,
+                at         = now,
             };
 
-            return Clients.Group(AdminsGroup).SendAsync("DriverPosition", evt);
+            // Fan out to every group in parallel. Admins + drivers + citizens
+            // all see live trucks; that's the whole point of this change.
+            await Task.WhenAll(
+                Clients.Group(AdminsGroup ).SendAsync("DriverPosition", evt),
+                Clients.Group(DriversGroup).SendAsync("DriverPosition", evt),
+                Clients.Group(UsersGroup  ).SendAsync("DriverPosition", evt));
         }
 
         private string GetRoleGroup()

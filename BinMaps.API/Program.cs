@@ -88,6 +88,9 @@ public sealed class Program
 
         builder.Services.AddMemoryCache();
         builder.Services.AddSingleton<Random>(_ => new Random());
+        // Live driver telemetry cache — last-known position per active driver
+        // so clients can catch up via GET /api/route-runs/active on connect.
+        builder.Services.AddSingleton<BinMaps.Infrastructure.Hubs.LiveDriverTracker>();
         builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
         builder.Services.AddScoped<ITruckRouteService, TruckRouteService>();
         builder.Services.AddScoped<IRouteRunService, RouteRunService>();

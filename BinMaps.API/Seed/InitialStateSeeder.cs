@@ -163,10 +163,12 @@ namespace BinMaps.API.Seed
 
             // Backfill missing seeded rows. We compare against the FULL table
             // including soft-deleted, so a soft-deleted seed bin isn't reinserted.
-            var existingIds = await _context.TrashContainers
+            // (EF Core has no ToHashSetAsync — use ToListAsync + ToHashSet.)
+            var existingIdList = await _context.TrashContainers
                 .IgnoreQueryFilters()
                 .Select(c => c.Id)
-                .ToHashSetAsync();
+                .ToListAsync();
+            var existingIds = existingIdList.ToHashSet();
 
             var missing = seedSet.Where(c => !existingIds.Contains(c.Id)).ToList();
             if (missing.Count == 0) return;

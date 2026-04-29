@@ -55,6 +55,48 @@ interface RouteStop {
   estimatedLoad: number;
 }
 
+/** Sentinel thrown by openRouteRun() when the server returns 409 — the
+ *  navigation flow catches it and aborts cleanly. Distinct error class so
+ *  generic catches don't swallow it as "unknown HTTP error". */
+class RouteLockedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RouteLockedError';
+  }
+}
+
+/** "преди 12 минути" / "току-що". Bulgarian phrasing matches the rest of
+ *  the user-facing strings in this app. */
+function humanAgo(when: Date): string {
+  const ms = Date.now() - when.getTime();
+  const sec = Math.max(0, Math.round(ms / 1000));
+  if (sec < 30) return 'току-що';
+  if (sec < 60) return `преди ${sec} сек.`;
+  const min = Math.round(sec / 60);
+  if (min < 60) return `преди ${min} мин.`;
+  const hr  = Math.round(min / 60);
+  return `преди ${hr} ч.`;
+}
+
+/**
+ * Deterministic colour from a driverId — same driver always gets the
+ * same colour so trucks don't flicker as updates arrive, and we don't
+ * need to maintain a global palette / counter. Mirrors the function in
+ * live-driver-tracking.service.ts so the two views agree on colour.
+ */
+function colorForDriverId(driverId: string): string {
+  const palette = [
+    '#10b981', '#3b82f6', '#06b6d4', '#f59e0b',
+    '#ef4444', '#a855f7', '#ec4899', '#14b8a6',
+    '#f97316', '#84cc16', '#6366f1', '#fbbf24',
+  ];
+  let hash = 0;
+  for (let i = 0; i < driverId.length; i++) {
+    hash = (hash * 31 + driverId.charCodeAt(i)) | 0;
+  }
+  return palette[Math.abs(hash) % palette.length];
+}
+
 @Component({
   selector: 'app-map',
   standalone: true,
@@ -85,15 +127,37 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private searchMarker?: L.Marker;
   private searchCircles: L.Circle[] = [];
 
-  // Live admin view of other drivers that are currently on a route.
+  // Live view of other drivers that are currently on a route. Visible to
+  // every authenticated role (admins, drivers, citizens) since the hub
+  // broadcasts to all groups now.
   //  key: driverId, value: the Leaflet marker shown for that driver.
   private liveDriverMarkers: Map<string, L.Marker> = new Map();
   //  key: driverId, value: the full latest event (for panel info).
   liveDrivers = new Map<string, {
     name: string; areaId: string; lat: number; lng: number;
     stopIndex: number; totalStops: number; load: number; at: string;
+    color: string;
   }>();
   showLiveDriversPanel = true;
+
+  // RAF-driven smooth lerp between consecutive position updates. Each entry
+  // tracks where the marker currently sits and where it's heading; the
+  // animation loop interpolates between them so trucks glide instead of
+  // jumping each tick. Tab-hidden ⇒ rAF is throttled to ~1Hz; on
+  // visibilitychange we snap to the target so the catch-up isn't visible.
+  private liveDriverAnim = new Map<string, {
+    fromLat: number; fromLng: number;
+    toLat:   number; toLng:   number;
+    fromHeading: number; toHeading: number;
+    startedAt: number;       // performance.now()
+    durationMs: number;
+  }>();
+  private liveDriverAnimRAF: number | null = null;
+  /** ~1.1× the broadcast interval (server pushes ~1 Hz). Slightly longer
+   *  so the marker is still gliding when the next packet arrives, avoiding
+   *  visible "stop-and-go" between updates. */
+  private static readonly LIVE_DRIVER_LERP_MS = 1100;
+  private liveDriverVisHandler?: () => void;
 
   // Current driver's telemetry state (for broadcasting).
   private driverRunId = 0;
@@ -258,12 +322,27 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         }
       });
 
-    // Admins see all drivers that are currently on a route, live.
-    // The server only sends `DriverPosition` events to the `admins` group,
-    // so this subscription is effectively a no-op for drivers/users.
+    // Every authenticated role (admin/driver/citizen) sees other drivers.
+    // The hub now fans the `DriverPosition` event to admins + drivers +
+    // users groups, so this single subscription works for everyone.
     this.signalR.driverPositions$
       .pipe(takeUntil(this.destroy$))
       .subscribe(ev => this.onDriverPosition(ev));
+
+    // Snap-to-truth on tab return: rAF is throttled to ~1Hz when the tab
+    // is hidden, so the lerp pauses. The SignalR connection is still alive
+    // (or auto-reconnecting), so updates *do* arrive — but we want the
+    // markers to land on the most recent position when the user comes back,
+    // not finish a 1-second lerp from where they were 4 minutes ago.
+    //
+    // We also re-pull the snapshot to pick up any *new* runs that started
+    // while the tab was hidden — those wouldn't be in our local map yet.
+    this.liveDriverVisHandler = () => {
+      if (document.visibilityState !== 'visible') return;
+      this.snapAllLiveDriversToTarget();
+      this.fetchActiveDriversSnapshot();
+    };
+    document.addEventListener('visibilitychange', this.liveDriverVisHandler);
   }
 
   private onDriverPosition(ev: {
@@ -271,14 +350,25 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     heading: number; stopIndex: number; totalStops: number; load: number;
     phase: string; areaId: string; at: string;
   }): void {
-    if (!this.isAdmin || !this.map) return;
+    if (!this.map) return;
+
+    // Don't render *yourself* on the live overlay — drivers running their
+    // own route already have their personal `truckMarker`. Avoids two
+    // markers fighting at the same coordinates.
+    if (this.currentUser && ev.driverId === this.currentUser.id) return;
 
     if (ev.phase === 'end') {
       const m = this.liveDriverMarkers.get(ev.driverId);
       if (m) { this.map.removeLayer(m); this.liveDriverMarkers.delete(ev.driverId); }
       this.liveDrivers.delete(ev.driverId);
+      this.liveDriverAnim.delete(ev.driverId);
       return;
     }
+
+    // Reuse a previously-assigned colour so the truck's icon doesn't
+    // change palette mid-route.
+    const previous = this.liveDrivers.get(ev.driverId);
+    const color = previous?.color ?? colorForDriverId(ev.driverId);
 
     this.liveDrivers.set(ev.driverId, {
       name:       ev.driverName || 'Шофьор',
@@ -289,14 +379,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       totalStops: ev.totalStops,
       load:       ev.load,
       at:         ev.at,
+      color,
     });
 
     let marker = this.liveDriverMarkers.get(ev.driverId);
-    const latlng: L.LatLngExpression = [ev.lat, ev.lng];
+    const target: L.LatLngExpression = [ev.lat, ev.lng];
 
     if (!marker) {
-      marker = L.marker(latlng, {
-        icon: this.makeLiveDriverIcon(ev.driverName, ev.heading),
+      // First sighting — drop the marker straight at the target.
+      marker = L.marker(target, {
+        icon: this.makeLiveDriverIcon(ev.driverName, ev.heading, color),
         zIndexOffset: 1800,
       }).addTo(this.map);
       marker.bindTooltip(
@@ -304,16 +396,104 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         { direction: 'top', offset: [0, -22] }
       );
       this.liveDriverMarkers.set(ev.driverId, marker);
+      // Initialise an anim entry sitting on the target so subsequent
+      // updates have a "from" to lerp from.
+      this.liveDriverAnim.set(ev.driverId, {
+        fromLat: ev.lat, fromLng: ev.lng,
+        toLat:   ev.lat, toLng:   ev.lng,
+        fromHeading: ev.heading, toHeading: ev.heading,
+        startedAt: performance.now(),
+        durationMs: 0,
+      });
     } else {
-      marker.setLatLng(latlng);
-      marker.setIcon(this.makeLiveDriverIcon(ev.driverName, ev.heading));
+      // Subsequent update — kick off a lerp from the current rendered
+      // position to the new target. Heading is interpolated on the
+      // shortest-arc path so a turn from 350° → 10° goes the right way
+      // around (not the long way around the compass).
+      const here = marker.getLatLng();
+      this.liveDriverAnim.set(ev.driverId, {
+        fromLat: here.lat,    fromLng: here.lng,
+        toLat:   ev.lat,      toLng:   ev.lng,
+        fromHeading: previous?.lat !== undefined ? (this.liveDriverAnim.get(ev.driverId)?.toHeading ?? ev.heading) : ev.heading,
+        toHeading: ev.heading,
+        startedAt: performance.now(),
+        durationMs: MapComponent.LIVE_DRIVER_LERP_MS,
+      });
       marker.setTooltipContent(
         `${ev.driverName || 'Шофьор'} · зона ${ev.areaId} · спирка ${ev.stopIndex}/${ev.totalStops}`
       );
     }
+
+    this.ensureLiveDriverAnimLoop();
   }
 
-  private makeLiveDriverIcon(name: string, heading: number): L.DivIcon {
+  /**
+   * Single rAF loop that drives every live-driver marker. We don't
+   * spawn one per driver — a single loop iterates the anim map and ticks
+   * all of them, which keeps the cost flat as the fleet grows.
+   */
+  private ensureLiveDriverAnimLoop(): void {
+    if (this.liveDriverAnimRAF !== null) return;
+    const tick = () => {
+      const now = performance.now();
+      let anyActive = false;
+
+      for (const [driverId, a] of this.liveDriverAnim.entries()) {
+        const m = this.liveDriverMarkers.get(driverId);
+        if (!m) continue;
+
+        if (a.durationMs <= 0) continue;
+        const t = Math.min(1, (now - a.startedAt) / a.durationMs);
+        // Ease-out cubic — fast at first, settles into the new position.
+        const eased = 1 - Math.pow(1 - t, 3);
+
+        const lat = a.fromLat + (a.toLat - a.fromLat) * eased;
+        const lng = a.fromLng + (a.toLng - a.fromLng) * eased;
+        m.setLatLng([lat, lng]);
+
+        // Heading: shortest-arc lerp.
+        const diff = ((a.toHeading - a.fromHeading + 540) % 360) - 180;
+        const heading = a.fromHeading + diff * eased;
+        const driver = this.liveDrivers.get(driverId);
+        if (driver) {
+          m.setIcon(this.makeLiveDriverIcon(driver.name, heading, driver.color));
+        }
+
+        if (t < 1) anyActive = true;
+      }
+
+      this.liveDriverAnimRAF = anyActive ? requestAnimationFrame(tick) : null;
+    };
+    this.liveDriverAnimRAF = requestAnimationFrame(tick);
+  }
+
+  /**
+   * Called on tab-visibility return. Cancels the current lerp and slams
+   * every marker onto its target position so there's no visible
+   * catch-up animation when the user comes back to the tab.
+   */
+  private snapAllLiveDriversToTarget(): void {
+    for (const [driverId, a] of this.liveDriverAnim.entries()) {
+      const m = this.liveDriverMarkers.get(driverId);
+      if (!m) continue;
+      m.setLatLng([a.toLat, a.toLng]);
+      const driver = this.liveDrivers.get(driverId);
+      if (driver) {
+        m.setIcon(this.makeLiveDriverIcon(driver.name, a.toHeading, driver.color));
+      }
+      // Mark anim as completed so the rAF loop doesn't re-animate from here.
+      a.fromLat = a.toLat;
+      a.fromLng = a.toLng;
+      a.fromHeading = a.toHeading;
+      a.durationMs = 0;
+    }
+    if (this.liveDriverAnimRAF !== null) {
+      cancelAnimationFrame(this.liveDriverAnimRAF);
+      this.liveDriverAnimRAF = null;
+    }
+  }
+
+  private makeLiveDriverIcon(name: string, heading: number, color: string): L.DivIcon {
     const initial = (name || '?').trim().charAt(0).toUpperCase() || '?';
     const deg = Number.isFinite(heading) ? Math.round(heading) : 0;
     return L.divIcon({
@@ -321,11 +501,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       iconSize: [44, 44],
       iconAnchor: [22, 22],
       html: `
-        <div class="live-driver-marker" title="${name || 'Шофьор'}">
+        <div class="live-driver-marker" title="${name || 'Шофьор'}" style="--driver-color: ${color}">
           <div class="live-driver-pulse"></div>
           <div class="live-driver-body" style="transform: rotate(${deg}deg)">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 2 L18 10 H14 V22 H10 V10 H6 Z" fill="#fbbf24" stroke="#0f172a" stroke-width="1"/>
+              <path d="M12 2 L18 10 H14 V22 H10 V10 H6 Z" fill="${color}" stroke="#0f172a" stroke-width="1"/>
             </svg>
           </div>
           <div class="live-driver-label">${initial}</div>
@@ -364,6 +544,14 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.loadBins();
     this.initFilterControl();
 
+    // Catch up on already-running routes so trucks appear immediately
+    // instead of waiting for the next ~1Hz broadcast. Deep-link from
+    // admin "Активни (live)" cards passes ?focusDriver=<id>; once the
+    // snapshot lands we centre the map on that driver and skip the
+    // default zoom-to-bins behaviour.
+    const focusDriverId = this.route.snapshot.queryParamMap.get('focusDriver');
+    this.fetchActiveDriversSnapshot(focusDriverId);
+
     const refreshId = setInterval(() => {
       if (this.navigationActive) return;
 
@@ -376,6 +564,66 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }, 60_000);
 
     this.destroy$.subscribe({ complete: () => clearInterval(refreshId) });
+  }
+
+  /**
+   * Pulls the snapshot of currently-active route runs and feeds each
+   * one through the same onDriverPosition() handler so live markers
+   * appear without waiting for the next SignalR push. Called once on
+   * mount and every time the tab returns to visible.
+   *
+   * If `focusDriverId` is provided (from a deep-link), the map is
+   * centred on that driver as soon as their snapshot row lands.
+   */
+  private fetchActiveDriversSnapshot(focusDriverId?: string | null): void {
+    const token = this.getToken();
+    if (!token) return;
+    this.http.get<Array<{
+      runId: number; driverId: string; driverName: string;
+      areaId: string; trashType: number; startedAt: string;
+      lastPosition: {
+        lat: number; lng: number; heading: number; speedKmh: number;
+        stopIndex: number; totalStops: number; load: number;
+        phase: 'start' | 'move' | 'stop' | 'end'; at: string;
+      } | null;
+    }>>(
+      `${this.API_URL}/trucks/route/active`,
+      { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) },
+    ).pipe(takeUntil(this.destroy$))
+     .subscribe({
+       next: rows => {
+         for (const r of rows ?? []) {
+           if (!r.lastPosition) continue;
+           // Synthesise the same shape onDriverPosition expects.
+           this.onDriverPosition({
+             driverId:   r.driverId,
+             driverName: r.driverName,
+             lat:        r.lastPosition.lat,
+             lng:        r.lastPosition.lng,
+             heading:    r.lastPosition.heading,
+             stopIndex:  r.lastPosition.stopIndex,
+             totalStops: r.lastPosition.totalStops,
+             load:       r.lastPosition.load,
+             phase:      r.lastPosition.phase,
+             areaId:     r.areaId,
+             at:         r.lastPosition.at,
+           });
+         }
+
+         // Deep-link target — centre on the requested driver once they're
+         // in our local state. Bail silently if the driver isn't actually
+         // active (run finished between the click and the snapshot).
+         if (focusDriverId && this.map) {
+           const d = this.liveDrivers.get(focusDriverId);
+           if (d) {
+             this.map.setView([d.lat, d.lng],
+               Math.max(this.map.getZoom(), 16),
+               { animate: true });
+           }
+         }
+       },
+       error: () => { /* harmless — keep whatever state we already have */ },
+     });
   }
 
   ngOnDestroy() {
@@ -393,6 +641,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
     this.liveDriverMarkers.clear();
     this.liveDrivers.clear();
+    this.liveDriverAnim.clear();
+    if (this.liveDriverAnimRAF !== null) {
+      cancelAnimationFrame(this.liveDriverAnimRAF);
+      this.liveDriverAnimRAF = null;
+    }
+    if (this.liveDriverVisHandler) {
+      document.removeEventListener('visibilitychange', this.liveDriverVisHandler);
+      this.liveDriverVisHandler = undefined;
+    }
 
     this.signalR.stop();
   }
@@ -726,8 +983,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     try {
       const persistedId = await this.openRouteRun();
       if (persistedId > 0) this.driverRunId = persistedId;
-    } catch {
-      // Non-fatal: keep local id, admins still see live telemetry.
+    } catch (err) {
+      // Lock conflict — don't run the route at all. The toast already
+      // told the user who's holding it; just bail out of navigation.
+      if (err instanceof RouteLockedError) {
+        this.navigationActive = false;
+        this.routeActive = false;
+        return;
+      }
+      // Other failures are non-fatal: keep local id, admins still see
+      // live telemetry, only history is lost.
     }
 
     const { truckIcon, path, stopIndices } = this.buildNavSetup();
@@ -778,14 +1043,36 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       stops,
     };
 
-    const res = await firstValueFrom(
-      this.http.post<{ runId: number }>(
-        `${this.API_URL}/trucks/route/start`,
-        body,
-        { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) },
-      ),
-    );
-    return res?.runId ?? 0;
+    try {
+      const res = await firstValueFrom(
+        this.http.post<{ runId: number }>(
+          `${this.API_URL}/trucks/route/start`,
+          body,
+          { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) },
+        ),
+      );
+      return res?.runId ?? 0;
+    } catch (err: any) {
+      // 409 Conflict ⇒ another driver already holds this (area, trashType).
+      // Show a clear message identifying the holder and give up cleanly so
+      // the truck app doesn't half-start a route it can't actually own.
+      if (err?.status === 409) {
+        const e = err.error ?? {};
+        const holder = e.lockedByDriverName || 'друг шофьор';
+        const startedAt = e.startedAt ? new Date(e.startedAt) : null;
+        const ago = startedAt ? humanAgo(startedAt) : '';
+        const msg = ago
+          ? `Маршрутът е стартиран ${ago}.`
+          : 'Маршрутът вече е стартиран.';
+        this.toast.error({
+          title: `Зает от ${holder}`,
+          message: msg,
+          duration: 6000,
+        });
+        throw new RouteLockedError(msg);
+      }
+      throw err;
+    }
   }
 
   /**

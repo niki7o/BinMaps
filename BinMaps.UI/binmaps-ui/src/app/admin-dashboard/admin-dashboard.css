@@ -8,6 +8,222 @@
   flex-wrap: wrap;
 }
 
+/* ─────────────────────────────────────────────────────────────────────
+   Routes panel — Active (live) / History sub-tabs
+   ───────────────────────────────────────────────────────────────────── */
+
+.admin__sub-tabs {
+  align-self: flex-start;
+  margin-bottom: var(--space-5);
+}
+
+/* Tab "Активни (live)" header gets a subtle pulsing dot so it's obvious
+   the panel is real-time even without looking inside. */
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 6px;
+}
+.live-indicator__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--eco-primary);
+  box-shadow: 0 0 0 0 var(--eco-glow);
+  animation: live-indicator-pulse 1.6s ease-out infinite;
+}
+@keyframes live-indicator-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--eco-glow); }
+  50%      { box-shadow: 0 0 0 6px transparent; }
+}
+
+/* ─── Live fleet cards ───────────────────────────────────────────── */
+
+.live-fleet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-4);
+}
+
+.live-fleet-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--duration-base) var(--ease-out),
+              transform var(--duration-base) var(--ease-spring),
+              box-shadow var(--duration-base) var(--ease-out);
+}
+
+/* Driver-coloured top rail — same colour the truck marker uses on the map,
+   so admins can match a card to a moving pin at a glance. */
+.live-fleet-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--driver-color, var(--eco-primary));
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .live-fleet-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-default);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+.live-fleet-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.live-fleet-card__id {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.live-fleet-card__swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--driver-color, var(--eco-primary));
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05),
+              0 0 12px var(--driver-color, var(--eco-primary));
+  flex-shrink: 0;
+}
+
+.live-fleet-card__name {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.live-fleet-card__sub {
+  margin-top: 2px;
+  font-family: var(--font-mono);
+}
+
+/* Phase chip — colour-coded so an admin can scan a fleet of 30 trucks
+   and find anyone parked vs. moving without reading text. */
+.live-fleet-card__phase {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.live-fleet-card__phase.phase-start {
+  color: var(--tech-blue);
+  background: rgba(59, 130, 246, 0.10);
+  border-color: rgba(59, 130, 246, 0.30);
+}
+.live-fleet-card__phase.phase-move {
+  color: var(--eco-primary);
+  background: var(--eco-ghost);
+  border-color: var(--border-eco-soft);
+}
+.live-fleet-card__phase.phase-stop {
+  color: var(--status-warn);
+  background: rgba(245, 158, 11, 0.10);
+  border-color: rgba(245, 158, 11, 0.30);
+}
+.live-fleet-card__phase.phase-end {
+  color: var(--text-muted);
+  background: rgba(107, 114, 128, 0.10);
+  border-color: rgba(107, 114, 128, 0.25);
+}
+
+.live-fleet-card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.live-fleet-card__row-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.live-fleet-card__row-value {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.live-fleet-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+  margin-top: auto;
+}
+
+/* Empty state shared with other admin tabs but tuned for the live panel */
+.admin__empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-16) var(--space-6);
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-lg);
+}
+.admin__empty-state__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  margin-bottom: var(--space-4);
+}
+.admin__empty-state h3 {
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+.admin__empty-state p {
+  font-size: var(--text-sm);
+  max-width: 360px;
+  line-height: var(--leading-relaxed);
+}
+
 
 .admin {
   padding: var(--space-8) var(--content-padding) var(--space-12);

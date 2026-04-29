@@ -4000,11 +4000,15 @@
   align-items: center;
   justify-content: center;
 }
+/* The marker reads its colour from the inline --driver-color custom
+   property set by makeLiveDriverIcon(). This way every driver gets a
+   distinct, deterministic colour without us maintaining a CSS palette. */
 .live-driver-pulse {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: rgba(251, 191, 36, 0.35);
+  background: var(--driver-color, #fbbf24);
+  opacity: 0.35;
   animation: live-driver-pulse 1.6s ease-out infinite;
 }
 .live-driver-body {
@@ -4016,8 +4020,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
-  border: 2px solid #fbbf24;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.45),
+    0 0 0 2px var(--driver-color, #fbbf24);
+  border: 2px solid var(--driver-color, #fbbf24);
   transition: transform 180ms ease-out;
 }
 .live-driver-label {
@@ -4026,7 +4032,7 @@
   right: -4px;
   width: 16px;
   height: 16px;
-  background: #10b981;
+  background: var(--driver-color, #10b981);
   color: #0f172a;
   border-radius: 50%;
   font: 700 10px/16px 'DM Sans', 'Inter', sans-serif;

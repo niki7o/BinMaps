@@ -62,6 +62,41 @@ public sealed class RouteRunService : IRouteRunService
                     $"Камионът с id={tid} не съществува.", nameof(dto));
         }
 
+        // ── Concurrency lock ─────────────────────────────────────────────
+        // Only one Active run per (AreaId, TrashType) at a time. A second
+        // driver trying to start the same route gets a 409 with the holder's
+        // name + start time so the truck app can show "Зает от Иван — преди
+        // 12 мин." instead of silently competing.
+        //
+        // A driver re-starting *their own* active run is allowed to fall
+        // through (idempotent retry); we don't throw in that case — instead
+        // we return the existing runId so the client converges.
+        var existingActive = await _repo.GetAllAttached()
+            .AsNoTracking()
+            .Where(r => r.Status == RouteRunStatus.Active
+                     && r.AreaId   == dto.AreaId
+                     && r.TrashType == dto.TrashType)
+            .OrderBy(r => r.StartedAt)
+            .Select(r => new { r.Id, r.DriverId, r.DriverName, r.StartedAt })
+            .FirstOrDefaultAsync();
+
+        if (existingActive is not null)
+        {
+            if (string.Equals(existingActive.DriverId, driverId, StringComparison.Ordinal))
+            {
+                // Same driver — return their existing run.
+                return existingActive.Id;
+            }
+
+            // Different driver — 409. We throw a typed exception so the
+            // controller can map it to a Conflict + structured payload.
+            throw new RouteAlreadyActiveException(
+                existingActive.Id,
+                existingActive.DriverId,
+                existingActive.DriverName,
+                existingActive.StartedAt);
+        }
+
         var run = new RouteRun
         {
             DriverId = driverId,
@@ -319,4 +354,30 @@ public sealed class RouteRunService : IRouteRunService
     }
 
     #endregion
+}
+
+/// <summary>
+/// Thrown when a driver tries to start a route on an (area, trashType) pair
+/// that another driver is already running. Carries the holder's identity so
+/// the API can return a structured 409 the truck app can render directly.
+/// </summary>
+public sealed class RouteAlreadyActiveException : Exception
+{
+    public int       ExistingRunId   { get; }
+    public string    LockedByDriverId { get; }
+    public string    LockedByDriverName { get; }
+    public DateTime  StartedAt        { get; }
+
+    public RouteAlreadyActiveException(
+        int existingRunId,
+        string lockedByDriverId,
+        string lockedByDriverName,
+        DateTime startedAt)
+        : base($"Route is already active (run #{existingRunId}, driver {lockedByDriverName}).")
+    {
+        ExistingRunId      = existingRunId;
+        LockedByDriverId   = lockedByDriverId;
+        LockedByDriverName = lockedByDriverName;
+        StartedAt          = startedAt;
+    }
 }
