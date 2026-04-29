@@ -190,9 +190,13 @@
   filter: drop-shadow(0 0 10px color-mix(in srgb, var(--acc) 55%, transparent));
 }
 
+/* Heatmap goes full-width on its own row; the density panel sits below
+   at full-width. The previous 1fr / 320px split was cramping the map
+   into a narrow column where 70% of Sofia couldn't fit. The map is
+   the centrepiece of this dashboard — it deserves the full canvas. */
 .an-main-row {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr;
   gap: var(--space-5);
   align-items: stretch;
 }
@@ -304,7 +308,10 @@
 
 .an-heat-wrap {
   position: relative;
-  height: 460px;
+  /* Bumped from 460px now that the map has the full row. Aspect-driven
+     so the canvas stays usable on ultrawides without going to 800px on
+     phones. clamp(min, vh-driven, max). */
+  height: clamp(420px, 56vh, 640px);
   flex-shrink: 0;
   border-radius: var(--radius-xl);
   overflow: hidden;
@@ -694,8 +701,7 @@
 }
 
 @media (max-width: 1200px) {
-  .an-main-row   { grid-template-columns: 1fr; }
-  .an-route-card { order: -1; }
+  /* an-main-row is already 1fr now — the route-card sits below the map. */
   .an-charts-row { grid-template-columns: 2fr 1fr; }
 }
 

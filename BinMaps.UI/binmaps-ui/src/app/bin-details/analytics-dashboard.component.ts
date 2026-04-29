@@ -18,6 +18,10 @@ interface Bin {
   status: string | null;
   locationX: number;
   locationY: number;
+  /** Litres. Optional because the analytics endpoint may omit it on
+   *  older responses; fallback to 1100 (the seed default) for the
+   *  projected-load calculation when missing. */
+  capacity?: number;
 }
 
 interface District {
@@ -128,6 +132,30 @@ export class AnalyticsDashboardComponent implements OnInit, AfterViewInit, OnDes
    *  because operationally they're treated the same: dispatch immediately. */
   get incidentCount(): number {
     return (this.stats.onFireCount ?? 0);
+  }
+
+  /** Standard truck capacity in litres — used for "trucks needed" estimate.
+   *  Real trucks vary 8–14k; 10k is a defensible average for the dashboard. */
+  private static readonly STANDARD_TRUCK_LITRES = 10_000;
+
+  /** Projected litres a route would collect right now: sum over critical
+   *  bins (>= 60% fill) of (capacity × fillRatio). Gives a *real* operational
+   *  number, not "X bins" — answers "how much waste am I about to move".
+   *  Falls back to 1100L per bin (the seed default) when the API didn't
+   *  include capacity in the bin payload. */
+  get projectedRouteLoad(): number {
+    return this.clusters
+      .flatMap(c => c.bins ?? [])
+      .filter(b => (b.fillPercentage ?? 0) >= 60)
+      .reduce((sum, b) => sum + (b.capacity ?? 1100) * (b.fillPercentage / 100), 0);
+  }
+
+  /** Trucks needed to clear the projected load. Ceil so a partial load
+   *  still rounds up to a full truck (you can't dispatch 0.4 of a truck). */
+  get trucksNeeded(): number {
+    const load = this.projectedRouteLoad;
+    if (load <= 0) return 0;
+    return Math.ceil(load / AnalyticsDashboardComponent.STANDARD_TRUCK_LITRES);
   }
 
   ngOnInit(): void {

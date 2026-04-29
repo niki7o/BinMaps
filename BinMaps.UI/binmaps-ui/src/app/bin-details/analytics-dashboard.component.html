@@ -186,33 +186,10 @@
         </div>
       </div>
 
-      <!-- The gauge tells one specific story (route packing). These four
-           tiles round it out with the operational signals that actually
-           drive decisions: how full the average bin is, what % of bins
-           don't need action, sensor coverage, and active incidents. -->
-      <div class="an-mini-kpi-grid">
-        <div class="an-mini-kpi" [class.is-warn]="stats.avgFill >= 60" [class.is-bad]="stats.avgFill >= 80">
-          <span class="an-mini-kpi__val">{{ stats.avgFill }}<small>%</small></span>
-          <span class="an-mini-kpi__lbl">Среден капацитет</span>
-          <span class="an-mini-kpi__sub">през всички контейнери</span>
-        </div>
-        <div class="an-mini-kpi" [class.is-good]="underControlPct >= 70" [class.is-warn]="underControlPct < 70 && underControlPct >= 50" [class.is-bad]="underControlPct < 50">
-          <span class="an-mini-kpi__val">{{ underControlPct }}<small>%</small></span>
-          <span class="an-mini-kpi__lbl">Под контрол</span>
-          <span class="an-mini-kpi__sub">контейнери под 60%</span>
-        </div>
-        <div class="an-mini-kpi" [class.is-good]="stats.sensorCoverage >= 70" [class.is-warn]="stats.sensorCoverage >= 40 && stats.sensorCoverage < 70" [class.is-bad]="stats.sensorCoverage < 40">
-          <span class="an-mini-kpi__val">{{ stats.sensorCoverage }}<small>%</small></span>
-          <span class="an-mini-kpi__lbl">IoT покритие</span>
-          <span class="an-mini-kpi__sub">с активен сензор</span>
-        </div>
-        <div class="an-mini-kpi" [class.is-good]="incidentCount === 0" [class.is-bad]="incidentCount > 0">
-          <span class="an-mini-kpi__val">{{ incidentCount }}</span>
-          <span class="an-mini-kpi__lbl">Инциденти</span>
-          <span class="an-mini-kpi__sub">пожар или повреда</span>
-        </div>
-      </div>
-
+      <!-- Panel-specific decomposition. These metrics explain THIS gauge —
+           what bins a route would target, how much waste they'd collect,
+           how many trucks it would require. None of these duplicate the
+           top KPI strip; they add operational context the top can't. -->
       <div class="an-rs-grid">
         <div class="an-rs-row">
           <span class="an-rs-lbl">Райони общо</span>
@@ -221,6 +198,18 @@
         <div class="an-rs-row">
           <span class="an-rs-lbl">Критични райони</span>
           <span class="an-rs-val" style="color:#ef4444">{{ criticalClusters.length }}</span>
+        </div>
+        <div class="an-rs-row">
+          <span class="an-rs-lbl">За събиране сега</span>
+          <span class="an-rs-val" style="color:#f59e0b" [title]="'Контейнери над 80% запълване — приоритетни за маршрут'">{{ stats.criticalBins }}</span>
+        </div>
+        <div class="an-rs-row">
+          <span class="an-rs-lbl">Прогнозен товар</span>
+          <span class="an-rs-val text-mono" [title]="'Сума на капацитетите на контейнерите за събиране, претеглена с тяхното запълване'">~{{ projectedRouteLoad | number:'1.0-0' }} L</span>
+        </div>
+        <div class="an-rs-row">
+          <span class="an-rs-lbl">Камиони нужни</span>
+          <span class="an-rs-val" [title]="'Базирано на стандартен камион 10 000 L'">{{ trucksNeeded }}</span>
         </div>
         <div class="an-rs-row">
           <span class="an-rs-lbl">Натоварена зона</span>

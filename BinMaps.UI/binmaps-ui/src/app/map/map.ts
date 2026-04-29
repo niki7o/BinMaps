@@ -1071,6 +1071,29 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         });
         throw new RouteLockedError(msg);
       }
+
+      // 400 Bad Request ⇒ validation failed on the server (missing area,
+      // missing truck, etc.). Surface the actual server message instead of
+      // letting it die silently in the network tab — the user has been
+      // hitting "400" and needing to debug from console.
+      if (err?.status === 400) {
+        const serverMsg = err?.error?.message ?? 'Невалидна заявка.';
+        this.toast.error({
+          title: 'Маршрутът не може да се стартира',
+          message: serverMsg,
+          duration: 7000,
+        });
+        throw err;
+      }
+
+      // Anything else (500, network, etc.) — show a fallback toast so the
+      // user sees something in the UI rather than just a console error.
+      const fallback = err?.error?.message ?? err?.message ?? 'Сървърна грешка.';
+      this.toast.error({
+        title: 'Грешка при стартиране',
+        message: fallback,
+        duration: 6000,
+      });
       throw err;
     }
   }
