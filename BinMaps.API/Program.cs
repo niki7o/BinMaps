@@ -257,6 +257,17 @@ public sealed class Program
                 using var scope = app.Services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<BinMapsDbContext>();
                 await db.Database.MigrateAsync();
+
+                // Schema sanity check: list of tables MigrateAsync() *should*
+                // have created if everything went well. If any are missing,
+                // EF's __EFMigrationsHistory likely went out of sync with the
+                // actual schema (we've seen this happen when the DB was
+                // restored from a snapshot that pre-dated a migration but
+                // the history table was preserved). Log a loud, actionable
+                // error so the next request that hits the missing table
+                // doesn't surface as a cryptic 400 in the browser console.
+                await EnsureCriticalTablesExistAsync(db, startupLogger);
+
                 var seeder = scope.ServiceProvider.GetRequiredService<InitialStateSeeder>();
                 await seeder.SeedAllAsync();
                 startupLogger.LogInformation("Database migration and seed completed successfully.");
@@ -277,8 +288,81 @@ public sealed class Program
         }
 
         startupLogger.LogInformation("App fully ready — accepting all requests.");
-        await app.WaitForShutdownAsync();  
+        await app.WaitForShutdownAsync();
 
         #endregion
+    }
+
+    /// <summary>
+    /// Verifies that the tables EF migrations should have created actually
+    /// exist. Logs a loud warning per missing table so the failure mode is
+    /// visible in container logs instead of surfacing as cryptic 400s on
+    /// every API call that touches the missing table.
+    ///
+    /// Doesn't throw — the app still starts and serves what it can. Add new
+    /// tables here as you ship migrations that create them.
+    /// </summary>
+    private static async Task EnsureCriticalTablesExistAsync(
+        BinMaps.Data.BinMapsDbContext db,
+        Microsoft.Extensions.Logging.ILogger logger)
+    {
+        // Maps table → manual SQL fallback path (relative to repo root) so
+        // ops can copy-paste the script into their SQL editor without
+        // hunting for it. New tables: append below as new migrations land.
+        var criticalTables = new[]
+        {
+            new { Table = "Areas",            Fallback = (string?)null },
+            new { Table = "Trucks",           Fallback = (string?)null },
+            new { Table = "TrashContainers",  Fallback = (string?)null },
+            new { Table = "Reports",          Fallback = (string?)null },
+            new { Table = "RouteRuns",        Fallback = (string?)"BinMaps.Data/Migrations/Manual/create-route-runs.sql" },
+        };
+
+        foreach (var t in criticalTables)
+        {
+            var exists = false;
+            try
+            {
+                // OBJECT_ID returns NULL for missing tables. Fast and avoids
+                // INFORMATION_SCHEMA which is sensitive to schema name.
+                var connection = db.Database.GetDbConnection();
+                if (connection.State != System.Data.ConnectionState.Open)
+                    await connection.OpenAsync();
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = $"SELECT CAST(CASE WHEN OBJECT_ID(N'[dbo].[{t.Table}]', N'U') IS NULL THEN 0 ELSE 1 END AS BIT)";
+                var result = await cmd.ExecuteScalarAsync();
+                exists = result is bool b && b;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex,
+                    "Could not verify table [{Table}] exists; assuming OK.",
+                    t.Table);
+                continue;
+            }
+
+            if (exists)
+            {
+                logger.LogInformation("Schema check OK: [{Table}] exists.", t.Table);
+            }
+            else
+            {
+                if (t.Fallback is not null)
+                {
+                    logger.LogError(
+                        "SCHEMA DRIFT: [{Table}] is MISSING — EF migrations did not create it. " +
+                        "Run the manual SQL script `{Script}` against the database " +
+                        "and restart the container. Until then, any feature that touches [{Table}] will 400.",
+                        t.Table, t.Fallback, t.Table);
+                }
+                else
+                {
+                    logger.LogError(
+                        "SCHEMA DRIFT: [{Table}] is MISSING. EF migrations are out of sync " +
+                        "with the actual database schema. Investigate __EFMigrationsHistory.",
+                        t.Table);
+                }
+            }
+        }
     }
 }
