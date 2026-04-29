@@ -139,6 +139,19 @@ public sealed class Program
                 // interprets the timestamp as local time (2-3h offset bug).
                 o.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
                 o.JsonSerializerOptions.Converters.Add(new UtcNullableDateTimeConverter());
+
+                // Tolerant enum binding: accept ints (0), numeric strings
+                // ("0"), and named strings ("Mixed") interchangeably.
+                // Why: Angular <select [value]="0"> binds the model as the
+                // STRING "0", not the number 0. Without this converter, every
+                // such request 400s on enum properties. Rather than chase
+                // [ngValue] across every dropdown forever, accept both forms
+                // here. allowIntegerValues:true keeps the existing numeric
+                // contract; the string fallback is the new tolerance.
+                o.JsonSerializerOptions.Converters.Add(
+                    new System.Text.Json.Serialization.JsonStringEnumConverter(
+                        namingPolicy: null,
+                        allowIntegerValues: true));
             });
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(o =>
