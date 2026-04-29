@@ -195,14 +195,35 @@ public sealed class TrashContainersController : ControllerBase
         // The TrashContainer entity is configured with ValueGeneratedNever()
         // (BinMapsDbContext line 47), so we must assign Id ourselves —
         // otherwise EF defaults to 0 and we end up with "#0" containers.
-        // Pulling MAX(Id)+1 from the full set (including soft-deleted rows)
-        // so a previous hard-delete can't collide with a freed-up id.
-        int nextId = await _containerRepo
+        //
+        // Strategy: pick the LOWEST missing positive integer (first-fit).
+        // The previous strategy was MAX(Id)+1, which left permanent gaps
+        // when a hard-delete punched a hole in the sequence. First-fit
+        // reuses those gaps so:
+        //   • An admin who hard-deleted a seeded container (e.g. #1) can
+        //     re-add a replacement and it will *land back at #1*, not at
+        //     the end of the table — which is what the user actually wants
+        //     when "restoring" a seeded row through the UI.
+        //   • Soft-deleted rows still occupy their id (we read with
+        //     IgnoreQueryFilters), so they will NOT be reused — restoring
+        //     a soft-deleted bin is a separate flow (UPDATE IsDeleted=0).
+        // Cost: O(n) memory for the id list. n ≈ a few thousand at most;
+        // negligible. The DB-side alternative (a self-LEFT-JOIN gap query)
+        // doesn't translate cleanly through EF and isn't worth the risk.
+        var existingIdsSorted = await _containerRepo
             .GetAllAttached()
             .IgnoreQueryFilters()
-            .Select(c => (int?)c.Id)
-            .MaxAsync() ?? 0;
-        nextId += 1;
+            .Select(c => c.Id)
+            .Where(id => id > 0)
+            .OrderBy(id => id)
+            .ToListAsync();
+
+        int nextId = 1;
+        foreach (var id in existingIdsSorted)
+        {
+            if (id != nextId) break;   // gap found — nextId is the missing slot
+            nextId++;
+        }
 
         var container = new TrashContainer
         {
