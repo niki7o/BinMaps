@@ -529,4 +529,176 @@ public sealed class AdminController : ControllerBase
     }
     #endregion
 
+    #region Schema heal (manual trigger)
+
+    /// <summary>
+    /// Admin-only manual trigger that runs the same idempotent
+    /// CREATE-IF-NOT-EXISTS SQL the startup auto-heal does, but on
+    /// demand. Useful when:
+    ///   • You can't tell from logs whether startup heal ran.
+    ///   • The auto-heal is being skipped for any reason.
+    ///   • You just want to verify the table exists right now.
+    ///
+    /// Returns a per-table report so you can see exactly what's
+    /// currently in the database. Idempotent — safe to call repeatedly.
+    /// </summary>
+    [HttpPost("diagnostics/heal-schema")]
+    public async Task<IActionResult> HealSchema()
+    {
+        var report = new List<object>();
+
+        // Mirror the same critical-table list as Program.EnsureCriticalTablesExistAsync
+        // to keep the on-demand path and the startup path identical.
+        var targets = new (string Table, string? HealSql)[]
+        {
+            ("Areas",           null),
+            ("Trucks",          null),
+            ("TrashContainers", null),
+            ("Reports",         null),
+            ("RouteRuns",       RouteRunsCreateSql),
+        };
+
+        foreach (var (table, healSql) in targets)
+        {
+            var beforeExists = await TableExistsAsync(table);
+
+            if (beforeExists)
+            {
+                report.Add(new { table, status = "ok", action = "none" });
+                continue;
+            }
+
+            if (healSql is null)
+            {
+                report.Add(new
+                {
+                    table,
+                    status = "missing",
+                    action = "none",
+                    note = "No auto-heal SQL configured for this table."
+                });
+                continue;
+            }
+
+            string action;
+            string? error = null;
+            try
+            {
+                await _context.Database.ExecuteSqlRawAsync(healSql);
+                action = "heal-sql-executed";
+
+                // Record EF migration as applied so future MigrateAsync
+                // doesn't try to recreate the table.
+                await _context.Database.ExecuteSqlRawAsync(@"
+IF OBJECT_ID(N'[dbo].[__EFMigrationsHistory]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[__EFMigrationsHistory] (
+        [MigrationId]    NVARCHAR(150) NOT NULL,
+        [ProductVersion] NVARCHAR(32)  NOT NULL,
+        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+    );
+END;");
+                await _context.Database.ExecuteSqlRawAsync(@"
+IF NOT EXISTS (SELECT 1 FROM [__EFMigrationsHistory] WHERE [MigrationId] = {0})
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion]) VALUES ({0}, {1});",
+                    "20260429180000_FixRouteRunsTable", "8.0.13");
+            }
+            catch (Exception ex)
+            {
+                action = "heal-sql-failed";
+                error = $"{ex.GetType().Name}: {ex.Message}";
+            }
+
+            var afterExists = await TableExistsAsync(table);
+            report.Add(new
+            {
+                table,
+                status = afterExists ? "ok" : "still-missing",
+                action,
+                error,
+                note = afterExists
+                    ? "Table now exists."
+                    : "Heal ran but table is still missing — check DB user permissions (CREATE TABLE may be denied)."
+            });
+        }
+
+        return Ok(new
+        {
+            executedAt = DateTime.UtcNow,
+            report
+        });
+    }
+
+    private async Task<bool> TableExistsAsync(string table)
+    {
+        try
+        {
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+                await connection.OpenAsync();
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText =
+                $"SELECT CAST(CASE WHEN OBJECT_ID(N'[dbo].[{table}]', N'U') IS NULL THEN 0 ELSE 1 END AS BIT)";
+            var result = await cmd.ExecuteScalarAsync();
+            return result is bool b && b;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Inline copy of the RouteRuns table + index DDL — same as the
+    /// constant in Program.cs. Duplicated here intentionally so the
+    /// heal endpoint has zero dependency on internals: just hit it.
+    /// </summary>
+    private const string RouteRunsCreateSql = @"
+IF OBJECT_ID(N'[dbo].[RouteRuns]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[RouteRuns] (
+        [Id]                INT             IDENTITY(1,1) NOT NULL,
+        [DriverId]          NVARCHAR(450)   NOT NULL,
+        [DriverName]        NVARCHAR(256)   NOT NULL,
+        [AreaId]            NVARCHAR(50)    NOT NULL,
+        [TrashType]         NVARCHAR(MAX)   NOT NULL,
+        [TruckId]           INT             NULL,
+        [StartedAt]         DATETIME2       NOT NULL,
+        [CompletedAt]       DATETIME2       NULL,
+        [Status]            NVARCHAR(MAX)   NOT NULL,
+        [PlannedDistanceKm] FLOAT           NOT NULL,
+        [PlannedMinutes]    FLOAT           NOT NULL,
+        [CollectedLoad]     FLOAT           NOT NULL,
+        [StopsCompleted]    INT             NOT NULL,
+        [StopsPlanned]      INT             NOT NULL,
+        [StopsJson]         NVARCHAR(MAX)   NULL,
+        CONSTRAINT [PK_RouteRuns] PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [FK_RouteRuns_Areas_AreaId]   FOREIGN KEY ([AreaId])
+            REFERENCES [dbo].[Areas]  ([Id]) ON DELETE NO ACTION,
+        CONSTRAINT [FK_RouteRuns_Trucks_TruckId] FOREIGN KEY ([TruckId])
+            REFERENCES [dbo].[Trucks] ([Id]) ON DELETE SET NULL
+    );
+END;
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_Area_StartedAt' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
+    CREATE NONCLUSTERED INDEX [IX_RouteRuns_Area_StartedAt]
+        ON [dbo].[RouteRuns] ([AreaId] ASC, [StartedAt] ASC);
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_Driver_StartedAt' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
+    CREATE NONCLUSTERED INDEX [IX_RouteRuns_Driver_StartedAt]
+        ON [dbo].[RouteRuns] ([DriverId] ASC, [StartedAt] ASC);
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_StartedAt' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
+    CREATE NONCLUSTERED INDEX [IX_RouteRuns_StartedAt]
+        ON [dbo].[RouteRuns] ([StartedAt] ASC);
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_Status' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
+    CREATE NONCLUSTERED INDEX [IX_RouteRuns_Status]
+        ON [dbo].[RouteRuns] ([Status] ASC);
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_TruckId' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
+    CREATE NONCLUSTERED INDEX [IX_RouteRuns_TruckId]
+        ON [dbo].[RouteRuns] ([TruckId] ASC);
+";
+    #endregion
 }
