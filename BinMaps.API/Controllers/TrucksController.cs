@@ -104,13 +104,32 @@ public sealed class TrucksController : ControllerBase
         }
         catch (DbUpdateException ex)
         {
+            // DbUpdateException at SaveChanges-time is a server-side
+            // problem (FK violations, schema drift, DB unreachable), not
+            // bad client input. Honest 503 so monitoring/alerting picks
+            // it up — was previously a 400 which obscured infrastructure
+            // issues as user errors.
             _logger.LogError(ex,
                 "StartRun DB error for driver {DriverId}, areaId={AreaId}, truckId={TruckId}",
                 driverId, dto.AreaId, dto.TruckId);
-            return BadRequest(new
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new
             {
-                message = "Не може да се създаде маршрут: "
-                       + (ex.InnerException?.Message ?? ex.Message),
+                message = "Базата данни не е достъпна в момента. Опитайте след малко.",
+                detail = ex.InnerException?.Message ?? ex.Message,
+            });
+        }
+        catch (Microsoft.Data.SqlClient.SqlException ex)
+        {
+            // Raw SQL errors that bypass DbUpdateException (e.g. queries
+            // we run before the SaveChanges path, like the lock check).
+            // Same 503 treatment for the same reason.
+            _logger.LogError(ex,
+                "StartRun SQL error for driver {DriverId}, areaId={AreaId}, truckId={TruckId}",
+                driverId, dto.AreaId, dto.TruckId);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+            {
+                message = "Грешка в базата данни. Опитайте след малко.",
+                detail = ex.Message,
             });
         }
         catch (Exception ex)

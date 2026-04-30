@@ -1074,13 +1074,25 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
       // 400 Bad Request ⇒ validation failed on the server (missing area,
       // missing truck, etc.). Surface the actual server message instead of
-      // letting it die silently in the network tab — the user has been
-      // hitting "400" and needing to debug from console.
+      // letting it die silently in the network tab.
       if (err?.status === 400) {
         const serverMsg = err?.error?.message ?? 'Невалидна заявка.';
         this.toast.error({
           title: 'Маршрутът не може да се стартира',
           message: serverMsg,
+          duration: 7000,
+        });
+        throw err;
+      }
+
+      // 503 Service Unavailable ⇒ DB hiccup or schema issue on the server.
+      // Distinct from 400 (which is the user's input) — phrase it so the
+      // user knows to retry rather than try to "fix" their request.
+      if (err?.status === 503) {
+        const serverMsg = err?.error?.message ?? 'Сървърна грешка.';
+        this.toast.error({
+          title: 'Базата данни не отговаря',
+          message: `${serverMsg} Опитайте отново след минута.`,
           duration: 7000,
         });
         throw err;
