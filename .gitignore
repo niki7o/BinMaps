@@ -427,3 +427,11 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Claude Code worktrees — these are local git-worktree clones used by the
+# AI coding agent. They were accidentally committed as a gitlink (mode
+# 160000) without a corresponding .gitmodules entry, which caused
+# `git submodule foreach` in CI to fail with "No url found for submodule
+# path '.claude/worktrees/...'" and abort the build. Ignoring the entire
+# .claude/ tree prevents any future agent session from re-introducing it.
+.claude/
