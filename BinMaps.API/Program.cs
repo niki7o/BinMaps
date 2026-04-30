@@ -249,6 +249,35 @@ public sealed class Program
         await app.StartAsync();   
 
         var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
+
+        // ── Step 1: pre-heal critical schema ─────────────────────────────
+        // Run BEFORE MigrateAsync so a broken migration history can't
+        // prevent the heal from happening. Idempotent — harmless when the
+        // tables already exist. This is the bulletproof path: even if
+        // every migration fails, the API still has the schema it needs.
+        try
+        {
+            using var preHealScope = app.Services.CreateScope();
+            var preHealDb = preHealScope.ServiceProvider.GetRequiredService<BinMapsDbContext>();
+            startupLogger.LogInformation("Pre-migration schema heal starting...");
+            await EnsureCriticalTablesExistAsync(preHealDb, startupLogger);
+            startupLogger.LogInformation("Pre-migration schema heal finished.");
+        }
+        catch (Exception ex)
+        {
+            // We deliberately don't rethrow — even if heal fails, the
+            // migration retry below might still recover. We've logged the
+            // error; the per-table heal logging inside is much more useful
+            // anyway.
+            startupLogger.LogError(ex,
+                "Pre-migration schema heal threw at the outer level. Continuing to MigrateAsync.");
+        }
+
+        // ── Step 2: standard EF migrations + seed ────────────────────────
+        // Now that the critical tables definitely exist, MigrateAsync can
+        // safely apply any *other* outstanding migrations (e.g. column
+        // additions, index changes) without tripping over RouteRuns being
+        // the missing piece.
         for (int attempt = 1; attempt <= 5; attempt++)
         {
             try
@@ -257,16 +286,6 @@ public sealed class Program
                 using var scope = app.Services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<BinMapsDbContext>();
                 await db.Database.MigrateAsync();
-
-                // Schema sanity check: list of tables MigrateAsync() *should*
-                // have created if everything went well. If any are missing,
-                // EF's __EFMigrationsHistory likely went out of sync with the
-                // actual schema (we've seen this happen when the DB was
-                // restored from a snapshot that pre-dated a migration but
-                // the history table was preserved). Log a loud, actionable
-                // error so the next request that hits the missing table
-                // doesn't surface as a cryptic 400 in the browser console.
-                await EnsureCriticalTablesExistAsync(db, startupLogger);
 
                 var seeder = scope.ServiceProvider.GetRequiredService<InitialStateSeeder>();
                 await seeder.SeedAllAsync();
@@ -282,9 +301,24 @@ public sealed class Program
             catch (Exception ex)
             {
                 startupLogger.LogError(ex,
-                    "Database migration failed after 5 attempts. App will continue running.");
+                    "Database migration failed after 5 attempts. App will continue running " +
+                    "(pre-migration schema heal already created critical tables).");
                 break;
             }
+        }
+
+        // ── Step 3: post-migration verification ──────────────────────────
+        // Belt-and-suspenders. If MigrateAsync did something weird (e.g.
+        // dropped a table, partial apply), this re-checks and re-heals.
+        try
+        {
+            using var verifyScope = app.Services.CreateScope();
+            var verifyDb = verifyScope.ServiceProvider.GetRequiredService<BinMapsDbContext>();
+            await EnsureCriticalTablesExistAsync(verifyDb, startupLogger);
+        }
+        catch (Exception ex)
+        {
+            startupLogger.LogError(ex, "Post-migration schema verification threw at the outer level.");
         }
 
         startupLogger.LogInformation("App fully ready — accepting all requests.");
