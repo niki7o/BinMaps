@@ -471,11 +471,11 @@ BEGIN
         [DriverId]          NVARCHAR(450)   NOT NULL,
         [DriverName]        NVARCHAR(256)   NOT NULL,
         [AreaId]            NVARCHAR(50)    NOT NULL,
-        [TrashType]         NVARCHAR(MAX)   NOT NULL,
+        [TrashType]         NVARCHAR(50)    NOT NULL,
         [TruckId]           INT             NULL,
         [StartedAt]         DATETIME2       NOT NULL,
         [CompletedAt]       DATETIME2       NULL,
-        [Status]            NVARCHAR(MAX)   NOT NULL,
+        [Status]            NVARCHAR(50)    NOT NULL,
         [PlannedDistanceKm] FLOAT           NOT NULL,
         [PlannedMinutes]    FLOAT           NOT NULL,
         [CollectedLoad]     FLOAT           NOT NULL,
@@ -495,6 +495,13 @@ END;",
 
         @"IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_StartedAt' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
     CREATE NONCLUSTERED INDEX [IX_RouteRuns_StartedAt] ON [dbo].[RouteRuns] ([StartedAt] ASC);",
+
+        // Shrink Status to NVARCHAR(50) first — MAX columns can't be index keys.
+        @"IF EXISTS (
+    SELECT 1 FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'[dbo].[RouteRuns]') AND name = N'Status' AND max_length = -1
+)
+    ALTER TABLE [dbo].[RouteRuns] ALTER COLUMN [Status] NVARCHAR(50) NOT NULL;",
 
         @"IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_Status' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
     CREATE NONCLUSTERED INDEX [IX_RouteRuns_Status] ON [dbo].[RouteRuns] ([Status] ASC);",

@@ -88,6 +88,22 @@ IF NOT EXISTS (
         ON [dbo].[RouteRuns] ([StartedAt] ASC);
 ", suppressTransaction: true);
 
+            // IX_RouteRuns_Status intentionally omitted:
+            // Status is NVARCHAR(MAX) and SQL Server forbids indexing MAX columns.
+            // Shrink the column to NVARCHAR(50) first so the index can be added.
+            migrationBuilder.Sql(@"
+IF EXISTS (
+    SELECT 1 FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'[dbo].[RouteRuns]')
+      AND name = N'Status'
+      AND max_length = -1   -- -1 = MAX
+)
+BEGIN
+    ALTER TABLE [dbo].[RouteRuns]
+        ALTER COLUMN [Status] NVARCHAR(50) NOT NULL;
+END;
+", suppressTransaction: true);
+
             migrationBuilder.Sql(@"
 IF NOT EXISTS (
     SELECT 1 FROM sys.indexes
