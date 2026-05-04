@@ -156,6 +156,10 @@ public sealed class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(o =>
         {
+            // Prevents "Conflicting schemaIds" crash when two types in
+            // different namespaces share the same simple name.
+            o.CustomSchemaIds(t => t.FullName?.Replace("+", ".") ?? t.Name);
+
             o.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Name = "Authorization",
