@@ -346,26 +346,33 @@ public sealed class Program
     /// If the table already exists, the SQL no-ops. If not, we create it.
     /// Either way the next request succeeds.
     ///
+    /// Each heal SQL string is executed in its own ExecuteSqlRawAsync call
+    /// so an index failure doesn't roll back the CREATE TABLE that preceded
+    /// it. We deliberately do NOT manipulate __EFMigrationsHistory here —
+    /// history entries are owned by the migration files (specifically
+    /// 20260505120000_EnsureRouteRunsV2) so MigrateAsync can track state
+    /// correctly on future cold starts.
+    ///
     /// Doesn't throw — the app still starts and serves what it can.
     /// </summary>
     private static async Task EnsureCriticalTablesExistAsync(
         BinMaps.Data.BinMapsDbContext db,
         Microsoft.Extensions.Logging.ILogger logger)
     {
-        // (table, inline self-heal SQL). null heal = no auto-create
+        // (table, per-statement heal SQLs). null heal = no auto-create
         // (the table is part of the original Identity/seed migration that
         // *must* exist before this app makes sense; if any of these are
         // missing, the database is empty and an admin needs to intervene).
-        var criticalTables = new (string Table, string? HealSql)[]
+        var criticalTables = new (string Table, string[]? HealSqls)[]
         {
             ("Areas",           null),
             ("Trucks",          null),
             ("TrashContainers", null),
             ("Reports",         null),
-            ("RouteRuns",       RouteRunsCreateSql),
+            ("RouteRuns",       RouteRunsHealSqls),
         };
 
-        foreach (var (table, healSql) in criticalTables)
+        foreach (var (table, healSqls) in criticalTables)
         {
             var exists = await TableExistsAsync(db, table, logger);
 
@@ -375,7 +382,7 @@ public sealed class Program
                 continue;
             }
 
-            if (healSql is null)
+            if (healSqls is null)
             {
                 logger.LogError(
                     "SCHEMA DRIFT: [{Table}] is MISSING and has no auto-heal SQL. " +
@@ -385,37 +392,35 @@ public sealed class Program
             }
 
             logger.LogWarning(
-                "SCHEMA DRIFT: [{Table}] is MISSING. Running inline self-heal SQL...",
-                table);
+                "SCHEMA DRIFT: [{Table}] is MISSING. Running {Count} inline self-heal statements...",
+                table, healSqls.Length);
 
-            try
+            // Execute each DDL statement independently so a failing index
+            // creation doesn't roll back the CREATE TABLE that ran before it.
+            foreach (var sql in healSqls)
             {
-                // ExecuteSqlRawAsync runs each statement; idempotent guards
-                // inside the SQL itself protect against partial creation.
-                await db.Database.ExecuteSqlRawAsync(healSql);
-
-                // Mark the corresponding EF migration as applied so MigrateAsync
-                // on the *next* cold start doesn't try to recreate the same
-                // schema (which would now fail because the table exists).
-                await RecordMigrationAppliedAsync(
-                    db, "20260429180000_FixRouteRunsTable", "8.0.13", logger);
-
-                var nowExists = await TableExistsAsync(db, table, logger);
-                if (nowExists)
-                    logger.LogInformation(
-                        "Self-heal succeeded: [{Table}] now exists.", table);
-                else
-                    logger.LogError(
-                        "Self-heal SQL ran without error but [{Table}] still missing — " +
-                        "check DB user permissions (CREATE TABLE may be denied).",
+                try
+                {
+                    await db.Database.ExecuteSqlRawAsync(sql);
+                }
+                catch (Exception ex)
+                {
+                    // Log and keep going — the next statement may still succeed.
+                    logger.LogError(ex,
+                        "Self-heal statement for [{Table}] failed (continuing with remaining statements).",
                         table);
+                }
             }
-            catch (Exception ex)
-            {
-                logger.LogError(ex,
-                    "Self-heal for [{Table}] failed. The DB user likely lacks DDL permissions.",
+
+            var nowExists = await TableExistsAsync(db, table, logger);
+            if (nowExists)
+                logger.LogInformation(
+                    "Self-heal succeeded: [{Table}] now exists.", table);
+            else
+                logger.LogError(
+                    "Self-heal SQL ran but [{Table}] still missing — " +
+                    "check DB user permissions (CREATE TABLE may be denied).",
                     table);
-            }
         }
     }
 
@@ -433,7 +438,8 @@ public sealed class Program
             cmd.CommandText =
                 $"SELECT CAST(CASE WHEN OBJECT_ID(N'[dbo].[{table}]', N'U') IS NULL THEN 0 ELSE 1 END AS BIT)";
             var result = await cmd.ExecuteScalarAsync();
-            return result is bool b && b;
+            // SQL Server BIT → .NET bool via Microsoft.Data.SqlClient
+            return result is true || (result is byte b && b == 1);
         }
         catch (Exception ex)
         {
@@ -443,47 +449,15 @@ public sealed class Program
         }
     }
 
-    private static async Task RecordMigrationAppliedAsync(
-        BinMaps.Data.BinMapsDbContext db,
-        string migrationId,
-        string productVersion,
-        Microsoft.Extensions.Logging.ILogger logger)
-    {
-        try
-        {
-            // First: __EFMigrationsHistory itself might not exist on a brand-new
-            // db (rare — MigrateAsync creates it). Best-effort.
-            await db.Database.ExecuteSqlRawAsync(@"
-IF OBJECT_ID(N'[dbo].[__EFMigrationsHistory]', N'U') IS NULL
-BEGIN
-    CREATE TABLE [dbo].[__EFMigrationsHistory] (
-        [MigrationId]    NVARCHAR(150) NOT NULL,
-        [ProductVersion] NVARCHAR(32)  NOT NULL,
-        CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
-    );
-END;");
-
-            await db.Database.ExecuteSqlRawAsync(@"
-IF NOT EXISTS (SELECT 1 FROM [__EFMigrationsHistory] WHERE [MigrationId] = {0})
-    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion]) VALUES ({0}, {1});",
-                migrationId, productVersion);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex,
-                "Could not record migration {Migration} as applied. " +
-                "MigrateAsync on next start may attempt to re-run it; the migration's " +
-                "IF-NOT-EXISTS guards should make that safe.", migrationId);
-        }
-    }
-
     /// <summary>
-    /// Idempotent CREATE for the RouteRuns table + 5 indexes. Mirrors the
-    /// schema in 20260420120000_AddRouteRun and 20260429180000_FixRouteRunsTable.
-    /// Embedded as a constant so a missing-resource issue can't break self-heal.
+    /// Individual idempotent DDL statements for the RouteRuns table + 5
+    /// indexes. Executed one-by-one so a failing index doesn't undo the
+    /// CREATE TABLE. Mirrors the schema in AddRouteRun + EnsureRouteRunsV2.
     /// </summary>
-    private const string RouteRunsCreateSql = @"
-IF OBJECT_ID(N'[dbo].[RouteRuns]', N'U') IS NULL
+    private static readonly string[] RouteRunsHealSqls =
+    [
+        // 1. Table — CREATE only when missing
+        @"IF OBJECT_ID(N'[dbo].[RouteRuns]', N'U') IS NULL
 BEGIN
     CREATE TABLE [dbo].[RouteRuns] (
         [Id]                INT             IDENTITY(1,1) NOT NULL,
@@ -507,26 +481,22 @@ BEGIN
         CONSTRAINT [FK_RouteRuns_Trucks_TruckId] FOREIGN KEY ([TruckId])
             REFERENCES [dbo].[Trucks] ([Id]) ON DELETE SET NULL
     );
-END;
+END;",
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_Area_StartedAt' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
-    CREATE NONCLUSTERED INDEX [IX_RouteRuns_Area_StartedAt]
-        ON [dbo].[RouteRuns] ([AreaId] ASC, [StartedAt] ASC);
+        // 2–6. Indexes — each in its own statement so one failure doesn't block the others
+        @"IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_Area_StartedAt' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
+    CREATE NONCLUSTERED INDEX [IX_RouteRuns_Area_StartedAt] ON [dbo].[RouteRuns] ([AreaId] ASC, [StartedAt] ASC);",
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_Driver_StartedAt' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
-    CREATE NONCLUSTERED INDEX [IX_RouteRuns_Driver_StartedAt]
-        ON [dbo].[RouteRuns] ([DriverId] ASC, [StartedAt] ASC);
+        @"IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_Driver_StartedAt' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
+    CREATE NONCLUSTERED INDEX [IX_RouteRuns_Driver_StartedAt] ON [dbo].[RouteRuns] ([DriverId] ASC, [StartedAt] ASC);",
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_StartedAt' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
-    CREATE NONCLUSTERED INDEX [IX_RouteRuns_StartedAt]
-        ON [dbo].[RouteRuns] ([StartedAt] ASC);
+        @"IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_StartedAt' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
+    CREATE NONCLUSTERED INDEX [IX_RouteRuns_StartedAt] ON [dbo].[RouteRuns] ([StartedAt] ASC);",
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_Status' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
-    CREATE NONCLUSTERED INDEX [IX_RouteRuns_Status]
-        ON [dbo].[RouteRuns] ([Status] ASC);
+        @"IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_Status' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
+    CREATE NONCLUSTERED INDEX [IX_RouteRuns_Status] ON [dbo].[RouteRuns] ([Status] ASC);",
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_TruckId' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
-    CREATE NONCLUSTERED INDEX [IX_RouteRuns_TruckId]
-        ON [dbo].[RouteRuns] ([TruckId] ASC);
-";
+        @"IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_TruckId' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
+    CREATE NONCLUSTERED INDEX [IX_RouteRuns_TruckId] ON [dbo].[RouteRuns] ([TruckId] ASC);",
+    ];
 }

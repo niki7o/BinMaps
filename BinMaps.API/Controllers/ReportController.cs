@@ -80,8 +80,11 @@ public sealed class ReportsController : ControllerBase
                 }
             }
         }
-        else
+        else if (dto.ReportType != ReportType.TruckProblem)
         {
+            // TruckProblem is about the vehicle, not a specific container — no
+            // TrashContainerId required. All other non-MissingContainer types
+            // (Full, Fire, SensorBroken, ContainerDamage) must reference a bin.
             if (dto.TrashContainerId is null or <= 0)
             {
                 return Problem(
