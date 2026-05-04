@@ -59,7 +59,25 @@ public sealed class TrashContainersController : ControllerBase
         if (status.HasValue)
             query = query.Where(c => c.Status == status.Value);
 
-        var result = await query.Select(c => new
+        // Fetch from DB with the raw entity shape first (EF can't translate
+        // enum-to-int casts in SQL projections reliably), then convert in memory.
+        var raw = await query.Select(c => new
+        {
+            c.Id,
+            c.AreaId,
+            c.FillPercentage,
+            c.Capacity,
+            c.LocationX,
+            c.LocationY,
+            c.TrashType,
+            c.Status,
+            c.HasSensor,
+            c.Temperature,
+            c.BatteryPercentage,
+            c.IsSeeded
+        }).ToListAsync();
+
+        var result = raw.Select(c => new
         {
             c.Id,
             c.AreaId,
@@ -68,12 +86,12 @@ public sealed class TrashContainersController : ControllerBase
             c.LocationX,
             c.LocationY,
             TrashType = (int)c.TrashType,
-            Status    = (int?)c.Status,
+            Status    = (int)c.Status,
             c.HasSensor,
             c.Temperature,
             c.BatteryPercentage,
             c.IsSeeded
-        }).ToListAsync();
+        });
 
         return Ok(result);
     }
@@ -97,7 +115,7 @@ public sealed class TrashContainersController : ControllerBase
             container.LocationX,
             container.LocationY,
             TrashType = (int)container.TrashType,
-            Status    = (int?)container.Status,
+            Status    = (int)container.Status,
             container.HasSensor,
             container.Temperature,
             container.BatteryPercentage
@@ -260,7 +278,7 @@ public sealed class TrashContainersController : ControllerBase
             container.LocationX,
             container.LocationY,
             TrashType = (int)container.TrashType,
-            Status    = (int?)container.Status,
+            Status    = (int)container.Status,
             container.HasSensor,
             container.Temperature,
             container.BatteryPercentage
