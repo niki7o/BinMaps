@@ -52,6 +52,112 @@ public sealed class AdminController : ControllerBase
     }
     #endregion
 
+    #region Schema Repair
+
+    /// <summary>
+    /// Creates the RouteRuns table if it doesn't exist.
+    /// Runs each DDL statement individually and returns per-step results so
+    /// we can see exactly which SQL fails and why (useful when we have no
+    /// direct DB shell access).  Admin-only.
+    /// </summary>
+    [HttpPost("ensure-route-runs-table")]
+    public async Task<IActionResult> EnsureRouteRunsTable()
+    {
+        // NOTE: No FK constraints — they're nice for integrity but not
+        // required for EF to work, and they're the most common failure point
+        // on restricted hosting (constraint names already exist from a
+        // partial earlier migration, or the DB user lacks REFERENCES perm).
+        var steps = new[]
+        {
+            ("CREATE TABLE", @"
+IF OBJECT_ID(N'[dbo].[RouteRuns]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[RouteRuns] (
+        [Id]                INT             IDENTITY(1,1) NOT NULL,
+        [DriverId]          NVARCHAR(450)   NOT NULL,
+        [DriverName]        NVARCHAR(256)   NOT NULL,
+        [AreaId]            NVARCHAR(50)    NOT NULL,
+        [TrashType]         NVARCHAR(MAX)   NOT NULL,
+        [TruckId]           INT             NULL,
+        [StartedAt]         DATETIME2       NOT NULL,
+        [CompletedAt]       DATETIME2       NULL,
+        [Status]            NVARCHAR(MAX)   NOT NULL,
+        [PlannedDistanceKm] FLOAT           NOT NULL,
+        [PlannedMinutes]    FLOAT           NOT NULL,
+        [CollectedLoad]     FLOAT           NOT NULL,
+        [StopsCompleted]    INT             NOT NULL,
+        [StopsPlanned]      INT             NOT NULL,
+        [StopsJson]         NVARCHAR(MAX)   NULL,
+        CONSTRAINT [PK_RouteRuns] PRIMARY KEY CLUSTERED ([Id] ASC)
+    );
+END;"),
+            ("IX_Area_StartedAt", @"
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_Area_StartedAt' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
+    CREATE NONCLUSTERED INDEX [IX_RouteRuns_Area_StartedAt] ON [dbo].[RouteRuns] ([AreaId] ASC, [StartedAt] ASC);"),
+            ("IX_Driver_StartedAt", @"
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_Driver_StartedAt' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
+    CREATE NONCLUSTERED INDEX [IX_RouteRuns_Driver_StartedAt] ON [dbo].[RouteRuns] ([DriverId] ASC, [StartedAt] ASC);"),
+            ("IX_StartedAt", @"
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_StartedAt' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
+    CREATE NONCLUSTERED INDEX [IX_RouteRuns_StartedAt] ON [dbo].[RouteRuns] ([StartedAt] ASC);"),
+            ("IX_Status", @"
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_Status' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
+    CREATE NONCLUSTERED INDEX [IX_RouteRuns_Status] ON [dbo].[RouteRuns] ([Status] ASC);"),
+            ("IX_TruckId", @"
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_TruckId' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
+    CREATE NONCLUSTERED INDEX [IX_RouteRuns_TruckId] ON [dbo].[RouteRuns] ([TruckId] ASC);"),
+            ("FK_AreaId", @"
+IF OBJECT_ID(N'FK_RouteRuns_Areas_AreaId', N'F') IS NULL
+   AND OBJECT_ID(N'[dbo].[RouteRuns]', N'U') IS NOT NULL
+   AND OBJECT_ID(N'[dbo].[Areas]', N'U') IS NOT NULL
+    ALTER TABLE [dbo].[RouteRuns]
+        ADD CONSTRAINT [FK_RouteRuns_Areas_AreaId]
+        FOREIGN KEY ([AreaId]) REFERENCES [dbo].[Areas]([Id]) ON DELETE NO ACTION;"),
+            ("FK_TruckId", @"
+IF OBJECT_ID(N'FK_RouteRuns_Trucks_TruckId', N'F') IS NULL
+   AND OBJECT_ID(N'[dbo].[RouteRuns]', N'U') IS NOT NULL
+   AND OBJECT_ID(N'[dbo].[Trucks]', N'U') IS NOT NULL
+    ALTER TABLE [dbo].[RouteRuns]
+        ADD CONSTRAINT [FK_RouteRuns_Trucks_TruckId]
+        FOREIGN KEY ([TruckId]) REFERENCES [dbo].[Trucks]([Id]) ON DELETE SET NULL;"),
+        };
+
+        var results = new List<object>();
+
+        foreach (var (name, sql) in steps)
+        {
+            try
+            {
+                await _context.Database.ExecuteSqlRawAsync(sql);
+                results.Add(new { step = name, ok = true, error = (string?)null });
+            }
+            catch (Exception ex)
+            {
+                results.Add(new { step = name, ok = false, error = ex.Message });
+            }
+        }
+
+        // Final existence check
+        bool tableExists;
+        try
+        {
+            var conn = _context.Database.GetDbConnection();
+            if (conn.State != System.Data.ConnectionState.Open) await conn.OpenAsync();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT CAST(CASE WHEN OBJECT_ID(N'[dbo].[RouteRuns]',N'U') IS NULL THEN 0 ELSE 1 END AS BIT)";
+            var raw = await cmd.ExecuteScalarAsync();
+            tableExists = raw is true || (raw is byte b && b == 1);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { tableExists = false, steps = results, probeError = ex.Message });
+        }
+
+        return Ok(new { tableExists, steps = results });
+    }
+
+    #endregion
+
     #region Containers (for Admin Dashboard)
     [HttpGet("containers")]
     public async Task<IActionResult> GetContainers()

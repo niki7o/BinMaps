@@ -456,7 +456,10 @@ public sealed class Program
     /// </summary>
     private static readonly string[] RouteRunsHealSqls =
     [
-        // 1. Table — CREATE only when missing
+        // 1. Table — no FK constraints in this statement: FKs are the most
+        //    common failure point on restricted hosting (constraint names
+        //    already exist from a partial migration, or user lacks REFERENCES
+        //    permission). FKs are added separately below; EF doesn't need them.
         @"IF OBJECT_ID(N'[dbo].[RouteRuns]', N'U') IS NULL
 BEGIN
     CREATE TABLE [dbo].[RouteRuns] (
@@ -475,11 +478,7 @@ BEGIN
         [StopsCompleted]    INT             NOT NULL,
         [StopsPlanned]      INT             NOT NULL,
         [StopsJson]         NVARCHAR(MAX)   NULL,
-        CONSTRAINT [PK_RouteRuns] PRIMARY KEY CLUSTERED ([Id] ASC),
-        CONSTRAINT [FK_RouteRuns_Areas_AreaId]   FOREIGN KEY ([AreaId])
-            REFERENCES [dbo].[Areas]  ([Id]) ON DELETE NO ACTION,
-        CONSTRAINT [FK_RouteRuns_Trucks_TruckId] FOREIGN KEY ([TruckId])
-            REFERENCES [dbo].[Trucks] ([Id]) ON DELETE SET NULL
+        CONSTRAINT [PK_RouteRuns] PRIMARY KEY CLUSTERED ([Id] ASC)
     );
 END;",
 
@@ -498,5 +497,22 @@ END;",
 
         @"IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_TruckId' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
     CREATE NONCLUSTERED INDEX [IX_RouteRuns_TruckId] ON [dbo].[RouteRuns] ([TruckId] ASC);",
+
+        // 7–8. FK constraints — separate statements so a failure here
+        //      (constraint name clash, REFERENCES permission denied) does NOT
+        //      prevent the table and indexes above from being usable.
+        @"IF OBJECT_ID(N'FK_RouteRuns_Areas_AreaId', N'F') IS NULL
+   AND OBJECT_ID(N'[dbo].[RouteRuns]', N'U') IS NOT NULL
+   AND OBJECT_ID(N'[dbo].[Areas]', N'U') IS NOT NULL
+    ALTER TABLE [dbo].[RouteRuns]
+        ADD CONSTRAINT [FK_RouteRuns_Areas_AreaId]
+        FOREIGN KEY ([AreaId]) REFERENCES [dbo].[Areas]([Id]) ON DELETE NO ACTION;",
+
+        @"IF OBJECT_ID(N'FK_RouteRuns_Trucks_TruckId', N'F') IS NULL
+   AND OBJECT_ID(N'[dbo].[RouteRuns]', N'U') IS NOT NULL
+   AND OBJECT_ID(N'[dbo].[Trucks]', N'U') IS NOT NULL
+    ALTER TABLE [dbo].[RouteRuns]
+        ADD CONSTRAINT [FK_RouteRuns_Trucks_TruckId]
+        FOREIGN KEY ([TruckId]) REFERENCES [dbo].[Trucks]([Id]) ON DELETE SET NULL;",
     ];
 }
