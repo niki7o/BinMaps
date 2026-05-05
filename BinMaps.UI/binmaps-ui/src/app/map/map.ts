@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, ViewEncapsulation, inject, OnInit, OnDestroy } from '@angular/core';
+﻿import { Component, AfterViewInit, ViewEncapsulation, inject, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -10,7 +10,6 @@ import { ContainerSignalRService } from '../services/signalr.service';
 import { ConfirmService } from '../shared/confirm-dialog/confirm.service';
 import { ToastService } from '../shared/toast/toast.service';
 import { environment } from '../../environments/environment';
-
 
 interface Bin {
   id: number;
@@ -37,11 +36,6 @@ interface RouteResult {
   containersCount: number;
   estimatedTimeMinutes: number;
   message: string;
-  /** Truck depot coordinates (lng/lat) — present when backend sends them.
-   *  Used to build a closed OSRM round-trip so the truck animates back to
-   *  its starting position along actual roads rather than stopping at the
-   *  last container.  depotX = longitude, depotY = latitude (same convention
-   *  as every other entity: X = horizontal = longitude). */
   depotX?: number;
   depotY?: number;
 }
@@ -62,9 +56,6 @@ interface RouteStop {
   estimatedLoad: number;
 }
 
-/** Sentinel thrown by openRouteRun() when the server returns 409 — the
- *  navigation flow catches it and aborts cleanly. Distinct error class so
- *  generic catches don't swallow it as "unknown HTTP error". */
 class RouteLockedError extends Error {
   constructor(message: string) {
     super(message);
@@ -72,8 +63,6 @@ class RouteLockedError extends Error {
   }
 }
 
-/** "преди 12 минути" / "току-що". Bulgarian phrasing matches the rest of
- *  the user-facing strings in this app. */
 function humanAgo(when: Date): string {
   const ms = Date.now() - when.getTime();
   const sec = Math.max(0, Math.round(ms / 1000));
@@ -85,12 +74,6 @@ function humanAgo(when: Date): string {
   return `преди ${hr} ч.`;
 }
 
-/**
- * Deterministic colour from a driverId — same driver always gets the
- * same colour so trucks don't flicker as updates arrive, and we don't
- * need to maintain a global palette / counter. Mirrors the function in
- * live-driver-tracking.service.ts so the two views agree on colour.
- */
 function colorForDriverId(driverId: string): string {
   const palette = [
     '#10b981', '#3b82f6', '#06b6d4', '#f59e0b',
@@ -120,8 +103,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private map!: L.Map;
   private cluster!: any;
   private allBins: Bin[] = [];
-  /** Map bin id -> Leaflet marker. Used for in-place updates so that
-   *  clicking a bin doesn't close its popup on the next SignalR refresh. */
   private binMarkers: Map<number, L.Marker> = new Map();
   private activeFilter = { type: 'all', fill: 'all', zone: 'all', sort: 'none' };
   private filterEl?: HTMLElement;
@@ -134,16 +115,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private searchMarker?: L.Marker;
   private searchCircles: L.Circle[] = [];
 
-  // Live view of other drivers that are currently on a route. Visible to
-  // every authenticated role (admins, drivers, citizens) since the hub
-  // broadcasts to all groups now.
-  //  key: driverId, value: the Leaflet marker shown for that driver.
   private liveDriverMarkers: Map<string, L.Marker> = new Map();
-  //  key: driverId, value: the dashed route polyline for that driver.
   private liveDriverRoutes: Map<string, L.Polyline> = new Map();
-  //  key: driverId, value: runId (used to avoid re-fetching the same route).
   private liveDriverRunIds: Map<string, number> = new Map();
-  //  key: driverId, value: the full latest event (for panel info).
   liveDrivers = new Map<string, {
     name: string; areaId: string; lat: number; lng: number;
     stopIndex: number; totalStops: number; load: number; at: string;
@@ -151,26 +125,17 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }>();
   showLiveDriversPanel = true;
 
-  // RAF-driven smooth lerp between consecutive position updates. Each entry
-  // tracks where the marker currently sits and where it's heading; the
-  // animation loop interpolates between them so trucks glide instead of
-  // jumping each tick. Tab-hidden ⇒ rAF is throttled to ~1Hz; on
-  // visibilitychange we snap to the target so the catch-up isn't visible.
   private liveDriverAnim = new Map<string, {
     fromLat: number; fromLng: number;
     toLat:   number; toLng:   number;
     fromHeading: number; toHeading: number;
-    startedAt: number;       // performance.now()
+    startedAt: number;
     durationMs: number;
   }>();
   private liveDriverAnimRAF: number | null = null;
-  /** ~1.1× the broadcast interval (server pushes ~1 Hz). Slightly longer
-   *  so the marker is still gliding when the next packet arrives, avoiding
-   *  visible "stop-and-go" between updates. */
   private static readonly LIVE_DRIVER_LERP_MS = 1100;
   private liveDriverVisHandler?: () => void;
 
-  // Current driver's telemetry state (for broadcasting).
   private driverRunId = 0;
   private driverLastBroadcastAt = 0;
   private driverLastLatLng: [number, number] | null = null;
@@ -180,14 +145,14 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   reportDescription = '';
   selectedReportType = 'Full';
   reportSubmitting = false;
-  reportCheckingPhoto = false;   
+  reportCheckingPhoto = false;
   photoNoBinWarning = false;
   photoCheckingPreview = false;
   private photoAnalysisCache: { containerDetected: boolean; detectedClass: string; confidence: number } | null = null;
 
-  navigationMode: 'auto' | 'step' = 'auto';  
-  stepPending = false;                       
-  private _stepResolve?: () => void;           
+  navigationMode: 'auto' | 'step' = 'auto';
+  stepPending = false;
+  private _stepResolve?: () => void;
 
   currentCollectedStop: {
     id:       number;
@@ -195,8 +160,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     load:     number;
     capacity: number;
   } | null = null;
-
-
   aiConflictModal: {
     visible:     boolean;
     variant:     'conflict' | 'noBin';
@@ -246,9 +209,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   showRoutePanel = true;
   currentStop = 0;
   currentTruckLoad = 0;
-  /** Saved just before `currentTruckLoad` is reset to 0 at the end of each
-   *  navigation loop. `closeRouteRun()` reads this instead of
-   *  `currentTruckLoad` (which is already 0 by the time the API call fires). */
   private finalCollectedLoad = 0;
 
   private baseLayers: Record<string, L.TileLayer> = {};
@@ -260,16 +220,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     { key: 'light',     label: 'Светла'      }
   ];
 
-  // ── 3D view ──────────────────────────────────────────────────────────────
   show3DView = false;
   map3dFullscreen = false;
   private map3d: any = null;
   private map3dStyleLoaded = false;
 
-  // Token comes from src/environments/environment.ts — never hardcode secrets.
   private readonly MAPBOX_TOKEN = environment.mapboxToken;
 
-  /** Mapbox style URL per 2D style key */
   private readonly map3dStyles: Record<string, string> = {
     standard:  'mapbox://styles/nik1t0/cmnll3qxs000401qw6oph0qm3',
     voyager:   'mapbox://styles/mapbox/outdoors-v12',
@@ -277,17 +234,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     light:     'mapbox://styles/mapbox/light-v11'
   };
 
-  // ── Speed control ─────────────────────────────────────────────────────────
   speedMultiplier = 1;
   readonly speedOptions = [1, 5, 10, 20, 50];
-
-
-  /**
-   * Normalise a trashType value that may arrive as a number (0-3) OR as the
-   * enum name string ("Mixed", "Plastic", "Paper", "Glass") because the API
-   * configures JsonStringEnumConverter.  Returns the numeric index so every
-   * downstream array lookup works correctly.
-   */
   private trashIdx(type: number | string | null | undefined): number {
     if (type === null || type === undefined) return 0;
     if (typeof type === 'number') return type;
@@ -303,9 +251,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private get brokenIcon() { return `${this.ICONS_DIR}/bin-broken.svg`;         }
   private get sensorBrokenIcon()  { return `${this.ICONS_DIR}/bin-sensor-broken.svg`;  }
   private get sensorIcon() { return `${this.ICONS_DIR}/sensor-dot.svg`;         }
-
-
-
   ngOnInit() {
     this.authService.currentUser$
       .pipe(takeUntil(this.destroy$))
@@ -313,10 +258,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         this.currentUser = u;
         this.syncRole();
       });
-
-    // SignalR is started at app-root level (app.ts) as soon as the user logs
-    // in — start() is idempotent so this is safe, but the call here is now
-    // redundant and has been removed to avoid confusion.
 
     this.signalR.containerUpdates$.subscribe((updates: any[]) => {
       if (!this.allBins.length) return;
@@ -335,9 +276,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.renderBins(this.filtered());
     });
 
-    // Admin deleted a container somewhere (here or another tab) — drop the
-    // marker from the map immediately so no-one keeps interacting with a
-    // container that no longer exists.
     this.signalR.containerRemoved$
       .pipe(takeUntil(this.destroy$))
       .subscribe(id => this.removeBinLocally(id));
@@ -351,21 +289,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         }
       });
 
-    // Every authenticated role (admin/driver/citizen) sees other drivers.
-    // The hub now fans the `DriverPosition` event to admins + drivers +
-    // users groups, so this single subscription works for everyone.
     this.signalR.driverPositions$
       .pipe(takeUntil(this.destroy$))
       .subscribe(ev => this.onDriverPosition(ev));
 
-    // Snap-to-truth on tab return: rAF is throttled to ~1Hz when the tab
-    // is hidden, so the lerp pauses. The SignalR connection is still alive
-    // (or auto-reconnecting), so updates *do* arrive — but we want the
-    // markers to land on the most recent position when the user comes back,
-    // not finish a 1-second lerp from where they were 4 minutes ago.
-    //
-    // We also re-pull the snapshot to pick up any *new* runs that started
-    // while the tab was hidden — those wouldn't be in our local map yet.
     this.liveDriverVisHandler = () => {
       if (document.visibilityState !== 'visible') return;
       this.snapAllLiveDriversToTarget();
@@ -383,14 +310,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }): void {
     if (!this.map) return;
 
-    // Don't render *yourself* on the live overlay — drivers running their
-    // own route already have their personal `truckMarker`. Avoids two
-    // markers fighting at the same coordinates.
-    //
-    // Two-layer check: (1) ID match is the authoritative signal — the hub
-    // broadcasts the ASP.NET Identity NameIdentifier which must equal the
-    // id returned by the login API.  (2) Name match is a belt-and-suspenders
-    // fallback in case the claim format ever differs (GUID casing, etc.).
     if (this.currentUser && (
       ev.driverId   === this.currentUser.id       ||
       ev.driverName === this.currentUser.userName
@@ -399,7 +318,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     if (ev.phase === 'end') {
       const m = this.liveDriverMarkers.get(ev.driverId);
       if (m) { this.map.removeLayer(m); this.liveDriverMarkers.delete(ev.driverId); }
-      // Remove the route polyline too.
       const poly = this.liveDriverRoutes.get(ev.driverId);
       if (poly) { this.map.removeLayer(poly); this.liveDriverRoutes.delete(ev.driverId); }
       this.liveDriverRunIds.delete(ev.driverId);
@@ -408,11 +326,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
-    // All other drivers' markers are yellow — visually distinct from the
-    // viewer's own green truck and from the red route lines. Reuse the
-    // colour once assigned so the icon doesn't flicker on subsequent updates.
     const previous = this.liveDrivers.get(ev.driverId);
-    const color = previous?.color ?? '#fbbf24';
+    const color = previous?.color ?? colorForDriverId(ev.driverId);
 
     this.liveDrivers.set(ev.driverId, {
       name:       ev.driverName || 'Шофьор',
@@ -432,7 +347,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const target: L.LatLngExpression = [ev.lat, ev.lng];
 
     if (!marker) {
-      // First sighting — drop the marker straight at the target.
       marker = L.marker(target, {
         icon: this.makeLiveDriverIcon(ev.driverName, ev.heading, color),
         zIndexOffset: 1800,
@@ -446,8 +360,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         { maxWidth: 280, minWidth: 220, className: 'live-driver-popup-wrapper' },
       );
       this.liveDriverMarkers.set(ev.driverId, marker);
-      // Initialise an anim entry sitting on the target so subsequent
-      // updates have a "from" to lerp from.
       this.liveDriverAnim.set(ev.driverId, {
         fromLat: ev.lat, fromLng: ev.lng,
         toLat:   ev.lat, toLng:   ev.lng,
@@ -456,16 +368,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         durationMs: 0,
       });
 
-      // Fetch and draw the planned route polyline the first time we see
-      // this driver — if we have a runId and the user is authenticated.
       if (ev.runId && !this.liveDriverRoutes.has(ev.driverId)) {
         this.fetchAndDrawDriverRoute(ev.driverId, ev.runId, color);
       }
     } else {
-      // Subsequent update — kick off a lerp from the current rendered
-      // position to the new target. Heading is interpolated on the
-      // shortest-arc path so a turn from 350° → 10° goes the right way
-      // around (not the long way around the compass).
       const here = marker.getLatLng();
       this.liveDriverAnim.set(ev.driverId, {
         fromLat: here.lat,    fromLng: here.lng,
@@ -478,12 +384,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       marker.setTooltipContent(
         `${ev.driverName || 'Шофьор'} · ${ev.areaId} · спирка ${ev.stopIndex}/${ev.totalStops}`
       );
-      // Update popup content to reflect the latest telemetry.
       marker.setPopupContent(this.makeLiveDriverPopup(ev.driverName, ev.areaId, ev.stopIndex, ev.totalStops, ev.load, ev.at, color, ev.truck));
 
-      // If we now have a runId for the first time, OR the driver started a
-      // NEW run (runId changed), clear the old polyline first so we don't
-      // leave ghost lines from the previous route on the map.
       if (ev.runId && this.liveDriverRunIds.get(ev.driverId) !== ev.runId) {
         const oldPoly = this.liveDriverRoutes.get(ev.driverId);
         if (oldPoly) {
@@ -499,9 +401,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.ensureLiveDriverAnimLoop();
   }
 
-  /** Builds the HTML string for a live-driver click popup. All styles are
-   *  inline so they work inside Leaflet's popup container regardless of
-   *  Angular's style encapsulation or Leaflet's own cascade. */
   private makeLiveDriverPopup(
     name: string, areaId: string, stopIndex: number, totalStops: number,
     load: number, at: string, color: string,
@@ -550,56 +449,50 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       </div>`;
   }
 
-  /**
-   * Fetches the planned stops for a run and draws a route polyline in the
-   * same red style as the driver's own route — so admins and other drivers
-   * can see the full planned path on the map.
-   */
-  private fetchAndDrawDriverRoute(driverId: string, runId: number, _color: string): void {
+  private fetchAndDrawDriverRoute(driverId: string, runId: number, color: string): void {
     const token = this.getToken();
     if (!token) return;
-    // Record we've started fetching so duplicate calls don't pile up.
     this.liveDriverRunIds.set(driverId, runId);
 
-    this.http.get<{
-      stops: Array<{ lat: number; lng: number }>;
-    }>(
+    this.http.get<{ stops: Array<{ lat: number; lng: number }> }>(
       `${this.API_URL}/trucks/route/${runId}`,
       { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) },
     ).pipe(takeUntil(this.destroy$))
      .subscribe({
-       next: detail => {
+       next: async detail => {
          if (!detail?.stops?.length || !this.map) return;
-         // Already have a polyline for this driver (race-condition guard).
          if (this.liveDriverRoutes.has(driverId)) return;
 
-         const coords: [number, number][] = detail.stops
-           .map(s => [s.lat, s.lng] as [number, number]);
+         const fallback: [number, number][] = detail.stops.map(s => [s.lat, s.lng]);
+         let coords: [number, number][] = fallback;
 
-         // Red dashed line — identical style to the driver's own routeLine so
-         // the visual language is consistent: every planned route looks the same.
+         try {
+           const osrm = detail.stops.map(s => `${s.lng},${s.lat}`).join(';');
+           const d = await (await fetch(
+             `https://router.project-osrm.org/route/v1/driving/${osrm}?overview=full&geometries=geojson`
+           )).json();
+           if (d.code === 'Ok' && d.routes?.[0]) {
+             coords = d.routes[0].geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]);
+           }
+         } catch { /* fallback already set */ }
+
+         const driverColor = color || colorForDriverId(driverId);
          const poly = L.polyline(coords, {
-           color:     '#ef4444',
+           color:     driverColor,
            weight:    5,
            opacity:   0.85,
            dashArray: '10, 5',
            lineCap:   'round',
            lineJoin:  'round',
          }).addTo(this.map);
-         // Bring the driver's marker on top of the line by increasing zIndex.
          const marker = this.liveDriverMarkers.get(driverId);
          if (marker) (marker as any).setZIndexOffset(1800);
          this.liveDriverRoutes.set(driverId, poly);
        },
-       error: () => { /* non-critical — map still works without the line */ },
+       error: () => {},
      });
   }
 
-  /**
-   * Single rAF loop that drives every live-driver marker. We don't
-   * spawn one per driver — a single loop iterates the anim map and ticks
-   * all of them, which keeps the cost flat as the fleet grows.
-   */
   private ensureLiveDriverAnimLoop(): void {
     if (this.liveDriverAnimRAF !== null) return;
     const tick = () => {
@@ -612,14 +505,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
         if (a.durationMs <= 0) continue;
         const t = Math.min(1, (now - a.startedAt) / a.durationMs);
-        // Ease-out cubic — fast at first, settles into the new position.
         const eased = 1 - Math.pow(1 - t, 3);
 
         const lat = a.fromLat + (a.toLat - a.fromLat) * eased;
         const lng = a.fromLng + (a.toLng - a.fromLng) * eased;
         m.setLatLng([lat, lng]);
 
-        // Heading: shortest-arc lerp.
         const diff = ((a.toHeading - a.fromHeading + 540) % 360) - 180;
         const heading = a.fromHeading + diff * eased;
         const driver = this.liveDrivers.get(driverId);
@@ -635,11 +526,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.liveDriverAnimRAF = requestAnimationFrame(tick);
   }
 
-  /**
-   * Called on tab-visibility return. Cancels the current lerp and slams
-   * every marker onto its target position so there's no visible
-   * catch-up animation when the user comes back to the tab.
-   */
   private snapAllLiveDriversToTarget(): void {
     for (const [driverId, a] of this.liveDriverAnim.entries()) {
       const m = this.liveDriverMarkers.get(driverId);
@@ -649,7 +535,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       if (driver) {
         m.setIcon(this.makeLiveDriverIcon(driver.name, a.toHeading, driver.color));
       }
-      // Mark anim as completed so the rAF loop doesn't re-animate from here.
       a.fromLat = a.toLat;
       a.fromLng = a.toLng;
       a.fromHeading = a.toHeading;
@@ -664,14 +549,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private makeLiveDriverIcon(name: string, heading: number, color: string): L.DivIcon {
     const initial = (name || '?').trim().charAt(0).toUpperCase() || '?';
     const deg = Number.isFinite(heading) ? Math.round(heading) : 0;
-    // Darker shade for outlines / wheels — computed from color or fallback to near-black.
     const dark = color === '#fbbf24' ? '#78350f' : '#0f172a';
     return L.divIcon({
       className: '',
       iconSize: [56, 56],
       iconAnchor: [28, 28],
-      // Top-down truck icon — rotates with heading. Pulsing ring sits on a
-      // separate non-rotating layer so it stays circular at all orientations.
       html: `
         <div style="position:relative;width:56px;height:56px;display:flex;align-items:center;justify-content:center" title="${name || 'Шофьор'}">
           <!-- Pulsing location ring -->
@@ -737,11 +619,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.loadBins();
     this.initFilterControl();
 
-    // Catch up on already-running routes so trucks appear immediately
-    // instead of waiting for the next ~1Hz broadcast. Deep-link from
-    // admin "Активни (live)" cards passes ?focusDriver=<id>; once the
-    // snapshot lands we centre the map on that driver and skip the
-    // default zoom-to-bins behaviour.
     const focusDriverId = this.route.snapshot.queryParamMap.get('focusDriver');
     this.fetchActiveDriversSnapshot(focusDriverId);
 
@@ -759,15 +636,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.destroy$.subscribe({ complete: () => clearInterval(refreshId) });
   }
 
-  /**
-   * Pulls the snapshot of currently-active route runs and feeds each
-   * one through the same onDriverPosition() handler so live markers
-   * appear without waiting for the next SignalR push. Called once on
-   * mount and every time the tab returns to visible.
-   *
-   * If `focusDriverId` is provided (from a deep-link), the map is
-   * centred on that driver as soon as their snapshot row lands.
-   */
   private fetchActiveDriversSnapshot(focusDriverId?: string | null): void {
     const token = this.getToken();
     if (!token) return;
@@ -788,7 +656,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
        next: rows => {
          for (const r of rows ?? []) {
            if (r.lastPosition) {
-             // Synthesise the same shape onDriverPosition expects.
              this.onDriverPosition({
                driverId:   r.driverId,
                driverName: r.driverName,
@@ -805,16 +672,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
                truck:      r.truck ? { plate: r.truck.plate, capacity: r.truck.capacity } : null,
              });
            } else if (r.runId && !this.liveDriverRoutes.has(r.driverId)) {
-             // No GPS yet — still draw the planned route polyline so admins
-             // and other drivers can see where this truck is headed.
              const color = colorForDriverId(r.driverId);
              this.fetchAndDrawDriverRoute(r.driverId, r.runId, color);
            }
          }
 
-         // Deep-link target — centre on the requested driver once they're
-         // in our local state. Bail silently if the driver isn't actually
-         // active (run finished between the click and the snapshot).
          if (focusDriverId && this.map) {
            const d = this.liveDrivers.get(focusDriverId);
            if (d) {
@@ -824,7 +686,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
            }
          }
        },
-       error: () => { /* harmless — keep whatever state we already have */ },
+       error: () => {},
      });
   }
 
@@ -832,17 +694,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
 
-    // Notify admins that this driver's run ended if we were navigating.
     if (this.navigationActive && this.driverLastLatLng) {
       this.broadcastDriverPhase('end', this.driverLastLatLng);
     }
     this.navigationActive = false;
 
     for (const m of this.liveDriverMarkers.values()) {
-      try { this.map?.removeLayer(m); } catch { /* map already torn down */ }
+      try { this.map?.removeLayer(m); } catch {}
     }
     for (const p of this.liveDriverRoutes.values()) {
-      try { this.map?.removeLayer(p); } catch { /* map already torn down */ }
+      try { this.map?.removeLayer(p); } catch {}
     }
     this.liveDriverMarkers.clear();
     this.liveDriverRoutes.clear();
@@ -858,13 +719,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.liveDriverVisHandler = undefined;
     }
 
-    // SignalR lifecycle is now owned by app.ts — do NOT stop it here because
-    // the admin dashboard / notification panel still need the connection when
-    // the user navigates away from the map.
   }
-
-
-
   private syncRole() {
     if (!this.currentUser) {
       this.isGuest = true;
@@ -879,9 +734,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.isDriver = this.currentUser.role === 'Driver';
     this.isUser = this.currentUser.role === 'User';
   }
-
-
-
   private initMap() {
     this.cluster = L.markerClusterGroup({
       maxClusterRadius: 60,
@@ -908,17 +760,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       maxZoom: 18,
       maxBounds: [[42.55, 23.15], [42.85, 23.50]],
       maxBoundsViscosity: 0.8,
-      // Bug fix: Shift+drag box-zoom creates a translucent selection rect and
-      // can leave the map black after release — disable it entirely.
       boxZoom: false,
-      // Bug fix: remove the default Leaflet attribution link at the bottom.
       attributionControl: false
     });
 
     this.baseLayers['standard']  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { className: 'map-tiles' });
     this.baseLayers['voyager']   = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png');
-    // Bug fix: maxNativeZoom:17 prevents "map data not yet available" on
-    // ESRI's satellite layer when zoomed to 18 — tiles are stretched instead.
     this.baseLayers['satellite'] = L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       { maxNativeZoom: 17 }
@@ -930,8 +777,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.baseLayers[this.currentMapStyle].addTo(this.map);
     this.map.addLayer(this.cluster);
 
-    // Wire admin delete button (rendered inside popup HTML) once, using
-    // event delegation so we don't need to rebind on every popup open.
     this.map.on('popupopen', (e: any) => {
       const root: HTMLElement | undefined = e?.popup?.getElement?.();
       if (!root) return;
@@ -953,7 +798,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.currentMapStyle = key;
     localStorage.setItem('mapStyle', key);
 
-    // Sync style in the Mapbox 3D map if it is active.
     if (this.map3d && this.map3dStyleLoaded) {
       this.map3dStyleLoaded = false;
       this.clearAll3DLayers();
@@ -966,9 +810,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       });
     }
   }
-
-
-
   private loadBins() {
     this.http.get<Bin[]>(`${this.API_URL}/containers`).subscribe({
       next: bins => {
@@ -1004,9 +845,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     return b;
   }
-
-
-
   async generateRoute() {
     if (!this.selectedAreaId) {
       await this.confirmSvc.notify({ title: 'Изберете зона', message: 'Моля изберете зона преди да генерирате маршрут.', variant: 'warning' });
@@ -1032,13 +870,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         await this.confirmSvc.notify({ title: 'Няма маршрут', message: res?.message || 'Няма контейнери за събиране в тази зона.', variant: 'info' });
         return;
       }
-
-
       this.routeResult = res;
       this.routeActive = true;
       await this.visualizeRoute();
 
-      // If 3D view is open, draw the route there too.
       if (this.show3DView && this.map3dStyleLoaded) {
         this.sync3DRoute();
       }
@@ -1079,11 +914,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const route = this.routeResult.route;
 
     try {
-      // Build a closed round-trip: depot → stop1 → … → stopN → depot.
-      // This makes the truck animate back to its starting position along
-      // actual roads (via OSRM) instead of teleporting or stopping at the
-      // last container.  Fall back to stop-only if the backend doesn't yet
-      // supply depot coordinates (older builds / empty routes).
       const depotX = this.routeResult.depotX;
       const depotY = this.routeResult.depotY;
       const hasDepot = depotX != null && depotY != null &&
@@ -1180,9 +1010,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       L.latLngBounds(route.map(s => [s.locationY, s.locationX] as [number, number]))
     );
   }
-
-
-
   async startNavigation() {
     if (!this.routeResult?.route.length || !this.realRouteCoords.length) {
       await this.confirmSvc.notify({ title: 'Маршрутът не е готов', message: 'Генерирайте маршрут преди да стартирате навигация.', variant: 'warning' });
@@ -1194,10 +1021,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.currentTruckLoad = 0;
     this.stepPending = false;
 
-    // Persist the run on the server BEFORE the animation starts so admins
-    // viewing history can see it even if the driver closes the tab mid-run.
-    // Falls back to a local-only correlation id if the request fails — live
-    // tracking still works, only history is lost.
     this.driverRunId = Date.now();
     this.driverLastBroadcastAt = 0;
     this.driverLastLatLng = null;
@@ -1206,20 +1029,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       const persistedId = await this.openRouteRun();
       if (persistedId > 0) this.driverRunId = persistedId;
     } catch (err) {
-      // Lock conflict — don't run the route at all. The toast already
-      // told the user who's holding it; just bail out of navigation.
       if (err instanceof RouteLockedError) {
         this.navigationActive = false;
         this.routeActive = false;
         return;
       }
-      // Other failures are non-fatal: keep local id, admins still see
-      // live telemetry, only history is lost.
     }
 
     const { truckIcon, path, stopIndices } = this.buildNavSetup();
 
-    // Announce to admins that a route has started.
     this.broadcastDriverPhase('start', path[0]);
 
     if (this.navigationMode === 'step') {
@@ -1228,20 +1046,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       await this.runAutoNavigation(truckIcon, path, stopIndices);
     }
 
-    // Always announce end, even if navigation was cancelled mid-way.
     this.broadcastDriverPhase('end', this.driverLastLatLng ?? path[0]);
 
-    // Close the persisted run. Only attempts if we have a real server id
-    // (driverRunId > 1e12 means it's the local timestamp fallback).
     if (this.driverRunId > 0 && this.driverRunId < 1e12) {
-      try { await this.closeRouteRun(); } catch { /* non-fatal */ }
+      try { await this.closeRouteRun(); } catch {}
     }
   }
 
-  /**
-   * POST the planned route to the server and return the generated runId.
-   * Returns 0 if the call fails or is not applicable.
-   */
   private async openRouteRun(): Promise<number> {
     const token = this.getToken();
     if (!token || !this.routeResult) return 0;
@@ -1275,9 +1086,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       );
       return res?.runId ?? 0;
     } catch (err: any) {
-      // 409 Conflict ⇒ another driver already holds this (area, trashType).
-      // Show a clear message identifying the holder and give up cleanly so
-      // the truck app doesn't half-start a route it can't actually own.
       if (err?.status === 409) {
         const e = err.error ?? {};
         const holder = e.lockedByDriverName || 'друг шофьор';
@@ -1294,9 +1102,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         throw new RouteLockedError(msg);
       }
 
-      // 400 Bad Request ⇒ validation failed on the server (missing area,
-      // missing truck, etc.). Surface the actual server message instead of
-      // letting it die silently in the network tab.
       if (err?.status === 400) {
         const serverMsg = err?.error?.message ?? 'Невалидна заявка.';
         this.toast.error({
@@ -1307,9 +1112,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         throw err;
       }
 
-      // 503 Service Unavailable ⇒ DB hiccup or schema issue on the server.
-      // Distinct from 400 (which is the user's input) — phrase it so the
-      // user knows to retry rather than try to "fix" their request.
       if (err?.status === 503) {
         const serverMsg = err?.error?.message ?? 'Сървърна грешка.';
         this.toast.error({
@@ -1320,8 +1122,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         throw err;
       }
 
-      // Anything else (500, network, etc.) — show a fallback toast so the
-      // user sees something in the UI rather than just a console error.
       const fallback = err?.error?.message ?? err?.message ?? 'Сървърна грешка.';
       this.toast.error({
         title: 'Грешка при стартиране',
@@ -1332,10 +1132,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Mark the persisted run as completed (or cancelled if the driver
-   * quit early). Called once at the end of startNavigation().
-   */
   private async closeRouteRun(): Promise<void> {
     const token = this.getToken();
     if (!token) return;
@@ -1343,9 +1139,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const totalStops = this.routeResult?.route.length ?? 0;
     const outcome = this.currentStop >= totalStops ? 'completed' : 'cancelled';
 
-    // currentTruckLoad has already been reset to 0 by the navigation loop
-    // before this call — use finalCollectedLoad which was captured just
-    // before the reset.
     const body = {
       stopsCompleted: this.currentStop,
       collectedLoad: this.finalCollectedLoad,
@@ -1361,11 +1154,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     );
   }
 
-  /**
-   * Throttled broadcast of current driver position. Called from the
-   * animation loops every frame — only actually sends if enough time
-   * has elapsed since the last broadcast (default 700ms).
-   */
   private broadcastDriverTelemetry(
     coord: [number, number],
     prevCoord: [number, number] | null,
@@ -1379,12 +1167,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     const heading = prevCoord ? this.bearing(prevCoord, coord) : 0;
 
-    // Approximate speed from frame-to-frame delta. Rough but good enough
-    // for a status indicator.
     let speedKmh = 0;
     if (prevCoord && this.driverLastBroadcastAt > 0) {
       const km = this.dist(prevCoord, coord);
-      const dtH = Math.max(0.0001, 0.7 / 3600); // 700ms assumption
+      const dtH = Math.max(0.0001, 0.7 / 3600);
       speedKmh = Math.min(90, km / dtH);
     }
 
@@ -1404,7 +1190,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.driverLastLatLng = coord;
   }
 
-  /** Announce a discrete phase change (start / end). Not throttled. */
   private broadcastDriverPhase(phase: 'start' | 'end', coord: [number, number]): void {
     if (!this.isDriver && !this.isAdmin) return;
     this.signalR.sendDriverPosition({
@@ -1494,7 +1279,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const capacity = route[idx].capacity > 0 ? route[idx].capacity : 1100;
     const actualFill = bin != null
       ? bin.fillPercentage
-      : route[idx].fillPercentage;                 // fallback to route snapshot
+      : route[idx].fillPercentage;
     const actualLoad = Math.round((actualFill / 100) * capacity);
 
     this.currentCollectedStop = {
@@ -1575,13 +1360,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         this.doCollectStop(si, route, token);
         needsRerender = true;
         si++;
-        // A stop was reached — broadcast once at the stop point so admins
-        // see the "pause" phase explicitly, not just a throttled move.
         this.broadcastDriverTelemetry(path[i], i > 0 ? path[i - 1] : null, 'stop');
       }
       if (needsRerender) this.renderBins(this.filtered());
 
-      // Throttled (700ms) telemetry to admins.
       this.broadcastDriverTelemetry(path[i], i > 0 ? path[i - 1] : null, 'move');
 
       await new Promise(r => setTimeout(r, Math.max(4, Math.floor(22 / this.speedMultiplier))));
@@ -1592,12 +1374,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     this.navigationActive = false;
     const load = this.currentTruckLoad;
-    // Capture BEFORE reset so closeRouteRun (called from startNavigation
-    // after this function returns) can persist the correct collected load.
     this.finalCollectedLoad = load;
     this.currentTruckLoad = 0;
-    this.currentCollectedStop = null;   // clear stale UI data
-    this.loadBins();   // refresh from server after emptying
+    this.currentCollectedStop = null;
+    this.loadBins();
 
     this.toast.success({
       title: '✅ Маршрут завършен',
@@ -1665,11 +1445,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     if (this.navigationActive) {
       this.navigationActive = false;
       const load = this.currentTruckLoad;
-      // Capture BEFORE reset so closeRouteRun can persist the correct value.
       this.finalCollectedLoad = load;
       this.currentTruckLoad = 0;
-      this.currentCollectedStop = null;   // clear stale UI data
-      this.loadBins();   // refresh from server after emptying
+      this.currentCollectedStop = null;
+      this.loadBins();
 
       this.toast.success({
         title: '✅ Маршрут завършен',
@@ -1714,18 +1493,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.currentTruckLoad = 0;
     this.loadBins();
   }
-
-
-
   stopRoute() {
     this.navigationActive = false;
-    // Unblock runStepNavigation if it is awaiting user confirmation — without
-    // this the Promise created in confirmNextStep() never resolves, leaking a
-    // hung async loop.
     this._stepResolve?.();
     this._stepResolve = undefined;
     this.stepPending = false;
-    this.currentCollectedStop = null;   // Bug 4: reset stale UI data
+    this.currentCollectedStop = null;
     this.clearRoute();
     this.routeResult = null;
     this.routeActive = false;
@@ -1741,7 +1514,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.routeMarkers.forEach(m => this.map.removeLayer(m));
     this.routeMarkers = [];
     this.realRouteCoords = [];
-    // Bug 3 fix: search is an independent feature — do NOT call clearSearch() here.
     this.clear3DRouteLayers();
   }
 
@@ -1753,7 +1525,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       .forEach(id => { try { if (this.map3d.getSource(id)) this.map3d.removeSource(id); } catch {} });
   }
 
-  /** Remove all BinMaps-added layers/sources from 3D map (called on style change) */
   private clearAll3DLayers(): void {
     if (!this.map3d) return;
     [
@@ -1776,27 +1547,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.showRoutePanel = show;
     setTimeout(() => this.map?.invalidateSize(), 350);
   }
-
-
-
-  /**
-   * Diff-update markers on the cluster layer.
-   *
-   * Previously this method did `cluster.clearLayers()` followed by re-adding
-   * every marker. Every SignalR push (once per minute from the dynamics
-   * service) rebuilt the whole cluster — which closed any open popup and,
-   * combined with `chunkedLoading: true`, made the icons briefly disappear
-   * and "reload" on the map. Users perceived that as a loading spinner.
-   *
-   * The new version updates existing markers in place (icon + popup HTML)
-   * and only adds/removes markers whose id entered or left the filtered set.
-   * A marker with an open popup is preserved, so the popup stays visible
-   * while its numbers tick forward in real time.
-   */
   private renderBins(bins: Bin[]) {
     const nextIds = new Set(bins.map(b => b.id));
 
-    // 1) Remove markers that no longer belong to the filtered set.
     for (const [id, marker] of this.binMarkers) {
       if (!nextIds.has(id)) {
         this.cluster.removeLayer(marker);
@@ -1804,7 +1557,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       }
     }
 
-    // 2) Add new markers, refresh existing ones in place.
     bins.forEach(bin => {
       let marker = this.binMarkers.get(bin.id);
 
@@ -1837,8 +1589,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         return;
       }
 
-      // Existing marker — refresh icon and popup HTML in place, so the
-      // live numbers update without destroying the DOM or closing the popup.
       marker.setIcon(this.createBinIcon(bin));
 
       const popup = marker.getPopup();
@@ -1846,29 +1596,23 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         popup.setContent(this.createPopup(bin));
       }
 
-      // If coordinates somehow changed (admin edit), reposition without
-      // re-adding to the cluster.
       const ll = marker.getLatLng();
       if (ll.lat !== bin.locationY || ll.lng !== bin.locationX) {
         marker.setLatLng([bin.locationY, bin.locationX]);
       }
     });
 
-    // Keep 3D map in sync with whatever filter/state produced this render.
     if (this.show3DView && this.map3dStyleLoaded) {
       this.sync3DBins();
     }
   }
 
-  // Zone boundaries were removed — the map no longer draws polygons around
-  // area groups. Area filtering still works via the zone dropdown.
-
   private createBinIcon(bin: Bin): L.DivIcon {
     const f = Math.round(bin.fillPercentage);
     const temp = bin.temperature ?? 0;
     const isFire = bin.status === 2 || (temp > 55 && bin.fillPercentage > 70);
-    const isSensorBroke = !isFire && bin.status === 3;           
-    const isOffline = !isFire && bin.status === 1;           
+    const isSensorBroke = !isFire && bin.status === 3;
+    const isOffline = !isFire && bin.status === 1;
     const isBroken = isSensorBroke || isOffline;
     const isWarm = temp > 44 && !isFire;
 
@@ -1934,9 +1678,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       iconAnchor: [32, 52]
     });
   }
-
-
-
   private createPopup(bin: Bin): string {
     const f = bin.fillPercentage;
     const liters = Math.round(f / 100 * 1100);
@@ -2030,11 +1771,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       </div>`;
   }
 
-  /**
-   * Called from inside the popup when the admin hits the delete button.
-   * Always soft-deletes — the container moves to the admin "Архивирани" tab
-   * where it can be restored or removed permanently.
-   */
   async deleteContainerFromPopup(id: number, seeded: boolean): Promise<void> {
     const ok = await this.confirmSvc.ask({
       title: 'Архивиране на контейнер',
@@ -2062,9 +1798,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       }
     });
   }
-
-
-
   private initFilterControl() {
     const self = this;
 
@@ -2308,9 +2041,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       select.appendChild(opt);
     });
   }
-
-
-
   async searchNearestBin(query: string) {
     if (!query.trim()) return;
 
@@ -2421,8 +2151,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       if (found) this.cluster.zoomToShowLayer(found, () => found.openPopup());
     }, 850);
   }
-
-
   handleImagePreview(event: any) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -2626,9 +2354,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   clearReportResult() {
     this.reportResult = null;
   }
-
-
-
   private showAiModal(
     variant:     'conflict' | 'noBin',
     reportLabel: string,
@@ -2675,9 +2400,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     };
     return map[cls] ?? { label: cls, description: 'неизвестен резултат от AI' };
   }
-
-
-
   private resamplePath(coords: [number, number][], count: number): [number, number][] {
     if (coords.length < 2) return coords;
 
@@ -2752,10 +2474,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     return this.authService.getToken();
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // 3D MAP  (Mapbox GL JS — overlay over Leaflet)
-  // ══════════════════════════════════════════════════════════════════════════
-
   toggle3DFullscreen(): void {
     this.map3dFullscreen = !this.map3dFullscreen;
     setTimeout(() => this.map3d?.resize(), 60);
@@ -2778,7 +2496,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         this.map3d.setZoom(this.map.getZoom() - 0.5);
         this.refresh3DLayers();
       }
-      // Always force a resize so the canvas fills the now-visible container.
       setTimeout(() => this.map3d?.resize(), 80);
     }
   }
@@ -2800,7 +2517,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
-  /** Move the truck marker on the 3D map during navigation */
   private updateTruck3D(lat: number, lng: number): void {
     if (!this.map3d || !this.map3dStyleLoaded) return;
 
@@ -2814,7 +2530,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
-    // First call — load the truck SVG as a Mapbox image, then add source + layers.
     const truckSvg = `<svg width="26" height="50" viewBox="0 0 26 50" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="3"    y="0"    width="20" height="3"   rx="1.5" fill="#047857"/>
       <rect x="1"    y="3"    width="24" height="13"  rx="2"   fill="#059669"/>
@@ -2838,8 +2553,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       <rect x="23"   y="31.5" width="4"  height="8"   rx="2"   fill="#0f172a"/>
     </svg>`;
 
-    // Rasterize the inline truck SVG to a canvas — same fix as sync3DBins:
-    // Mapbox GL cannot decode SVG blobs via loadImage().
     this.svgToCanvas(truckSvg, 52, 100).then(imageData => {
       if (!this.map3d || !this.map3dStyleLoaded) return;
 
@@ -2849,7 +2562,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
       this.map3d.addSource('truck-src-3d', { type: 'geojson', data: point });
 
-      // Soft green glow ring.
       this.map3d.addLayer({
         id: 'truck-glow-3d', type: 'circle', source: 'truck-src-3d',
         paint: {
@@ -2860,7 +2572,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         }
       });
 
-      // Truck SVG icon.
       this.map3d.addLayer({
         id: 'truck-layer-3d', type: 'symbol', source: 'truck-src-3d',
         layout: {
@@ -2883,9 +2594,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
-    // Guard: if token is missing the map crashes mid-init and leaves the
-    // container dirty, causing "container not empty" + mouse-event crashes
-    // on every subsequent hover. Bail out cleanly instead.
     if (!this.MAPBOX_TOKEN) {
       console.error('Mapbox token is missing — set mapboxToken in environment.ts');
       this.show3DView = false;
@@ -2898,8 +2606,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
-    // Clear the container so Mapbox never sees stale DOM from a previous
-    // failed init (avoids the "container not empty" warning and vec4 crashes).
     const container = document.getElementById('map-3d');
     if (container) container.innerHTML = '';
 
@@ -2937,8 +2643,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       if (this.routeActive && this.realRouteCoords.length) this.sync3DRoute();
     });
 
-    // If the map errors (e.g. invalid token), clean up so the next toggle
-    // attempt gets a fresh start rather than reusing the broken instance.
     this.map3d.on('error', (e: any) => {
       console.error('Mapbox map error:', e);
       if (!this.map3dStyleLoaded) {
@@ -2950,11 +2654,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
-  /** Add terrain, sky and 3D buildings — called after every style load/change */
   private addMapbox3DLayers(): void {
     if (!this.map3d) return;
 
-    // ── Terrain (real elevation mesh) ──────────────────────────────────────
     if (!this.map3d.getSource('mapbox-dem')) {
       this.map3d.addSource('mapbox-dem', {
         type:     'raster-dem',
@@ -2965,7 +2667,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
     this.map3d.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
 
-    // ── Sky layer ──────────────────────────────────────────────────────────
     if (!this.map3d.getLayer('sky')) {
       this.map3d.addLayer({
         id:   'sky',
@@ -2978,17 +2679,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       });
     }
 
-    // ── 3D buildings from Mapbox vector tiles (no Overpass needed) ─────────
     this.load3DBuildings();
   }
 
   private load3DBuildings(): void {
     if (!this.map3d || !this.map3dStyleLoaded) return;
-    if (this.map3d.getLayer('buildings-3d')) return; // already present
+    if (this.map3d.getLayer('buildings-3d')) return;
 
-    // Mapbox vector tiles include building footprints + heights in the
-    // 'composite' source. No Overpass API call needed — buildings load
-    // instantly, pan/zoom smoothly, and never 429/504.
     this.map3d.addLayer({
       id:             'buildings-3d',
       source:         'composite',
@@ -3005,7 +2702,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
           35,  '#9aa2ae',
           60,  '#8d9bab'
         ],
-        // Fade buildings in as you zoom past 14 so they don't pop.
         'fill-extrusion-height': [
           'interpolate', ['linear'], ['zoom'],
           14, 0, 14.5, ['get', 'height']
@@ -3020,16 +2716,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Rasterize an SVG (URL or inline string) to an ImageData object.
-   * Returns ImageData so Mapbox addImage() always gets explicit width/height/data.
-   */
   private async svgToCanvas(source: string, w = 64, h = 64): Promise<ImageData> {
     const svgText = source.trimStart().startsWith('<')
       ? source
       : await fetch(source).then(r => r.text());
 
-    // Stamp explicit width/height so the browser can measure + decode the SVG.
     const stamped = /\bwidth=/.test(svgText)
       ? svgText
       : svgText.replace('<svg', `<svg width="${w}" height="${h}"`);
@@ -3046,8 +2737,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         const ctx = canvas.getContext('2d')!;
         ctx.drawImage(img, 0, 0, w, h);
         URL.revokeObjectURL(blobUrl);
-        // Extract pixel data explicitly — ImageData.width/height/data are always
-        // correct, unlike HTMLCanvasElement which Mapbox may misread.
         resolve(ctx.getImageData(0, 0, w, h));
       };
       img.onerror = () => {
@@ -3063,8 +2752,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     const typeNames = ['mixed', 'plastic', 'paper', 'glass'];
 
-    // Use filtered() so zone/type/fill filters from the filter panel
-    // apply in 3D exactly as they do in the 2D Leaflet map.
     const binsToShow = this.filtered();
 
     const features = binsToShow.map(b => {
@@ -3081,28 +2768,22 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     const geojson = { type: 'FeatureCollection' as const, features };
 
-    // If source already exists AND layers are present, just refresh data.
     if (this.map3d.getSource('bins-3d') && this.map3d.getLayer('bins-dot')) {
       (this.map3d.getSource('bins-3d') as any).setData(geojson);
       return;
     }
-    // If source exists but layers were lost (e.g. after setStyle), remove source
-    // first so we can rebuild everything cleanly.
     if (this.map3d.getSource('bins-3d')) {
       ['bins-cluster', 'bins-cluster-count', 'bins-dot']
         .forEach(id => { try { if (this.map3d.getLayer(id)) this.map3d.removeLayer(id); } catch {} });
       try { this.map3d.removeSource('bins-3d'); } catch {}
     }
 
-    // Preload SVG icons, then add source + layers once all images are ready.
     const icons: { id: string; url: string }[] = [
       ...typeNames.map(n => ({ id: `icon3d-bin-${n}`, url: `assets/icons/bin-${n}.svg` })),
       { id: 'icon3d-burning',  url: 'assets/icons/bin-burning.svg'       },
       { id: 'icon3d-broken',   url: 'assets/icons/bin-broken.svg'        },
     ];
 
-    // Preload SVG icons via canvas rasterization — Mapbox's loadImage() cannot
-    // decode SVG files directly (InvalidStateError: source image could not be decoded).
     Promise.all(
       icons.map(async ({ id, url }) => {
         if (this.map3d.hasImage(id)) return;
@@ -3116,34 +2797,29 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     ).then(() => {
       if (!this.map3d || !this.map3dStyleLoaded) return;
 
-      // Enable Mapbox's built-in clustering — mirrors Leaflet's
-      // MarkerClusterGroup from the 2D map so the 3D view isn't overwhelmed.
       this.map3d.addSource('bins-3d', {
         type: 'geojson',
         data: geojson,
         cluster:         true,
-        clusterMaxZoom:  15,   // unclusters at zoom 16+
+        clusterMaxZoom:  15,
         clusterRadius:   50
       });
 
-      // ── Cluster bubble — matches the 2D Leaflet MarkerClusterGroup style ──
-      // Small (<10): r=20, Medium (10–49): r=25, Large (50+): r=30
-      // White border + green glow shadow exactly as in .marker-cluster CSS.
       this.map3d.addLayer({
         id: 'bins-cluster', type: 'circle', source: 'bins-3d',
         filter: ['has', 'point_count'],
         paint: {
           'circle-color': [
             'step', ['get', 'point_count'],
-            '#10b981',  // small  < 10
-            10, '#10b981',  // medium 10–49
-            50, '#059669'   // large  50+
+            '#10b981',
+            10, '#10b981',
+            50, '#059669'
           ],
           'circle-radius': [
             'step', ['get', 'point_count'],
-            20,   // small  < 10
-            10, 25,   // medium 10–49
-            50, 30    // large  50+
+            20,
+            10, 25,
+            50, 30
           ],
           'circle-stroke-width': 3,
           'circle-stroke-color': '#ffffff',
@@ -3151,7 +2827,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         }
       });
 
-      // Cluster count label — bold white, same as the 2D cluster span
       this.map3d.addLayer({
         id: 'bins-cluster-count', type: 'symbol', source: 'bins-3d',
         filter: ['has', 'point_count'],
@@ -3163,13 +2838,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         },
         paint: {
           'text-color': '#ffffff',
-          // Subtle halo so the number reads clearly over any tile style
           'text-halo-color': 'rgba(5,150,105,0.6)',
           'text-halo-width': 1
         }
       });
 
-      // ── Individual bin icon (unclustered) ────────────────────────────────
       this.map3d.addLayer({
         id: 'bins-dot', type: 'symbol', source: 'bins-3d',
         filter: ['!', ['has', 'point_count']],
@@ -3184,7 +2857,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
       const mbx = (window as any).mapboxgl;
 
-      // Clicking a cluster zooms in to expand it.
       this.map3d.on('click', 'bins-cluster', (e: any) => {
         const features = this.map3d.queryRenderedFeatures(e.point, { layers: ['bins-cluster'] });
         const clusterId = features[0].properties['cluster_id'];
@@ -3196,7 +2868,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.map3d.on('mouseenter', 'bins-cluster', () => { this.map3d.getCanvas().style.cursor = 'pointer'; });
       this.map3d.on('mouseleave', 'bins-cluster', () => { this.map3d.getCanvas().style.cursor = ''; });
 
-      // Click — identical popup logic as 2D map.
       this.map3d.on('click', 'bins-dot', (e: any) => {
         const id  = e.features[0].properties.id;
         const bin = this.allBins.find(b => b.id === id);
@@ -3226,7 +2897,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private sync3DRoute(): void {
     if (!this.map3d || !this.map3dStyleLoaded || !this.routeResult || !this.realRouteCoords.length) return;
 
-    // realRouteCoords are [lat, lng]; Mapbox needs [lng, lat]
     const lineCoords = this.realRouteCoords.map(c => [c[1], c[0]]);
 
     const routeGeoJSON = {
@@ -3247,7 +2917,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       }))
     };
 
-    // If sources exist just update data
     if (this.map3d.getSource('route-3d')) {
       (this.map3d.getSource('route-3d') as any).setData(routeGeoJSON);
       (this.map3d.getSource('stops-3d') as any).setData(stopsGeoJSON);
@@ -3257,21 +2926,18 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.map3d.addSource('route-3d', { type: 'geojson', data: routeGeoJSON });
     this.map3d.addSource('stops-3d', { type: 'geojson', data: stopsGeoJSON });
 
-    // Wide glow underneath
     this.map3d.addLayer({
       id: 'route-glow-3d', type: 'line', source: 'route-3d',
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: { 'line-color': lineColor, 'line-width': 14, 'line-opacity': 0.18, 'line-blur': 6 }
     });
 
-    // Solid main line
     this.map3d.addLayer({
       id: 'route-line-3d', type: 'line', source: 'route-3d',
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: { 'line-color': lineColor, 'line-width': 4.5, 'line-opacity': 0.92 }
     });
 
-    // Stop circles — same blue style as the 2D .route-stop-marker
     this.map3d.addLayer({
       id: 'stops-outer-3d', type: 'circle', source: 'stops-3d',
       paint: {
@@ -3297,12 +2963,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       }
     });
   }
-
-
   private refresh3DLayers(): void {
     if (!this.map3dStyleLoaded) return;
-    // Buildings are baked into the Mapbox style via addMapbox3DLayers() on
-    // every style.load event — no manual reload needed on camera changes.
     this.sync3DBins();
     if (this.routeActive && this.realRouteCoords.length) this.sync3DRoute();
   }
