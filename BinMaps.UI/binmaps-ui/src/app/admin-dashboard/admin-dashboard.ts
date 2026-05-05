@@ -147,8 +147,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   deletedContainers: DeletedContainer[] = [];
   trucks: Truck[] = [];
   users: User[] = [];
-  /** userId → role lookup so the reports tab knows whether the
-   *  submitter is an Admin/Driver (we hide reputation for those). */
   userRoleById: Record<string, string> = {};
   filteredUsers: User[] = [];
   stats: AdminStats = {
@@ -166,12 +164,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   reportSearch = '';
   reportFilter = { status: '', reportType: '' };
 
-  /** Reports selected by the admin for bulk delete. Keyed by report.id. */
+  
   selectedReportIds = new Set<number>();
 
-  /** When true, the reports table renders a checkbox column and the bulk-delete
-   *  bar is shown. Toggled on by clicking "Изчисти", off by "Откажи" or after
-   *  a successful delete. */
+ 
   isReportSelectMode = false;
 
   containerSearch = '';
@@ -182,10 +178,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   reputationModal: { user: User; value: number } | null = null;
   banModal: { user: User; reason: string } | null = null;
 
-  /** Set to true if the report photo <img> emits an `error` event — typically
-   *  because the file is missing on the backend (Azure Container Apps volumes
-   *  are ephemeral). The template swaps to a "snapshot unavailable" fallback
-   *  with a direct link so the admin can still try to fetch it. */
+ 
   photoLoadFailed = false;
 
   toasts: Toast[] = [];
@@ -293,22 +286,19 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** 0–100 % of stops completed. Defensive — `totalStops` may be 0 the
-   *  very first tick if the driver pinged before stops were planned. */
+
   stopsProgress(d: LiveDriver): number {
     if (!d.totalStops || d.totalStops <= 0) return 0;
     return Math.min(100, Math.round((d.stopIndex / d.totalStops) * 100));
   }
 
-  /** 0–100 % of truck capacity used. Returns 0 when there's no truck so
-   *  the bar (which we hide in template anyway) wouldn't NaN. */
+  
   capacityProgress(d: LiveDriver): number {
     if (!d.truck || d.truck.capacity <= 0) return 0;
     return Math.min(100, Math.round((d.load / d.truck.capacity) * 100));
   }
 
-  /** Colour the capacity bar by fullness so a near-full truck is visually
-   *  flagged (depot run incoming) without an extra status field. */
+ 
   capacityClass(d: LiveDriver): string {
     const pct = this.capacityProgress(d);
     if (pct >= 90) return 'progress__fill--critical';
@@ -327,8 +317,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     return `преди ${min} мин.`;
   }
 
-  /** Deep-link to /map with the driver pre-selected. Map.ts reads the
-   *  `focusDriver` query param and centers on that driver's marker. */
+ 
   goToDriverOnMap(driverId: string): void {
     this.router.navigate(['/map'], { queryParams: { focusDriver: driverId } });
   }
@@ -340,10 +329,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         if (user?.role === 'Admin') {
           this.loadStats();
           this.loadReports();
-          // Pre-load users so the userId → role map is ready when the
-          // reports table renders. Otherwise the reputation column would
-          // briefly show bars for Driver/Admin submitters until the
-          // "Потребители" tab is opened.
+         
           this.loadUsers();
         }
       });
@@ -367,7 +353,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     loaders[tab]();
   }
 
-  // ── Route history ────────────────────────────────────────────────────
+  
   routeHistory: RouteRunSummary[] = [];
   filteredRoutes: RouteRunSummary[] = [];
   routeFilter: { status: string; areaId: string; driver: string } = {
@@ -606,13 +592,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
-  /** True if a given role gets reputation hidden in admin tables. */
+  
   isPrivilegedRole(role: string | undefined | null): boolean {
     return role === 'Admin' || role === 'Driver';
   }
 
-  /** Lookup helper used by the template to decide whether to render
-   *  the reputation bar in the reports table. */
+
   isPrivilegedUserId(userId: string | undefined | null): boolean {
     if (!userId) return false;
     return this.isPrivilegedRole(this.userRoleById[userId]);
@@ -694,9 +679,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
-  // ───────────────────────────── Bulk delete ─────────────────────────────
 
-  /** True if the given report is currently checked. */
   isReportSelected(reportId: number): boolean {
     return this.selectedReportIds.has(reportId);
   }
@@ -710,25 +693,24 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** True when every report in the current filtered view is selected. */
+ 
   get allVisibleReportsSelected(): boolean {
     if (this.filteredReports.length === 0) return false;
     return this.filteredReports.every(r => this.selectedReportIds.has(r.id));
   }
 
-  /** True when some but not all visible reports are selected — used for the
-   *  indeterminate state of the header checkbox. */
+
   get someVisibleReportsSelected(): boolean {
     const anySelected = this.filteredReports.some(r => this.selectedReportIds.has(r.id));
     return anySelected && !this.allVisibleReportsSelected;
   }
 
-  /** How many reports are currently checked (across all pages, not just visible). */
+ 
   get selectedReportCount(): number {
     return this.selectedReportIds.size;
   }
 
-  /** Toggle "select all" — covers only the rows currently in view. */
+ 
   toggleSelectAllReports(): void {
     if (this.allVisibleReportsSelected) {
       this.filteredReports.forEach(r => this.selectedReportIds.delete(r.id));
@@ -737,8 +719,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Drop any checked reports that are no longer in the current page/filter.
-   *  Called after a reload so we don't keep stale IDs forever. */
+
   private pruneSelectedReports(): void {
     if (this.selectedReportIds.size === 0) return;
     const visible = new Set(this.reports.map(r => r.id));
@@ -751,23 +732,18 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.selectedReportIds.clear();
   }
 
-  /** Cancel select mode entirely — hides checkboxes and clears any picks. */
+  
   exitReportSelectMode(): void {
     this.selectedReportIds.clear();
     this.isReportSelectMode = false;
   }
 
-  /**
-   * "Изчисти" → enter select mode. The checkbox column appears so the admin
-   * can pick individual reports to delete. Nothing is pre-selected — the
-   * admin chooses each one explicitly. The header checkbox is still
-   * available as a "select all visible" shortcut for power users.
-   */
+
   enterReportSelectMode(): void {
     if (this.filteredReports.length === 0) return;
     this.isReportSelectMode = true;
     this.selectedReportIds.clear();
-    // Scroll the toolbar into view so the user sees the new bulk-delete bar.
+    
     queueMicrotask(() => {
       document.querySelector('.admin__toolbar-actions')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
@@ -804,8 +780,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
-  /** Delete every report matching the current status / reportType filter
-   *  (across ALL pages — not just the visible one). */
+
   async deleteAllFilteredReports(): Promise<void> {
     const filterParts: string[] = [];
     if (this.reportFilter.status) {
@@ -851,8 +826,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   openReportModal(report: Report): void {
     this.selectedReport = report;
-    // Reset the photo error state every time a report is opened — otherwise
-    // a previous failed load would keep the fallback shown for the next one.
+ 
     this.photoLoadFailed = false;
   }
 
@@ -861,9 +835,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.photoLoadFailed = false;
   }
 
-  /** Called from the report modal's <img (error)> binding. Logs the failed
-   *  URL so we can correlate against backend storage and flips the flag that
-   *  swaps the image for the fallback message + direct link. */
+ 
   onPhotoError(photoURL: string | null): void {
     console.warn('Report photo failed to load:', this.getPhotoFullUrl(photoURL));
     this.photoLoadFailed = true;
@@ -1049,9 +1021,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     return 'badge--offline';
   }
 
-  /** Normalise trashType — the API returns either a number (0-3) or the
-   *  string enum name ("Mixed","Plastic","Paper","Glass") depending on the
-   *  JsonStringEnumConverter configuration.  Both forms map to index 0-3. */
   private trashIdx(type: number | string | null | undefined): number {
     if (type === null || type === undefined) return 0;
     if (typeof type === 'number') return type;
@@ -1204,20 +1173,13 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     URL.revokeObjectURL(url);
   }
 
-  /**
-   * Thin wrapper over the global ToastService — kept so the rest of the
-   * component can keep its short `this.showToast(...)` call sites.
-   *
-   *   showToast('Готово')                 → success toast
-   *   showToast('Грешка...', 'error')     → danger toast
-   *   showToast('Зареждам...', 'info')    → info toast
-   */
+  
   showToast(message: string, type: 'success' | 'error' | 'info' = 'success'): void {
     const variant = type === 'error' ? 'danger' : type;
     this.toastSvc.show({ title: message, variant });
   }
 
-  /** Legacy hook — toasts are now managed by ToastService and self-dismiss. */
+  
   dismissToast(_id: number): void { /* no-op */ }
 
   private authHeaders(): { headers: HttpHeaders } {

@@ -48,8 +48,7 @@ export class Header implements OnInit, OnDestroy {
     private readonly router: Router,
     private readonly notifService: NotificationService
   ) {
-    // Fire `justReceived` for 2 seconds whenever unreadCount increases,
-    // so the bell icon gets a `.just-received` ring animation class.
+   
     effect(() => {
       const current = this.notifService.notifications()
         .filter(n => !n.read).length;

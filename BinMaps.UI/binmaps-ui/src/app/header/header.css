@@ -1,4 +1,4 @@
-/* header-local aliases — kept for backward compatibility, now point at global tokens */
+
 :root {
   --nav-height: var(--navbar-height, 64px);
   --nav-bg:     rgba(10, 17, 30, 0.92);
@@ -106,15 +106,13 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
-/* FIX 4: Active nav link — replaced subtle 16px underline with a pill
-   background. Matches the tab/button active-state pattern used elsewhere
-   in the system. No pseudo-element needed. */
+
 .navbar__link.is-active {
   color: var(--eco);
   background: rgba(16, 185, 129, 0.10);
   border: 1px solid rgba(16, 185, 129, 0.20);
 }
-/* .navbar__link.is-active::after removed */
+
 
 .navbar__right {
   display: flex;
@@ -148,15 +146,11 @@
   border-color: rgba(255, 255, 255, 0.15);
 }
 
-/* FIX 5: Bell animation — removed infinite loop. has-unread now only
-   changes colour/border. A .just-received class (added/removed via TS
-   after a new notification arrives) fires the ring exactly once.
-   See header.ts: add 'just-received' on unreadCount increase, remove
-   after 2 000 ms. */
+
 .navbar__notif.has-unread {
   border-color: rgba(16, 185, 129, 0.35);
   color: var(--eco);
-  /* animation removed — no more infinite ring */
+ 
 }
 
 .navbar__notif.just-received {
@@ -170,8 +164,7 @@
   40%      { transform: rotate(0); }
 }
 
-/* Default badge is brand-eco. Red is earned: only when one of the
-   unread items is severity=critical (.is-critical). */
+
 .navbar__notif-count {
   position: absolute;
   top: -4px;
@@ -242,8 +235,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  /* Role moved into the dropdown so the username has the full pill width
-     to itself — important for real names that aren't 4 letters. */
   max-width: 160px;
   letter-spacing: -0.01em;
 }
@@ -262,7 +253,7 @@
   position: relative;
 }
 
-/* FIX 7: Replaced hardcoded hex colours with design tokens. */
+
 .user-menu {
   position: absolute;
   top: calc(100% + 8px);
@@ -365,7 +356,7 @@
   color: #f87171;
 }
 
-/* FIX 7 (cont.): notif-dropdown hex colours → tokens */
+
 .notif-dropdown {
   position: absolute;
   top: calc(100% + 10px);
@@ -669,9 +660,7 @@
 .btn--primary:active {
   transform: translateY(0);
 }
-/* FIX 6: Avatar shape — unified to rounded square (var(--radius-md) = 10px)
-   across both photo and initials states. Consistent with the icon/card
-   vocabulary used throughout the design system. */
+
 .avatar-img {
   width: 32px;
   height: 32px;

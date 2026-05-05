@@ -38,16 +38,11 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     { name: 'Зона 6 — Изток',      areaId: 'Зона 6 - Изток',         avgFill: 61, risk: 'medium',   riskLabel: 'Умерено',  containerCount: 35 }
   ];
 
-  /** Sum of containers across all zones — derived from the cards below
-   *  so the headline number on the totals strip can never drift away
-   *  from what's directly visible to the user. */
+
   get totalContainers(): number {
     return this.zones.reduce((sum, z) => sum + z.containerCount, 0);
   }
 
-  /** Container-weighted average fill percentage across all zones.
-   *  Container-weighted (not zone-weighted) so a small zone with low fill
-   *  doesn't artificially pull the city-wide average down. */
   get avgZoneFill(): number {
     const total = this.totalContainers;
     if (!total) return 0;
@@ -69,8 +64,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       this.isLoggedIn = !!user;
     });
 
-    // Load live container counts per zone. The /api/containers endpoint
-    // is AllowAnonymous so this works for guests too.
+  
     this.loadContainerCounts();
   }
 

@@ -3687,9 +3687,7 @@
 }
 
 
-/* ══════════════════════════════════════════════════════════════════════════
-   3D MAP OVERLAY
-   ══════════════════════════════════════════════════════════════════════════ */
+
 
 .map-container {
   position: relative;
@@ -3704,27 +3702,20 @@
   background-color: #141e2e;
 }
 
-/* Leaflet stays rendered but invisible when 3D is on.
-   The filter control is a Leaflet child so it would also disappear — we use
-   visibility:hidden (not display:none) so the control can escape with its own
-   visibility rule below. */
+
 #map.map-hidden-by-3d {
   pointer-events: none;
   visibility: hidden;
 }
 
-/* Let the filter control stay visible and interactive above the 3D canvas
-   when the 2D map is hidden. The control lives inside #map but we override
-   its visibility here so it escapes the parent's visibility:hidden. */
+
 #map.map-hidden-by-3d .map-filter-control {
   visibility: visible;
   pointer-events: auto;
-  z-index: 600;  /* above #map-3d's z-index:5 */
+  z-index: 600;  
 }
 
-/* 3D div — keep it in the layout flow so MapLibre always reads real dimensions,
-   but hide it visually until activated.  display:none gave MapLibre a 0×0
-   canvas on first open, causing the "quarter-screen" bug. */
+
 #map-3d {
   z-index: 0;
   visibility: hidden;
@@ -3749,12 +3740,12 @@
   z-index: 9000 !important;
 }
 
-/* Keep style-switcher on top of the fullscreen 3D canvas */
+
 .map-container .map-style-switcher {
   z-index: 9100;
 }
 
-/* Fullscreen toggle button — slightly different accent to distinguish from 3D btn */
+
 .btn-3d-fullscreen-toggle {
   border-color: rgba(59, 130, 246, 0.25) !important;
 }
@@ -3770,7 +3761,7 @@
   box-shadow: 0 0 12px rgba(59, 130, 246, 0.25) !important;
 }
 
-/* MapLibre/Mapbox attribution — hide the © text we don't want */
+
 .mapboxgl-ctrl-attrib,
 .maplibregl-ctrl-attrib { display: none !important; }
 
@@ -3821,9 +3812,6 @@
   border-top-color: #0d1b2a !important;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   3D TOGGLE BUTTON  (in style switcher)
-   ══════════════════════════════════════════════════════════════════════════ */
 
 .style-sep {
   display: inline-block;
@@ -3868,10 +3856,6 @@
 .btn-3d-toggle svg {
   flex-shrink: 0;
 }
-
-/* ══════════════════════════════════════════════════════════════════════════
-   SPEED CONTROLS  (in navigation progress)
-   ══════════════════════════════════════════════════════════════════════════ */
 
 .speed-controls {
   display: flex;
@@ -3924,12 +3908,7 @@
   color: #34d399 !important;
   box-shadow: 0 0 8px rgba(16, 185, 129, 0.20);
 }
-/* ───────────────────────────────────────────────────────────────
-   Missing-container FAB
-   Sits bottom-left of the map so it doesn't collide with the
-   legend in the bottom-right corner. Visible only to logged-in
-   citizens (User role) and drivers.
-   ─────────────────────────────────────────────────────────────── */
+
 .missing-container-fab {
   position: absolute;
   bottom: 20px;
@@ -3964,9 +3943,6 @@
   flex-shrink: 0;
 }
 
-/* Zone boundary overlay styles removed together with renderAreaBoundaries(). */
-
-/* Admin-only delete button inside container popup */
 .bpp-delete-btn {
   display: flex;
   align-items: center;
@@ -3992,9 +3968,7 @@
   background: rgba(239, 68, 68, 0.28);
 }
 
-/* ─────────────────────────────────────────────
-   Live driver marker (admin sees drivers on route)
-   ───────────────────────────────────────────── */
+
 .live-driver-marker {
   position: relative;
   width: 44px;
@@ -4003,9 +3977,7 @@
   align-items: center;
   justify-content: center;
 }
-/* The marker reads its colour from the inline --driver-color custom
-   property set by makeLiveDriverIcon(). This way every driver gets a
-   distinct, deterministic colour without us maintaining a CSS palette. */
+
 .live-driver-pulse {
   position: absolute;
   inset: 0;
@@ -4047,7 +4019,7 @@
   100% { transform: scale(1.6); opacity: 0; }
 }
 
-/* Live-drivers side panel (admin-only) */
+
 .live-drivers-panel {
   position: absolute;
   top: 90px;
@@ -4125,7 +4097,7 @@
   transition: width 240ms;
 }
 
-/* FAB to re-open the live-drivers panel when closed */
+
 .live-drivers-fab {
   position: absolute;
   top: 90px;
@@ -4154,8 +4126,7 @@
   border: 2px solid #0f2a30;
 }
 
-/* ── Live-driver Leaflet popup wrapper — zero-pad so the inner div's border
-       radius is fully visible; remove the ugly default tip shadow.       ── */
+
 .live-driver-popup-wrapper .leaflet-popup-content-wrapper {
   padding: 0 !important;
   border-radius: 10px !important;
@@ -4171,7 +4142,7 @@
   margin-top: -1px;
 }
 
-/* ── Live-driver click popup ─────────────────────────────────────────────── */
+
 .live-driver-popup {
   font-family: 'DM Sans', 'Inter', sans-serif;
   min-width: 200px;

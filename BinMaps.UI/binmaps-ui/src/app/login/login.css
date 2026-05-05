@@ -96,8 +96,6 @@
   color: var(--eco-primary);
 }
 
-/* FIX 11: Removed double horizontal rules — brand mark above and inputs below
-   provide sufficient structure. Padding reduced to avoid dead whitespace. */
 .auth-header {
   text-align: center;
   padding: var(--space-2) 0 var(--space-4);

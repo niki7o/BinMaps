@@ -1,10 +1,8 @@
-/* ═══════════════════════════════════════════════
-   HOME — combined redesign
-   ═══════════════════════════════════════════════ */
+
 
 .home { overflow-x: hidden; }
 
-/* ─── HERO ─── */
+
 .hero {
   min-height: 100vh;
   display: flex;
@@ -14,7 +12,7 @@
   overflow: hidden;
 }
 
-/* Background layers */
+
 .hero__bg {
   position: absolute;
   inset: 0;
