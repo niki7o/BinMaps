@@ -4155,6 +4155,23 @@
   border: 2px solid #0f2a30;
 }
 
+/* ── Live-driver Leaflet popup wrapper — zero-pad so the inner div's border
+       radius is fully visible; remove the ugly default tip shadow.       ── */
+.live-driver-popup-wrapper .leaflet-popup-content-wrapper {
+  padding: 0 !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25) !important;
+}
+.live-driver-popup-wrapper .leaflet-popup-content {
+  margin: 0 !important;
+  width: auto !important;
+  min-width: 220px;
+}
+.live-driver-popup-wrapper .leaflet-popup-tip-container {
+  margin-top: -1px;
+}
+
 /* ── Live-driver click popup ─────────────────────────────────────────────── */
 .live-driver-popup {
   font-family: 'DM Sans', 'Inter', sans-serif;

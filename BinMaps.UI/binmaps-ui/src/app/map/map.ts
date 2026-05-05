@@ -239,6 +239,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   showRoutePanel = true;
   currentStop = 0;
   currentTruckLoad = 0;
+  /** Saved just before `currentTruckLoad` is reset to 0 at the end of each
+   *  navigation loop. `closeRouteRun()` reads this instead of
+   *  `currentTruckLoad` (which is already 0 by the time the API call fires). */
+  private finalCollectedLoad = 0;
 
   private baseLayers: Record<string, L.TileLayer> = {};
   currentMapStyle = localStorage.getItem('mapStyle') || 'standard';
@@ -404,10 +408,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         zIndexOffset: 1800,
       }).addTo(this.map);
       marker.bindTooltip(
-        `${ev.driverName || 'Шофьор'} · зона ${ev.areaId} · спирка ${ev.stopIndex}/${ev.totalStops}`,
+        `${ev.driverName || 'Шофьор'} · ${ev.areaId} · спирка ${ev.stopIndex}/${ev.totalStops}`,
         { direction: 'top', offset: [0, -22] }
       );
-      marker.bindPopup(this.makeLiveDriverPopup(ev.driverName, ev.areaId, ev.stopIndex, ev.totalStops, ev.load, ev.at, color, ev.truck));
+      marker.bindPopup(
+        this.makeLiveDriverPopup(ev.driverName, ev.areaId, ev.stopIndex, ev.totalStops, ev.load, ev.at, color, ev.truck),
+        { maxWidth: 280, minWidth: 220, className: 'live-driver-popup-wrapper' },
+      );
       this.liveDriverMarkers.set(ev.driverId, marker);
       // Initialise an anim entry sitting on the target so subsequent
       // updates have a "from" to lerp from.
@@ -439,7 +446,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         durationMs: MapComponent.LIVE_DRIVER_LERP_MS,
       });
       marker.setTooltipContent(
-        `${ev.driverName || 'Шофьор'} · зона ${ev.areaId} · спирка ${ev.stopIndex}/${ev.totalStops}`
+        `${ev.driverName || 'Шофьор'} · ${ev.areaId} · спирка ${ev.stopIndex}/${ev.totalStops}`
       );
       // Update popup content to reflect the latest telemetry.
       marker.setPopupContent(this.makeLiveDriverPopup(ev.driverName, ev.areaId, ev.stopIndex, ev.totalStops, ev.load, ev.at, color, ev.truck));
@@ -454,28 +461,53 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.ensureLiveDriverAnimLoop();
   }
 
-  /** Builds the HTML string for a live-driver popup. */
+  /** Builds the HTML string for a live-driver click popup. All styles are
+   *  inline so they work inside Leaflet's popup container regardless of
+   *  Angular's style encapsulation or Leaflet's own cascade. */
   private makeLiveDriverPopup(
     name: string, areaId: string, stopIndex: number, totalStops: number,
     load: number, at: string, color: string,
     truck?: { plate: string; capacity: number } | null,
   ): string {
     const progress = totalStops > 0 ? Math.round((stopIndex / totalStops) * 100) : 0;
-    const loadStr = truck ? `${Math.round(load)} / ${truck.capacity} л` : `${Math.round(load)} л`;
-    const truckStr = truck ? `<div class="ldp-row"><span class="ldp-label">Камион:</span> ${truck.plate}</div>` : '';
-    const timeStr = at ? `<div class="ldp-row"><span class="ldp-label">Обновен:</span> ${humanAgo(new Date(at))}</div>` : '';
+    const loadStr = truck
+      ? `${Math.round(load)} / ${truck.capacity} л`
+      : `${Math.round(load)} л`;
+    const truckRow = truck
+      ? `<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:4px">
+           <span style="color:#64748b;font-weight:600">Камион</span>
+           <span style="color:#0f172a;font-weight:500">${truck.plate}</span>
+         </div>`
+      : '';
+    const timeRow = at
+      ? `<div style="color:#94a3b8;font-size:11px;margin-top:6px;text-align:right">${humanAgo(new Date(at))}</div>`
+      : '';
+
     return `
-      <div class="live-driver-popup">
-        <div class="ldp-header" style="border-left: 4px solid ${color}">
-          <strong>${name || 'Шофьор'}</strong>
-          <span class="ldp-area">Зона ${areaId}</span>
+      <div style="min-width:220px;max-width:260px;font-family:'DM Sans',system-ui,sans-serif;font-size:13px;overflow:hidden;border-radius:10px">
+        <!-- Header -->
+        <div style="background:${color};padding:9px 13px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <strong style="color:#fff;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name || 'Шофьор'}</strong>
+          <span style="color:rgba(255,255,255,0.88);font-size:11px;background:rgba(0,0,0,0.18);border-radius:9px;padding:2px 8px;white-space:nowrap">${areaId}</span>
         </div>
-        <div class="ldp-body">
-          <div class="ldp-row"><span class="ldp-label">Спирка:</span> ${stopIndex} / ${totalStops}</div>
-          <div class="ldp-progress-bar"><div class="ldp-progress-fill" style="width:${progress}%;background:${color}"></div></div>
-          <div class="ldp-row"><span class="ldp-label">Товар:</span> ${loadStr}</div>
-          ${truckStr}
-          ${timeStr}
+        <!-- Body -->
+        <div style="padding:11px 13px 10px;background:#fff">
+          <!-- Stop row -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+            <span style="color:#64748b;font-weight:600;font-size:12px">Спирка</span>
+            <span style="color:#0f172a;font-weight:700;font-size:13px">${stopIndex}&thinsp;/&thinsp;${totalStops}</span>
+          </div>
+          <!-- Progress bar -->
+          <div style="height:5px;background:#e2e8f0;border-radius:3px;overflow:hidden;margin-bottom:9px">
+            <div style="height:100%;width:${progress}%;background:${color};border-radius:3px;transition:width 300ms"></div>
+          </div>
+          <!-- Load row -->
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:4px">
+            <span style="color:#64748b;font-weight:600">Товар</span>
+            <span style="color:#0f172a;font-weight:500">${loadStr}</span>
+          </div>
+          ${truckRow}
+          ${timeRow}
         </div>
       </div>`;
   }
@@ -594,17 +626,42 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const deg = Number.isFinite(heading) ? Math.round(heading) : 0;
     return L.divIcon({
       className: '',
-      iconSize: [44, 44],
-      iconAnchor: [22, 22],
+      iconSize: [52, 52],
+      iconAnchor: [26, 26],
+      // Top-down truck icon — the entire SVG rotates to face the direction
+      // of travel. The pulsing ring is in a separate layer so it stays
+      // circular regardless of rotation. A small name badge in the corner
+      // identifies the driver at a glance even at map zoom 12.
       html: `
-        <div class="live-driver-marker" title="${name || 'Шофьор'}" style="--driver-color: ${color}">
-          <div class="live-driver-pulse"></div>
-          <div class="live-driver-body" style="transform: rotate(${deg}deg)">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 2 L18 10 H14 V22 H10 V10 H6 Z" fill="${color}" stroke="#0f172a" stroke-width="1"/>
+        <div style="position:relative;width:52px;height:52px;display:flex;align-items:center;justify-content:center" title="${name || 'Шофьор'}">
+          <!-- Pulsing location ring -->
+          <div class="live-driver-pulse" style="--driver-color:${color}"></div>
+          <!-- Truck SVG — rotated to match heading -->
+          <div style="transform:rotate(${deg}deg);filter:drop-shadow(0 2px 5px rgba(0,0,0,0.55))">
+            <svg width="30" height="38" viewBox="0 0 30 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Cab (front of truck — top of icon) -->
+              <rect x="5" y="1" width="20" height="13" rx="3.5" fill="${color}" stroke="#0f172a" stroke-width="1.2"/>
+              <!-- Windshield -->
+              <rect x="7.5" y="2.5" width="15" height="9" rx="2" fill="#0f172a" opacity="0.72"/>
+              <!-- Cargo body -->
+              <rect x="3" y="14" width="24" height="22" rx="2.5" fill="${color}" stroke="#0f172a" stroke-width="1.2"/>
+              <!-- Cargo panel lines -->
+              <line x1="3" y1="19" x2="27" y2="19" stroke="#0f172a" stroke-width="0.8" opacity="0.25"/>
+              <line x1="15" y1="14" x2="15" y2="36" stroke="#0f172a" stroke-width="0.8" opacity="0.15"/>
+              <!-- Front-left wheel -->
+              <rect x="0" y="3.5" width="4" height="8" rx="1.5" fill="#1e293b"/>
+              <!-- Front-right wheel -->
+              <rect x="26" y="3.5" width="4" height="8" rx="1.5" fill="#1e293b"/>
+              <!-- Rear-left wheels (double) -->
+              <rect x="0" y="20" width="4" height="6" rx="1.5" fill="#1e293b"/>
+              <rect x="0" y="27" width="4" height="6" rx="1.5" fill="#1e293b"/>
+              <!-- Rear-right wheels (double) -->
+              <rect x="26" y="20" width="4" height="6" rx="1.5" fill="#1e293b"/>
+              <rect x="26" y="27" width="4" height="6" rx="1.5" fill="#1e293b"/>
             </svg>
           </div>
-          <div class="live-driver-label">${initial}</div>
+          <!-- Driver initial badge -->
+          <div style="position:absolute;bottom:1px;right:1px;width:17px;height:17px;background:${color};color:#0f172a;border-radius:50%;font:700 10px/17px 'DM Sans',sans-serif;text-align:center;border:2px solid #0f172a;letter-spacing:-0.5px">${initial}</div>
         </div>`,
     });
   }
@@ -1225,9 +1282,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const totalStops = this.routeResult?.route.length ?? 0;
     const outcome = this.currentStop >= totalStops ? 'completed' : 'cancelled';
 
+    // currentTruckLoad has already been reset to 0 by the navigation loop
+    // before this call — use finalCollectedLoad which was captured just
+    // before the reset.
     const body = {
       stopsCompleted: this.currentStop,
-      collectedLoad: this.currentTruckLoad,
+      collectedLoad: this.finalCollectedLoad,
       outcome,
     };
 
@@ -1471,8 +1531,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     this.navigationActive = false;
     const load = this.currentTruckLoad;
+    // Capture BEFORE reset so closeRouteRun (called from startNavigation
+    // after this function returns) can persist the correct collected load.
+    this.finalCollectedLoad = load;
     this.currentTruckLoad = 0;
-    this.currentCollectedStop = null;   // Bug 4 fix: clear stale UI data
+    this.currentCollectedStop = null;   // clear stale UI data
     this.loadBins();   // refresh from server after emptying
 
     this.toast.success({
@@ -1541,8 +1604,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     if (this.navigationActive) {
       this.navigationActive = false;
       const load = this.currentTruckLoad;
+      // Capture BEFORE reset so closeRouteRun can persist the correct value.
+      this.finalCollectedLoad = load;
       this.currentTruckLoad = 0;
-      this.currentCollectedStop = null;   // Bug 4 fix: clear stale UI data
+      this.currentCollectedStop = null;   // clear stale UI data
       this.loadBins();   // refresh from server after emptying
 
       this.toast.success({

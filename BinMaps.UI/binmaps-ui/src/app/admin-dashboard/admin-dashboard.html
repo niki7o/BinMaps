@@ -836,10 +836,10 @@
               <td class="text-muted text-xs">{{ formatDate(r.startedAt) }}</td>
               <td class="text-mono text-sm">
                 <ng-container *ngIf="r.status === 'Active'">—</ng-container>
-                <ng-container *ngIf="r.status !== 'Active'">{{ r.durationMinutes | number:'1.1-1' }} мин</ng-container>
+                <ng-container *ngIf="r.status !== 'Active'">{{ r.plannedMinutes | number:'1.0-0' }} мин</ng-container>
               </td>
               <td class="text-mono text-sm">{{ r.stopsCompleted }} / {{ r.stopsPlanned }}</td>
-              <td class="text-mono text-sm">{{ r.collectedLoad | number:'1.0-0' }} L</td>
+              <td class="text-mono text-sm">{{ r.collectedLoad | number:'1.0-0' }} л</td>
               <td class="text-mono text-sm">{{ r.plannedDistanceKm | number:'1.1-1' }} km</td>
               <td>
                 <button class="btn btn--sm btn--secondary" (click)="openRunDetail(r.id)">
@@ -904,8 +904,8 @@
           <div>{{ selectedRun.completedAt ? formatDate(selectedRun.completedAt) : '—' }}</div>
         </div>
         <div>
-          <div class="text-muted text-xs">Продължителност</div>
-          <div class="text-mono">{{ selectedRun.durationMinutes | number:'1.1-1' }} мин</div>
+          <div class="text-muted text-xs">Прогнозно (мин)</div>
+          <div class="text-mono">{{ selectedRun.plannedMinutes | number:'1.0-0' }} мин</div>
         </div>
         <div>
           <div class="text-muted text-xs">Отпадък</div>
