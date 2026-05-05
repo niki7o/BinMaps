@@ -523,7 +523,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.liveDriverRunIds.set(driverId, runId);
 
     this.http.get<{
-      stops: Array<{ locationX: number; locationY: number; stopNumber: number }>;
+      stops: Array<{ lat: number; lng: number }>;
     }>(
       `${this.API_URL}/trucks/route/${runId}`,
       { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) },
@@ -535,8 +535,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
          if (this.liveDriverRoutes.has(driverId)) return;
 
          const coords: [number, number][] = detail.stops
-           .sort((a, b) => a.stopNumber - b.stopNumber)
-           .map(s => [s.locationY, s.locationX] as [number, number]);
+           .map(s => [s.lat, s.lng] as [number, number]);
 
          const poly = L.polyline(coords, {
            color,
@@ -1188,8 +1187,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const stops = (this.routeResult.route ?? []).map(s => ({
       id: s.id,
       areaId: s.areaId ?? this.routeResult!.areaId,
-      lat: s.locationX,
-      lng: s.locationY,
+      lat: s.locationY,
+      lng: s.locationX,
       fill: s.fillPercentage ?? 0,
       capacity: s.capacity ?? 0,
     }));
@@ -1856,6 +1855,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       html: `
         <div class="bm${f >= 85 && !isBroken ? ' bm-critical' : ''}${isFire ? ' bm-on-fire' : ''}${isBroken ? ' bm-broken' : ''}">
           ${flames}
+          ${brokenBadge}
           <div class="bm-ring" style="
             background: conic-gradient(${ring} 0% ${f}%, rgba(255,255,255,0.07) ${f}% 100%);
             filter: drop-shadow(0 0 8px ${glow});">
@@ -1865,12 +1865,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
           </div>
           ${sensor}
           ${tbadge}
-          ${noSensorLabel}
-          ${brokenBadge}
           <div class="bm-id">#${bin.id}</div>
+          ${noSensorLabel}
         </div>`,
-      iconSize:   [54, 70],
-      iconAnchor: [27, 62]
+      iconSize:   [64, 86],
+      iconAnchor: [32, 52]
     });
   }
 

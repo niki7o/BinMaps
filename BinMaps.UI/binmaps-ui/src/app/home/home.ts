@@ -8,7 +8,6 @@ import { environment } from '../../environments/environment';
 
 interface Zone {
   name: string;
-  /** Matches the Area.Id in the database — used to count containers. */
   areaId: string;
   avgFill: number;
   risk: string;
