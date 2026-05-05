@@ -189,12 +189,29 @@ export class LiveDriverTrackingService implements OnDestroy {
     const prev = this._drivers();
 
     for (const r of rows) {
-      // No telemetry yet (server just rebooted, driver hasn't pinged) —
-      // hide the row until first DriverPosition arrives. Otherwise the
-      // marker would render at (0, 0) or stale coords from history.
-      if (!r.lastPosition) continue;
-
       const existing = prev.get(r.driverId);
+
+      if (!r.lastPosition) {
+        // Server has no cached position yet (driver just started, or the
+        // in-memory tracker was cleared by a server restart). Two cases:
+        //   a) We already have live data from a SignalR event — keep it so
+        //      a tab-visibility refresh doesn't wipe the marker the user can
+        //      already see. Update mutable fields (name, runId, truck) in
+        //      case they changed.
+        //   b) We have no data at all — skip; rendering at (0,0) would be
+        //      wrong. The marker will appear on the next DriverPosition tick.
+        if (existing) {
+          next.set(r.driverId, {
+            ...existing,
+            driverName: r.driverName,
+            runId:      r.runId,
+            areaId:     r.areaId,
+            truck:      r.truck,
+          });
+        }
+        continue;
+      }
+
       next.set(r.driverId, {
         driverId:   r.driverId,
         driverName: r.driverName,

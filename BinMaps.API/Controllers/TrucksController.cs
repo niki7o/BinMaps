@@ -272,7 +272,7 @@ public sealed class TrucksController : ControllerBase
                     driverId          = r.DriverId,
                     driverName        = r.DriverName,
                     areaId            = r.AreaId,
-                    trashType         = r.TrashType,
+                    trashType         = (int)r.TrashType,
                     startedAt         = r.StartedAt,
                     plannedDistanceKm = r.PlannedDistanceKm,
                     plannedMinutes    = r.PlannedMinutes,

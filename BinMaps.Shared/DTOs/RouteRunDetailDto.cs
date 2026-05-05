@@ -1,5 +1,3 @@
-using BinMaps.Data.Entities.Enums;
-
 namespace BinMaps.Shared.DTOs;
 
 /// <summary>
@@ -11,7 +9,8 @@ public sealed class RouteRunDetailDto
     public string DriverId { get; init; } = string.Empty;
     public string DriverName { get; init; } = string.Empty;
     public string AreaId { get; init; } = string.Empty;
-    public TrashType TrashType { get; init; }
+    /// <summary>Integer value of the TrashType enum (0=Mixed,1=Plastic,2=Paper,3=Glass).</summary>
+    public int TrashType { get; init; }
     public int? TruckId { get; init; }
     public DateTime StartedAt { get; init; }
     public DateTime? CompletedAt { get; init; }
