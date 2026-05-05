@@ -14,5 +14,13 @@ namespace BinMaps.Infrastructure.Services.Interfaces
         /// a JWT token is still issued so the frontend can display the ban page.
         /// </summary>
         Task<(bool Success, AuthResultDto? Result)> LoginAsync(LoginDTO dto);
+        /// <summary>
+        /// Issues a fresh JWT for an already-authenticated user (identified by
+        /// their userId claim). Reads the current role from the database so
+        /// that role changes made by an admin are immediately reflected in the
+        /// new token without requiring the user to log out and back in.
+        /// Returns null when the userId is not found (e.g. account deleted).
+        /// </summary>
+        Task<AuthResultDto?> RefreshCurrentUserAsync(string userId);
     }
 }

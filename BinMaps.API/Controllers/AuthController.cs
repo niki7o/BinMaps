@@ -1,5 +1,8 @@
-﻿using BinMaps.Infrastructure.Services.Interfaces;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using BinMaps.Infrastructure.Services.Interfaces;
 using BinMaps.Shared.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BinMaps.API.Controllers;
@@ -47,6 +50,29 @@ public sealed class AuthController : ControllerBase
         if (!success || result is null)
             return Unauthorized(new { message = "Невалиден имейл или парола." });
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Issues a fresh JWT for the currently-authenticated user, picking up
+    /// any role change that an admin may have made since the last login.
+    /// The frontend calls this on profile load / after an admin changes the
+    /// user's role, so the token (and UI) reflect the current database state.
+    /// </summary>
+    [HttpGet("me")]
+    [Authorize]
+    [ProducesResponseType(typeof(AuthResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Me()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                     ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
+
+        var result = await _authService.RefreshCurrentUserAsync(userId);
+        return result is null
+            ? Unauthorized(new { message = "Потребителят не е намерен." })
+            : Ok(result);
     }
 
     #endregion

@@ -108,6 +108,10 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
+    // Refresh the JWT so role changes made by an admin are picked up
+    // immediately the next time the user opens their profile page.
+    this.authService.refreshRole();
+
     this.loadProfile();
     this.loadReports();
     this.loadReputation();

@@ -132,11 +132,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   // broadcasts to all groups now.
   //  key: driverId, value: the Leaflet marker shown for that driver.
   private liveDriverMarkers: Map<string, L.Marker> = new Map();
+  //  key: driverId, value: the dashed route polyline for that driver.
+  private liveDriverRoutes: Map<string, L.Polyline> = new Map();
+  //  key: driverId, value: runId (used to avoid re-fetching the same route).
+  private liveDriverRunIds: Map<string, number> = new Map();
   //  key: driverId, value: the full latest event (for panel info).
   liveDrivers = new Map<string, {
     name: string; areaId: string; lat: number; lng: number;
     stopIndex: number; totalStops: number; load: number; at: string;
-    color: string;
+    color: string; runId?: number; truck?: { plate: string; capacity: number } | null;
   }>();
   showLiveDriversPanel = true;
 
@@ -349,6 +353,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     driverId: string; driverName: string; lat: number; lng: number;
     heading: number; stopIndex: number; totalStops: number; load: number;
     phase: string; areaId: string; at: string;
+    runId?: number;
+    truck?: { plate: string; capacity: number } | null;
   }): void {
     if (!this.map) return;
 
@@ -360,6 +366,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     if (ev.phase === 'end') {
       const m = this.liveDriverMarkers.get(ev.driverId);
       if (m) { this.map.removeLayer(m); this.liveDriverMarkers.delete(ev.driverId); }
+      // Remove the route polyline too.
+      const poly = this.liveDriverRoutes.get(ev.driverId);
+      if (poly) { this.map.removeLayer(poly); this.liveDriverRoutes.delete(ev.driverId); }
+      this.liveDriverRunIds.delete(ev.driverId);
       this.liveDrivers.delete(ev.driverId);
       this.liveDriverAnim.delete(ev.driverId);
       return;
@@ -380,6 +390,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       load:       ev.load,
       at:         ev.at,
       color,
+      runId:      ev.runId,
+      truck:      ev.truck,
     });
 
     let marker = this.liveDriverMarkers.get(ev.driverId);
@@ -395,6 +407,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         `${ev.driverName || 'Шофьор'} · зона ${ev.areaId} · спирка ${ev.stopIndex}/${ev.totalStops}`,
         { direction: 'top', offset: [0, -22] }
       );
+      marker.bindPopup(this.makeLiveDriverPopup(ev.driverName, ev.areaId, ev.stopIndex, ev.totalStops, ev.load, ev.at, color, ev.truck));
       this.liveDriverMarkers.set(ev.driverId, marker);
       // Initialise an anim entry sitting on the target so subsequent
       // updates have a "from" to lerp from.
@@ -405,6 +418,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         startedAt: performance.now(),
         durationMs: 0,
       });
+
+      // Fetch and draw the planned route polyline the first time we see
+      // this driver — if we have a runId and the user is authenticated.
+      if (ev.runId && !this.liveDriverRoutes.has(ev.driverId)) {
+        this.fetchAndDrawDriverRoute(ev.driverId, ev.runId, color);
+      }
     } else {
       // Subsequent update — kick off a lerp from the current rendered
       // position to the new target. Heading is interpolated on the
@@ -422,9 +441,86 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       marker.setTooltipContent(
         `${ev.driverName || 'Шофьор'} · зона ${ev.areaId} · спирка ${ev.stopIndex}/${ev.totalStops}`
       );
+      // Update popup content to reflect the latest telemetry.
+      marker.setPopupContent(this.makeLiveDriverPopup(ev.driverName, ev.areaId, ev.stopIndex, ev.totalStops, ev.load, ev.at, color, ev.truck));
+
+      // If we now have a runId for the first time (snapshot vs live event
+      // ordering), fetch the route if we haven't yet.
+      if (ev.runId && !this.liveDriverRoutes.has(ev.driverId) && this.liveDriverRunIds.get(ev.driverId) !== ev.runId) {
+        this.fetchAndDrawDriverRoute(ev.driverId, ev.runId, color);
+      }
     }
 
     this.ensureLiveDriverAnimLoop();
+  }
+
+  /** Builds the HTML string for a live-driver popup. */
+  private makeLiveDriverPopup(
+    name: string, areaId: string, stopIndex: number, totalStops: number,
+    load: number, at: string, color: string,
+    truck?: { plate: string; capacity: number } | null,
+  ): string {
+    const progress = totalStops > 0 ? Math.round((stopIndex / totalStops) * 100) : 0;
+    const loadStr = truck ? `${Math.round(load)} / ${truck.capacity} л` : `${Math.round(load)} л`;
+    const truckStr = truck ? `<div class="ldp-row"><span class="ldp-label">Камион:</span> ${truck.plate}</div>` : '';
+    const timeStr = at ? `<div class="ldp-row"><span class="ldp-label">Обновен:</span> ${humanAgo(new Date(at))}</div>` : '';
+    return `
+      <div class="live-driver-popup">
+        <div class="ldp-header" style="border-left: 4px solid ${color}">
+          <strong>${name || 'Шофьор'}</strong>
+          <span class="ldp-area">Зона ${areaId}</span>
+        </div>
+        <div class="ldp-body">
+          <div class="ldp-row"><span class="ldp-label">Спирка:</span> ${stopIndex} / ${totalStops}</div>
+          <div class="ldp-progress-bar"><div class="ldp-progress-fill" style="width:${progress}%;background:${color}"></div></div>
+          <div class="ldp-row"><span class="ldp-label">Товар:</span> ${loadStr}</div>
+          ${truckStr}
+          ${timeStr}
+        </div>
+      </div>`;
+  }
+
+  /**
+   * Fetches the planned stops for a run and draws a dashed polyline in the
+   * driver's colour so dispatchers and other drivers can see the full route.
+   */
+  private fetchAndDrawDriverRoute(driverId: string, runId: number, color: string): void {
+    const token = this.getToken();
+    if (!token) return;
+    // Record we've started fetching so duplicate calls don't pile up.
+    this.liveDriverRunIds.set(driverId, runId);
+
+    this.http.get<{
+      stops: Array<{ locationX: number; locationY: number; stopNumber: number }>;
+    }>(
+      `${this.API_URL}/trucks/route/${runId}`,
+      { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) },
+    ).pipe(takeUntil(this.destroy$))
+     .subscribe({
+       next: detail => {
+         if (!detail?.stops?.length || !this.map) return;
+         // Already have a polyline for this driver (race-condition guard).
+         if (this.liveDriverRoutes.has(driverId)) return;
+
+         const coords: [number, number][] = detail.stops
+           .sort((a, b) => a.stopNumber - b.stopNumber)
+           .map(s => [s.locationY, s.locationX] as [number, number]);
+
+         const poly = L.polyline(coords, {
+           color,
+           weight: 3,
+           opacity: 0.7,
+           dashArray: '8, 6',
+           lineCap: 'round',
+           lineJoin: 'round',
+         }).addTo(this.map);
+         // Bring the driver's marker on top of the line by increasing zIndex.
+         const marker = this.liveDriverMarkers.get(driverId);
+         if (marker) (marker as any).setZIndexOffset(1800);
+         this.liveDriverRoutes.set(driverId, poly);
+       },
+       error: () => { /* non-critical — map still works without the line */ },
+     });
   }
 
   /**
@@ -581,6 +677,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.http.get<Array<{
       runId: number; driverId: string; driverName: string;
       areaId: string; trashType: number; startedAt: string;
+      truck: { id: number; plate: string; capacity: number } | null;
       lastPosition: {
         lat: number; lng: number; heading: number; speedKmh: number;
         stopIndex: number; totalStops: number; load: number;
@@ -607,6 +704,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
              phase:      r.lastPosition.phase,
              areaId:     r.areaId,
              at:         r.lastPosition.at,
+             runId:      r.runId,
+             truck:      r.truck ? { plate: r.truck.plate, capacity: r.truck.capacity } : null,
            });
          }
 
@@ -639,7 +738,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     for (const m of this.liveDriverMarkers.values()) {
       try { this.map?.removeLayer(m); } catch { /* map already torn down */ }
     }
+    for (const p of this.liveDriverRoutes.values()) {
+      try { this.map?.removeLayer(p); } catch { /* map already torn down */ }
+    }
     this.liveDriverMarkers.clear();
+    this.liveDriverRoutes.clear();
+    this.liveDriverRunIds.clear();
     this.liveDrivers.clear();
     this.liveDriverAnim.clear();
     if (this.liveDriverAnimRAF !== null) {

@@ -97,6 +97,36 @@ public sealed class AuthService : IAuthService
 
     #endregion
 
+    public async Task<AuthResultDto?> RefreshCurrentUserAsync(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user is null) return null;
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var role = roles.FirstOrDefault() ?? "User";
+        var token = GenerateJwtToken(user, role);
+
+        var isBanned = role != "Admin" && user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow;
+        string? banReason = null;
+        if (isBanned)
+        {
+            var userClaims = await _userManager.GetClaimsAsync(user);
+            banReason = userClaims.FirstOrDefault(c => c.Type == "ban_reason")?.Value;
+        }
+
+        return new AuthResultDto
+        {
+            Token = token,
+            UserId = user.Id,
+            UserName = user.UserName!,
+            Email = user.Email!,
+            Role = role,
+            Reputation = user.Reputation,
+            IsBanned = isBanned,
+            BanReason = banReason
+        };
+    }
+
     #region Private
 
     private string GenerateJwtToken(User user, string role)

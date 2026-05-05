@@ -744,11 +744,23 @@
               </div>
             </ng-container>
 
+            <!-- No-GPS banner — driver is active but hasn't sent position yet -->
+            <div *ngIf="!d.hasGps" class="live-fleet-card__no-gps">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              GPS не е наличен
+            </div>
+
             <div class="live-fleet-card__foot">
-              <span class="text-muted text-xs">
+              <span class="text-muted text-xs" *ngIf="d.hasGps">
                 {{ d.speedKmh | number:'1.0-0' }} km/h · обновено {{ liveAgo(d.at) }}
               </span>
+              <span class="text-muted text-xs" *ngIf="!d.hasGps">Изчаква GPS сигнал…</span>
               <button class="btn btn--sm btn--ghost"
+                      [disabled]="!d.hasGps"
                       (click)="goToDriverOnMap(d.driverId)"
                       title="Виж на картата">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none"

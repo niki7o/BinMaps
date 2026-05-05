@@ -178,9 +178,12 @@ public sealed class TrucksController : ControllerBase
         }
     }
 
-    /// <summary>Full detail of a single run (admin only).</summary>
+    /// <summary>
+    /// Full detail of a single run. Admins can read any run; drivers can
+    /// read any active run so the map can draw the planned route polyline.
+    /// </summary>
     [HttpGet("route/{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Driver,Admin")]
     [ProducesResponseType(typeof(RouteRunDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetRun(int id)

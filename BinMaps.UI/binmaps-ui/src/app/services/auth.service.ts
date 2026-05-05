@@ -49,6 +49,36 @@ export class AuthService {
       .pipe(tap(r => this.applyResponse(r, email)));
   }
 
+  /**
+   * Fetches a fresh JWT from the server and updates the stored user state.
+   * Call this after an admin changes a user's role, or on profile load, so
+   * the UI always reflects what is actually in the database.
+   * Preserves the existing profilePicturePath (not carried in the token).
+   */
+  refreshRole(): void {
+    const token = this.getToken();
+    if (!token) return;
+
+    this.http
+      .get<LoginResponse>(`${AuthService.API}/auth/me`, {
+        headers: new HttpHeaders({ Authorization: `Bearer ${token}` }),
+      })
+      .subscribe({
+        next: r => {
+          const current = this.currentUser;
+          this.applyResponse(r, current?.email ?? r.email ?? '');
+          // Preserve profile picture — not in the JWT payload.
+          const updated = this._state$.value;
+          if (updated && current?.profilePicturePath) {
+            const withPic = { ...updated, profilePicturePath: current.profilePicturePath };
+            this.storage.save(withPic);
+            this._state$.next(withPic);
+          }
+        },
+        error: () => { /* swallow — keep existing token */ },
+      });
+  }
+
   register(data: RegisterRequest): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${AuthService.API}/auth/register`, data);
   }

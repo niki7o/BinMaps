@@ -36,6 +36,10 @@ export interface LiveDriver {
    *  preserved across updates so a driver's marker doesn't flicker through
    *  the palette as positions arrive. */
   color: string;
+  /** False when the driver is active but hasn't broadcast a GPS position
+   *  yet (just started, or server restarted). Map markers should only be
+   *  placed when this is true; the admin panel can show a "no GPS" badge. */
+  hasGps: boolean;
 }
 
 interface ActiveRunDto {
@@ -179,6 +183,7 @@ export class LiveDriverTrackingService implements OnDestroy {
       // carry it because plates/capacity don't change mid-route.
       truck:      prev?.truck ?? null,
       color:      prev?.color ?? colorForDriver(ev.driverId),
+      hasGps:     true,
     });
 
     this._drivers.set(next);
@@ -193,13 +198,14 @@ export class LiveDriverTrackingService implements OnDestroy {
 
       if (!r.lastPosition) {
         // Server has no cached position yet (driver just started, or the
-        // in-memory tracker was cleared by a server restart). Two cases:
-        //   a) We already have live data from a SignalR event — keep it so
-        //      a tab-visibility refresh doesn't wipe the marker the user can
-        //      already see. Update mutable fields (name, runId, truck) in
-        //      case they changed.
-        //   b) We have no data at all — skip; rendering at (0,0) would be
-        //      wrong. The marker will appear on the next DriverPosition tick.
+        // in-memory tracker was cleared by a server restart).
+        //   a) We already have live GPS data from a SignalR event — keep it
+        //      so a tab-visibility refresh doesn't wipe a marker the user
+        //      can already see. Update mutable fields in case they changed.
+        //   b) We have no data at all — still add a row with hasGps:false so
+        //      the admin panel and live fleet list can show the driver is
+        //      active, with a "GPS не е наличен" indicator. The map marker
+        //      won't be rendered until the first DriverPosition tick.
         if (existing) {
           next.set(r.driverId, {
             ...existing,
@@ -207,6 +213,25 @@ export class LiveDriverTrackingService implements OnDestroy {
             runId:      r.runId,
             areaId:     r.areaId,
             truck:      r.truck,
+          });
+        } else {
+          next.set(r.driverId, {
+            driverId:   r.driverId,
+            driverName: r.driverName,
+            runId:      r.runId,
+            areaId:     r.areaId,
+            lat:        0,
+            lng:        0,
+            heading:    0,
+            speedKmh:   0,
+            stopIndex:  0,
+            totalStops: 0,
+            load:       0,
+            phase:      'start',
+            at:         new Date().toISOString(),
+            truck:      r.truck,
+            color:      colorForDriver(r.driverId),
+            hasGps:     false,
           });
         }
         continue;
@@ -228,6 +253,7 @@ export class LiveDriverTrackingService implements OnDestroy {
         at:         r.lastPosition.at,
         truck:      r.truck,
         color:      existing?.color ?? colorForDriver(r.driverId),
+        hasGps:     true,
       });
     }
 
