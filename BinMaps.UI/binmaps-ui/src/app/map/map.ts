@@ -275,8 +275,20 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   readonly speedOptions = [1, 5, 10, 20, 50];
 
 
-  private binIcon(type: number): string {
-    return `${this.ICONS_DIR}/bin-${['mixed', 'plastic', 'paper', 'glass'][type] ?? 'mixed'}.svg`;
+  /**
+   * Normalise a trashType value that may arrive as a number (0-3) OR as the
+   * enum name string ("Mixed", "Plastic", "Paper", "Glass") because the API
+   * configures JsonStringEnumConverter.  Returns the numeric index so every
+   * downstream array lookup works correctly.
+   */
+  private trashIdx(type: number | string | null | undefined): number {
+    if (type === null || type === undefined) return 0;
+    if (typeof type === 'number') return type;
+    return ({ Mixed: 0, Plastic: 1, Paper: 2, Glass: 3 } as Record<string, number>)[type] ?? 0;
+  }
+
+  private binIcon(type: number | string | null | undefined): string {
+    return `${this.ICONS_DIR}/bin-${['mixed', 'plastic', 'paper', 'glass'][this.trashIdx(type)] ?? 'mixed'}.svg`;
   }
 
   private get fireIcon()   { return `${this.ICONS_DIR}/bin-fire.svg`;           }
@@ -295,7 +307,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         this.syncRole();
       });
 
-    this.signalR.start();
+    // SignalR is started at app-root level (app.ts) as soon as the user logs
+    // in — start() is idempotent so this is safe, but the call here is now
+    // redundant and has been removed to avoid confusion.
 
     this.signalR.containerUpdates$.subscribe((updates: any[]) => {
       if (!this.allBins.length) return;
@@ -821,7 +835,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.liveDriverVisHandler = undefined;
     }
 
-    this.signalR.stop();
+    // SignalR lifecycle is now owned by app.ts — do NOT stop it here because
+    // the admin dashboard / notification panel still need the connection when
+    // the user navigates away from the map.
   }
 
 
@@ -954,7 +970,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     let b = this.allBins;
 
     if (this.activeFilter.zone !== 'all') b = b.filter(x => x.areaId === this.activeFilter.zone);
-    if (this.activeFilter.type !== 'all') b = b.filter(x => x.trashType === +this.activeFilter.type);
+    if (this.activeFilter.type !== 'all') b = b.filter(x => this.trashIdx(x.trashType) === +this.activeFilter.type);
 
     if (this.activeFilter.fill === 'low')    b = b.filter(x => x.fillPercentage < 40);
     if (this.activeFilter.fill === 'medium') b = b.filter(x => x.fillPercentage >= 40 && x.fillPercentage <= 70);
@@ -1893,9 +1909,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const isWarm = temp !== null && temp! > 44 && !isFire;
     const ring = f >= 85 ? '#ef4444' : f >= 65 ? '#f97316' : f >= 45 ? '#f59e0b' : '#10b981';
 
-    const typeLbl = ['Смесен', 'Пластмаса', 'Хартия', 'Стъкло'][bin.trashType] ?? '';
-    const typeBg = ['rgba(148,163,184,.18)', 'rgba(245,158,11,.18)', 'rgba(59,130,246,.18)', 'rgba(34,211,238,.18)'][bin.trashType];
-    const typeClr = ['#94a3b8', '#f59e0b', '#60a5fa', '#22d3ee'][bin.trashType];
+    const _ti    = this.trashIdx(bin.trashType);
+    const typeLbl = ['Смесен', 'Пластмаса', 'Хартия', 'Стъкло'][_ti] ?? 'Смесен';
+    const typeBg  = ['rgba(148,163,184,.18)', 'rgba(245,158,11,.18)', 'rgba(59,130,246,.18)', 'rgba(34,211,238,.18)'][_ti] ?? 'rgba(148,163,184,.18)';
+    const typeClr = ['#94a3b8', '#f59e0b', '#60a5fa', '#22d3ee'][_ti] ?? '#94a3b8';
 
     const tempHtml = bin.hasSensor && temp !== null && !isFire ? `
       <div class="bpp-temp ${isWarm ? 'bpp-temp--warm' : ''}">
@@ -3018,7 +3035,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       const isFire    = b.status === 2 || ((b.temperature ?? 0) > 55 && b.fillPercentage > 70);
       const isBroken  = b.status === 1 || b.status === 3;
       const iconImage = isFire ? 'icon3d-burning' : isBroken ? 'icon3d-broken'
-                        : `icon3d-bin-${typeNames[b.trashType] ?? 'mixed'}`;
+                        : `icon3d-bin-${typeNames[this.trashIdx(b.trashType)] ?? 'mixed'}`;
       return {
         type: 'Feature' as const,
         geometry: { type: 'Point' as const, coordinates: [b.locationX, b.locationY] },

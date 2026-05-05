@@ -426,9 +426,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.selectedRun = null;
   }
 
-  trashTypeLabel(t: number): string {
-    return t === 0 ? 'Общ' : t === 1 ? 'Пластмаса' : t === 2 ? 'Хартия' : t === 3 ? 'Стъкло' : 'Неизв.';
-  }
+
 
   loadDeletedContainers(): void {
     this.http.get<DeletedContainer[]>(`${this.API}/admin/containers/deleted`, this.authHeaders())
@@ -1051,18 +1049,32 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     return 'badge--offline';
   }
 
-  getTrashTypeText(type: number): string {
-    return ['Смесен', 'Пластмаса', 'Хартия', 'Стъкло'][type] ?? 'Неизвестен';
+  /** Normalise trashType — the API returns either a number (0-3) or the
+   *  string enum name ("Mixed","Plastic","Paper","Glass") depending on the
+   *  JsonStringEnumConverter configuration.  Both forms map to index 0-3. */
+  private trashIdx(type: number | string | null | undefined): number {
+    if (type === null || type === undefined) return 0;
+    if (typeof type === 'number') return type;
+    return ({ Mixed: 0, Plastic: 1, Paper: 2, Glass: 3 } as Record<string, number>)[type] ?? 0;
+  }
+
+  getTrashTypeText(type: number | string | null | undefined): string {
+    return ['Смесен', 'Пластмаса', 'Хартия', 'Стъкло'][this.trashIdx(type)] ?? 'Смесен';
+  }
+
+  trashTypeLabel(t: number | string | null | undefined): string {
+    const labels = ['Общ', 'Пластмаса', 'Хартия', 'Стъкло'];
+    return labels[this.trashIdx(t)] ?? 'Общ';
   }
 
   getStatusText(status: number | null): string {
     if (status === null || status === undefined) return 'Активен';
-    return (['Активен', 'Извън линия', 'Пожар', 'Повреден сензор'][status]) ?? 'Неизвестен';
+    return (['Активен', 'Извън линия', 'Пожар', 'Повреден сензор'][status]) ?? 'Активен';
   }
 
   getStatusClass(status: number | null): string {
     if (status === null || status === 0) return 'badge--eco';
-    return (['badge--eco', 'badge--offline', 'badge--danger', 'badge--warn'])[status] ?? '';
+    return (['badge--eco', 'badge--offline', 'badge--danger', 'badge--warn'])[status] ?? 'badge--eco';
   }
 
   getInitials(name: string): string {
