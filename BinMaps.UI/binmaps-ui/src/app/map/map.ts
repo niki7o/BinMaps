@@ -37,6 +37,13 @@ interface RouteResult {
   containersCount: number;
   estimatedTimeMinutes: number;
   message: string;
+  /** Truck depot coordinates (lng/lat) — present when backend sends them.
+   *  Used to build a closed OSRM round-trip so the truck animates back to
+   *  its starting position along actual roads rather than stopping at the
+   *  last container.  depotX = longitude, depotY = latitude (same convention
+   *  as every other entity: X = horizontal = longitude). */
+  depotX?: number;
+  depotY?: number;
 }
 
 interface RouteStop {
@@ -379,7 +386,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     // Don't render *yourself* on the live overlay — drivers running their
     // own route already have their personal `truckMarker`. Avoids two
     // markers fighting at the same coordinates.
-    if (this.currentUser && ev.driverId === this.currentUser.id) return;
+    //
+    // Two-layer check: (1) ID match is the authoritative signal — the hub
+    // broadcasts the ASP.NET Identity NameIdentifier which must equal the
+    // id returned by the login API.  (2) Name match is a belt-and-suspenders
+    // fallback in case the claim format ever differs (GUID casing, etc.).
+    if (this.currentUser && (
+      ev.driverId   === this.currentUser.id       ||
+      ev.driverName === this.currentUser.userName
+    )) return;
 
     if (ev.phase === 'end') {
       const m = this.liveDriverMarkers.get(ev.driverId);
@@ -466,8 +481,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       // Update popup content to reflect the latest telemetry.
       marker.setPopupContent(this.makeLiveDriverPopup(ev.driverName, ev.areaId, ev.stopIndex, ev.totalStops, ev.load, ev.at, color, ev.truck));
 
-      // If we now have a runId for the first time (snapshot vs live event
-      // ordering), fetch the route if we haven't yet.
+      // If we now have a runId for the first time, OR the driver started a
+      // NEW run (runId changed), clear the old polyline first so we don't
+      // leave ghost lines from the previous route on the map.
+      if (ev.runId && this.liveDriverRunIds.get(ev.driverId) !== ev.runId) {
+        const oldPoly = this.liveDriverRoutes.get(ev.driverId);
+        if (oldPoly) {
+          this.map.removeLayer(oldPoly);
+          this.liveDriverRoutes.delete(ev.driverId);
+        }
+      }
       if (ev.runId && !this.liveDriverRoutes.has(ev.driverId) && this.liveDriverRunIds.get(ev.driverId) !== ev.runId) {
         this.fetchAndDrawDriverRoute(ev.driverId, ev.runId, color);
       }
@@ -1056,9 +1079,22 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const route = this.routeResult.route;
 
     try {
-      const coords = route.map(s => `${s.locationX},${s.locationY}`).join(';');
+      // Build a closed round-trip: depot → stop1 → … → stopN → depot.
+      // This makes the truck animate back to its starting position along
+      // actual roads (via OSRM) instead of teleporting or stopping at the
+      // last container.  Fall back to stop-only if the backend doesn't yet
+      // supply depot coordinates (older builds / empty routes).
+      const depotX = this.routeResult.depotX;
+      const depotY = this.routeResult.depotY;
+      const hasDepot = depotX != null && depotY != null &&
+                       Number.isFinite(depotX) && Number.isFinite(depotY);
+      const stopWaypoints = route.map(s => `${s.locationX},${s.locationY}`);
+      const osrmCoords = hasDepot
+        ? [`${depotX},${depotY}`, ...stopWaypoints, `${depotX},${depotY}`].join(';')
+        : stopWaypoints.join(';');
+
       const d = await (await fetch(
-        `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`
+        `https://router.project-osrm.org/route/v1/driving/${osrmCoords}?overview=full&geometries=geojson`
       )).json();
 
       if (d.code === 'Ok' && d.routes?.[0]) {

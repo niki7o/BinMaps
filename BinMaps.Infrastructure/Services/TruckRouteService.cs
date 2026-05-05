@@ -249,6 +249,8 @@ public sealed class TruckRouteService : ITruckRouteService
         return new RouteResultDto
         {
             TruckId = truck.Id,
+            DepotX = truck.LocationX,   // longitude — truck start / end position
+            DepotY = truck.LocationY,   // latitude
             AreaId = areaId,
             TrashType = trashType,
             Route = stops,
