@@ -1,20 +1,30 @@
 <div class="home">
 
-
+  <!-- ═══ HERO ═══ -->
   <section class="hero">
     <div class="hero__bg">
-      <div class="hero__orb hero__orb--1"></div>
-      <div class="hero__orb hero__orb--2"></div>
       <div class="hero__grid"></div>
+      <div class="hero__haze hero__haze--1"></div>
+      <div class="hero__haze hero__haze--2"></div>
     </div>
 
     <div class="hero__inner container">
+
+      <!-- Left copy column -->
       <div class="hero__content animate-slide-up">
 
-        
+        <div class="hero__eyebrow">
+          <div class="live-dot"></div>
+          <span>SOFIA</span>
+          <span class="hero__eyebrow-sep">//</span>
+          <span>ПУБЛИЧНА СИСТЕМА</span>
+          <span class="hero__eyebrow-sep">//</span>
+          <b class="hero__eyebrow-ver">v3.4</b>
+        </div>
 
         <h1 class="hero__title">
-          Умно управление<br>
+          Умно<br>
+          управление<br>
           на <span class="hero__title-accent">отпадъците</span><br>
           в София
         </h1>
@@ -26,14 +36,13 @@
 
         <div class="hero__ctas">
           <a routerLink="/map" class="btn btn--primary btn--lg">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg>
             Разгледай картата
           </a>
-          <a *ngIf="!isLoggedIn" routerLink="/register" class="btn btn--secondary btn--lg">Създай акаунт</a>
-          <a *ngIf="isLoggedIn" routerLink="/profile" class="btn btn--secondary btn--lg">Моят профил</a>
+          <a *ngIf="!isLoggedIn" routerLink="/register" class="btn btn--secondary btn--lg">Създай акаунт <span class="btn-arrow">→</span></a>
+          <a *ngIf="isLoggedIn"  routerLink="/profile"  class="btn btn--secondary btn--lg">Моят профил <span class="btn-arrow">→</span></a>
         </div>
 
-     
         <div class="hero__stats">
           <div class="hero__stat">
             <span class="hero__stat-value">6</span>
@@ -52,54 +61,122 @@
         </div>
       </div>
 
-
+      <!-- Right: map module -->
       <div class="hero__visual animate-fade-in">
-        <div class="hero__map-preview">
-          <div class="hero__map-header">
-            <span class="hero__map-status">
-              <div class="live-dot"></div>
-              <span>LIVE</span>
-              <span class="hero__map-status-sep">·</span>
-              <span>ЗОНА 1 — НАДЕЖДА</span>
-              <span class="hero__map-status-sep">·</span>
-              <span>SOFIA · BG</span>
-            </span>
+
+        <!-- Floating HUD — top-left -->
+        <div class="hero__hud hero__hud--tl">
+          <div class="hero__hud-dot hero__hud-dot--crit"></div>
+          <div>
+            <p class="hero__hud-title">Критичен контейнер</p>
+            <p class="hero__hud-desc">Зона 2 · 91% запълнен</p>
           </div>
-          <div class="map-overlay"></div>
+        </div>
+
+        <div class="hero__map-module">
+          <!-- Chrome header -->
+          <div class="hero__chrome">
+            <div class="hero__chrome-l">
+              <span class="live-dot"></span>
+              <span class="hero__chrome-live">LIVE</span>
+              <span class="hero__chrome-sep">/</span>
+              <span><b>ЗОНА 1</b> — НАДЕЖДА</span>
+              <span class="hero__chrome-sep">/</span>
+              <span>SOFIA · BG</span>
+            </div>
+            <span class="hero__chrome-r" id="hero-clock">––:––:––</span>
+          </div>
+
+          <!-- Map body -->
           <div class="hero__map-body">
             <div id="hero-map" class="hero__real-map"></div>
-            <div class="hero__map-pin hero__map-pin--ok"       style="left:28%; top:38%"><div class="pin-ring"></div><div class="pin-dot"></div><div class="pin-label">32%</div></div>
-            <div class="hero__map-pin hero__map-pin--warn"     style="left:55%; top:25%"><div class="pin-ring"></div><div class="pin-dot"></div><div class="pin-label">58%</div></div>
-            <div class="hero__map-pin hero__map-pin--high"     style="left:40%; top:60%"><div class="pin-ring"></div><div class="pin-dot"></div><div class="pin-label">74%</div></div>
-            <div class="hero__map-pin hero__map-pin--critical" style="left:70%; top:55%"><div class="pin-ring pin-ring--pulse"></div><div class="pin-dot"></div><div class="pin-label">91%</div></div>
-            <div class="hero__map-pin hero__map-pin--ok"       style="left:18%; top:65%"><div class="pin-ring"></div><div class="pin-dot"></div><div class="pin-label">21%</div></div>
+            <div class="map-tint"></div>
+            <div class="hero__map-pin hero__map-pin--ok"       style="left:28%;top:38%"><div class="pin-ring"></div><div class="pin-dot"></div><div class="pin-label">32%</div></div>
+            <div class="hero__map-pin hero__map-pin--warn"     style="left:55%;top:25%"><div class="pin-ring"></div><div class="pin-dot"></div><div class="pin-label">58%</div></div>
+            <div class="hero__map-pin hero__map-pin--high"     style="left:40%;top:60%"><div class="pin-ring"></div><div class="pin-dot"></div><div class="pin-label">74%</div></div>
+            <div class="hero__map-pin hero__map-pin--critical" style="left:70%;top:55%"><div class="pin-ring pin-ring--pulse"></div><div class="pin-dot"></div><div class="pin-label">91%</div></div>
+            <div class="hero__map-pin hero__map-pin--ok"       style="left:18%;top:65%"><div class="pin-ring"></div><div class="pin-dot"></div><div class="pin-label">21%</div></div>
           </div>
-          <div class="hero__map-footer">
+
+          <!-- Chrome footer -->
+          <div class="hero__foot">
             <div class="hero__map-legend">
               <span class="legend-dot legend-dot--ok"></span><span>Нормален</span>
               <span class="legend-dot legend-dot--warn"></span><span>Внимание</span>
               <span class="legend-dot legend-dot--critical"></span><span>Критичен</span>
             </div>
-            <div class="hero__map-sensor">
+            <div class="hero__iot">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
               IoT активен
             </div>
           </div>
         </div>
-        <div class="hero__card hero__card--tl">
-          <div class="live-dot live-dot--danger"></div>
-          <div><p class="hero__card-title">Критичен контейнер</p><p class="hero__card-desc">Зона 2 — 91% запълнен</p></div>
+
+        <!-- Floating HUD — bottom-right -->
+        <div class="hero__hud hero__hud--br">
+          <div class="hero__hud-icon">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div>
+            <p class="hero__hud-title">Маршрут генериран</p>
+            <p class="hero__hud-desc">8 спирки · 12.4 km</p>
+          </div>
         </div>
-        <div class="hero__card hero__card--br">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          <div><p class="hero__card-title">Маршрут генериран</p><p class="hero__card-desc">8 спирки · 12.4 km</p></div>
-        </div>
-      </div>
+
+      </div><!-- /hero__visual -->
     </div>
   </section>
+
+  <!-- ═══ TICKER ═══ -->
+  <div class="ticker">
+    <div class="ticker__track">
+      <span class="ticker__item"><span class="ticker__dot ticker__dot--danger"></span>14:22:08 &nbsp;<b>З2-447</b>&nbsp;· АЛАБИН 14 · fill 91%</span>
+      <span class="ticker__item"><span class="ticker__dot ticker__dot--warn"></span>14:21:54 &nbsp;<b>З1-208</b>&nbsp;· НАДЕЖДА · fill 73%</span>
+      <span class="ticker__item"><span class="ticker__dot ticker__dot--blue"></span>14:21:31 &nbsp;<b>КАМИОН 04</b>&nbsp;· маршрут · 8 спирки · 12.4 km</span>
+      <span class="ticker__item"><span class="ticker__dot ticker__dot--ok"></span>14:21:12 &nbsp;<b>З3-104</b>&nbsp;· ЛЮЛИН · СЪБРАН</span>
+      <span class="ticker__item"><span class="ticker__dot ticker__dot--warn"></span>14:20:48 &nbsp;<b>З6-371</b>&nbsp;· ИЗТОК · fill 68%</span>
+      <span class="ticker__item"><span class="ticker__dot ticker__dot--ok"></span>14:20:22 &nbsp;<b>З4-090</b>&nbsp;· ВИТОША · нормален · 38%</span>
+      <span class="ticker__item"><span class="ticker__dot ticker__dot--blue"></span>14:20:01 SYS · 1287 сензора онлайн · 22ms</span>
+      <!-- duplicate for seamless loop -->
+      <span class="ticker__item"><span class="ticker__dot ticker__dot--danger"></span>14:22:08 &nbsp;<b>З2-447</b>&nbsp;· АЛАБИН 14 · fill 91%</span>
+      <span class="ticker__item"><span class="ticker__dot ticker__dot--warn"></span>14:21:54 &nbsp;<b>З1-208</b>&nbsp;· НАДЕЖДА · fill 73%</span>
+      <span class="ticker__item"><span class="ticker__dot ticker__dot--blue"></span>14:21:31 &nbsp;<b>КАМИОН 04</b>&nbsp;· маршрут · 8 спирки · 12.4 km</span>
+      <span class="ticker__item"><span class="ticker__dot ticker__dot--ok"></span>14:21:12 &nbsp;<b>З3-104</b>&nbsp;· ЛЮЛИН · СЪБРАН</span>
+      <span class="ticker__item"><span class="ticker__dot ticker__dot--warn"></span>14:20:48 &nbsp;<b>З6-371</b>&nbsp;· ИЗТОК · fill 68%</span>
+      <span class="ticker__item"><span class="ticker__dot ticker__dot--ok"></span>14:20:22 &nbsp;<b>З4-090</b>&nbsp;· ВИТОША · нормален · 38%</span>
+      <span class="ticker__item"><span class="ticker__dot ticker__dot--blue"></span>14:20:01 SYS · 1287 сензора онлайн · 22ms</span>
+    </div>
+  </div>
+
+  <!-- ═══ BIG NUMBERS STRIP ═══ -->
+  <div class="numstrip">
+    <div class="container numstrip__inner">
+      <div class="numstrip__cell">
+        <span class="numstrip__key">Контейнера</span>
+        <span class="numstrip__val">{{ totalContainers }}</span>
+        <span class="numstrip__detail">в 6 зони на София</span>
+      </div>
+      <div class="numstrip__cell">
+        <span class="numstrip__key">IoT покритие</span>
+        <span class="numstrip__val">~60<sup>%</sup></span>
+        <span class="numstrip__detail">от активния флот</span>
+      </div>
+      <div class="numstrip__cell">
+        <span class="numstrip__key">Обновяване</span>
+        <span class="numstrip__val">10<sup>s</sup></span>
+        <span class="numstrip__detail">в реално време</span>
+      </div>
+      <div class="numstrip__cell numstrip__cell--noborder">
+        <span class="numstrip__key">Средно запълване</span>
+        <span class="numstrip__val">{{ avgZoneFill }}<sup>%</sup></span>
+        <span class="numstrip__detail">претеглено по контейнери</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ FEATURES ═══ -->
   <section class="features">
     <div class="container">
-
       <div class="features__header">
         <div class="section-label">Функционалности</div>
         <h2 class="features__title">Технологията зад<br><span class="features__title-grad">умния град</span></h2>
@@ -107,7 +184,6 @@
       </div>
 
       <div class="feat-bento">
-
         <div class="feat-card feat-card--map">
           <div class="feat-card__glow feat-card__glow--eco"></div>
           <div class="feat-card__num">01</div>
@@ -115,7 +191,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg>
           </div>
           <h3 class="feat-card__title">Карта в реално време</h3>
-          <p class="feat-card__desc">Leaflet карта с всички контейнери в София, цветово кодирани по запълване. Обновяване в реално време чрез WebSocket.</p>
+          <p class="feat-card__desc">Leaflet карта с всички контейнери в София, цветово кодирани по запълване. Обновяване чрез WebSocket.</p>
           <div class="feat-card__bars">
             <div class="feat-bar" style="--h:24%;--c:#10b981"><div class="feat-bar__fill"></div><span>24%</span></div>
             <div class="feat-bar" style="--h:38%;--c:#10b981"><div class="feat-bar__fill"></div><span>38%</span></div>
@@ -123,15 +199,10 @@
             <div class="feat-bar" style="--h:67%;--c:#f59e0b"><div class="feat-bar__fill"></div><span>67%</span></div>
             <div class="feat-bar" style="--h:91%;--c:#ef4444"><div class="feat-bar__fill"></div><span>91%</span></div>
           </div>
-          <div class="feat-card__chip">
-            <div class="live-dot"></div>
-            WebSocket · Live
-          </div>
+          <div class="feat-card__chip"><div class="live-dot"></div>WebSocket · Live</div>
         </div>
 
-       
         <div class="feat-col-right">
-
           <div class="feat-card feat-card--route">
             <div class="feat-card__glow feat-card__glow--blue"></div>
             <div class="feat-card__num">02</div>
@@ -162,9 +233,6 @@
             </div>
             <h3 class="feat-card__title">Аналитичен панел</h3>
             <p class="feat-card__desc">Интерактивни графики по зони и период. Hotspot анализ и тенденции.</p>
-            <!-- Six bars = the six Sofia zones, height = avg fill, colour
-                 = status. Labels underneath make the chart parse as data
-                 instead of decoration. -->
             <div class="feat-zonebar-row">
               <div class="feat-zonebar"><div class="feat-zonebar__fill" style="height:67%;background:#f59e0b"></div><span>З1</span></div>
               <div class="feat-zonebar"><div class="feat-zonebar__fill" style="height:82%;background:#ef4444"></div><span>З2</span></div>
@@ -192,13 +260,12 @@
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>
   </section>
 
-
+  <!-- ═══ HOW IT WORKS ═══ -->
   <section class="how-it-works">
     <div class="container">
       <div class="features__header">
@@ -208,50 +275,51 @@
       </div>
       <div class="hiw-steps">
         <div class="hiw-step">
-          <div class="hiw-step__head">
-            <span class="hiw-step__num">01</span>
-            <div class="hiw-step__icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            </div>
+          <div class="hiw-step__circle">
+            <span>01</span>
+            <div class="hiw-step__circle-ring"></div>
+          </div>
+          <div class="hiw-step__icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           </div>
           <h4>Снимай проблема</h4>
           <p>Виждаш препълнена или наранена кофа? Снимай я и изпрати сигнал директно от приложението.</p>
         </div>
         <div class="hiw-connector"></div>
         <div class="hiw-step">
-          <div class="hiw-step__head">
-            <span class="hiw-step__num">02</span>
-            <div class="hiw-step__icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            </div>
+          <div class="hiw-step__circle">
+            <span>02</span>
+            <div class="hiw-step__circle-ring"></div>
+          </div>
+          <div class="hiw-step__icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
           </div>
           <h4>AI го проверява</h4>
-          <p>Системата анализира снимката автоматично и оценява ситуацията. По-надеждните потребители имат по-голямо влияние.</p>
+          <p>Системата анализира снимката автоматично. По-надеждните потребители имат по-голямо влияние.</p>
         </div>
         <div class="hiw-connector"></div>
         <div class="hiw-step">
-          <div class="hiw-step__head">
-            <span class="hiw-step__num">03</span>
-            <div class="hiw-step__icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-            </div>
+          <div class="hiw-step__circle">
+            <span>03</span>
+            <div class="hiw-step__circle-ring"></div>
+          </div>
+          <div class="hiw-step__icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
           </div>
           <h4>Камионът идва</h4>
-          <p>Системата генерира оптимален маршрут и изпраща камиона точно там, където трябва — без излишни обиколки.</p>
+          <p>Системата генерира оптимален маршрут и изпраща камиона точно там, където трябва.</p>
         </div>
       </div>
     </div>
   </section>
 
+  <!-- ═══ ZONES ═══ -->
   <section class="zones">
     <div class="container">
       <div class="zones__header">
         <div class="section-label">Покритие</div>
         <h2 class="zones__title">6 зони в София</h2>
         <p class="zones__sub">Текущо средно запълване по зони.</p>
-        <!-- Strip below the subtitle — *sums* what's already shown in the
-             grid of cards below, so the numbers are earned, not asserted.
-             Mono font deliberately separates these from prose. -->
         <div class="zones__totals">
           <span class="zones__totals-item">
             <strong>{{ totalContainers }}</strong>
@@ -269,13 +337,19 @@
           </span>
         </div>
       </div>
+
       <div class="zones__grid">
-        <div *ngFor="let zone of zones; let i = index" class="zone-card" [style.animation-delay]="(i * 60) + 'ms'">
+        <div *ngFor="let zone of zones; let i = index"
+             class="zone-card"
+             [style.animation-delay]="(i * 60) + 'ms'">
           <div class="zone-card__info">
             <p class="zone-card__name">{{ zone.name }}</p>
             <div class="zone-card__bar">
               <div class="progress">
-                <div class="progress__fill" [ngClass]="fillClass(zone.avgFill)" [style.width]="zone.avgFill + '%'"></div>
+                <div class="progress__fill"
+                     [ngClass]="fillClass(zone.avgFill)"
+                     [style.width]="zone.avgFill + '%'">
+                </div>
               </div>
               <span class="zone-card__pct">{{ zone.avgFill }}%</span>
             </div>

@@ -746,23 +746,29 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
      .subscribe({
        next: rows => {
          for (const r of rows ?? []) {
-           if (!r.lastPosition) continue;
-           // Synthesise the same shape onDriverPosition expects.
-           this.onDriverPosition({
-             driverId:   r.driverId,
-             driverName: r.driverName,
-             lat:        r.lastPosition.lat,
-             lng:        r.lastPosition.lng,
-             heading:    r.lastPosition.heading,
-             stopIndex:  r.lastPosition.stopIndex,
-             totalStops: r.lastPosition.totalStops,
-             load:       r.lastPosition.load,
-             phase:      r.lastPosition.phase,
-             areaId:     r.areaId,
-             at:         r.lastPosition.at,
-             runId:      r.runId,
-             truck:      r.truck ? { plate: r.truck.plate, capacity: r.truck.capacity } : null,
-           });
+           if (r.lastPosition) {
+             // Synthesise the same shape onDriverPosition expects.
+             this.onDriverPosition({
+               driverId:   r.driverId,
+               driverName: r.driverName,
+               lat:        r.lastPosition.lat,
+               lng:        r.lastPosition.lng,
+               heading:    r.lastPosition.heading,
+               stopIndex:  r.lastPosition.stopIndex,
+               totalStops: r.lastPosition.totalStops,
+               load:       r.lastPosition.load,
+               phase:      r.lastPosition.phase,
+               areaId:     r.areaId,
+               at:         r.lastPosition.at,
+               runId:      r.runId,
+               truck:      r.truck ? { plate: r.truck.plate, capacity: r.truck.capacity } : null,
+             });
+           } else if (r.runId && !this.liveDriverRoutes.has(r.driverId)) {
+             // No GPS yet — still draw the planned route polyline so admins
+             // and other drivers can see where this truck is headed.
+             const color = colorForDriverId(r.driverId);
+             this.fetchAndDrawDriverRoute(r.driverId, r.runId, color);
+           }
          }
 
          // Deep-link target — centre on the requested driver once they're

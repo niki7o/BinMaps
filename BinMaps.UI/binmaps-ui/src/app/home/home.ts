@@ -24,8 +24,10 @@ interface Zone {
 })
 export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   isLoggedIn = false;
+  heroTime = '––:––:––';
   private authSub?: Subscription;
   private map?: L.Map;
+  private clockTimer?: ReturnType<typeof setInterval>;
 
   zones: Zone[] = [
     { name: 'Зона 1 — Надежда',   areaId: 'Зона 1 - Надежда север', avgFill: 67, risk: 'high',     riskLabel: 'Високо',   containerCount: 42 },
@@ -103,7 +105,18 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       });
   }
 
+  private tickClock(): void {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    this.heroTime = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const el = document.getElementById('hero-clock');
+    if (el) el.textContent = this.heroTime;
+  }
+
   ngAfterViewInit(): void {
+    this.tickClock();
+    this.clockTimer = setInterval(() => this.tickClock(), 1000);
+
     try {
       this.map = L.map('hero-map', {
         zoomControl: false,
@@ -123,6 +136,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.authSub?.unsubscribe();
     this.map?.remove();
+    if (this.clockTimer) clearInterval(this.clockTimer);
   }
 
   fillClass(fill: number): string {
