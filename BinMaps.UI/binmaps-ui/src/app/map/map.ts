@@ -379,10 +379,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
 
-    // Reuse a previously-assigned colour so the truck's icon doesn't
-    // change palette mid-route.
+    // All other drivers' markers are yellow — visually distinct from the
+    // viewer's own green truck and from the red route lines. Reuse the
+    // colour once assigned so the icon doesn't flicker on subsequent updates.
     const previous = this.liveDrivers.get(ev.driverId);
-    const color = previous?.color ?? colorForDriverId(ev.driverId);
+    const color = previous?.color ?? '#fbbf24';
 
     this.liveDrivers.set(ev.driverId, {
       name:       ev.driverName || 'Шофьор',
@@ -513,10 +514,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   /**
-   * Fetches the planned stops for a run and draws a dashed polyline in the
-   * driver's colour so dispatchers and other drivers can see the full route.
+   * Fetches the planned stops for a run and draws a route polyline in the
+   * same red style as the driver's own route — so admins and other drivers
+   * can see the full planned path on the map.
    */
-  private fetchAndDrawDriverRoute(driverId: string, runId: number, color: string): void {
+  private fetchAndDrawDriverRoute(driverId: string, runId: number, _color: string): void {
     const token = this.getToken();
     if (!token) return;
     // Record we've started fetching so duplicate calls don't pile up.
@@ -537,13 +539,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
          const coords: [number, number][] = detail.stops
            .map(s => [s.lat, s.lng] as [number, number]);
 
+         // Red dashed line — identical style to the driver's own routeLine so
+         // the visual language is consistent: every planned route looks the same.
          const poly = L.polyline(coords, {
-           color,
-           weight: 3,
-           opacity: 0.7,
-           dashArray: '8, 6',
-           lineCap: 'round',
-           lineJoin: 'round',
+           color:     '#ef4444',
+           weight:    5,
+           opacity:   0.85,
+           dashArray: '10, 5',
+           lineCap:   'round',
+           lineJoin:  'round',
          }).addTo(this.map);
          // Bring the driver's marker on top of the line by increasing zIndex.
          const marker = this.liveDriverMarkers.get(driverId);
@@ -623,44 +627,44 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private makeLiveDriverIcon(name: string, heading: number, color: string): L.DivIcon {
     const initial = (name || '?').trim().charAt(0).toUpperCase() || '?';
     const deg = Number.isFinite(heading) ? Math.round(heading) : 0;
+    // Darker shade for outlines / wheels — computed from color or fallback to near-black.
+    const dark = color === '#fbbf24' ? '#78350f' : '#0f172a';
     return L.divIcon({
       className: '',
-      iconSize: [52, 52],
-      iconAnchor: [26, 26],
-      // Top-down truck icon — the entire SVG rotates to face the direction
-      // of travel. The pulsing ring is in a separate layer so it stays
-      // circular regardless of rotation. A small name badge in the corner
-      // identifies the driver at a glance even at map zoom 12.
+      iconSize: [56, 56],
+      iconAnchor: [28, 28],
+      // Top-down truck icon — rotates with heading. Pulsing ring sits on a
+      // separate non-rotating layer so it stays circular at all orientations.
       html: `
-        <div style="position:relative;width:52px;height:52px;display:flex;align-items:center;justify-content:center" title="${name || 'Шофьор'}">
+        <div style="position:relative;width:56px;height:56px;display:flex;align-items:center;justify-content:center" title="${name || 'Шофьор'}">
           <!-- Pulsing location ring -->
           <div class="live-driver-pulse" style="--driver-color:${color}"></div>
           <!-- Truck SVG — rotated to match heading -->
-          <div style="transform:rotate(${deg}deg);filter:drop-shadow(0 2px 5px rgba(0,0,0,0.55))">
-            <svg width="30" height="38" viewBox="0 0 30 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <!-- Cab (front of truck — top of icon) -->
-              <rect x="5" y="1" width="20" height="13" rx="3.5" fill="${color}" stroke="#0f172a" stroke-width="1.2"/>
+          <div style="transform:rotate(${deg}deg);filter:drop-shadow(0 3px 7px rgba(0,0,0,0.65))">
+            <svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Cab (front — top of icon) -->
+              <rect x="5"   y="1"   width="22" height="14" rx="4"   fill="${color}" stroke="${dark}" stroke-width="1.4"/>
               <!-- Windshield -->
-              <rect x="7.5" y="2.5" width="15" height="9" rx="2" fill="#0f172a" opacity="0.72"/>
+              <rect x="7.5" y="2.5" width="17" height="10" rx="2.5" fill="${dark}" opacity="0.75"/>
               <!-- Cargo body -->
-              <rect x="3" y="14" width="24" height="22" rx="2.5" fill="${color}" stroke="#0f172a" stroke-width="1.2"/>
+              <rect x="3"   y="15"  width="26" height="25" rx="3"   fill="${color}" stroke="${dark}" stroke-width="1.4"/>
               <!-- Cargo panel lines -->
-              <line x1="3" y1="19" x2="27" y2="19" stroke="#0f172a" stroke-width="0.8" opacity="0.25"/>
-              <line x1="15" y1="14" x2="15" y2="36" stroke="#0f172a" stroke-width="0.8" opacity="0.15"/>
+              <line x1="3"  y1="20" x2="29"  y2="20" stroke="${dark}" stroke-width="0.9" opacity="0.22"/>
+              <line x1="16" y1="15" x2="16"  y2="40" stroke="${dark}" stroke-width="0.9" opacity="0.14"/>
               <!-- Front-left wheel -->
-              <rect x="0" y="3.5" width="4" height="8" rx="1.5" fill="#1e293b"/>
+              <rect x="0"   y="3.5" width="4.5" height="9"  rx="1.5" fill="#1e293b"/>
               <!-- Front-right wheel -->
-              <rect x="26" y="3.5" width="4" height="8" rx="1.5" fill="#1e293b"/>
+              <rect x="27.5" y="3.5" width="4.5" height="9" rx="1.5" fill="#1e293b"/>
               <!-- Rear-left wheels (double) -->
-              <rect x="0" y="20" width="4" height="6" rx="1.5" fill="#1e293b"/>
-              <rect x="0" y="27" width="4" height="6" rx="1.5" fill="#1e293b"/>
+              <rect x="0"   y="22"  width="4.5" height="7"  rx="1.5" fill="#1e293b"/>
+              <rect x="0"   y="30"  width="4.5" height="7"  rx="1.5" fill="#1e293b"/>
               <!-- Rear-right wheels (double) -->
-              <rect x="26" y="20" width="4" height="6" rx="1.5" fill="#1e293b"/>
-              <rect x="26" y="27" width="4" height="6" rx="1.5" fill="#1e293b"/>
+              <rect x="27.5" y="22" width="4.5" height="7"  rx="1.5" fill="#1e293b"/>
+              <rect x="27.5" y="30" width="4.5" height="7"  rx="1.5" fill="#1e293b"/>
             </svg>
           </div>
-          <!-- Driver initial badge -->
-          <div style="position:absolute;bottom:1px;right:1px;width:17px;height:17px;background:${color};color:#0f172a;border-radius:50%;font:700 10px/17px 'DM Sans',sans-serif;text-align:center;border:2px solid #0f172a;letter-spacing:-0.5px">${initial}</div>
+          <!-- Driver initial badge — top-right corner, high contrast -->
+          <div style="position:absolute;top:1px;right:1px;width:18px;height:18px;background:${color};color:${dark};border-radius:50%;font:700 10px/18px 'DM Sans',sans-serif;text-align:center;border:2px solid ${dark};letter-spacing:-0.5px">${initial}</div>
         </div>`,
     });
   }
