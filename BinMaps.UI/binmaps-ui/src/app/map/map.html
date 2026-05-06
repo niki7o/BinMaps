@@ -147,20 +147,11 @@
                    so the backend's System.Text.Json can deserialise it into
                    the TrashType enum without a string-enum converter. -->
               <select class="form-select"
-                      [(ngModel)]="selectedTrashType"
-                      [disabled]="!selectedAreaId || availableTrashTypesForArea.length <= 1">
-                <ng-container *ngIf="availableTrashTypesForArea.length > 0; else allTypes">
-                  <option *ngIf="availableTrashTypesForArea.includes(0)" [ngValue]="0">Смесен отпадък</option>
-                  <option *ngIf="availableTrashTypesForArea.includes(1)" [ngValue]="1">Пластмаса</option>
-                  <option *ngIf="availableTrashTypesForArea.includes(2)" [ngValue]="2">Хартия и картон</option>
-                  <option *ngIf="availableTrashTypesForArea.includes(3)" [ngValue]="3">Стъкло</option>
-                </ng-container>
-                <ng-template #allTypes>
-                  <option [ngValue]="0">Смесен отпадък</option>
-                  <option [ngValue]="1">Пластмаса</option>
-                  <option [ngValue]="2">Хартия и картон</option>
-                  <option [ngValue]="3">Стъкло</option>
-                </ng-template>
+                      [(ngModel)]="selectedTrashType">
+                <option [ngValue]="0">Смесен отпадък</option>
+                <option [ngValue]="1">Пластмаса</option>
+                <option [ngValue]="2">Хартия и картон</option>
+                <option [ngValue]="3">Стъкло</option>
               </select>
             </div>
           </div>
