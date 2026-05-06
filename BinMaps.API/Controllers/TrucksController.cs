@@ -33,6 +33,41 @@ public sealed class TrucksController : ControllerBase
         _logger = logger;
     }
 
+    #region Zones
+
+    /// <summary>
+    /// Returns every distinct (AreaId, TrashType) combination that has an
+    /// active truck configured. Used by the driver UI to populate the zone
+    /// and trash-type dropdowns with only the combinations that are actually
+    /// served — preventing drivers from generating routes for zones/types
+    /// that have no truck assigned.
+    /// </summary>
+    [HttpGet("zones")]
+    [Authorize(Roles = "Driver,Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetZones([FromServices] BinMapsDbContext db)
+    {
+        try
+        {
+            var zones = await db.Trucks
+                .AsNoTracking()
+                .Where(t => t.IsActive)
+                .Select(t => new { t.AreaId, trashType = (int)t.TrashType })
+                .Distinct()
+                .OrderBy(z => z.AreaId)
+                .ThenBy(z => z.trashType)
+                .ToListAsync();
+            return Ok(zones);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetZones failed");
+            return Ok(Array.Empty<object>());
+        }
+    }
+
+    #endregion
+
     #region Route generation
 
     [HttpGet("route")]

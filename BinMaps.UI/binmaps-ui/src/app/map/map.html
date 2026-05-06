@@ -116,14 +116,15 @@
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                 <circle cx="12" cy="10" r="3"/>
               </svg>
-              <select class="form-select" [(ngModel)]="selectedAreaId">
+              <!-- Area dropdown: populated from /trucks/zones so only
+                   zones with an active truck are selectable. -->
+              <select class="form-select"
+                      [(ngModel)]="selectedAreaId"
+                      (ngModelChange)="onAreaChange()">
                 <option value="">Избери зона…</option>
-                <option value="Зона 1 - Надежда север">Зона 1 — Надежда север</option>
-                <option value="Зона 2 - Център">Зона 2 — Център</option>
-                <option value="Зона 3 - Люлин">Зона 3 — Люлин</option>
-                <option value="Зона 4 - Овча Купел">Зона 4 — Овча Купел</option>
-                <option value="Зона 5 - Юг и Витоша">Зона 5 — Юг и Витоша</option>
-                <option value="Зона 6 - Изток">Зона 6 — Изток</option>
+                <option *ngFor="let areaId of availableAreaIds" [value]="areaId">
+                  {{ areaId }}
+                </option>
               </select>
             </div>
           </div>
@@ -141,17 +142,25 @@
                 <polyline points="3 6 5 6 21 6"/>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
               </svg>
-              <!-- [ngValue] not [value]: with [value], Angular coerces the
-                   bound model to a string ("0"), and the server's
-                   System.Text.Json (no JsonStringEnumConverter registered)
-                   refuses to deserialise "0" into a TrashType enum →
-                   400 with "The JSON value could not be converted...".
-                   With [ngValue], the model stays a number. -->
-              <select class="form-select" [(ngModel)]="selectedTrashType">
-                <option [ngValue]="0">Смесен отпадък</option>
-                <option [ngValue]="1">Пластмаса</option>
-                <option [ngValue]="2">Хартия и картон</option>
-                <option [ngValue]="3">Стъкло</option>
+              <!-- Trash-type options are filtered to only what's available in
+                   the selected zone. [ngValue] keeps the value as a number
+                   so the backend's System.Text.Json can deserialise it into
+                   the TrashType enum without a string-enum converter. -->
+              <select class="form-select"
+                      [(ngModel)]="selectedTrashType"
+                      [disabled]="!selectedAreaId || availableTrashTypesForArea.length <= 1">
+                <ng-container *ngIf="availableTrashTypesForArea.length > 0; else allTypes">
+                  <option *ngIf="availableTrashTypesForArea.includes(0)" [ngValue]="0">Смесен отпадък</option>
+                  <option *ngIf="availableTrashTypesForArea.includes(1)" [ngValue]="1">Пластмаса</option>
+                  <option *ngIf="availableTrashTypesForArea.includes(2)" [ngValue]="2">Хартия и картон</option>
+                  <option *ngIf="availableTrashTypesForArea.includes(3)" [ngValue]="3">Стъкло</option>
+                </ng-container>
+                <ng-template #allTypes>
+                  <option [ngValue]="0">Смесен отпадък</option>
+                  <option [ngValue]="1">Пластмаса</option>
+                  <option [ngValue]="2">Хартия и картон</option>
+                  <option [ngValue]="3">Стъкло</option>
+                </ng-template>
               </select>
             </div>
           </div>

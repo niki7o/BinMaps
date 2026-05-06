@@ -51,19 +51,22 @@ public sealed class TruckRouteService : ITruckRouteService
 
     /// <summary>
     /// Finds the truck assigned to <paramref name="areaId"/> that collects
-    /// <paramref name="trashType"/>. Falls back to any truck in the area if
-    /// no type-specific vehicle is seeded — keeps legacy single-truck-per-area
-    /// deployments working.
+    /// exactly <paramref name="trashType"/>. A strict match is required —
+    /// no fallback to a different trash-type truck in the same area — because
+    /// a "wrong type" truck would collect the right containers but report
+    /// them under the wrong vehicle, corrupting the route history and
+    /// the capacity/load accounting.
     /// </summary>
     private async Task<Truck> FindTruckAsync(string areaId, TrashType trashType)
     {
-        var query = _truckRepo.GetAllAttached().Where(t => t.AreaId == areaId);
-
-        var truck = await query.FirstOrDefaultAsync(t => t.TrashType == trashType)
-                 ?? await query.FirstOrDefaultAsync();
+        var truck = await _truckRepo
+            .GetAllAttached()
+            .Where(t => t.AreaId == areaId && t.TrashType == trashType)
+            .FirstOrDefaultAsync();
 
         return truck ?? throw new InvalidOperationException(
-            $"No truck found for area '{areaId}' (type: {trashType}).");
+            $"Няма активен камион за зона '{areaId}' с тип отпадък '{trashType}'. " +
+            $"Проверете дали камионът е правилно конфигуриран.");
     }
 
     private async Task<List<TrashContainer>> GetCandidatesAsync(string areaId, TrashType trashType)

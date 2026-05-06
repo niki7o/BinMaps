@@ -202,6 +202,14 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   guestBannerVisible = true;
   selectedAreaId = '';
   selectedTrashType = 0;
+
+  // Zone/trashType combos loaded from the backend (trucks table).
+  // A zone = { areaId, trashType } pair that has an active truck.
+  // Drivers and admins see only the served combinations so they
+  // can't accidentally generate routes for areas with no truck.
+  availableZones: { areaId: string; trashType: number }[] = [];
+  availableAreaIds: string[] = [];
+  availableTrashTypesForArea: number[] = [];
   routeResult: RouteResult | null = null;
   routeActive = false;
   navigationActive = false;
@@ -618,6 +626,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.initMap();
     this.loadBins();
     this.initFilterControl();
+    this.loadZones();
 
     const focusDriverId = this.route.snapshot.queryParamMap.get('focusDriver');
     this.fetchActiveDriversSnapshot(focusDriverId);
@@ -733,6 +742,50 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.isAdmin = this.currentUser.role === 'Admin';
     this.isDriver = this.currentUser.role === 'Driver';
     this.isUser = this.currentUser.role === 'User';
+  }
+
+  /** Loads which (areaId, trashType) pairs actually have an active truck. */
+  private loadZones(): void {
+    const token = this.getToken();
+    if (!token) return;
+    this.http.get<{ areaId: string; trashType: number }[]>(
+      `${this.API_URL}/trucks/zones`,
+      { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) }
+    ).pipe(takeUntil(this.destroy$))
+     .subscribe({
+       next: zones => {
+         this.availableZones = zones ?? [];
+         // Unique area IDs, preserving the sorted order from the backend.
+         this.availableAreaIds = [...new Set(zones.map(z => z.areaId))];
+         // If only one area exists, pre-select it.
+         if (this.availableAreaIds.length === 1 && !this.selectedAreaId) {
+           this.selectedAreaId = this.availableAreaIds[0];
+           this.onAreaChange();
+         }
+       },
+       error: () => {
+         // Fallback: leave availableZones empty; the dropdowns will show
+         // "no options" and the driver gets a clear error on route generation.
+       }
+     });
+  }
+
+  /**
+   * Called when the area dropdown changes. Filters the trash-type dropdown
+   * to only the types served in the selected area, and auto-selects the
+   * type if there is exactly one option — preventing the driver from picking
+   * a type that has no truck in that zone.
+   */
+  onAreaChange(): void {
+    const typesForArea = this.availableZones
+      .filter(z => z.areaId === this.selectedAreaId)
+      .map(z => z.trashType);
+    this.availableTrashTypesForArea = typesForArea;
+    if (typesForArea.length === 1) {
+      this.selectedTrashType = typesForArea[0];
+    } else if (!typesForArea.includes(this.selectedTrashType)) {
+      this.selectedTrashType = typesForArea[0] ?? 0;
+    }
   }
   private initMap() {
     this.cluster = L.markerClusterGroup({
@@ -1509,6 +1562,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.currentTruckLoad = 0;
     this.selectedAreaId = '';
     this.selectedTrashType = 0;
+    this.availableTrashTypesForArea = [];
+    // Reload zones so the dropdowns are ready for the next route.
+    this.loadZones();
   }
 
   private clearRoute() {

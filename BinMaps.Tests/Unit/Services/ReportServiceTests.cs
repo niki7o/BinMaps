@@ -19,6 +19,8 @@ namespace BinMaps.Tests.Unit.Services
     public class ReportServiceTests
     {
         private readonly Mock<IRepository<Report, int>> _mockReportRepo;
+        private readonly Mock<IRepository<TrashContainer, int>> _mockContainerRepo;
+        private readonly Mock<IRepository<Area, string>> _mockAreaRepo;
         private readonly Mock<IAIService> _mockAIService;
         private readonly Mock<IReputationService> _mockReputationService;
         private readonly Mock<IContainerUpdateService> _mockContainerUpdateService;
@@ -29,6 +31,8 @@ namespace BinMaps.Tests.Unit.Services
         public ReportServiceTests()
         {
             _mockReportRepo = new Mock<IRepository<Report, int>>();
+            _mockContainerRepo = new Mock<IRepository<TrashContainer, int>>();
+            _mockAreaRepo = new Mock<IRepository<Area, string>>();
             _mockAIService = new Mock<IAIService>();
             _mockReputationService = new Mock<IReputationService>();
             _mockContainerUpdateService = new Mock<IContainerUpdateService>();
@@ -79,6 +83,8 @@ namespace BinMaps.Tests.Unit.Services
 
             _service = new ReportService(
                 _mockReportRepo.Object,
+                _mockContainerRepo.Object,
+                _mockAreaRepo.Object,
                 _mockAIService.Object,
                 _mockReputationService.Object,
                 _mockContainerUpdateService.Object,
