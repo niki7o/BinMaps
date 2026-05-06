@@ -949,7 +949,7 @@
       "id": 106,
       "locationX": 23.3012,
       "locationY": 42.7123,
-      "areaId": "Зона 5 - Юг и Витоша",
+      "areaId": "Зона 3 - Люлин",
       "trashType": 1,
       "hasSensor": true,
       "capacity": 1100
@@ -967,7 +967,7 @@
       "id": 108,
       "locationX": 23.3221,
       "locationY": 42.7289,
-      "areaId": "Зона 5 - Юг и Витоша",
+      "areaId": "Зона 1 - Надежда север",
       "trashType": 3,
       "hasSensor": true,
       "capacity": 1100
@@ -985,7 +985,7 @@
       "id": 110,
       "locationX": 23.3122,
       "locationY": 42.6999,
-      "areaId": "Зона 5 - Юг и Витоша",
+      "areaId": "Зона 1 - Надежда север",
       "trashType": 1,
       "hasSensor": true,
       "capacity": 1100
@@ -1030,7 +1030,7 @@
       "id": 115,
       "locationX": 23.3277,
       "locationY": 42.7129,
-      "areaId": "Зона 5 - Юг и Витоша",
+      "areaId": "Зона 1 - Надежда север",
       "trashType": 2,
       "hasSensor": true,
       "capacity": 1100
@@ -1048,7 +1048,7 @@
       "id": 117,
       "locationX": 23.2891,
       "locationY": 42.7055,
-      "areaId": "Зона 5 - Юг и Витоша",
+      "areaId": "Зона 3 - Люлин",
       "trashType": 0,
       "hasSensor": false,
       "capacity": 1100
@@ -1093,7 +1093,7 @@
       "id": 122,
       "locationX": 23.3688,
       "locationY": 42.6998,
-      "areaId": "Зона 5 - Юг и Витоша",
+      "areaId": "Зона 6 - Изток",
       "trashType": 1,
       "hasSensor": true,
       "capacity": 1100
@@ -1102,7 +1102,7 @@
       "id": 123,
       "locationX": 23.3544,
       "locationY": 42.6881,
-      "areaId": "Зона 4 - Овча Купел",
+      "areaId": "Зона 6 - Изток",
       "trashType": 2,
       "hasSensor": true,
       "capacity": 1100
