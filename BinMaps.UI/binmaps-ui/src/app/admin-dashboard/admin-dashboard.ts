@@ -25,6 +25,12 @@ interface Report {
   createdAt: string;
 }
 
+interface Area {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface Container {
   id: number;
   areaId: string;
@@ -140,6 +146,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   activeTab: ActiveTab = 'reports';
 
+  areas: Area[] = [];
   reports: Report[] = [];
   filteredReports: Report[] = [];
   containers: Container[] = [];
@@ -318,7 +325,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         if (user?.role === 'Admin') {
           this.loadStats();
           this.loadReports();
-         
+          this.loadAreas();
           this.loadUsers();
         }
       });
@@ -586,6 +593,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   goToPage(page: number): void {
     if (page < 1 || page > this.totalPages) return;
     this.loadReports(page);
+  }
+
+  loadAreas(): void {
+    this.http.get<Area[]>(`${this.API}/areas`, this.authHeaders())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({ next: data => this.areas = data });
   }
 
   loadContainers(): void {
@@ -898,7 +911,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       {
         fillPercentage: this.editingContainer.fillPercentage,
         status: this.editingContainer.status,
-        hasSensor: this.editingContainer.hasSensor
+        hasSensor: this.editingContainer.hasSensor,
+        areaId: this.editingContainer.areaId
       },
       this.authHeaders()
     ).pipe(takeUntil(this.destroy$))

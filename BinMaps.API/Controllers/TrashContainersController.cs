@@ -322,6 +322,14 @@ public sealed class TrashContainersController : ControllerBase
         container.FillPercentage = dto.FillPercentage;
         container.Status = dto.Status;
 
+        if (!string.IsNullOrWhiteSpace(dto.AreaId) && dto.AreaId != container.AreaId)
+        {
+            var areaExists = await _areaRepo.GetByIdAsync(dto.AreaId) is not null;
+            if (!areaExists)
+                return BadRequest($"AreaId '{dto.AreaId}' does not exist.");
+            container.AreaId = dto.AreaId;
+        }
+
         if (dto.HasSensor)
         {
             container.HasSensor = true;

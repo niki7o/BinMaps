@@ -12,7 +12,13 @@ public sealed class UpdateContainerDTO
 
     public bool HasSensor { get; set; }
 
-
     [Range(0, 100)]
     public double? BatteryPercentage { get; set; }
+
+    /// <summary>
+    /// Optional — when provided, reassigns the container to a different zone.
+    /// Must match an existing Area.Id.
+    /// </summary>
+    [MaxLength(50)]
+    public string? AreaId { get; set; }
 }
