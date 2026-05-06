@@ -142,19 +142,9 @@ namespace BinMaps.API.Seed
 
         private async Task SeedContainersAsync()
         {
-            // Always load from the JSON file so every deploy automatically
-            // applies the latest seed data (corrected zone assignments,
-            // updated coordinates, new containers, etc.).
-            //
-            // Strategy: UPDATE seed-controlled fields for rows that already
-            // exist, INSERT rows that are new. Never delete existing rows so
-            // Report foreign-key references stay intact and user-added
-            // containers (IsSeeded = false) are never touched.
             var seedSet = await LoadContainersFromJsonAsync();
             if (seedSet.Count == 0) return;
 
-            // Load ALL seeded rows including soft-deleted so we don't
-            // accidentally re-insert a deleted container.
             var existingSeeded = await _context.TrashContainers
                 .IgnoreQueryFilters()
                 .Where(c => c.IsSeeded)
@@ -166,9 +156,6 @@ namespace BinMaps.API.Seed
             {
                 if (existingSeeded.TryGetValue(seed.Id, out var existing))
                 {
-                    // Sync the seed-controlled (static) fields from the latest
-                    // JSON. Runtime state (fill %, temperature, battery, status)
-                    // is left untouched so the simulator's work isn't discarded.
                     existing.AreaId    = seed.AreaId;
                     existing.LocationX = seed.LocationX;
                     existing.LocationY = seed.LocationY;
@@ -188,12 +175,6 @@ namespace BinMaps.API.Seed
             await _context.SaveChangesAsync();
         }
 
-        /// <summary>
-        /// Cluster-based generator: each collection point holds one bin per
-        /// <see cref="TrashType"/> placed side-by-side. Produces ~480 bins
-        /// across six zones so truck routes always have meaningful targets,
-        /// and the map renders like a real разделно събиране layout.
-        /// </summary>
         private async Task<IReadOnlyList<TrashContainer>> GenerateContainersFromClustersAsync()
         {
             var areas = await _context.Areas.AsNoTracking().ToListAsync();
@@ -205,9 +186,6 @@ namespace BinMaps.API.Seed
             var now = DateTime.UtcNow;
             var ambient = GetAmbientTemperature();
 
-            // Generator leaves Temperature null; set it here for sensor-backed
-            // bins so the initial map view has values to render (the
-            // FillageSimulator will take over from the next cycle onwards).
             foreach (var bin in bins.Where(b => b.HasSensor))
                 bin.Temperature = CalculateInitialTemperature(ambient, bin.TrashType, bin.FillPercentage, now.Hour);
 

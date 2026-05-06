@@ -124,7 +124,6 @@ public sealed class ContainerDynamicsService : BackgroundService
 
     #region Weather
 
-    
     private async Task<double> ResolveAmbientAsync(IExternalWeatherService weather)
     {
         if (DateTime.UtcNow - _tempCachedAt < WeatherCacheDuration)
@@ -146,7 +145,6 @@ public sealed class ContainerDynamicsService : BackgroundService
 
     #region Updates
 
-    
     private bool ApplyUpdates(
         TrashContainer container,
         FillageSimulator simulator,
@@ -196,8 +194,6 @@ public sealed class ContainerDynamicsService : BackgroundService
                 }
                 if (container.BatteryPercentage <= 0)
                 {
-                   
-
                     container.BatteryPercentage = 100;
                     container.Status = TrashContainerStatus.Active;
                     _lowBatteryNotified.Remove(container.Id);
@@ -255,11 +251,7 @@ public sealed class ContainerDynamicsService : BackgroundService
 
         if (newStatus != container.Status)
         {
-            if (container.Status == TrashContainerStatus.Fire && newStatus == TrashContainerStatus.Active)
-            {
-                // keep Fire — do nothing
-            }
-            else
+            if (container.Status != TrashContainerStatus.Fire || newStatus != TrashContainerStatus.Active)
             {
                 container.Status = newStatus;
                 changed = true;
@@ -312,7 +304,6 @@ public sealed class ContainerDynamicsService : BackgroundService
 
     #region Broadcast
 
-    
     private async Task BroadcastAsync(
         List<TrashContainer> containers,
         HashSet<int> changedIds,

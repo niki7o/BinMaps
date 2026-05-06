@@ -81,9 +81,8 @@ public sealed class ReportService : IReportService
             aiResult = await _aiService.AnalyzeAsync(dto.Photo!);
 
         var aiScore           = aiResult?.Confidence       ?? 0.0;
-        var containerDetected = aiResult?.ContainerDetected ?? true; 
+        var containerDetected = aiResult?.ContainerDetected ?? true;
 
-      
         var finalConfidence = isDriver
             ? aiScore
             : CalculateConfidence(aiScore, userReputation, hasPhoto);
@@ -144,7 +143,6 @@ public sealed class ReportService : IReportService
         }
         else if (!isTruckReport)
         {
-            
             await _hub.Clients.All.SendAsync("ReportCreated", new
             {
                 ReportId    = report.Id,
@@ -213,7 +211,6 @@ public sealed class ReportService : IReportService
         if (!isDriver)
             await IncrementReputationAndNotifyAsync(report.UserId, report.UserName);
 
-        
         await _hub.Clients.All.SendAsync("ReportStatusChanged", new
         {
             ReportId    = report.Id,
@@ -235,7 +232,6 @@ public sealed class ReportService : IReportService
         if (!await IsDriverAsync(report.UserId))
             await _reputationService.DecrementAsync(report.UserId);
 
-      
         await _hub.Clients.All.SendAsync("ReportStatusChanged", new
         {
             ReportId  = report.Id,
@@ -254,7 +250,6 @@ public sealed class ReportService : IReportService
     {
         await _reputationService.IncrementAsync(userId);
 
-       
         var updatedUser = await _userManager.FindByIdAsync(userId);
         var newReputation = updatedUser?.Reputation ?? 0;
 
@@ -275,15 +270,12 @@ public sealed class ReportService : IReportService
 
     private static double CalculateConfidence(double aiScore, int reputation, bool hasPhoto)
     {
-     
         if (!hasPhoto)
             return Math.Round(reputation * ReputationWeight, 2);
 
-       
         if (aiScore <= 0)
             return Math.Round(reputation * ReputationWeight, 2);
 
-      
         return Math.Round((aiScore * AiWeight) + (reputation * ReputationWeight), 2);
     }
 

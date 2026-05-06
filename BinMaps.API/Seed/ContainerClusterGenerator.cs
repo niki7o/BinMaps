@@ -6,11 +6,9 @@ namespace BinMaps.API.Seed;
 
 public sealed class ContainerClusterGenerator
 {
-    
     private static readonly IReadOnlyDictionary<string, ZoneBox> ZoneBoxes =
         new Dictionary<string, ZoneBox>
         {
-            // (minLng, maxLng, minLat, maxLat, clusterCount)
             ["Зона 1 - Надежда север"] = new(23.295, 23.375, 42.700, 42.740, 20),
             ["Зона 2 - Център"]         = new(23.300, 23.355, 42.680, 42.715, 20),
             ["Зона 3 - Люлин"]          = new(23.255, 23.305, 42.690, 42.735, 20),
@@ -75,7 +73,7 @@ public sealed class ContainerClusterGenerator
                         Status            = TrashContainerStatus.Active,
                         FillPercentage    = InitialFill(area, type),
                         BatteryPercentage = hasSensor ? _random.Next(60, 101) : null,
-                        Temperature       = null, // set by FillageSimulator
+                        Temperature       = null,
                         LastSensorReadAt  = hasSensor ? DateTime.UtcNow : null,
                         IsSeeded          = true,
                     });

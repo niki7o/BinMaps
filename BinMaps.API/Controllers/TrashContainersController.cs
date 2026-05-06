@@ -143,7 +143,6 @@ public sealed class TrashContainersController : ControllerBase
         double? east = bounds.GetValue<double?>("East");
         if (south is not null && west is not null && north is not null && east is not null)
         {
-            // LocationX = lng, LocationY = lat in this codebase.
             if (dto.LocationY < south || dto.LocationY > north ||
                 dto.LocationX < west  || dto.LocationX > east)
             {

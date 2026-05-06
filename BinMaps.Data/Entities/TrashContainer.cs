@@ -65,19 +65,9 @@ public sealed class TrashContainer
 
     #region Lifecycle
 
-    /// <summary>
-    /// True if the container was created by the InitialStateSeeder rather
-    /// than by an admin/citizen at runtime. Seeded containers are soft-deleted
-    /// (can be restored); user-created ones are hard-deleted.
-    /// </summary>
     [Required]
     public bool IsSeeded { get; set; }
 
-    /// <summary>
-    /// Soft-delete flag. Only ever set to true for seeded containers so the
-    /// admin can restore them. Non-seeded containers are removed from the
-    /// table entirely.
-    /// </summary>
     [Required]
     public bool IsDeleted { get; set; }
 

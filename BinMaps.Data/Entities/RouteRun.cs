@@ -5,14 +5,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BinMaps.Data.Entities
 {
-  
     public sealed class RouteRun
     {
         [Key]
         public int Id { get; set; }
 
         [Required]
-        [MaxLength(450)]            
+        [MaxLength(450)]
         public string DriverId { get; set; } = string.Empty;
 
         [MaxLength(256)]

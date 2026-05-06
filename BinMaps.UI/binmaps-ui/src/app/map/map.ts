@@ -799,12 +799,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Called when the area dropdown changes. Filters the trash-type dropdown
-   * to only the types served in the selected area, and auto-selects the
-   * type if there is exactly one option — preventing the driver from picking
-   * a type that has no truck in that zone.
-   */
+ 
   onAreaChange(): void {
     const typesForArea = this.availableZones
       .filter(z => z.areaId === this.selectedAreaId)

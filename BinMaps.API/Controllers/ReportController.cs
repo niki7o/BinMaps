@@ -60,7 +60,6 @@ public sealed class ReportsController : ControllerBase
                     statusCode: StatusCodes.Status400BadRequest);
             }
 
-            // Region bounds check (same policy as POST /api/containers)
             var bounds = _configuration.GetSection("Region:Bounds");
             double? south = bounds.GetValue<double?>("South");
             double? west  = bounds.GetValue<double?>("West");
@@ -92,7 +91,6 @@ public sealed class ReportsController : ControllerBase
 
         try
         {
-
             dto.PhotoURL = null;
             AIResultDto? aiResult = null;
             bool runAi = dto.ReportType != ReportType.MissingContainer;
@@ -140,7 +138,6 @@ public sealed class ReportsController : ControllerBase
         }
         catch (Exception ex)
         {
-            
             var env = HttpContext.RequestServices
                           .GetRequiredService<IWebHostEnvironment>();
             var detail = env.IsDevelopment() ? ex.ToString() : "Грешка при създаване на доклада.";
@@ -157,7 +154,6 @@ public sealed class ReportsController : ControllerBase
 
         var result = await _aiService.AnalyzeAsync(photo);
 
-    
         return Ok(result ?? new AIResultDto { ContainerDetected = true, Confidence = 0 });
     }
 

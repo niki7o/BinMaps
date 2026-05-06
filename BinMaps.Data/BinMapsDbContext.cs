@@ -62,9 +62,6 @@ namespace BinMaps.Data
                 entity.HasIndex(tc => tc.IsDeleted)
                     .HasDatabaseName("IX_Containers_IsDeleted");
 
-                // Hide soft-deleted containers from every query by default.
-                // Admin endpoints that manage the trash bin (restore/list deleted)
-                // must call .IgnoreQueryFilters() explicitly.
                 entity.HasQueryFilter(tc => !tc.IsDeleted);
             });
         }
@@ -137,19 +134,15 @@ namespace BinMaps.Data
                     .HasForeignKey(r => r.TruckId)
                     .OnDelete(DeleteBehavior.SetNull);
 
-                // Most common admin query: "list latest runs" ordered by StartedAt DESC
                 entity.HasIndex(r => r.StartedAt)
                     .HasDatabaseName("IX_RouteRuns_StartedAt");
 
-                // Per-driver history lookups
                 entity.HasIndex(r => new { r.DriverId, r.StartedAt })
                     .HasDatabaseName("IX_RouteRuns_Driver_StartedAt");
 
-                // Filter by status (Active vs Completed) on history screen
                 entity.HasIndex(r => r.Status)
                     .HasDatabaseName("IX_RouteRuns_Status");
 
-                // Per-area analytics
                 entity.HasIndex(r => new { r.AreaId, r.StartedAt })
                     .HasDatabaseName("IX_RouteRuns_Area_StartedAt");
             });

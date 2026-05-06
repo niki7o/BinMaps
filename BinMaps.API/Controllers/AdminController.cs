@@ -54,19 +54,9 @@ public sealed class AdminController : ControllerBase
 
     #region Schema Repair
 
-    /// <summary>
-    /// Creates the RouteRuns table if it doesn't exist.
-    /// Runs each DDL statement individually and returns per-step results so
-    /// we can see exactly which SQL fails and why (useful when we have no
-    /// direct DB shell access).  Admin-only.
-    /// </summary>
     [HttpPost("ensure-route-runs-table")]
     public async Task<IActionResult> EnsureRouteRunsTable()
     {
-        // NOTE: No FK constraints — they're nice for integrity but not
-        // required for EF to work, and they're the most common failure point
-        // on restricted hosting (constraint names already exist from a
-        // partial earlier migration, or the DB user lacks REFERENCES perm).
         var steps = new[]
         {
             ("CREATE TABLE", @"
@@ -100,8 +90,6 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_Driver_Star
             ("IX_StartedAt", @"
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RouteRuns_StartedAt' AND object_id = OBJECT_ID(N'[dbo].[RouteRuns]'))
     CREATE NONCLUSTERED INDEX [IX_RouteRuns_StartedAt] ON [dbo].[RouteRuns] ([StartedAt] ASC);"),
-            // Shrink Status to NVARCHAR(50) first if it was created as MAX
-            // (MAX columns cannot be index key columns in SQL Server).
             ("Status_shrink", @"
 IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[RouteRuns]') AND name = N'Status' AND max_length = -1)
     ALTER TABLE [dbo].[RouteRuns] ALTER COLUMN [Status] NVARCHAR(50) NOT NULL;"),
@@ -145,7 +133,6 @@ IF OBJECT_ID(N'FK_RouteRuns_Trucks_TruckId', N'F') IS NULL
             }
         }
 
-        // Final existence check
         bool tableExists;
         try
         {
@@ -170,7 +157,6 @@ IF OBJECT_ID(N'FK_RouteRuns_Trucks_TruckId', N'F') IS NULL
     [HttpGet("containers")]
     public async Task<IActionResult> GetContainers()
     {
-        // Global query filter already hides soft-deleted containers.
         var containers = await _context.TrashContainers
             .AsNoTracking()
             .Select(c => new
@@ -190,12 +176,6 @@ IF OBJECT_ID(N'FK_RouteRuns_Trucks_TruckId', N'F') IS NULL
         return Ok(containers);
     }
 
-    /// <summary>
-    /// Soft-deletes any container (seeded or user-added). The row is hidden via
-    /// the global query filter and shows up in the "Архивирани" tab where the
-    /// admin can either restore it or remove it permanently via the dedicated
-    /// /permanent endpoint.
-    /// </summary>
     [HttpDelete("containers/{id:int}")]
     public async Task<IActionResult> DeleteContainer([FromRoute] int id)
     {
@@ -207,7 +187,6 @@ IF OBJECT_ID(N'FK_RouteRuns_Trucks_TruckId', N'F') IS NULL
         if (container.IsDeleted)
             return BadRequest(new { message = "Контейнерът вече е изтрит." });
 
-        // Soft-delete: keep row, hide via global query filter, allow restore.
         container.IsDeleted = true;
         container.DeletedAt = DateTime.UtcNow;
         container.DeletedByUserId = _userManager.GetUserId(User);
@@ -222,10 +201,6 @@ IF OBJECT_ID(N'FK_RouteRuns_Trucks_TruckId', N'F') IS NULL
         });
     }
 
-    /// <summary>
-    /// Permanently removes an already-archived container and any reports that
-    /// reference it (FK is Restrict-on-delete, so we drop reports first).
-    /// </summary>
     [HttpDelete("containers/{id:int}/permanent")]
     public async Task<IActionResult> DeleteContainerPermanent([FromRoute] int id)
     {
@@ -527,10 +502,6 @@ IF OBJECT_ID(N'FK_RouteRuns_Trucks_TruckId', N'F') IS NULL
         public List<int> Ids { get; set; } = new();
     }
 
-    /// <summary>
-    /// Permanently deletes the given report IDs and their photo files.
-    /// Used by the admin "изтрий избраните" bulk action.
-    /// </summary>
     [HttpPost("reports/bulk-delete")]
     public async Task<IActionResult> BulkDeleteReports(
         [FromBody] BulkDeleteReportsDto dto,
@@ -539,7 +510,6 @@ IF OBJECT_ID(N'FK_RouteRuns_Trucks_TruckId', N'F') IS NULL
         if (dto is null || dto.Ids is null || dto.Ids.Count == 0)
             return BadRequest(new { error = "Липсват идентификатори." });
 
-        // Cap to prevent accidental mass-deletion in one request.
         var ids = dto.Ids.Distinct().Take(1000).ToList();
 
         var reports = await _context.Reports
@@ -549,8 +519,6 @@ IF OBJECT_ID(N'FK_RouteRuns_Trucks_TruckId', N'F') IS NULL
         if (reports.Count == 0)
             return Ok(new { deleted = 0, photosRemoved = 0 });
 
-        // Clean up photo files from disk before deleting DB rows so we don't
-        // leave orphans. Non-fatal — if the file is already gone we keep going.
         var webRoot = env.WebRootPath
             ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
         var photosRemoved = 0;
@@ -559,7 +527,6 @@ IF OBJECT_ID(N'FK_RouteRuns_Trucks_TruckId', N'F') IS NULL
         {
             if (string.IsNullOrWhiteSpace(r.PhotoURL)) continue;
 
-            // PhotoURL is stored as "/uploads/reports/{filename}" — convert to disk path.
             var relative = r.PhotoURL.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
             var fullPath = Path.Combine(webRoot, relative);
 
@@ -571,10 +538,7 @@ IF OBJECT_ID(N'FK_RouteRuns_Trucks_TruckId', N'F') IS NULL
                     photosRemoved++;
                 }
             }
-            catch
-            {
-                // Swallow: photo cleanup is best-effort.
-            }
+            catch { }
         }
 
         _context.Reports.RemoveRange(reports);
@@ -588,10 +552,6 @@ IF OBJECT_ID(N'FK_RouteRuns_Trucks_TruckId', N'F') IS NULL
         });
     }
 
-    /// <summary>
-    /// Permanently deletes ALL reports matching the optional status / reportType filter.
-    /// Use with care — confirmed by the admin in the UI.
-    /// </summary>
     [HttpPost("reports/delete-all")]
     public async Task<IActionResult> DeleteAllReports(
         [FromQuery] string? status,
@@ -628,7 +588,7 @@ IF OBJECT_ID(N'FK_RouteRuns_Trucks_TruckId', N'F') IS NULL
                     photosRemoved++;
                 }
             }
-            catch { /* best effort */ }
+            catch { }
         }
 
         _context.Reports.RemoveRange(reports);
@@ -645,24 +605,11 @@ IF OBJECT_ID(N'FK_RouteRuns_Trucks_TruckId', N'F') IS NULL
 
     #region Schema heal (manual trigger)
 
-    /// <summary>
-    /// Admin-only manual trigger that runs the same idempotent
-    /// CREATE-IF-NOT-EXISTS SQL the startup auto-heal does, but on
-    /// demand. Useful when:
-    ///   • You can't tell from logs whether startup heal ran.
-    ///   • The auto-heal is being skipped for any reason.
-    ///   • You just want to verify the table exists right now.
-    ///
-    /// Returns a per-table report so you can see exactly what's
-    /// currently in the database. Idempotent — safe to call repeatedly.
-    /// </summary>
     [HttpPost("diagnostics/heal-schema")]
     public async Task<IActionResult> HealSchema()
     {
         var report = new List<object>();
 
-        // Mirror the same critical-table list as Program.EnsureCriticalTablesExistAsync
-        // to keep the on-demand path and the startup path identical.
         var targets = new (string Table, string? HealSql)[]
         {
             ("Areas",           null),
@@ -701,8 +648,6 @@ IF OBJECT_ID(N'FK_RouteRuns_Trucks_TruckId', N'F') IS NULL
                 await _context.Database.ExecuteSqlRawAsync(healSql);
                 action = "heal-sql-executed";
 
-                // Record EF migration as applied so future MigrateAsync
-                // doesn't try to recreate the table.
                 await _context.Database.ExecuteSqlRawAsync(@"
 IF OBJECT_ID(N'[dbo].[__EFMigrationsHistory]', N'U') IS NULL
 BEGIN
@@ -762,11 +707,6 @@ IF NOT EXISTS (SELECT 1 FROM [__EFMigrationsHistory] WHERE [MigrationId] = {0})
         }
     }
 
-    /// <summary>
-    /// Inline copy of the RouteRuns table + index DDL — same as the
-    /// constant in Program.cs. Duplicated here intentionally so the
-    /// heal endpoint has zero dependency on internals: just hit it.
-    /// </summary>
     private const string RouteRunsCreateSql = @"
 IF OBJECT_ID(N'[dbo].[RouteRuns]', N'U') IS NULL
 BEGIN
