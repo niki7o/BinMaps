@@ -142,38 +142,49 @@ namespace BinMaps.API.Seed
 
         private async Task SeedContainersAsync()
         {
-            // First-time seed: table is empty → insert everything.
-            // Subsequent runs: backfill any seeded row whose Id was hard-deleted
-            // (admin "permanent delete" can wipe a seeded container; this lets
-            // it self-heal on the next startup without losing user data).
-            bool tableIsEmpty = !await _context.TrashContainers.AnyAsync();
-
-            IReadOnlyList<TrashContainer> seedSet = UseClusterGenerator
-                ? await GenerateContainersFromClustersAsync()
-                : await LoadContainersFromJsonAsync();
-
+            // Always load from the JSON file so every deploy automatically
+            // applies the latest seed data (corrected zone assignments,
+            // updated coordinates, new containers, etc.).
+            //
+            // Strategy: UPDATE seed-controlled fields for rows that already
+            // exist, INSERT rows that are new. Never delete existing rows so
+            // Report foreign-key references stay intact and user-added
+            // containers (IsSeeded = false) are never touched.
+            var seedSet = await LoadContainersFromJsonAsync();
             if (seedSet.Count == 0) return;
 
-            if (tableIsEmpty)
+            // Load ALL seeded rows including soft-deleted so we don't
+            // accidentally re-insert a deleted container.
+            var existingSeeded = await _context.TrashContainers
+                .IgnoreQueryFilters()
+                .Where(c => c.IsSeeded)
+                .ToDictionaryAsync(c => c.Id);
+
+            var toAdd = new List<TrashContainer>();
+
+            foreach (var seed in seedSet)
             {
-                await _context.TrashContainers.AddRangeAsync(seedSet);
-                await _context.SaveChangesAsync();
-                return;
+                if (existingSeeded.TryGetValue(seed.Id, out var existing))
+                {
+                    // Sync the seed-controlled (static) fields from the latest
+                    // JSON. Runtime state (fill %, temperature, battery, status)
+                    // is left untouched so the simulator's work isn't discarded.
+                    existing.AreaId    = seed.AreaId;
+                    existing.LocationX = seed.LocationX;
+                    existing.LocationY = seed.LocationY;
+                    existing.TrashType = seed.TrashType;
+                    existing.Capacity  = seed.Capacity;
+                    existing.HasSensor = seed.HasSensor;
+                }
+                else
+                {
+                    toAdd.Add(seed);
+                }
             }
 
-            // Backfill missing seeded rows. We compare against the FULL table
-            // including soft-deleted, so a soft-deleted seed bin isn't reinserted.
-            // (EF Core has no ToHashSetAsync — use ToListAsync + ToHashSet.)
-            var existingIdList = await _context.TrashContainers
-                .IgnoreQueryFilters()
-                .Select(c => c.Id)
-                .ToListAsync();
-            var existingIds = existingIdList.ToHashSet();
+            if (toAdd.Count > 0)
+                await _context.TrashContainers.AddRangeAsync(toAdd);
 
-            var missing = seedSet.Where(c => !existingIds.Contains(c.Id)).ToList();
-            if (missing.Count == 0) return;
-
-            await _context.TrashContainers.AddRangeAsync(missing);
             await _context.SaveChangesAsync();
         }
 
