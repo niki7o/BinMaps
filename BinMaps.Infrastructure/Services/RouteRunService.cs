@@ -51,11 +51,9 @@ public sealed class RouteRunService : IRouteRunService
             throw new ArgumentException(
                 $"Зоната \"{dto.AreaId}\" не съществува.", nameof(dto));
 
-        // Truck is optional, but if supplied it must exist AND must be
-        // assigned to the same area + trashType as the requested run.
-        // This prevents a driver from accidentally starting a route for
-        // zone A using a truck that belongs to zone B (which would corrupt
-        // capacity accounting and the route history).
+        // Truck is optional, but if supplied it must exist AND belong to
+        // the same area as the route — prevents a driver from accidentally
+        // starting a zone-B route using a zone-A truck.
         if (dto.TruckId is int tid)
         {
             var truck = await _db.Trucks
@@ -69,11 +67,6 @@ public sealed class RouteRunService : IRouteRunService
                     $"Камион #{tid} обслужва зона '{truck.AreaId}', " +
                     $"но маршрутът е за зона '{dto.AreaId}'. " +
                     $"Шофьорът може да стартира маршрут само за зоната на своя камион.", nameof(dto));
-            if (truck.TrashType != dto.TrashType)
-                throw new ArgumentException(
-                    $"Камион #{tid} събира '{truck.TrashType}', " +
-                    $"но е заявен тип '{dto.TrashType}'. " +
-                    $"Изберете правилния тип отпадък за вашия камион.", nameof(dto));
         }
 
         // ── Concurrency lock ─────────────────────────────────────────────
