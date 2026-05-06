@@ -793,11 +793,11 @@
             style="max-width:200px">
         </div>
         <div class="admin__toolbar-actions">
-          <button class="btn btn--sm btn--secondary" (click)="loadRouteHistory()">
+          <button class="btn btn--sm btn--secondary" (click)="applyRouteFilters()">
             Обнови
           </button>
           <span class="text-muted text-xs">
-            {{ filteredRoutes.length }} от {{ routeHistory.length }}
+            {{ routeTotal }} общо
           </span>
         </div>
       </div>
@@ -841,9 +841,19 @@
               <td class="text-mono text-sm">{{ r.stopsCompleted }} / {{ r.stopsPlanned }}</td>
               <td class="text-mono text-sm">{{ r.collectedLoad | number:'1.0-0' }} л</td>
               <td class="text-mono text-sm">{{ r.plannedDistanceKm | number:'1.1-1' }} km</td>
-              <td>
+              <td style="white-space:nowrap;display:flex;gap:4px">
                 <button class="btn btn--sm btn--secondary" (click)="openRunDetail(r.id)">
                   Детайли
+                </button>
+                <button *ngIf="r.status === 'Active'"
+                        class="btn btn--sm btn--ghost"
+                        style="color:#f59e0b;border-color:rgba(245,158,11,0.4)"
+                        (click)="cancelRun(r)">
+                  Анулирай
+                </button>
+                <button class="btn btn--sm btn--danger"
+                        (click)="deleteRun(r)">
+                  Изтрий
                 </button>
               </td>
             </tr>
@@ -863,6 +873,22 @@
           </tbody>
         </table>
       </div>
+
+      <div class="admin__pagination" *ngIf="routeTotalPages > 1">
+        <button class="btn btn--ghost btn--sm" [disabled]="routePage <= 1" (click)="goToRoutePage(routePage - 1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button *ngFor="let p of routePageNumbers"
+          class="btn btn--sm"
+          [class.btn--primary]="p === routePage"
+          [class.btn--ghost]="p !== routePage"
+          (click)="goToRoutePage(p)">{{ p }}</button>
+        <button class="btn btn--ghost btn--sm" [disabled]="routePage >= routeTotalPages" (click)="goToRoutePage(routePage + 1)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <span class="text-muted text-xs" style="margin-left:8px">Страница {{ routePage }} от {{ routeTotalPages }}</span>
+      </div>
+
       </ng-container>
     </div>
 

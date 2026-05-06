@@ -364,21 +364,44 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   selectedRun: RouteRunDetail | null = null;
   isLoadingRoutes = false;
 
+  routePage = 1;
+  readonly routePageSize = 20;
+  routeTotal = 0;
+
+  get routeTotalPages(): number {
+    return Math.max(1, Math.ceil(this.routeTotal / this.routePageSize));
+  }
+
+  get routePageNumbers(): number[] {
+    const pages: number[] = [];
+    const start = Math.max(1, this.routePage - 2);
+    const end   = Math.min(this.routeTotalPages, this.routePage + 2);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
+
+  goToRoutePage(page: number): void {
+    if (page < 1 || page > this.routeTotalPages) return;
+    this.routePage = page;
+    this.loadRouteHistory();
+  }
+
   loadRouteHistory(): void {
     this.isLoadingRoutes = true;
-    const params: string[] = [];
+    const skip = (this.routePage - 1) * this.routePageSize;
+    const params: string[] = [`skip=${skip}`, `take=${this.routePageSize}`];
     if (this.routeFilter.status) params.push(`status=${this.routeFilter.status}`);
     if (this.routeFilter.areaId) params.push(`areaId=${encodeURIComponent(this.routeFilter.areaId)}`);
     if (this.routeFilter.driver) params.push(`driverId=${encodeURIComponent(this.routeFilter.driver)}`);
-    params.push('take=200');
 
     const url = `${this.API}/trucks/route/history?${params.join('&')}`;
-    this.http.get<RouteRunSummary[]>(url, this.authHeaders())
+    this.http.get<{ items: RouteRunSummary[]; total: number }>(url, this.authHeaders())
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: data => {
-          this.routeHistory = data ?? [];
-          this.applyRouteFilters();
+          this.routeHistory  = data?.items ?? [];
+          this.routeTotal    = data?.total ?? 0;
+          this.filteredRoutes = this.routeHistory;
           this.isLoadingRoutes = false;
         },
         error: () => {
@@ -389,14 +412,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   applyRouteFilters(): void {
-    const term = (this.routeFilter.driver ?? '').trim().toLowerCase();
-    this.filteredRoutes = this.routeHistory.filter(r => {
-      if (this.routeFilter.status && r.status !== this.routeFilter.status) return false;
-      if (this.routeFilter.areaId && r.areaId !== this.routeFilter.areaId) return false;
-      if (term && !(r.driverName ?? '').toLowerCase().includes(term)
-          && !(r.driverId ?? '').toLowerCase().includes(term)) return false;
-      return true;
-    });
+    this.routePage = 1;
+    this.loadRouteHistory();
   }
 
   openRunDetail(runId: number): void {
@@ -410,6 +427,49 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   closeRunDetail(): void {
     this.selectedRun = null;
+  }
+
+  async cancelRun(run: RouteRunSummary): Promise<void> {
+    const ok = await this.confirmSvc.ask({
+      title: 'Анулиране на маршрут',
+      message: `Да анулирам ли активен маршрут #${run.id} (${run.driverName || run.driverId})?`,
+      confirmText: 'Анулирай',
+      cancelText: 'Отказ',
+      variant: 'danger',
+    });
+    if (!ok) return;
+
+    this.http.post(`${this.API}/trucks/route/${run.id}/cancel`, {}, this.authHeaders())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.showToast(`Маршрут #${run.id} е анулиран`, 'success');
+          this.loadRouteHistory();
+        },
+        error: () => this.showToast('Грешка при анулиране на маршрута', 'error'),
+      });
+  }
+
+  async deleteRun(run: RouteRunSummary): Promise<void> {
+    const ok = await this.confirmSvc.ask({
+      title: 'Изтриване на маршрут',
+      message: `Да изтрия ли завинаги маршрут #${run.id}? Действието не може да се отмени.`,
+      confirmText: 'Изтрий',
+      cancelText: 'Отказ',
+      variant: 'danger',
+    });
+    if (!ok) return;
+
+    this.http.delete(`${this.API}/trucks/route/${run.id}`, this.authHeaders())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.showToast(`Маршрут #${run.id} е изтрит`, 'success');
+          if (this.routeHistory.length === 1 && this.routePage > 1) this.routePage--;
+          this.loadRouteHistory();
+        },
+        error: () => this.showToast('Грешка при изтриване на маршрута', 'error'),
+      });
   }
 
 

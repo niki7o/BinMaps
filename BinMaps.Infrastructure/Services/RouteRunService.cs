@@ -98,19 +98,39 @@ public sealed class RouteRunService : IRouteRunService
 
         if (existingActive is not null)
         {
-            if (string.Equals(existingActive.DriverId, driverId, StringComparison.Ordinal))
+            var staleThreshold = DateTime.UtcNow.AddHours(-6);
+            if (existingActive.StartedAt < staleThreshold)
             {
-                // Same driver — return their existing run.
+                try
+                {
+                    var trackedRun = await _repo.GetByIdAsync(existingActive.Id);
+                    if (trackedRun?.Status == RouteRunStatus.Active)
+                    {
+                        trackedRun.Status = RouteRunStatus.Cancelled;
+                        trackedRun.CompletedAt = DateTime.UtcNow;
+                        await _repo.UpdateAsync(trackedRun);
+                        _logger.LogInformation(
+                            "Auto-expired stale run #{RunId} for area '{AreaId}' (started {StartedAt:u}, driver {DriverName}).",
+                            existingActive.Id, existingActive.AreaId, existingActive.StartedAt, existingActive.DriverName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to auto-expire stale run #{RunId}.", existingActive.Id);
+                }
+            }
+            else if (string.Equals(existingActive.DriverId, driverId, StringComparison.Ordinal))
+            {
                 return existingActive.Id;
             }
-
-            // Different driver — 409. We throw a typed exception so the
-            // controller can map it to a Conflict + structured payload.
-            throw new RouteAlreadyActiveException(
-                existingActive.Id,
-                existingActive.DriverId,
-                existingActive.DriverName,
-                existingActive.StartedAt);
+            else
+            {
+                throw new RouteAlreadyActiveException(
+                    existingActive.Id,
+                    existingActive.DriverId,
+                    existingActive.DriverName,
+                    existingActive.StartedAt);
+            }
         }
 
         var run = new RouteRun
@@ -247,14 +267,16 @@ public sealed class RouteRunService : IRouteRunService
 
     #region Admin reads
 
-    public async Task<IReadOnlyList<RouteRunSummaryDto>> GetHistoryAsync(
+    public async Task<(IReadOnlyList<RouteRunSummaryDto> Items, int Total)> GetHistoryAsync(
         string? driverId = null,
         string? areaId = null,
         string? status = null,
-        int take = 100)
+        int skip = 0,
+        int take = 20)
     {
-        if (take <= 0) take = 100;
-        if (take > 500) take = 500;
+        if (skip < 0)  skip = 0;
+        if (take <= 0) take = 20;
+        if (take > 200) take = 200;
 
         try
         {
@@ -272,20 +294,42 @@ public sealed class RouteRunService : IRouteRunService
                 query = query.Where(r => r.Status == parsed);
             }
 
-            var rows = await query
-                .OrderByDescending(r => r.StartedAt)
-                .Take(take)
-                .ToListAsync();
+            var ordered = query.OrderByDescending(r => r.StartedAt);
+            var total = await ordered.CountAsync();
+            var rows  = await ordered.Skip(skip).Take(take).ToListAsync();
 
-            return rows.Select(ToSummary).ToList();
+            return (rows.Select(ToSummary).ToList(), total);
         }
         catch (Exception ex)
         {
-            // Most common cause on a fresh deploy: "Invalid object name 'RouteRuns'"
-            // because the migration hasn't been applied yet. Return an empty list
-            // so the admin dashboard stays usable instead of showing 500.
-            _logger.LogError(ex, "GetHistoryAsync failed — returning empty list");
-            return Array.Empty<RouteRunSummaryDto>();
+            _logger.LogError(ex, "GetHistoryAsync failed");
+            return (Array.Empty<RouteRunSummaryDto>(), 0);
+        }
+    }
+
+    public async Task<bool> CancelAsync(int runId)
+    {
+        var run = await _repo.GetByIdAsync(runId);
+        if (run is null) return false;
+        if (run.Status != RouteRunStatus.Active) return true;
+
+        run.Status = RouteRunStatus.Cancelled;
+        run.CompletedAt = DateTime.UtcNow;
+        return await _repo.UpdateAsync(run);
+    }
+
+    public async Task<bool> DeleteAsync(int runId)
+    {
+        try
+        {
+            var run = await _repo.GetByIdAsync(runId);
+            if (run is null) return false;
+            return await _repo.DeleteAsync(run);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "DeleteAsync({RunId}) failed", runId);
+            return false;
         }
     }
 

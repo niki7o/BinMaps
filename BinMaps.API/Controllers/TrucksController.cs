@@ -153,29 +153,46 @@ public sealed class TrucksController : ControllerBase
         return ok ? NoContent() : NotFound(new { message = "Маршрутът не е намерен." });
     }
 
-    /// <summary>Admin history list — most recent first.</summary>
     [HttpGet("route/history")]
     [Authorize(Roles = "Admin")]
-    [ProducesResponseType(typeof(IReadOnlyList<RouteRunSummaryDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetHistory(
         [FromQuery] string? driverId = null,
         [FromQuery] string? areaId = null,
         [FromQuery] string? status = null,
-        [FromQuery] int take = 100)
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = 20)
     {
         try
         {
-            var list = await _routeRunService.GetHistoryAsync(driverId, areaId, status, take);
-            return Ok(list);
+            var (items, total) = await _routeRunService.GetHistoryAsync(driverId, areaId, status, skip, take);
+            return Ok(new { items, total });
         }
         catch (Exception ex)
         {
-            // Log and return an empty list rather than 500, so the admin dashboard
-            // can render cleanly even if the RouteRuns table isn't there yet
-            // (e.g. fresh deploy where the migration hasn't finished).
-            _logger.LogError(ex, "GetHistory failed — returning empty list");
-            return Ok(Array.Empty<RouteRunSummaryDto>());
+            _logger.LogError(ex, "GetHistory failed");
+            return Ok(new { items = Array.Empty<RouteRunSummaryDto>(), total = 0 });
         }
+    }
+
+    [HttpPost("route/{id:int}/cancel")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CancelRun(int id)
+    {
+        var ok = await _routeRunService.CancelAsync(id);
+        return ok ? NoContent() : NotFound(new { message = "Маршрутът не е намерен." });
+    }
+
+    [HttpDelete("route/{id:int}")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteRun(int id)
+    {
+        var ok = await _routeRunService.DeleteAsync(id);
+        return ok ? NoContent() : NotFound(new { message = "Маршрутът не е намерен." });
     }
 
     /// <summary>
@@ -218,6 +235,16 @@ public sealed class TrucksController : ControllerBase
     {
         try
         {
+            // Auto-expire runs that are still Active but started more than 6 hours
+            // ago — these are abandoned runs whose driver never called /complete.
+            // A single batch UPDATE is cheaper than loading + updating each row.
+            var staleThreshold = DateTime.UtcNow.AddHours(-6);
+            await db.Set<RouteRun>()
+                .Where(r => r.Status == RouteRunStatus.Active && r.StartedAt < staleThreshold)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(r => r.Status, RouteRunStatus.Cancelled)
+                    .SetProperty(r => r.CompletedAt, DateTime.UtcNow));
+
             // 1. Active runs (DB is the source of truth — covers fresh server
             //    boots where the in-memory tracker is still empty).
             var runs = await db.Set<RouteRun>()

@@ -463,8 +463,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
          if (!detail?.stops?.length || !this.map) return;
          if (this.liveDriverRoutes.has(driverId)) return;
 
-         const fallback: [number, number][] = detail.stops.map(s => [s.lat, s.lng]);
-         let coords: [number, number][] = fallback;
+         let coords: [number, number][] | null = null;
 
          try {
            const osrm = detail.stops.map(s => `${s.lng},${s.lat}`).join(';');
@@ -474,7 +473,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
            if (d.code === 'Ok' && d.routes?.[0]) {
              coords = d.routes[0].geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]);
            }
-         } catch { /* fallback already set */ }
+         } catch { }
+
+         if (!coords) return;
 
          const driverColor = color || colorForDriverId(driverId);
          const poly = L.polyline(coords, {
