@@ -6,19 +6,6 @@ using System.Threading.Tasks;
 
 namespace BinMaps.Infrastructure.Hubs
 {
-    /// <summary>
-    /// Real-time hub for container updates and driver telemetry.
-    ///
-    /// Security: JWT is required and may be passed via the
-    /// <c>Authorization: Bearer</c> header, or — because browser
-    /// WebSockets cannot set headers — via the <c>access_token</c>
-    /// query string (wired up in <c>Program.cs</c>).
-    ///
-    /// Groups used:
-    ///   admins   — only users in role <c>Admin</c>; receive driver telemetry
-    ///   drivers  — only users in role <c>Driver</c>; receive route dispatch
-    ///   users    — everyone else; receive public container/report events
-    /// </summary>
     [Authorize]
     public class ContainerHub : Hub
     {
@@ -47,19 +34,6 @@ namespace BinMaps.Infrastructure.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
-        /// <summary>
-        /// Driver pushes their current position while a route is active.
-        ///
-        /// Broadcast targets (changed): every authenticated client now sees
-        /// driver positions — admins to monitor the fleet, drivers to see
-        /// peers (and avoid double-starting a route), citizens to watch the
-        /// service in motion. Privacy is fine: payload is just truck
-        /// telemetry, no PII beyond a display name.
-        ///
-        /// Last-known position is also stashed in <see cref="LiveDriverTracker"/>
-        /// so a client that connects mid-route can catch up via the snapshot
-        /// endpoint instead of waiting up to a full update cycle.
-        /// </summary>
         [Authorize(Roles = "Driver,Admin")]
         public async Task DriverPosition(DriverPositionPayload payload)
         {
@@ -69,8 +43,6 @@ namespace BinMaps.Infrastructure.Hubs
             var userName = Context.User?.Identity?.Name ?? string.Empty;
             var now      = DateTime.UtcNow;
 
-            // Update server-side cache first so a snapshot fetched in the
-            // same millisecond as the broadcast already reflects this point.
             if (string.Equals(payload.Phase, "end", StringComparison.OrdinalIgnoreCase))
             {
                 _tracker.Remove(userId);
@@ -108,12 +80,10 @@ namespace BinMaps.Infrastructure.Hubs
                 stopIndex  = payload.StopIndex,
                 totalStops = payload.TotalStops,
                 load       = payload.Load,
-                phase      = payload.Phase,  // "start" | "move" | "stop" | "end"
+                phase      = payload.Phase,  
                 at         = now,
             };
 
-            // Fan out to every group in parallel. Admins + drivers + citizens
-            // all see live trucks; that's the whole point of this change.
             await Task.WhenAll(
                 Clients.Group(AdminsGroup ).SendAsync("DriverPosition", evt),
                 Clients.Group(DriversGroup).SendAsync("DriverPosition", evt),
@@ -128,18 +98,17 @@ namespace BinMaps.Infrastructure.Hubs
         }
     }
 
-    /// <summary>Payload sent by the driver client during active navigation.</summary>
     public sealed class DriverPositionPayload
     {
-        public int    RunId      { get; set; }     // 0 until persistence lands
+        public int    RunId      { get; set; }     
         public string AreaId     { get; set; } = "";
         public double Lat        { get; set; }
         public double Lng        { get; set; }
-        public double Heading    { get; set; }     // degrees (0 = north)
+        public double Heading    { get; set; }     
         public double SpeedKmh   { get; set; }
         public int    StopIndex  { get; set; }
         public int    TotalStops { get; set; }
-        public double Load       { get; set; }     // litres collected so far
+        public double Load       { get; set; }    
         public string Phase      { get; set; } = "move";
     }
 }

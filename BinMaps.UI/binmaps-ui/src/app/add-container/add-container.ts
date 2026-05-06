@@ -6,7 +6,7 @@ import { Router, RouterModule } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../services/auth.service';
 
-declare const L: any; // Leaflet is loaded globally via index.html
+declare const L: any;
 
 interface Area {
   id: string;
@@ -20,8 +20,8 @@ interface Area {
 interface ExistingContainer {
   id: number;
   areaId: string;
-  locationX: number; // lng
-  locationY: number; // lat
+  locationX: number; 
+  locationY: number; 
   trashType: number;
   status: number;
   hasSensor: boolean;
@@ -46,16 +46,16 @@ interface ApiProblem {
   styleUrls: ['./add-container.css']
 })
 export class AddContainerComponent implements AfterViewInit, OnDestroy {
-  // ── Form state ────────────────────────────────────────────────────
+ 
   areas: Area[] = [];
   areaId = '';
-  trashType: 0 | 1 | 2 | 3 = 0; // Mixed=0, Plastic=1, Paper=2, Glass=3
+  trashType: 0 | 1 | 2 | 3 = 0; 
   capacity = 1100;
   hasSensor = false;
   lat: number | null = null;
   lng: number | null = null;
 
-  // ── UI state ──────────────────────────────────────────────────────
+ 
   loadingAreas = true;
   loadingContainers = true;
   submitting = false;
@@ -63,30 +63,19 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
   errorMessage: string | null = null;
   formTouched = false;
 
-  /** Closest existing container to the currently placed pin. */
+ 
   nearest: NearestInfo | null = null;
 
-  // ── Proximity thresholds (meters) ─────────────────────────────────
-  /**
-   * Anything closer than this is a hard conflict — must match the
-   * backend's Region:MinContainerDistanceMeters (currently 15m).
-   * Submission is blocked at this distance.
-   */
+ 
   readonly conflictDistanceMeters = 15;
-  /**
-   * Soft-warn window. A pin placed within this distance but outside
-   * the conflict zone shows a yellow "close to container #42" hint
-   * so the admin knows there's already one nearby.
-   */
+  
   readonly warnDistanceMeters = 40;
 
-  // ── Map refs ──────────────────────────────────────────────────────
   private map?: any;
   private placedMarker?: any;
-  private existingLayer?: any;   // LayerGroup for existing containers
-  private highlightLayer?: any;  // Circle highlighting nearest on hover
+  private existingLayer?: any; 
+  private highlightLayer?: any;  
 
-  // Custom CSS-based marker — avoids Leaflet's default PNG icons.
   private readonly pinIcon = () =>
     L.divIcon({
       className: 'add-container-pin',
@@ -108,7 +97,6 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
       iconAnchor: [7, 7]
     });
 
-  // ── Area polygons (loaded from assets/data/areas.geojson) ─────────
   private areaFeatures: { id: string; ring: number[][] }[] = [];
 
   /** Existing containers, loaded once on init. */
@@ -138,14 +126,12 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
     this.map?.remove();
   }
 
-  // ── Map ───────────────────────────────────────────────────────────
   private initMap(): void {
     this.map = L.map('add-container-map', {
       center: environment.region.center,
       zoom: environment.region.defaultZoom,
       minZoom: 11,
       maxZoom: 18,
-      // Hide the default Leaflet attribution badge in the bottom-right.
       attributionControl: false,
     });
 
@@ -153,7 +139,6 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
       attribution: ''
     }).addTo(this.map);
 
-    // LayerGroup for the static overlay of existing bins.
     this.existingLayer = L.layerGroup().addTo(this.map);
 
     this.map.on('click', (e: any) => {
@@ -166,10 +151,8 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
     this.lat = +lat.toFixed(6);
     this.lng = +lng.toFixed(6);
 
-    // Area is derived from coordinates — admin cannot override.
     this.areaId = this.findAreaForPoint(this.lat, this.lng) ?? '';
 
-    // Update nearest-container readout.
     this.recomputeNearest();
 
     if (this.placedMarker) {
@@ -199,11 +182,6 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
     this.updateMarkerConflictStyle();
   }
 
-  /**
-   * Apply a red halo to the placed pin when it falls inside an
-   * existing container's exclusion zone — gives an immediate visual
-   * cue without the admin having to read the side panel.
-   */
   private updateMarkerConflictStyle(): void {
     if (!this.placedMarker) return;
     const el = this.placedMarker.getElement?.();
@@ -212,10 +190,8 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
     el.classList.toggle('warn', this.hasWarning && !this.hasConflict);
   }
 
-  // ── Existing containers overlay ───────────────────────────────────
   private loadExistingContainers(): void {
-    // /api/containers is AllowAnonymous — no auth headers needed, but
-    // including them is harmless when the admin is logged in.
+   
     this.http.get<ExistingContainer[]>(
       `${environment.apiUrl}/containers`,
       { headers: this.authHeaders() }
@@ -228,8 +204,7 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
       error: err => {
         this.loadingContainers = false;
         console.warn('Failed to load existing containers', err);
-        // Not fatal — the admin can still place a new container; the
-        // backend will catch conflicts. We just lose the preview.
+       
       }
     });
   }
@@ -239,7 +214,7 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
     this.existingLayer.clearLayers();
 
     for (const c of this.existingContainers) {
-      // Small gray-ish dot at the existing container's position.
+      
       const dot = L.marker([c.locationY, c.locationX], {
         icon: this.existingIcon('rgba(120,140,160,0.85)'),
         interactive: true,
@@ -250,8 +225,6 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
         { direction: 'top', offset: [0, -6] }
       );
 
-      // 15m exclusion circle — shows the admin where the backend will
-      // reject a duplicate. Subtle by default so the map stays readable.
       const exclusion = L.circle([c.locationY, c.locationX], {
         radius: this.conflictDistanceMeters,
         color: '#ef4444',
@@ -271,7 +244,6 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
     return this.trashTypeOptions.find(x => x.value === t)?.label ?? 'Неизв.';
   }
 
-  // ── Proximity calculation ─────────────────────────────────────────
   private recomputeNearest(): void {
     if (this.lat === null || this.lng === null ||
         this.existingContainers.length === 0) {
@@ -327,12 +299,10 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
     return `Контейнер #${id} (${type}) на ${d.toFixed(1)} м`;
   }
 
-  /** Count of existing containers loaded from the API. */
   get existingContainersCount(): number {
     return this.existingContainers.length;
   }
 
-  // ── Area detection from coordinates ───────────────────────────────
   private loadAreaFeatures(): void {
     this.http.get<any>('assets/data/areas.geojson').subscribe({
       next: gj => {
@@ -356,7 +326,6 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
     return null;
   }
 
-  /** Ray-casting point-in-polygon. `ring` is GeoJSON [[lng, lat], ...]. */
   private pointInPolygon(lat: number, lng: number, ring: number[][]): boolean {
     let inside = false;
     for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
@@ -370,19 +339,15 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
     return inside;
   }
 
-  // Helper for the template (shows the derived area's name).
   get derivedAreaName(): string | null {
     if (!this.areaId) return null;
     return this.areas.find(a => a.id === this.areaId)?.name ?? this.areaId;
   }
 
-  // True when the admin has placed a pin but the pin falls outside
-  // every known area polygon — submission must be blocked.
   get locationOutsideAreas(): boolean {
     return this.lat !== null && this.lng !== null && !this.areaId;
   }
 
-  // ── Areas ─────────────────────────────────────────────────────────
   private loadAreas(): void {
     const headers = this.authHeaders();
     this.http.get<Area[]>(`${environment.apiUrl}/areas`, { headers }).subscribe({
@@ -398,7 +363,6 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  // ── Validation (client-side) ──────────────────────────────────────
   get canSubmit(): boolean {
     return (
       !this.submitting &&
@@ -417,7 +381,6 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
            this.lng >= 23.15 && this.lng <= 23.50;
   }
 
-  // ── Submit ────────────────────────────────────────────────────────
   onSubmit(): void {
     this.formTouched = true;
     this.successMessage = null;
@@ -464,8 +427,6 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
           this.successMessage =
             `Контейнер #${created?.id ?? '?'} е добавен успешно.`;
 
-          // Add the new container to the local cache so the next pin
-          // placement sees it too (without a full reload).
           if (created?.id != null) {
             this.existingContainers = [...this.existingContainers, {
               id: created.id,
@@ -511,7 +472,6 @@ export class AddContainerComponent implements AfterViewInit, OnDestroy {
     this.nearest = null;
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────
   private authHeaders(): HttpHeaders {
     const token = this.auth.getToken();
     return token

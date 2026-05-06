@@ -12,7 +12,6 @@
   padding: var(--space-8) var(--content-padding) var(--space-12);
 }
 
-/* ── Header ──────────────────────────────────────────────── */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -54,7 +53,6 @@
   text-decoration: underline;
 }
 
-/* ── Layout ──────────────────────────────────────────────── */
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 400px;
@@ -68,7 +66,6 @@
   }
 }
 
-/* ── Map panel ───────────────────────────────────────────── */
 .map-panel {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
@@ -85,7 +82,6 @@
 
 .map-hint {
   position: absolute;
-  /* Top-right keeps the box clear of Leaflet's zoom controls (top-left). */
   top: var(--space-4);
   right: var(--space-4);
   z-index: 500;
@@ -152,7 +148,6 @@
   text-decoration: underline;
 }
 
-/* ── Form panel ──────────────────────────────────────────── */
 .form-panel {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
@@ -229,7 +224,6 @@
   font-weight: 500;
 }
 
-/* ── Checkbox field ──────────────────────────────────────── */
 .checkbox-field label {
   display: flex;
   align-items: center;
@@ -249,7 +243,6 @@
   cursor: pointer;
 }
 
-/* ── Coords readback ─────────────────────────────────────── */
 .coords-empty {
   color: var(--text-muted);
   font-size: var(--text-sm);
@@ -267,7 +260,6 @@
   color: var(--text-primary);
 }
 
-/* ── Messages ────────────────────────────────────────────── */
 .msg {
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
@@ -288,7 +280,6 @@
   color: var(--eco-bright);
 }
 
-/* ── Actions ─────────────────────────────────────────────── */
 .actions {
   display: flex;
   gap: var(--space-3);
@@ -354,10 +345,8 @@
   border-color: var(--border-default);
 }
 
-/* ── Map legend (under map-hint) ─────────────────────────── */
 .map-legend {
   position: absolute;
-  /* Top-right, just below the map-hint. Avoids Leaflet zoom controls. */
   top: calc(var(--space-4) + 34px);
   right: var(--space-4);
   z-index: 500;
@@ -384,7 +373,6 @@
   flex-shrink: 0;
 }
 
-/* ── Nearest-container readout box ───────────────────────── */
 .nearest-box {
   background: var(--bg-input);
   border: 1px solid var(--border-default);
@@ -419,7 +407,6 @@
   font-weight: 500;
 }
 
-/* ── Pin conflict / warn halos (via .getElement class toggle) */
 :host ::ng-deep .add-container-pin.conflict {
   filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.85));
   animation: conflict-pulse 1.2s ease-in-out infinite;
@@ -434,7 +421,6 @@
   50%      { filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.95)); }
 }
 
-/* ── Existing-container gray dots ─────────────────────────── */
 :host ::ng-deep .existing-container-dot {
   pointer-events: auto;
 }
@@ -449,7 +435,6 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 
-/* ── Leaflet controls tweaks for dark theme ──────────────── */
 :host ::ng-deep .leaflet-bar a {
   background-color: var(--bg-elevated);
   color: var(--text-primary);

@@ -258,25 +258,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     private readonly confirmSvc: ConfirmService,
     private readonly toastSvc: ToastService,
     private readonly router: Router,
-    /** Injecting the service triggers its constructor — which subscribes
-     *  to SignalR DriverPosition events and pulls the active-runs snapshot
-     *  immediately. The "Активни (live)" sub-tab reads its `liveDrivers`
-     *  signal directly via the template binding below. */
     private readonly liveDriverSvc: LiveDriverTrackingService,
   ) {}
 
-  // ── Routes sub-tab (live vs history) ──────────────────────────────────
   routesSubTab: 'live' | 'history' = 'live';
 
-  /** Read-only view of the live-driver state, exposed as a callable signal
-   *  for the template (`liveDrivers()`). Using a getter — class-field
-   *  initialisers can fire before parameter-property assignment under
-   *  `useDefineForClassFields: true`, which would crash the component. */
   get liveDrivers() { return this.liveDriverSvc.liveDrivers; }
 
   trackLiveDriver = (_: number, d: LiveDriver) => d.driverId;
 
-  /** Localised label for the driver's current navigation phase. */
   phaseLabel(phase: LiveDriver['phase']): string {
     switch (phase) {
       case 'start': return 'Старт';
@@ -307,7 +297,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     return 'progress__fill--ok';
   }
 
-  /** "преди 4 сек." — short relative time, recomputed every render. */
   liveAgo(at: string): string {
     const ms = Date.now() - new Date(at).getTime();
     const sec = Math.max(0, Math.round(ms / 1000));
@@ -525,7 +514,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
           this.filteredContainers = this.filteredContainers.filter(x => x.id !== c.id);
           this.showToast(`Контейнер #${c.id} е архивиран`, 'success');
           this.loadStats();
-          // Refresh archive list if it's currently loaded so the count tab updates.
           this.loadDeletedContainers();
         },
         error: err => this.showToast(
@@ -638,9 +626,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         next: data => {
           this.users = data;
           this.filteredUsers = [...data];
-          // Rebuild the userId → role map so the reports tab can suppress
-          // reputation for Admin/Driver submitters even if "Потребители"
-          // tab hasn't been visited yet.
+        
           this.userRoleById = {};
           for (const u of data) this.userRoleById[u.id] = u.role;
           this.isLoading = false;
@@ -744,7 +730,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     return this.selectedReportIds.has(reportId);
   }
 
-  /** Toggle a single row's checkbox. */
   toggleReportSelection(reportId: number): void {
     if (this.selectedReportIds.has(reportId)) {
       this.selectedReportIds.delete(reportId);

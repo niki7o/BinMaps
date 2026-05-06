@@ -2,13 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ToastService, Toast } from './toast.service';
 
-/**
- * Mounts once at app root (next to <app-confirm-dialog/>). Renders the
- * current toast stack from ToastService. Toasts slide in from the right,
- * gently float up to make room for new ones, and fade out on dismiss.
- *
- *   <app-toast-host/>
- */
+
 @Component({
   selector: 'app-toast-host',
   standalone: true,

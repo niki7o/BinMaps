@@ -21,9 +21,7 @@
     <div class="navbar__right">
 
       <div class="navbar__dropdown">
-        <!-- FIX 5: just-received fires bellRing once on new notification.
-             In header.ts: track prevUnreadCount; when unreadCount() increases,
-             add 'just-received' via a signal/setTimeout(2000) then remove it. -->
+      
         <button class="navbar__notif"
                 *ngIf="isLoggedIn()"
                 (click)="toggleNotifPanel($event)"

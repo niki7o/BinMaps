@@ -35,11 +35,6 @@ export class App implements OnDestroy {
         this.showShell = !SHELL_HIDDEN_ROUTES.some(r => e.url === r || e.url.startsWith(r + '?') || e.url.startsWith(r + '/'));
       });
 
-    // Start SignalR once at app level the moment a user logs in — and keep
-    // it alive for the whole session.  This means live driver data arrives
-    // on any page (admin dashboard, map, notifications) without having to
-    // visit /map first.  The map component still calls start() itself, but
-    // ContainerSignalRService.start() is idempotent (guards with `if (this.hub) return`).
     this.authSub = this.auth.currentUser$.subscribe(user => {
       if (user && !this.signalRStarted) {
         this.signalR.start();

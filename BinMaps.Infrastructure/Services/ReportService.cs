@@ -15,15 +15,8 @@ public sealed class ReportService : IReportService
     private const double ReputationWeight = 0.4;
     private const double AutoApproveThreshold = 85.0;
 
-    /// <summary>
-    /// Minimum allowed distance (in meters) between two trash containers.
-    /// Used both for the live add-container conflict check and for guarding
-    /// MissingContainer report approval — admin cannot approve a citizen
-    /// proposal if the suggested point already has a container nearby.
-    /// </summary>
     private const double MinContainerDistanceMeters = 15.0;
 
-    /// <summary>Default capacity assigned to admin-approved citizen requests.</summary>
     private const double DefaultRequestedCapacity = 1100.0;
 
 
@@ -99,9 +92,6 @@ public sealed class ReportService : IReportService
         bool autoApprove;
         if (isMissingContainerRequest)
         {
-            // A missing-container suggestion is a PROPOSAL. It must be reviewed
-            // by an admin who has domain knowledge (area, capacity, trash type).
-            // Never auto-approve — the admin creates the actual container.
             autoApprove = false;
         }
         else if (isAdmin)
@@ -135,8 +125,6 @@ public sealed class ReportService : IReportService
             ReportType = dto.ReportType,
             Description= dto.Description,
             PhotoURL  = dto.PhotoURL,
-            // Only MissingContainer carries coordinates on the Report itself;
-            // other types reference a container via TrashContainerId.
             LocationX = isMissingContainerRequest ? dto.LocationX : null,
             LocationY = isMissingContainerRequest ? dto.LocationY : null,
             AI_Score = aiScore,
@@ -250,11 +238,11 @@ public sealed class ReportService : IReportService
       
         await _hub.Clients.All.SendAsync("ReportStatusChanged", new
         {
-            ReportId    = report.Id,
+            ReportId  = report.Id,
             ContainerId = report.TrashContainerId,
             IsApproved  = false,
-            UserId      = report.UserId,
-            ReportType  = report.ReportType.ToString()
+            UserId  = report.UserId,
+            ReportType = report.ReportType.ToString()
         });
     }
 

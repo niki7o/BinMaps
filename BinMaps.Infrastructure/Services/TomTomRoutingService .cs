@@ -21,10 +21,6 @@ public sealed class TomTomRoutingService : IExternalRoutingService
     {
         _http = http;
         _logger = logger;
-
-        // Read the key but never throw at startup — the matrix call gracefully
-        // falls back to Haversine when the key is missing or placeholder. This
-        // way the API still boots in environments without a TomTom key.
         var raw = config["ExternalAPIs:TomTom:ApiKey"];
         _apiKey = string.IsNullOrWhiteSpace(raw) ||
                   raw.Equals("YOUR_TOMTOM_API_KEY", StringComparison.OrdinalIgnoreCase)
@@ -44,7 +40,6 @@ public sealed class TomTomRoutingService : IExternalRoutingService
         if (origins.Count == 0 || destinations.Count == 0)
             return null;
 
-        // No key → don't call out, let the caller use the offline fallback.
         if (_apiKey is null)
             return null;
 

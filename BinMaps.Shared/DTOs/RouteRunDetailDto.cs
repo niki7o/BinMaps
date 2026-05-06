@@ -1,15 +1,12 @@
 namespace BinMaps.Shared.DTOs;
 
-/// <summary>
-/// Full detail for a single RouteRun — includes the stop snapshot taken at start.
-/// </summary>
 public sealed class RouteRunDetailDto
 {
     public int Id { get; init; }
     public string DriverId { get; init; } = string.Empty;
     public string DriverName { get; init; } = string.Empty;
     public string AreaId { get; init; } = string.Empty;
-    /// <summary>Integer value of the TrashType enum (0=Mixed,1=Plastic,2=Paper,3=Glass).</summary>
+  
     public int TrashType { get; init; }
     public int? TruckId { get; init; }
     public DateTime StartedAt { get; init; }

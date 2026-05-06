@@ -49,13 +49,6 @@ public sealed class TruckRouteService : ITruckRouteService
 
     #region Pipeline
 
-    /// <summary>
-    /// Finds the truck assigned to <paramref name="areaId"/> that collects
-    /// <paramref name="trashType"/>. Prefers an exact type match; falls back
-    /// to any truck in the same area when the zone has only one vehicle
-    /// (single-truck-per-area deployments). The fallback is intentionally
-    /// area-scoped — it never crosses zone boundaries.
-    /// </summary>
     private async Task<Truck> FindTruckAsync(string areaId, TrashType trashType)
     {
         var query = _truckRepo.GetAllAttached().Where(t => t.AreaId == areaId);
@@ -225,18 +218,18 @@ public sealed class TruckRouteService : ITruckRouteService
 
             stops.Add(new ContainerStopDto
             {
-                Id                   = container.Id,
-                StopNumber           = stopNum++,
-                FillPercentage       = container.FillPercentage,
-                LocationX            = container.LocationX,
-                LocationY            = container.LocationY,
+                Id  = container.Id,
+                StopNumber  = stopNum++,
+                FillPercentage    = container.FillPercentage,
+                LocationX   = container.LocationX,
+                LocationY    = container.LocationY,
                 DistanceFromPrevious = Math.Round(distKm, 3),
-                EstimatedLoad        = Math.Round(estLoadKg, 1),
-                Capacity             = container.Capacity,
-                HasSensor            = container.HasSensor,
-                AreaId               = container.AreaId,
-                TrashType            = container.TrashType,
-                Status               = container.Status
+                EstimatedLoad  = Math.Round(estLoadKg, 1),
+                Capacity = container.Capacity,
+                HasSensor  = container.HasSensor,
+                AreaId  = container.AreaId,
+                TrashType   = container.TrashType,
+                Status = container.Status
             });
 
             totalDistKm += distKm;
@@ -250,8 +243,8 @@ public sealed class TruckRouteService : ITruckRouteService
         return new RouteResultDto
         {
             TruckId = truck.Id,
-            DepotX = truck.LocationX,   // longitude — truck start / end position
-            DepotY = truck.LocationY,   // latitude
+            DepotX = truck.LocationX,   
+            DepotY = truck.LocationY,   
             AreaId = areaId,
             TrashType = trashType,
             Route = stops,

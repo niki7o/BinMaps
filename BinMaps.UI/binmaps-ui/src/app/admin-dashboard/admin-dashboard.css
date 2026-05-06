@@ -8,17 +8,12 @@
   flex-wrap: wrap;
 }
 
-/* ─────────────────────────────────────────────────────────────────────
-   Routes panel — Active (live) / History sub-tabs
-   ───────────────────────────────────────────────────────────────────── */
 
 .admin__sub-tabs {
   align-self: flex-start;
   margin-bottom: var(--space-5);
 }
 
-/* Tab "Активни (live)" header gets a subtle pulsing dot so it's obvious
-   the panel is real-time even without looking inside. */
 .live-indicator {
   display: inline-flex;
   align-items: center;
@@ -37,7 +32,6 @@
   50%      { box-shadow: 0 0 0 6px transparent; }
 }
 
-/* ─── Live fleet cards ───────────────────────────────────────────── */
 
 .live-fleet-grid {
   display: grid;
@@ -60,8 +54,7 @@
               box-shadow var(--duration-base) var(--ease-out);
 }
 
-/* Driver-coloured top rail — same colour the truck marker uses on the map,
-   so admins can match a card to a moving pin at a glance. */
+
 .live-fleet-card::before {
   content: '';
   position: absolute;
@@ -120,8 +113,6 @@
   font-family: var(--font-mono);
 }
 
-/* Phase chip — colour-coded so an admin can scan a fleet of 30 trucks
-   and find anyone parked vs. moving without reading text. */
 .live-fleet-card__phase {
   font-family: var(--font-mono);
   font-size: 10px;
@@ -201,7 +192,6 @@
   margin-top: auto;
 }
 
-/* Empty state shared with other admin tabs but tuned for the live panel */
 .admin__empty-state {
   display: flex;
   flex-direction: column;
@@ -291,7 +281,6 @@
   color: var(--text-muted);
 }
 
-/* FIX 9: Trend context chips under each quick-stat */
 .admin__quick-stat-trend {
   font-size: 10px;
   font-weight: 600;
@@ -321,10 +310,6 @@
   color: var(--status-critical);
 }
 
-/* Count badge: any non-zero count is the *action signal* on this page,
-   so it carries the brand colour regardless of active state. The tab's
-   text colour still shifts on active/hover, but the count stays loud
-   so users can scan "where do I have work?" in one pass. */
 .tab-count {
   display: inline-flex;
   align-items: center;
@@ -601,14 +586,6 @@
   to { transform: rotate(360deg); }
 }
 
- 
-
-/* FIX 8: Removed local .toast-stack (was top-right, conflicting with the
-   global .toast-container in styles.css which is bottom-right).
-   Use the shared NotificationService + global .toast-container instead.
-   Also remove the <div class="toast-stack"> block from admin-dashboard.html. */
-
-
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -860,7 +837,7 @@
   .modal__meta-label {
     min-width: 120px;
   }
-  /* FIX 8 (cont.): .toast-stack and .toast responsive overrides removed — use global system */
+  
 }
 
 .user-row--banned {
@@ -923,7 +900,6 @@
   margin-top: 4px;
 }
 
-/* ───────── Bulk-delete row selection (reports tab) ───────── */
 
 .admin-checkbox {
   width: 16px;

@@ -165,23 +165,13 @@ export class ContainerSignalRService {
 
   async stop(): Promise<void> {
     this.intentionalStop = true;
-    // If start() is still in flight, wait for it to settle before tearing
-    // down — otherwise the SignalR client throws the "before stop() was
-    // called" race error in the console.
     if (this.startPromise) {
       try { await this.startPromise; } catch { /* swallow */ }
     }
     try { await this.hub?.stop(); } catch { /* swallow */ }
   }
 
-  /**
-   * Driver client → server → admins. Safe to call at high frequency
-   * (hub method just forwards to the `admins` group); the server
-   * silently ignores the call from non-Driver/non-Admin users.
-   *
-   * Errors (hub disconnected, network blip) are swallowed — we don't
-   * want driver navigation to crash because telemetry is flaky.
-   */
+  
   sendDriverPosition(payload: DriverPositionPayload): void {
     if (!this.hub || this.hub.state !== signalR.HubConnectionState.Connected) return;
     this.hub.invoke('DriverPosition', payload).catch(() => {});
@@ -191,9 +181,6 @@ export class ContainerSignalRService {
     const fullHubUrl = `${window.location.origin}${environment.hubUrl}`;
     return new signalR.HubConnectionBuilder()
       .withUrl(fullHubUrl, {
-        // Backend requires a JWT on /hubs/* — read from query string via
-        // JwtBearerEvents.OnMessageReceived. accessTokenFactory is what
-        // SignalR's client uses to append ?access_token=... on negotiate.
         accessTokenFactory: () => this.auth.getToken() ?? '',
         transport:
           signalR.HttpTransportType.WebSockets |

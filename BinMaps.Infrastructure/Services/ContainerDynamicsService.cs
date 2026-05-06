@@ -19,10 +19,6 @@ public sealed class ContainerDynamicsService : BackgroundService
     private static readonly TimeSpan UpdateInterval = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan WeatherCacheDuration = TimeSpan.FromMinutes(30);
     private const int BatchSize = 50;
-    // Fallback coordinates used only when Region:CenterLat/CenterLng are not
-    // configured in appsettings.json. In that case we default to Sofia center,
-    // which is the pilot region for this project, and log a warning so
-    // operators notice the missing config in other deployments.
     private const double FallbackLat = 42.6977;
     private const double FallbackLng = 23.3219;
     private const double FallbackAmbient = 20.0;
@@ -39,8 +35,6 @@ public sealed class ContainerDynamicsService : BackgroundService
     private readonly double _regionLng;
 
     private readonly HashSet<int> _lowBatteryNotified = new();
-    // Track containers we've already alerted about being on fire so we don't
-    // spam admins every 60-second cycle while the fire persists.
     private readonly HashSet<int> _fireNotified = new();
 
 
@@ -239,9 +233,6 @@ public sealed class ContainerDynamicsService : BackgroundService
         }
         else
         {
-            // No sensor (or sensor broken) → there can be no battery or
-            // temperature reading. Null both so the UI shows them as N/A
-            // instead of stale values from when the sensor was active.
             if (container.Temperature != null)
             {
                 container.Temperature = null;
@@ -252,8 +243,6 @@ public sealed class ContainerDynamicsService : BackgroundService
                 container.BatteryPercentage = null;
                 changed = true;
             }
-            // Drop any pending battery alert so it doesn't fire when the
-            // sensor is re-attached later.
             _lowBatteryNotified.Remove(container.Id);
         }
 
@@ -266,12 +255,6 @@ public sealed class ContainerDynamicsService : BackgroundService
 
         if (newStatus != container.Status)
         {
-            // Never auto-revert Fire → Active through the simulator.
-            // A fire status set by a citizen report or by the simulator must
-            // be cleared explicitly by an admin — not silently overwritten the
-            // next time the background cycle runs and temperature happens to be
-            // below the threshold.  The simulator CAN still auto-SET fire
-            // (Active → Fire) when conditions are met.
             if (container.Status == TrashContainerStatus.Fire && newStatus == TrashContainerStatus.Active)
             {
                 // keep Fire — do nothing
@@ -282,8 +265,6 @@ public sealed class ContainerDynamicsService : BackgroundService
                 changed = true;
             }
         }
-
-        // Fire-alert lifecycle: notify once on entry.
         if (newStatus == TrashContainerStatus.Fire || container.Status == TrashContainerStatus.Fire)
         {
             if (!_fireNotified.Contains(container.Id))

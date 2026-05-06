@@ -35,15 +35,8 @@ public sealed class TrucksController : ControllerBase
 
     #region Zones
 
-    /// <summary>
-    /// Returns every distinct (AreaId, TrashType) combination that has an
-    /// active truck configured. Used by the driver UI to populate the zone
-    /// and trash-type dropdowns with only the combinations that are actually
-    /// served — preventing drivers from generating routes for zones/types
-    /// that have no truck assigned.
-    /// </summary>
     [HttpGet("zones")]
-    [Authorize] // any authenticated user — the map is accessible to all roles
+    [Authorize] 
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetZones([FromServices] BinMapsDbContext db)
     {
@@ -94,8 +87,6 @@ public sealed class TrucksController : ControllerBase
     #endregion
 
     #region Route history (persistence)
-
-    /// <summary>Driver opens a new route run. Returns the generated runId.</summary>
     [HttpPost("route/start")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -117,8 +108,6 @@ public sealed class TrucksController : ControllerBase
         }
         catch (RouteAlreadyActiveException ex)
         {
-            // Another driver already holds this (area, trashType). Return a
-            // structured 409 the truck app can render as "Зает от Иван — преди 12 мин."
             _logger.LogInformation(
                 "StartRun blocked for {DriverId} — already held by {Holder} (run #{RunId}).",
                 driverId, ex.LockedByDriverId, ex.ExistingRunId);
@@ -138,11 +127,6 @@ public sealed class TrucksController : ControllerBase
         }
         catch (DbUpdateException ex)
         {
-            // DbUpdateException at SaveChanges-time is a server-side
-            // problem (FK violations, schema drift, DB unreachable), not
-            // bad client input. Honest 503 so monitoring/alerting picks
-            // it up — was previously a 400 which obscured infrastructure
-            // issues as user errors.
             _logger.LogError(ex,
                 "StartRun DB error for driver {DriverId}, areaId={AreaId}, truckId={TruckId}",
                 driverId, dto.AreaId, dto.TruckId);
@@ -154,9 +138,6 @@ public sealed class TrucksController : ControllerBase
         }
         catch (Microsoft.Data.SqlClient.SqlException ex)
         {
-            // Raw SQL errors that bypass DbUpdateException (e.g. queries
-            // we run before the SaveChanges path, like the lock check).
-            // Same 503 treatment for the same reason.
             _logger.LogError(ex,
                 "StartRun SQL error for driver {DriverId}, areaId={AreaId}, truckId={TruckId}",
                 driverId, dto.AreaId, dto.TruckId);
@@ -173,7 +154,6 @@ public sealed class TrucksController : ControllerBase
         }
     }
 
-    /// <summary>Driver closes a run. 404 if the run does not belong to the caller.</summary>
     [HttpPost("route/{id:int}/complete")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -229,10 +209,6 @@ public sealed class TrucksController : ControllerBase
         return ok ? NoContent() : NotFound(new { message = "Маршрутът не е намерен." });
     }
 
-    /// <summary>
-    /// Full detail of a single run. Any authenticated user can read a run so
-    /// the map can draw the planned route polyline for observers too.
-    /// </summary>
     [HttpGet("route/{id:int}")]
     [Authorize]
     [ProducesResponseType(typeof(RouteRunDetailDto), StatusCodes.Status200OK)]
@@ -253,15 +229,8 @@ public sealed class TrucksController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Snapshot of currently-active route runs with last-known driver
-    /// position (if any). Used by every client on connect/return-to-tab so
-    /// trucks are immediately visible without waiting up to a full broadcast
-    /// cycle. Open to any authenticated user — payload is just truck
-    /// telemetry, no PII beyond display name.
-    /// </summary>
     [HttpGet("route/active")]
-    [Authorize] // overrides class-level [Authorize(Roles="Driver,Admin")]
+    [Authorize] 
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetActiveRuns(
         [FromServices] BinMapsDbContext db,
@@ -269,9 +238,6 @@ public sealed class TrucksController : ControllerBase
     {
         try
         {
-            // Auto-expire runs that are still Active but started more than 6 hours
-            // ago — these are abandoned runs whose driver never called /complete.
-            // A single batch UPDATE is cheaper than loading + updating each row.
             var staleThreshold = DateTime.UtcNow.AddHours(-6);
             await db.Set<RouteRun>()
                 .Where(r => r.Status == RouteRunStatus.Active && r.StartedAt < staleThreshold)
@@ -279,8 +245,6 @@ public sealed class TrucksController : ControllerBase
                     .SetProperty(r => r.Status, RouteRunStatus.Cancelled)
                     .SetProperty(r => r.CompletedAt, DateTime.UtcNow));
 
-            // 1. Active runs (DB is the source of truth — covers fresh server
-            //    boots where the in-memory tracker is still empty).
             var runs = await db.Set<RouteRun>()
                 .AsNoTracking()
                 .Where(r => r.Status == RouteRunStatus.Active)
@@ -302,8 +266,6 @@ public sealed class TrucksController : ControllerBase
             if (runs.Count == 0)
                 return Ok(Array.Empty<object>());
 
-            // 2. Truck details (plate, capacity) so the live panel can show
-            //    a real "load / capacity" bar instead of just litres.
             var truckIds = runs.Where(r => r.TruckId.HasValue)
                                .Select(r => r.TruckId!.Value)
                                .Distinct()
@@ -318,8 +280,6 @@ public sealed class TrucksController : ControllerBase
                         t => t.Id,
                         t => (t.LicensePlate, t.Capacity));
 
-            // 3. Live positions cached in-memory (may be empty if drivers
-            //    haven't broadcast yet after a server restart — that's fine).
             var positions = tracker.Snapshot()
                 .ToDictionary(p => p.DriverId, StringComparer.Ordinal);
 

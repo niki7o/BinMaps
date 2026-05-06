@@ -6,10 +6,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BinMaps.API.Controllers;
 
-/// <summary>
-/// Read-only catalog of zones/areas. Used by the "Add container" admin page
-/// to populate the AreaId dropdown and by the map to color zones.
-/// </summary>
 [ApiController]
 [Route("api/areas")]
 [Authorize]

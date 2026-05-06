@@ -52,12 +52,6 @@ public sealed class AuthController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Issues a fresh JWT for the currently-authenticated user, picking up
-    /// any role change that an admin may have made since the last login.
-    /// The frontend calls this on profile load / after an admin changes the
-    /// user's role, so the token (and UI) reflect the current database state.
-    /// </summary>
     [HttpGet("me")]
     [Authorize]
     [ProducesResponseType(typeof(AuthResultDto), StatusCodes.Status200OK)]

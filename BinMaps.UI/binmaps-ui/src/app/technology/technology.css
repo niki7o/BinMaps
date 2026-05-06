@@ -1,11 +1,10 @@
-/* ── Tech page layout ─────────────────────────────────────────────────── */
+
 .tech-page {
   min-height: 100vh;
   background: var(--bg-root);
   color: var(--text-primary);
 }
 
-/* ── Hero ─────────────────────────────────────────────────────────────── */
 .tech-hero {
   background: linear-gradient(160deg, #0a1628 0%, #0f172a 50%, #071a2e 100%);
   border-bottom: 1px solid var(--border-subtle);
@@ -43,7 +42,6 @@
   margin: 0;
 }
 
-/* ── Sections ─────────────────────────────────────────────────────────── */
 .tech-section {
   padding: 72px 24px;
 }
@@ -72,7 +70,6 @@
   font-size: .97rem;
 }
 
-/* ── Badge ────────────────────────────────────────────────────────────── */
 .tech-badge {
   display: inline-flex;
   align-items: center;
@@ -88,7 +85,6 @@
   margin-bottom: 14px;
 }
 
-/* ── Wide card (sensor / truck) ───────────────────────────────────────── */
 .tech-card--wide {
   display: grid;
   grid-template-columns: 260px 1fr;
@@ -119,7 +115,6 @@
   }
 }
 
-/* ── Card media (SVG illustration side) ──────────────────────────────── */
 .tech-card__media {
   display: flex;
   flex-direction: column;
@@ -149,7 +144,6 @@
   font-size: 13px;
 }
 
-/* ── Card body ────────────────────────────────────────────────────────── */
 .tech-card__body h2 {
   font-size: 1.45rem;
   font-weight: 700;
@@ -162,7 +156,6 @@
   margin-bottom: 24px;
 }
 
-/* ── Specs table ──────────────────────────────────────────────────────── */
 .tech-specs {
   background: var(--bg-root);
   border: 1px solid var(--border-subtle);
@@ -192,7 +185,6 @@
   text-align: right;
 }
 
-/* ── Formula blocks ───────────────────────────────────────────────────── */
 .tech-formula-block {
   background: #0a1628;
   border: 1px solid rgba(16,185,129,.2);
@@ -239,7 +231,6 @@
   word-break: break-all;
 }
 
-/* ── Container grid ───────────────────────────────────────────────────── */
 .tech-containers-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -285,7 +276,6 @@
 
 .tech-container-specs { max-width: 540px; margin: 0 auto; }
 
-/* ── Algorithm steps ──────────────────────────────────────────────────── */
 .tech-algo-steps {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -329,7 +319,6 @@
   margin: 0 0 10px;
 }
 
-/* ── CTA ──────────────────────────────────────────────────────────────── */
 .tech-cta {
   padding: 80px 24px;
   text-align: center;

@@ -23,19 +23,12 @@ ALLOWED_ORIGINS = os.getenv(
 ).split(",")
 
 MODEL_PATH = os.getenv("MODEL_PATH", "/app/bin_fill_model.pth")
-
-# When true, /analyze returns 503 if the saved weights could not be loaded
-# (architecture mismatch, missing file, partial match). When false (dev only),
-# it serves predictions anyway and marks them as untrusted. In production
-# this MUST be "true" — predictions from an untrained head are meaningless.
 STRICT_WEIGHTS = os.getenv("AI_STRICT_WEIGHTS", "true").lower() in {"1", "true", "yes"}
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 CLASSES = ["clean", "moderate", "full", "fire", "damaged"]
 
-# Must match train.py exactly so state_dict keys align.
-# train.py replaces the whole classifier with Sequential(Dropout, Linear).
 def _build_model(num_classes: int = 5) -> nn.Module:
     model = tv_models.mobilenet_v2(weights=None)
     in_features = model.classifier[1].in_features
@@ -54,10 +47,6 @@ TRANSFORM = transforms.Compose([
         std=[0.229, 0.224, 0.225]
     ),
 ])
-
-# ---------------------------------------------------------------------------
-# Model loading state
-# ---------------------------------------------------------------------------
 
 _model: nn.Module | None = None
 _weights_loaded: bool = False
@@ -94,16 +83,11 @@ def load_model() -> nn.Module:
         model.eval()
         return model
 
-    # Match keys by name AND shape. Anything that doesn't match is skipped.
     filtered = {
         k: v for k, v in state_dict.items()
         if k in model_dict and v.shape == model_dict[k].shape
     }
     _weights_matched = len(filtered)
-
-    # Accept only near-complete matches. A handful of stray keys is fine
-    # (e.g. buffer renames), but <90% match means the .pth is from a
-    # different architecture — serving random weights would be dishonest.
     match_ratio = _weights_matched / max(_weights_total, 1)
 
     if match_ratio < 0.9:
@@ -170,14 +154,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# ---------------------------------------------------------------------------
-# Prediction
-# ---------------------------------------------------------------------------
-
-# Class -> representative fill %. This is a lookup, not a regression output.
-# We expose it as `fill_estimate` (not `fill_percentage`) to make clear
-# that it is derived from the class, not measured.
 _CLASS_FILL = {
     "clean": 10.0,
     "moderate": 50.0,

@@ -41,9 +41,6 @@ public sealed class RouteRunService : IRouteRunService
         if (string.IsNullOrWhiteSpace(dto.AreaId))
             throw new ArgumentException("areaId е задължителен.", nameof(dto));
 
-        // Verify the area exists — a missing FK would otherwise surface as a
-        // cryptic DbUpdateException at SaveChanges. Catch it here with a clear
-        // 400 message instead.
         var areaExists = await _db.Areas
             .AsNoTracking()
             .AnyAsync(a => a.Id == dto.AreaId);
@@ -51,9 +48,6 @@ public sealed class RouteRunService : IRouteRunService
             throw new ArgumentException(
                 $"Зоната \"{dto.AreaId}\" не съществува.", nameof(dto));
 
-        // Truck is optional, but if supplied it must exist AND belong to
-        // the same area as the route — prevents a driver from accidentally
-        // starting a zone-B route using a zone-A truck.
         if (dto.TruckId is int tid)
         {
             var truck = await _db.Trucks
@@ -69,22 +63,6 @@ public sealed class RouteRunService : IRouteRunService
                     $"Шофьорът може да стартира маршрут само за зоната на своя камион.", nameof(dto));
         }
 
-        // ── Concurrency lock ─────────────────────────────────────────────
-        // Only one Active run per (AreaId, TrashType) at a time. A second
-        // driver trying to start the same route gets a 409 with the holder's
-        // name + start time so the truck app can show "Зает от Иван — преди
-        // 12 мин." instead of silently competing.
-        //
-        // A driver re-starting *their own* active run is allowed to fall
-        // through (idempotent retry); we don't throw in that case — instead
-        // we return the existing runId so the client converges.
-        //
-        // ⚠ Fail open: if the lock query itself errors (transient DB blip,
-        // schema drift on a fresh deploy where the migration hasn't fully
-        // applied, etc.) we LOG and proceed to insert. The alternative —
-        // 500'ing every start-route call when the lock is unavailable —
-        // is much worse than a vanishingly-rare double-start, which the
-        // truck app already handles defensively at the navigation layer.
         RouteRun? existingActive = null;
         try
         {
@@ -168,7 +146,6 @@ public sealed class RouteRunService : IRouteRunService
         }
         catch
         {
-            // A weird stop shouldn't prevent the run from starting.
             return null;
         }
     }
@@ -194,12 +171,6 @@ public sealed class RouteRunService : IRouteRunService
 
         var saved = await _repo.UpdateAsync(run);
 
-        // On a successful completion (not a cancellation), reset the
-        // fill % of every container that was visited. Without this the
-        // background simulator and route generator both still see the
-        // pre-collection fills and the driver can immediately re-run the
-        // same route. We do this server-side so it cannot be skipped by
-        // a flaky network request from the truck app.
         if (saved && !cancelled)
             await EmptyVisitedContainersAsync(run, dto);
 
@@ -208,11 +179,6 @@ public sealed class RouteRunService : IRouteRunService
 
     private async Task EmptyVisitedContainersAsync(RouteRun run, CompleteRouteRunDto dto)
     {
-        // Two sources of truth for which containers were actually visited:
-        //   (1) dto.VisitedContainerIds — explicit list from the truck app
-        //   (2) the saved StopsJson snapshot, capped to StopsCompleted
-        // (1) is preferred when present, (2) is the safe fallback so this
-        // works even if the frontend doesn't supply the list.
         IReadOnlyList<int> ids = Array.Empty<int>();
 
         if (dto.VisitedContainerIds is { Count: > 0 } explicitIds)
@@ -234,7 +200,6 @@ public sealed class RouteRunService : IRouteRunService
             }
             catch
             {
-                // StopsJson was somehow malformed — bail out silently.
                 ids = Array.Empty<int>();
             }
         }
@@ -249,10 +214,6 @@ public sealed class RouteRunService : IRouteRunService
 
             foreach (var c in containers)
             {
-                // Tiny non-zero residual prevents "exactly 0%" snapping that
-                // looks fake; matches the 1-5% jitter the truck app already
-                // applied locally. Real-world parallel: even after pickup, a
-                // few liters of residue stay in the bin.
                 c.FillPercentage = Math.Round(Random.Shared.NextDouble() * 4 + 1, 1);
             }
 
@@ -263,8 +224,6 @@ public sealed class RouteRunService : IRouteRunService
         }
         catch (Exception ex)
         {
-            // Don't fail the whole completion call if cleanup fails — the
-            // run was already persisted successfully.
             _logger.LogWarning(ex,
                 "Route {RunId} completed but emptying containers failed.", run.Id);
         }
@@ -423,11 +382,6 @@ public sealed class RouteRunService : IRouteRunService
     #endregion
 }
 
-/// <summary>
-/// Thrown when a driver tries to start a route on an (area, trashType) pair
-/// that another driver is already running. Carries the holder's identity so
-/// the API can return a structured 409 the truck app can render directly.
-/// </summary>
 public sealed class RouteAlreadyActiveException : Exception
 {
     public int       ExistingRunId   { get; }

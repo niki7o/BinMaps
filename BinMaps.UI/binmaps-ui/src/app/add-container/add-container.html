@@ -10,14 +10,13 @@
   </header>
 
   <div class="layout">
-    <!-- ── Map ─────────────────────────────────────────────────── -->
+  
     <section class="map-panel">
       <div class="map-hint" *ngIf="lat === null">
         <span class="dot"></span>
         <span>Кликнете някъде на картата</span>
       </div>
 
-      <!-- Map legend: explains the red exclusion zones around existing bins -->
       <div class="map-legend" *ngIf="!loadingContainers && existingContainersCount > 0">
         <span class="legend-dot"></span>
         <span>Сиви точки = съществуващи контейнери · червен кръг = 15m зона</span>
@@ -39,10 +38,8 @@
       </div>
     </section>
 
-    <!-- ── Form ────────────────────────────────────────────────── -->
     <section class="form-panel">
       <form (ngSubmit)="onSubmit()" #form="ngForm" novalidate>
-        <!-- Area — derived automatically from the clicked map location -->
         <div class="field">
           <label>Зона <small>(определя се от локацията)</small></label>
           <div *ngIf="lat === null" class="coords-empty">
@@ -57,11 +54,10 @@
               някоя от зоните на картата.
             </small>
           </div>
-          <!-- Keep the real value in the form for ngModel consistency -->
+         
           <input type="hidden" name="area" [(ngModel)]="areaId" />
         </div>
 
-        <!-- Trash type -->
         <div class="field">
           <label for="type">Тип отпадък</label>
           <select id="type" name="type" [(ngModel)]="trashType" required>
@@ -71,7 +67,6 @@
           </select>
         </div>
 
-        <!-- Capacity -->
         <div class="field">
           <label for="capacity">Капацитет (литри)</label>
           <input
@@ -86,7 +81,6 @@
           <small>Между 100 и 100 000 л.</small>
         </div>
 
-        <!-- Sensor -->
         <div class="field checkbox-field">
           <label>
             <input
@@ -98,7 +92,6 @@
           <small>Ако е активирано, контейнерът започва със 100% батерия.</small>
         </div>
 
-        <!-- Location readback (read-only, populated by map click) -->
         <div class="field coords-field">
           <label>Локация</label>
           <div *ngIf="lat === null" class="coords-empty">
@@ -133,7 +126,6 @@
           </div>
         </div>
 
-        <!-- Messages -->
         <div class="msg msg-error" *ngIf="errorMessage">{{ errorMessage }}</div>
         <div class="msg msg-success" *ngIf="successMessage">
           {{ successMessage }}

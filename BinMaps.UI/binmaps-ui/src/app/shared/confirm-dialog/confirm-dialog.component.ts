@@ -3,19 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ConfirmService } from './confirm.service';
 
-/**
- * Global in-app confirmation dialog. Mount once (e.g. in AppComponent
- * template) — the dialog opens/closes in response to ConfirmService.
- *
- *   <app-confirm-dialog />
- *
- * Supports three layouts:
- *   • Standard confirm (confirmText / cancelText)
- *   • Acknowledgement  (single OK button, via .notify())
- *   • Multi-choice     (vertical stack of choice cards, via .askChoice())
- *
- * Styling matches the app's dark-emerald theme used in the admin dashboard.
- */
+
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
@@ -240,7 +228,6 @@ import { ConfirmService } from './confirm.service';
       line-height: 1.5;
     }
 
-    /* ---------------- Choice cards ---------------- */
     .confirm-choices {
       display: flex; flex-direction: column; gap: 10px;
       margin-top: 18px;
@@ -398,7 +385,6 @@ import { ConfirmService } from './confirm.service';
       to   { opacity: 1; transform: translateY(0)    scale(1); }
     }
 
-    /* Mobile: give cards a bit more breathing room */
     @media (max-width: 480px) {
       .confirm-card { padding: 20px 18px 18px; border-radius: 16px; }
       .confirm-title { font-size: 17.5px; }
@@ -430,7 +416,7 @@ export class ConfirmDialogComponent {
   onCancel(): void { this.svc.cancel(); }
 
   onBackdrop(): void {
-    // Backdrop click cancels — matches common dialog UX.
+   
     this.svc.cancel();
   }
 

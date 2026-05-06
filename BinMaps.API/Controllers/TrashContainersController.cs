@@ -59,8 +59,6 @@ public sealed class TrashContainersController : ControllerBase
         if (status.HasValue)
             query = query.Where(c => c.Status == status.Value);
 
-        // Fetch from DB with the raw entity shape first (EF can't translate
-        // enum-to-int casts in SQL projections reliably), then convert in memory.
         var raw = await query.Select(c => new
         {
             c.Id,
@@ -138,16 +136,11 @@ public sealed class TrashContainersController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        // ── 1. Region bounds check ─────────────────────────────────────
         var bounds = _configuration.GetSection("Region:Bounds");
         double? south = bounds.GetValue<double?>("South");
         double? west = bounds.GetValue<double?>("West");
         double? north = bounds.GetValue<double?>("North");
         double? east = bounds.GetValue<double?>("East");
-
-        // Only apply bounds check when all four sides are configured.
-        // This way the endpoint is still usable in test environments
-        // without region config, while production stays guarded.
         if (south is not null && west is not null && north is not null && east is not null)
         {
             // LocationX = lng, LocationY = lat in this codebase.
@@ -162,7 +155,6 @@ public sealed class TrashContainersController : ControllerBase
             }
         }
 
-        // ── 2. Area exists ─────────────────────────────────────────────
         var area = await _areaRepo.GetByIdAsync(dto.AreaId);
         if (area is null)
         {
@@ -172,14 +164,10 @@ public sealed class TrashContainersController : ControllerBase
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
-        // ── 3. Duplicate / too-close check ─────────────────────────────
         double minDistanceMeters = _configuration
             .GetSection("Region")
             .GetValue<double?>("MinContainerDistanceMeters") ?? 15.0;
 
-        // Pre-filter with a cheap bounding box (rough degree conversion
-        // sufficient at Sofia latitude) to avoid fetching every row, then
-        // compute the exact haversine in memory for candidates.
         double degreeLat = minDistanceMeters / 111_000.0;
         double degreeLng = minDistanceMeters /
                            (111_000.0 * Math.Cos(dto.LocationY * Math.PI / 180));
@@ -209,25 +197,6 @@ public sealed class TrashContainersController : ControllerBase
             }
         }
 
-        // ── 4. Persist ────────────────────────────────────────────────
-        // The TrashContainer entity is configured with ValueGeneratedNever()
-        // (BinMapsDbContext line 47), so we must assign Id ourselves —
-        // otherwise EF defaults to 0 and we end up with "#0" containers.
-        //
-        // Strategy: pick the LOWEST missing positive integer (first-fit).
-        // The previous strategy was MAX(Id)+1, which left permanent gaps
-        // when a hard-delete punched a hole in the sequence. First-fit
-        // reuses those gaps so:
-        //   • An admin who hard-deleted a seeded container (e.g. #1) can
-        //     re-add a replacement and it will *land back at #1*, not at
-        //     the end of the table — which is what the user actually wants
-        //     when "restoring" a seeded row through the UI.
-        //   • Soft-deleted rows still occupy their id (we read with
-        //     IgnoreQueryFilters), so they will NOT be reused — restoring
-        //     a soft-deleted bin is a separate flow (UPDATE IsDeleted=0).
-        // Cost: O(n) memory for the id list. n ≈ a few thousand at most;
-        // negligible. The DB-side alternative (a self-LEFT-JOIN gap query)
-        // doesn't translate cleanly through EF and isn't worth the risk.
         var existingIdsSorted = await _containerRepo
             .GetAllAttached()
             .IgnoreQueryFilters()
@@ -239,7 +208,7 @@ public sealed class TrashContainersController : ControllerBase
         int nextId = 1;
         foreach (var id in existingIdsSorted)
         {
-            if (id != nextId) break;   // gap found — nextId is the missing slot
+            if (id != nextId) break;  
             nextId++;
         }
 
@@ -260,7 +229,6 @@ public sealed class TrashContainersController : ControllerBase
 
         await _containerRepo.AddAsync(container);
 
-        // ── 5. Audit log ──────────────────────────────────────────────
         string actor = User.Identity?.Name ?? "unknown";
         _logger.LogInformation(
             "Admin {Actor} created container #{Id} in area {Area} at ({Lat:F5},{Lng:F5}) type={Type} sensor={Sensor}",
@@ -268,7 +236,6 @@ public sealed class TrashContainersController : ControllerBase
             container.LocationY, container.LocationX,
             container.TrashType, container.HasSensor);
 
-        // ── 6. Broadcast via SignalR ──────────────────────────────────
         var payload = new
         {
             container.Id,
@@ -358,15 +325,8 @@ public sealed class TrashContainersController : ControllerBase
         if (dto.HasSensor)
         {
             container.HasSensor = true;
-            // Preserve existing battery when not explicitly provided.
-            // Defaulting to 100 only for truly new/null sensors avoids
-            // accidentally resetting a partially-drained battery on every edit.
             container.BatteryPercentage = dto.BatteryPercentage ?? container.BatteryPercentage ?? 100;
 
-            // Pull a fresh ambient reading so the row immediately shows a
-            // real temperature instead of waiting up to 60s for the next
-            // background cycle. If the API call fails we fall back to a
-            // sensible default rather than blocking the admin's edit.
             if (sensorJustEnabled || container.Temperature is null)
             {
                 try
@@ -406,13 +366,6 @@ public sealed class TrashContainersController : ControllerBase
 
         return NoContent();
     }
-
-    /// <summary>
-    /// Soft-deletes a container (seeded or user-added). The row is hidden from
-    /// the map via the global query filter and shows up in the admin's
-    /// "Архивирани" tab where it can be restored or removed permanently via
-    /// the AdminController's /permanent endpoint.
-    /// </summary>
     [HttpDelete("{id:int}")]
     [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -438,7 +391,6 @@ public sealed class TrashContainersController : ControllerBase
             "Admin {Actor} archived container #{Id} (seeded={Seeded})",
             User.Identity?.Name ?? "unknown", id, container.IsSeeded);
 
-        // Tell every connected client to drop this marker from the map.
         await hubContext.Clients.All.SendAsync("ContainerRemoved", new { id });
 
         return Ok(new { id, mode = "soft", isSeeded = container.IsSeeded });

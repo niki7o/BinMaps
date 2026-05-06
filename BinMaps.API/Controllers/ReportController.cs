@@ -42,7 +42,6 @@ public sealed class ReportsController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        // ── Type-specific validation ─────────────────────────────────
         if (dto.ReportType == ReportType.MissingContainer)
         {
             if (dto.LocationX is null || dto.LocationY is null)
@@ -82,9 +81,6 @@ public sealed class ReportsController : ControllerBase
         }
         else if (dto.ReportType != ReportType.TruckProblem)
         {
-            // TruckProblem is about the vehicle, not a specific container — no
-            // TrashContainerId required. All other non-MissingContainer types
-            // (Full, Fire, SensorBroken, ContainerDamage) must reference a bin.
             if (dto.TrashContainerId is null or <= 0)
             {
                 return Problem(
@@ -99,8 +95,6 @@ public sealed class ReportsController : ControllerBase
 
             dto.PhotoURL = null;
             AIResultDto? aiResult = null;
-            // Skip AI analysis for MissingContainer — the photo is of a street,
-            // not a trash bin, so the classifier would return noise.
             bool runAi = dto.ReportType != ReportType.MissingContainer;
             if (runAi && dto.Photo is not null)
             {

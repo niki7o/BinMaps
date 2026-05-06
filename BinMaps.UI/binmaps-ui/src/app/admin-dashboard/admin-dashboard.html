@@ -655,11 +655,10 @@
       </div>
     </div>
 
-    <!-- Routes (driver course log) -->
+    
     <div *ngSwitchCase="'routes'" class="admin__panel animate-fade-in">
 
-      <!-- Sub-tabs: live fleet vs. history. Live shows what's running RIGHT
-           NOW; History is the audit log for completed/cancelled runs. -->
+     
       <div class="tabs admin__sub-tabs">
         <button class="tab"
                 [class.is-active]="routesSubTab === 'live'"
@@ -679,7 +678,7 @@
         </button>
       </div>
 
-      <!-- LIVE FLEET PANEL ──────────────────────────────────────────── -->
+      
       <ng-container *ngIf="routesSubTab === 'live'">
         <div *ngIf="liveDrivers().length === 0" class="admin__empty-state">
           <div class="admin__empty-state__icon">
@@ -728,8 +727,7 @@
                    [style.width.%]="stopsProgress(d)"></div>
             </div>
 
-            <!-- Capacity (only when truck is known — otherwise we'd be
-                 showing a bar with no meaningful denominator) -->
+        
             <ng-container *ngIf="d.truck">
               <div class="live-fleet-card__row">
                 <span class="live-fleet-card__row-label">Капацитет</span>
@@ -744,7 +742,7 @@
               </div>
             </ng-container>
 
-            <!-- No-GPS banner — driver is active but hasn't sent position yet -->
+            
             <div *ngIf="!d.hasGps" class="live-fleet-card__no-gps">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2">
@@ -774,7 +772,7 @@
         </div>
       </ng-container>
 
-      <!-- HISTORY PANEL ─────────────────────────────────────────────── -->
+      
       <ng-container *ngIf="routesSubTab === 'history'">
       <div class="admin__toolbar">
         <div class="admin__toolbar-filters">
