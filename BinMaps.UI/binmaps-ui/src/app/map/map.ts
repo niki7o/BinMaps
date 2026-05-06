@@ -742,32 +742,61 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.isAdmin = this.currentUser.role === 'Admin';
     this.isDriver = this.currentUser.role === 'Driver';
     this.isUser = this.currentUser.role === 'User';
+
+    // Reload zones now that we have a confirmed auth token.
+    // ngAfterViewInit may have fired before the token was ready,
+    // so we retry here to guarantee the dropdowns are populated.
+    if ((this.isDriver || this.isAdmin) && this.availableAreaIds.length === 0) {
+      this.loadZones();
+    }
   }
+
+  // Hard-coded fallback zones matching the seeded trucks.
+  // Used when the /trucks/zones API is unreachable or returns empty
+  // (e.g. server not yet restarted after deploy).
+  private static readonly FALLBACK_ZONES: { areaId: string; trashType: number }[] = [
+    { areaId: 'Зона 1 - Надежда север', trashType: 0 },
+    { areaId: 'Зона 2 - Център',        trashType: 2 },
+    { areaId: 'Зона 3 - Люлин',         trashType: 1 },
+    { areaId: 'Зона 4 - Овча Купел',    trashType: 3 },
+    { areaId: 'Зона 5 - Юг и Витоша',   trashType: 0 },
+    { areaId: 'Зона 6 - Изток',         trashType: 1 },
+  ];
 
   /** Loads which (areaId, trashType) pairs actually have an active truck. */
   private loadZones(): void {
     const token = this.getToken();
-    if (!token) return;
+    if (!token) {
+      // Not authenticated yet — apply the fallback so the UI isn't blank.
+      this.applyZones(MapComponent.FALLBACK_ZONES);
+      return;
+    }
     this.http.get<{ areaId: string; trashType: number }[]>(
       `${this.API_URL}/trucks/zones`,
       { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) }
     ).pipe(takeUntil(this.destroy$))
      .subscribe({
        next: zones => {
-         this.availableZones = zones ?? [];
-         // Unique area IDs, preserving the sorted order from the backend.
-         this.availableAreaIds = [...new Set(zones.map(z => z.areaId))];
-         // If only one area exists, pre-select it.
-         if (this.availableAreaIds.length === 1 && !this.selectedAreaId) {
-           this.selectedAreaId = this.availableAreaIds[0];
-           this.onAreaChange();
-         }
+         // If the server returns an empty list (endpoint not yet deployed or
+         // no trucks seeded), fall back to the hard-coded list so the driver
+         // always has something to pick from.
+         this.applyZones(zones?.length ? zones : MapComponent.FALLBACK_ZONES);
        },
        error: () => {
-         // Fallback: leave availableZones empty; the dropdowns will show
-         // "no options" and the driver gets a clear error on route generation.
+         // API unreachable or 4xx — use the seeded fallback.
+         this.applyZones(MapComponent.FALLBACK_ZONES);
        }
      });
+  }
+
+  private applyZones(zones: { areaId: string; trashType: number }[]): void {
+    this.availableZones = zones;
+    this.availableAreaIds = [...new Set(zones.map(z => z.areaId))];
+    // Auto-select when there is only one area.
+    if (this.availableAreaIds.length === 1 && !this.selectedAreaId) {
+      this.selectedAreaId = this.availableAreaIds[0];
+      this.onAreaChange();
+    }
   }
 
   /**

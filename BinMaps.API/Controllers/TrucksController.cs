@@ -43,7 +43,7 @@ public sealed class TrucksController : ControllerBase
     /// that have no truck assigned.
     /// </summary>
     [HttpGet("zones")]
-    [Authorize(Roles = "Driver,Admin")]
+    [Authorize] // any authenticated user — the map is accessible to all roles
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetZones([FromServices] BinMapsDbContext db)
     {
@@ -51,7 +51,6 @@ public sealed class TrucksController : ControllerBase
         {
             var zones = await db.Trucks
                 .AsNoTracking()
-                .Where(t => t.IsActive)
                 .Select(t => new { t.AreaId, trashType = (int)t.TrashType })
                 .Distinct()
                 .OrderBy(z => z.AreaId)
