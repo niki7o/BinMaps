@@ -478,12 +478,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
          const driverColor = color || colorForDriverId(driverId);
          const poly = L.polyline(coords, {
-           color:     driverColor,
-           weight:    5,
-           opacity:   0.85,
-           dashArray: '10, 5',
-           lineCap:   'round',
-           lineJoin:  'round',
+           color:    driverColor,
+           weight:   5,
+           opacity:  0.8,
+           lineCap:  'round',
+           lineJoin: 'round',
          }).addTo(this.map);
          const marker = this.liveDriverMarkers.get(driverId);
          if (marker) (marker as any).setZIndexOffset(1800);
@@ -738,7 +737,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.cluster = L.markerClusterGroup({
       maxClusterRadius: 60,
       spiderfyOnMaxZoom: true,
-      showCoverageOnHover: true,
+      showCoverageOnHover: false,
       zoomToBoundsOnClick: true,
       disableClusteringAtZoom: 15,
       chunkedLoading: true,
@@ -913,38 +912,41 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.clearRoute();
     const route = this.routeResult.route;
 
+    let roadCoords: [number, number][] | null = null;
+
     try {
       const depotX = this.routeResult.depotX;
       const depotY = this.routeResult.depotY;
       const hasDepot = depotX != null && depotY != null &&
-                       Number.isFinite(depotX) && Number.isFinite(depotY);
+                       Number.isFinite(depotX) && Number.isFinite(depotY) &&
+                       Math.abs(depotX) > 0.001 && Math.abs(depotY) > 0.001;
+
       const stopWaypoints = route.map(s => `${s.locationX},${s.locationY}`);
-      const osrmCoords = hasDepot
+      const waypoints = hasDepot
         ? [`${depotX},${depotY}`, ...stopWaypoints, `${depotX},${depotY}`].join(';')
         : stopWaypoints.join(';');
 
       const d = await (await fetch(
-        `https://router.project-osrm.org/route/v1/driving/${osrmCoords}?overview=full&geometries=geojson`
+        `https://router.project-osrm.org/route/v1/driving/${waypoints}?overview=full&geometries=geojson`
       )).json();
 
       if (d.code === 'Ok' && d.routes?.[0]) {
-        this.realRouteCoords = d.routes[0].geometry.coordinates.map(
+        roadCoords = d.routes[0].geometry.coordinates.map(
           (c: number[]) => [c[1], c[0]] as [number, number]
         );
-      } else {
-        this.realRouteCoords = route.map(s => [s.locationY, s.locationX] as [number, number]);
       }
-    } catch {
-      this.realRouteCoords = route.map(s => [s.locationY, s.locationX] as [number, number]);
-    }
+    } catch { /* roadCoords stays null */ }
 
-    if (this.realRouteCoords.length < 80) {
-      this.realRouteCoords = this.interpolateCoords(this.realRouteCoords, 60);
-    }
+    const fallback: [number, number][] = route.map(s => [s.locationY, s.locationX] as [number, number]);
+    const displayCoords = roadCoords ?? fallback;
+
+    this.realRouteCoords = roadCoords
+      ? (roadCoords.length < 80 ? this.interpolateCoords(roadCoords, 60) : roadCoords)
+      : fallback;
 
     const avg = route.reduce((s, r) => s + r.fillPercentage, 0) / route.length;
 
-    this.routeLine = L.polyline(this.realRouteCoords, {
+    this.routeLine = L.polyline(displayCoords, {
       color: this.routeColor(avg),
       weight: 5,
       opacity: 0.85,
