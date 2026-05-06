@@ -358,7 +358,10 @@ public sealed class TrashContainersController : ControllerBase
         if (dto.HasSensor)
         {
             container.HasSensor = true;
-            container.BatteryPercentage = dto.BatteryPercentage ?? 100;
+            // Preserve existing battery when not explicitly provided.
+            // Defaulting to 100 only for truly new/null sensors avoids
+            // accidentally resetting a partially-drained battery on every edit.
+            container.BatteryPercentage = dto.BatteryPercentage ?? container.BatteryPercentage ?? 100;
 
             // Pull a fresh ambient reading so the row immediately shows a
             // real temperature instead of waiting up to 60s for the next

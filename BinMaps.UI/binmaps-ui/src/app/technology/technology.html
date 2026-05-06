@@ -1,0 +1,409 @@
+<div class="tech-page">
+
+  <!-- Hero -->
+  <section class="tech-hero">
+    <div class="tech-hero__inner">
+      <span class="tech-hero__label">IoT · Алгоритми · Логистика</span>
+      <h1 class="tech-hero__title">Технологията зад BinMaps</h1>
+      <p class="tech-hero__sub">
+        Прецизни ултразвукови сензори, стандартизирани контейнери и оптимизирани
+        маршрути — всичко, захранвано от реални данни на Столична Община.
+      </p>
+    </div>
+  </section>
+
+  <!-- Sensors -->
+  <section class="tech-section" id="sensors">
+    <div class="tech-section__inner">
+
+      <div class="tech-card tech-card--wide">
+        <div class="tech-card__media">
+          <!-- MaxBotix MB7139 stylised SVG illustration -->
+          <svg viewBox="0 0 200 280" fill="none" xmlns="http://www.w3.org/2000/svg" class="tech-svg">
+            <!-- Body cylinder -->
+            <rect x="65" y="30" width="70" height="180" rx="12" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+            <!-- Top dome -->
+            <ellipse cx="100" cy="30" rx="35" ry="12" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+            <!-- Transducer face -->
+            <ellipse cx="100" cy="210" rx="35" ry="12" fill="#10b981" opacity="0.25" stroke="#10b981" stroke-width="1.5"/>
+            <ellipse cx="100" cy="210" rx="22" ry="7" fill="#10b981" opacity="0.4"/>
+            <ellipse cx="100" cy="210" rx="10" ry="3.5" fill="#10b981"/>
+            <!-- LED indicator -->
+            <circle cx="100" cy="60" r="5" fill="#10b981" opacity="0.9"/>
+            <circle cx="100" cy="60" r="9" fill="#10b981" opacity="0.2"/>
+            <!-- Label lines on body -->
+            <rect x="75" y="85" width="50" height="2" rx="1" fill="#334155"/>
+            <rect x="75" y="95" width="40" height="2" rx="1" fill="#334155"/>
+            <rect x="75" y="105" width="45" height="2" rx="1" fill="#334155"/>
+            <!-- Cable -->
+            <path d="M100 30 Q100 10 85 5 Q70 0 65 0" stroke="#475569" stroke-width="3" stroke-linecap="round" fill="none"/>
+            <!-- Pulse arcs -->
+            <path d="M40 215 Q40 230 100 235 Q160 230 160 215" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4 3" fill="none" opacity="0.7"/>
+            <path d="M25 220 Q25 242 100 248 Q175 242 175 220" stroke="#10b981" stroke-width="1" stroke-dasharray="4 4" fill="none" opacity="0.4"/>
+            <path d="M10 225 Q10 255 100 262 Q190 255 190 225" stroke="#10b981" stroke-width="0.8" stroke-dasharray="3 5" fill="none" opacity="0.2"/>
+            <!-- IP67 badge -->
+            <rect x="72" y="150" width="56" height="20" rx="4" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+            <text x="100" y="164" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="monospace">IP67</text>
+          </svg>
+          <div class="tech-card__media-caption">
+            <strong>MaxBotix MB7139</strong><br>HRXL‑MaxSonar‑WR
+          </div>
+        </div>
+
+        <div class="tech-card__body">
+          <div class="tech-badge">Ултразвуков сензор</div>
+          <h2>MaxBotix MB7139 HRXL‑MaxSonar‑WR</h2>
+          <p class="tech-card__lead">
+            Промишлен ултразвуков сензор, проектиран за прецизно измерване на ниво в
+            агресивна среда. BinMaps симулира физическите му характеристики до ниво на
+            шум, температурна дрейф и артефакти.
+          </p>
+
+          <div class="tech-specs">
+            <div class="tech-specs__row">
+              <span class="tech-specs__label">Обхват</span>
+              <span class="tech-specs__value">20 – 765 cm</span>
+            </div>
+            <div class="tech-specs__row">
+              <span class="tech-specs__label">Резолюция</span>
+              <span class="tech-specs__value">1 cm</span>
+            </div>
+            <div class="tech-specs__row">
+              <span class="tech-specs__label">Честота</span>
+              <span class="tech-specs__value">42 kHz</span>
+            </div>
+            <div class="tech-specs__row">
+              <span class="tech-specs__label">Защита</span>
+              <span class="tech-specs__value">IP67 (прахо- и водоустойчив)</span>
+            </div>
+            <div class="tech-specs__row">
+              <span class="tech-specs__label">Принцип</span>
+              <span class="tech-specs__value">Импулсно-ехо (Pulse-Echo)</span>
+            </div>
+            <div class="tech-specs__row">
+              <span class="tech-specs__label">Интерфейс</span>
+              <span class="tech-specs__value">UART / Аналогов / PWM</span>
+            </div>
+          </div>
+
+          <div class="tech-formula-block">
+            <div class="tech-formula-title">Изчисляване на запълване</div>
+            <div class="tech-formula">
+              <div class="tech-formula__line"><code>d = (v × t) / 2</code></div>
+              <div class="tech-formula__line tech-formula__line--sub">v = 343 m/s (скорост на звука при 20°C)</div>
+              <div class="tech-formula__line" style="margin-top:10px"><code>fill% = ((H − d) / H) × 100</code></div>
+              <div class="tech-formula__line tech-formula__line--sub">H = 1.10 m (стандартен 1100 L Euro-контейнер)</div>
+              <div class="tech-formula__line tech-formula__line--highlight">При d = 0.22 m → fill% = 80% (праг за маршрутизация)</div>
+            </div>
+          </div>
+
+          <div class="tech-formula-block">
+            <div class="tech-formula-title">AI Confidence Scoring</div>
+            <div class="tech-formula">
+              <div class="tech-formula__line"><code>Confidence = (AI_validity × 0.6) + (User_Rep × 0.4)</code></div>
+              <div class="tech-formula__line tech-formula__line--sub">AI_validity — outlier detection + moving average deviation</div>
+              <div class="tech-formula__line tech-formula__line--sub">Показания с Confidence &lt; 0.5 се отхвърлят</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Containers -->
+  <section class="tech-section tech-section--alt" id="containers">
+    <div class="tech-section__inner">
+      <div class="tech-section__heading">
+        <div class="tech-badge">Euro-контейнери</div>
+        <h2>1100 L Euro-контейнери (EN 840-1:2012)</h2>
+        <p>Стандартизирани контейнери с вътрешна височина 1.10 m, кодирани по цвят
+           според вида на отпадъка.</p>
+      </div>
+
+      <div class="tech-containers-grid">
+
+        <div class="tech-container-card tech-container-card--blue">
+          <div class="tech-container-card__icon">
+            <!-- Paper/Cardboard bin SVG -->
+            <svg viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg" width="72" height="90">
+              <rect x="8" y="18" width="64" height="72" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+              <rect x="8" y="10" width="64" height="12" rx="4" fill="#1e40af" stroke="#3b82f6" stroke-width="1.5"/>
+              <rect x="28" y="6" width="24" height="8" rx="3" fill="#1d4ed8" stroke="#3b82f6" stroke-width="1.5"/>
+              <!-- Paper icon on bin -->
+              <rect x="28" y="38" width="24" height="30" rx="2" fill="none" stroke="#60a5fa" stroke-width="1.5"/>
+              <line x1="33" y1="46" x2="47" y2="46" stroke="#60a5fa" stroke-width="1.2"/>
+              <line x1="33" y1="52" x2="47" y2="52" stroke="#60a5fa" stroke-width="1.2"/>
+              <line x1="33" y1="58" x2="42" y2="58" stroke="#60a5fa" stroke-width="1.2"/>
+              <!-- Wheels -->
+              <circle cx="22" cy="90" r="5" fill="#0f172a" stroke="#3b82f6" stroke-width="1.5"/>
+              <circle cx="58" cy="90" r="5" fill="#0f172a" stroke="#3b82f6" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <div class="tech-container-card__name">Синьо</div>
+          <div class="tech-container-card__type">Хартия и картон</div>
+          <div class="tech-container-card__fill-rate">Темп на запълване: ×1.0</div>
+        </div>
+
+        <div class="tech-container-card tech-container-card--yellow">
+          <div class="tech-container-card__icon">
+            <svg viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg" width="72" height="90">
+              <rect x="8" y="18" width="64" height="72" rx="6" fill="#422006" stroke="#eab308" stroke-width="2"/>
+              <rect x="8" y="10" width="64" height="12" rx="4" fill="#713f12" stroke="#eab308" stroke-width="1.5"/>
+              <rect x="28" y="6" width="24" height="8" rx="3" fill="#854d0e" stroke="#eab308" stroke-width="1.5"/>
+              <!-- Plastic bottle icon -->
+              <ellipse cx="40" cy="48" rx="7" ry="3" fill="none" stroke="#fde047" stroke-width="1.5"/>
+              <rect x="33" y="48" width="14" height="18" rx="2" fill="none" stroke="#fde047" stroke-width="1.5"/>
+              <ellipse cx="40" cy="66" rx="7" ry="3" fill="none" stroke="#fde047" stroke-width="1.5"/>
+              <rect x="37" y="43" width="6" height="6" rx="1" fill="none" stroke="#fde047" stroke-width="1.2"/>
+              <circle cx="22" cy="90" r="5" fill="#0f172a" stroke="#eab308" stroke-width="1.5"/>
+              <circle cx="58" cy="90" r="5" fill="#0f172a" stroke="#eab308" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <div class="tech-container-card__name">Жълто</div>
+          <div class="tech-container-card__type">Пластмаса</div>
+          <div class="tech-container-card__fill-rate">Темп на запълване: ×1.2</div>
+        </div>
+
+        <div class="tech-container-card tech-container-card--green">
+          <div class="tech-container-card__icon">
+            <svg viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg" width="72" height="90">
+              <rect x="8" y="18" width="64" height="72" rx="6" fill="#052e16" stroke="#22c55e" stroke-width="2"/>
+              <rect x="8" y="10" width="64" height="12" rx="4" fill="#14532d" stroke="#22c55e" stroke-width="1.5"/>
+              <rect x="28" y="6" width="24" height="8" rx="3" fill="#166534" stroke="#22c55e" stroke-width="1.5"/>
+              <!-- Wine bottle icon -->
+              <rect x="36" y="35" width="8" height="4" rx="1" fill="none" stroke="#4ade80" stroke-width="1.2"/>
+              <path d="M34 39 Q32 44 32 50 L32 68 Q32 70 40 70 Q48 70 48 68 L48 50 Q48 44 46 39 Z" fill="none" stroke="#4ade80" stroke-width="1.5"/>
+              <circle cx="22" cy="90" r="5" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
+              <circle cx="58" cy="90" r="5" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <div class="tech-container-card__name">Зелено</div>
+          <div class="tech-container-card__type">Стъкло</div>
+          <div class="tech-container-card__fill-rate">Темп на запълване: ×0.8</div>
+        </div>
+
+        <div class="tech-container-card tech-container-card--gray">
+          <div class="tech-container-card__icon">
+            <svg viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg" width="72" height="90">
+              <rect x="8" y="18" width="64" height="72" rx="6" fill="#1e293b" stroke="#64748b" stroke-width="2"/>
+              <rect x="8" y="10" width="64" height="12" rx="4" fill="#334155" stroke="#64748b" stroke-width="1.5"/>
+              <rect x="28" y="6" width="24" height="8" rx="3" fill="#475569" stroke="#64748b" stroke-width="1.5"/>
+              <!-- Mixed waste icon -->
+              <circle cx="35" cy="50" r="6" fill="none" stroke="#94a3b8" stroke-width="1.3"/>
+              <circle cx="47" cy="44" r="5" fill="none" stroke="#94a3b8" stroke-width="1.3"/>
+              <circle cx="46" cy="58" r="5" fill="none" stroke="#94a3b8" stroke-width="1.3"/>
+              <circle cx="22" cy="90" r="5" fill="#0f172a" stroke="#64748b" stroke-width="1.5"/>
+              <circle cx="58" cy="90" r="5" fill="#0f172a" stroke="#64748b" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <div class="tech-container-card__name">Черно / Сиво</div>
+          <div class="tech-container-card__type">Смесени битови отпадъци</div>
+          <div class="tech-container-card__fill-rate">Темп на запълване: ×1.5</div>
+        </div>
+
+      </div>
+
+      <div class="tech-container-specs">
+        <div class="tech-specs">
+          <div class="tech-specs__row">
+            <span class="tech-specs__label">Обем</span>
+            <span class="tech-specs__value">1 100 L (1.1 m³)</span>
+          </div>
+          <div class="tech-specs__row">
+            <span class="tech-specs__label">Вътрешна височина (H)</span>
+            <span class="tech-specs__value">1.10 m</span>
+          </div>
+          <div class="tech-specs__row">
+            <span class="tech-specs__label">Стандарт</span>
+            <span class="tech-specs__value">EN 840-1:2012</span>
+          </div>
+          <div class="tech-specs__row">
+            <span class="tech-specs__label">Праг за маршрутизация</span>
+            <span class="tech-specs__value">≥ 40% запълване</span>
+          </div>
+          <div class="tech-specs__row">
+            <span class="tech-specs__label">Координатна система</span>
+            <span class="tech-specs__value">WGS84 (GPS)</span>
+          </div>
+          <div class="tech-specs__row">
+            <span class="tech-specs__label">Данни за позиция</span>
+            <span class="tech-specs__value">Open Data — data.sofia.bg</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Trucks -->
+  <section class="tech-section" id="trucks">
+    <div class="tech-section__inner">
+
+      <div class="tech-card tech-card--wide tech-card--reverse">
+        <div class="tech-card__media">
+          <!-- Garbage truck SVG illustration -->
+          <svg viewBox="0 0 280 160" fill="none" xmlns="http://www.w3.org/2000/svg" class="tech-svg tech-svg--truck">
+            <!-- Truck body -->
+            <rect x="8" y="50" width="190" height="80" rx="6" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+            <!-- Compactor unit (back) -->
+            <rect x="8" y="40" width="100" height="90" rx="4" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+            <!-- Compactor details -->
+            <rect x="15" y="50" width="86" height="30" rx="3" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+            <rect x="15" y="88" width="86" height="15" rx="2" fill="#334155"/>
+            <!-- BinMaps logo on truck -->
+            <circle cx="58" cy="65" r="10" fill="#10b981" opacity="0.15" stroke="#10b981" stroke-width="1"/>
+            <text x="58" y="69" text-anchor="middle" font-size="8" fill="#10b981" font-family="sans-serif" font-weight="bold">BM</text>
+            <!-- Cab -->
+            <rect x="198" y="58" width="68" height="72" rx="8" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+            <!-- Windshield -->
+            <rect x="206" y="65" width="52" height="34" rx="4" fill="#0ea5e9" opacity="0.3" stroke="#3b82f6" stroke-width="1.2"/>
+            <!-- Cab details -->
+            <rect x="206" y="104" width="52" height="10" rx="2" fill="#334155"/>
+            <!-- Side mirror -->
+            <rect x="260" y="70" width="10" height="6" rx="2" fill="#334155" stroke="#475569" stroke-width="1"/>
+            <!-- Exhaust -->
+            <rect x="256" y="40" width="6" height="22" rx="3" fill="#334155" stroke="#475569" stroke-width="1"/>
+            <ellipse cx="259" cy="38" rx="5" ry="3" fill="#475569" opacity="0.5"/>
+            <!-- Wheels -->
+            <circle cx="42" cy="130" r="18" fill="#0f172a" stroke="#475569" stroke-width="2"/>
+            <circle cx="42" cy="130" r="10" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+            <circle cx="42" cy="130" r="3" fill="#475569"/>
+            <circle cx="130" cy="130" r="18" fill="#0f172a" stroke="#475569" stroke-width="2"/>
+            <circle cx="130" cy="130" r="10" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+            <circle cx="130" cy="130" r="3" fill="#475569"/>
+            <circle cx="228" cy="130" r="18" fill="#0f172a" stroke="#475569" stroke-width="2"/>
+            <circle cx="228" cy="130" r="10" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+            <circle cx="228" cy="130" r="3" fill="#475569"/>
+            <!-- Ground line -->
+            <line x1="0" y1="148" x2="280" y2="148" stroke="#1e293b" stroke-width="1.5"/>
+            <!-- CO2 / emission badge -->
+            <rect x="108" y="30" width="60" height="16" rx="4" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+            <text x="138" y="42" text-anchor="middle" font-size="8" fill="#94a3b8" font-family="monospace">2.65 kg CO₂/L</text>
+          </svg>
+          <div class="tech-card__media-caption">
+            <strong>Сметосъбирачен камион</strong><br>8–12 m³ товароносимост
+          </div>
+        </div>
+
+        <div class="tech-card__body">
+          <div class="tech-badge">Транспортни средства</div>
+          <h2>Параметри на флота</h2>
+          <p class="tech-card__lead">
+            Всеки камион е моделиран с реалистични физически параметри — товароносимост,
+            разход на гориво и CO₂ профил. Маршрутизаторът оптимизира натоварването
+            така, че капацитетът никога да не бъде надвишен.
+          </p>
+
+          <div class="tech-specs">
+            <div class="tech-specs__row">
+              <span class="tech-specs__label">Товароносимост</span>
+              <span class="tech-specs__value">8 – 12 m³</span>
+            </div>
+            <div class="tech-specs__row">
+              <span class="tech-specs__label">Разход на гориво</span>
+              <span class="tech-specs__value">35 – 40 L / 100 km</span>
+            </div>
+            <div class="tech-specs__row">
+              <span class="tech-specs__label">CO₂ (дизел)</span>
+              <span class="tech-specs__value">2.65 kg CO₂ / L</span>
+            </div>
+            <div class="tech-specs__row">
+              <span class="tech-specs__label">Средна скорост</span>
+              <span class="tech-specs__value">25 – 35 km/h (градска среда)</span>
+            </div>
+            <div class="tech-specs__row">
+              <span class="tech-specs__label">Горивен резервоар</span>
+              <span class="tech-specs__value">200 – 300 L</span>
+            </div>
+            <div class="tech-specs__row">
+              <span class="tech-specs__label">Спирка (обслужване)</span>
+              <span class="tech-specs__value">~5 min / контейнер</span>
+            </div>
+          </div>
+
+          <div class="tech-formula-block">
+            <div class="tech-formula-title">Маршрутни метрики</div>
+            <div class="tech-formula">
+              <div class="tech-formula__line"><code>T = (Σ Dᵢ / v_avg) + (N × t_service)</code></div>
+              <div class="tech-formula__line tech-formula__line--sub">Dᵢ — разстояние между спирки (km)</div>
+              <div class="tech-formula__line tech-formula__line--sub">v_avg — средна скорост (km/h)</div>
+              <div class="tech-formula__line tech-formula__line--sub">N — брой спирки, t_service = 5 min</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Algorithm -->
+  <section class="tech-section tech-section--alt" id="algorithm">
+    <div class="tech-section__inner">
+      <div class="tech-section__heading">
+        <div class="tech-badge">Алгоритъм</div>
+        <h2>Dijkstra TSP · Capacitated VRP</h2>
+        <p>Маршрутизирането на сметосъбирачите е формален вариант на NP-трудния
+           Capacitated Vehicle Routing Problem (CVRP). BinMaps го решава с хибриден
+           евристичен подход с времева сложност O(n² log n).</p>
+      </div>
+
+      <div class="tech-algo-steps">
+
+        <div class="tech-algo-step">
+          <div class="tech-algo-step__num">1</div>
+          <div class="tech-algo-step__body">
+            <h4>Граф от контейнери</h4>
+            <p>GPS координати на всички контейнери с fill% ≥ 40%. Теглата на ребрата
+               се изчисляват по формулата на Хаверсин или от OSRM (реални улични разстояния).</p>
+            <div class="tech-formula tech-formula--compact">
+              <code>d = 2r · arcsin(√(sin²(Δφ/2) + cos φ₁·cos φ₂·sin²(Δλ/2)))</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="tech-algo-step">
+          <div class="tech-algo-step__num">2</div>
+          <div class="tech-algo-step__body">
+            <h4>Dijkstra — матрица на разстоянията</h4>
+            <p>Изчислява пълна матрица от кратките пътища от камиона до всеки контейнер
+               и между контейнерите. Времева сложност: O((V+E) log V).</p>
+          </div>
+        </div>
+
+        <div class="tech-algo-step">
+          <div class="tech-algo-step__num">3</div>
+          <div class="tech-algo-step__body">
+            <h4>Greedy TSP — избор на следваща спирка</h4>
+            <p>Итеративно избира най-близкия необходен контейнер, докато капацитетът
+               на камиона е запълнен. Камионът се връща в депото по улиците (OSRM).</p>
+          </div>
+        </div>
+
+        <div class="tech-algo-step">
+          <div class="tech-algo-step__num">4</div>
+          <div class="tech-algo-step__body">
+            <h4>Резултат</h4>
+            <p>Наредена последователност от спирки с изчислено разстояние, натоварване,
+               прогнозно време и CO₂ за маршрута. Визуализацията следва реалните улици
+               чрез OSRM API.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="tech-cta">
+    <div class="tech-cta__inner">
+      <h2>Виж системата в действие</h2>
+      <p>Разгледай реалната карта с живи данни на ниво на запълване, активни камиони
+         и оптимизирани маршрути.</p>
+      <div class="tech-cta__btns">
+        <a routerLink="/map" class="btn btn--primary">Отвори картата</a>
+        <a routerLink="/analytics" class="btn btn--ghost">Аналитично табло</a>
+      </div>
+    </div>
+  </section>
+
+</div>

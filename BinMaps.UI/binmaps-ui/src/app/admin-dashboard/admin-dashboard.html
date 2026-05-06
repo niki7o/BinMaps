@@ -288,7 +288,7 @@
           Добави контейнер
         </a>
         <button class="btn btn--ghost btn--sm" (click)="rechargeAllBatteries()" [disabled]="isResettingSensors"
-          title="Презарежда батериите на всички IoT сензори до 100% и възстановява повредените">
+          title="Подменя батериите на сензорите с ниска батерия (≤ 20%) — последователно, с поддръжка">
           <svg *ngIf="!isResettingSensors" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19"/>
             <line x1="23" y1="13" x2="23" y2="11"/>

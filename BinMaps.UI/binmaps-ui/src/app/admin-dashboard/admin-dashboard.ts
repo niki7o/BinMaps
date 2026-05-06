@@ -943,52 +943,55 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       });
   }
 
-  rechargeAllBatteries(): void {
+  async rechargeAllBatteries(): Promise<void> {
     if (this.isResettingSensors) return;
-    this.isResettingSensors = true;
 
+    const LOW_BATTERY_THRESHOLD = 20;
     const targets = this.containers.filter(
-      c => c.trashType !== 0 && c.batteryPercentage !== null
+      c => c.hasSensor && c.batteryPercentage !== null && c.batteryPercentage <= LOW_BATTERY_THRESHOLD
     );
 
     if (targets.length === 0) {
-      this.showToast('Няма IoT сензори за презареждане', 'info');
-      this.isResettingSensors = false;
+      this.showToast('Няма сензори с ниска батерия (≤ 20%)', 'info');
       return;
     }
 
+    const ok = await this.confirmSvc.ask({
+      title: 'Подмяна на батерии',
+      message: `Ще бъдат подменени батериите на ${targets.length} сензора с ниска батерия (≤ 20%). Батериите ще бъдат заредени последователно, симулирайки посещение на поддръжка.`,
+      confirmText: 'Стартирай поддръжка',
+      cancelText: 'Отказ',
+      variant: 'info',
+    });
+    if (!ok) return;
+
+    this.isResettingSensors = true;
     let completed = 0;
     let hasError = false;
 
-    targets.forEach(c => {
-      this.http.put(
-        `${this.API}/containers/${c.id}`,
-        { fillPercentage: c.fillPercentage, status: 0, hasSensor: true },
-        this.authHeaders()
-      ).pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            completed++;
-            if (completed === targets.length) {
-              if (!hasError) {
-                this.showToast(`Батериите на ${completed} IoT сензора са презаредени до 100%`);
-              }
-              this.isResettingSensors = false;
-              this.loadContainers();
-              this.loadStats();
-            }
-          },
-          error: () => {
-            hasError = true;
-            completed++;
-            if (completed === targets.length) {
-              this.showToast('Някои сензори не бяха презаредени', 'error');
-              this.isResettingSensors = false;
-              this.loadContainers();
-            }
-          }
+    for (const c of targets) {
+      await new Promise<void>(resolve => {
+        this.http.put(
+          `${this.API}/containers/${c.id}`,
+          { fillPercentage: c.fillPercentage, status: c.status ?? 0, hasSensor: true, batteryPercentage: 100 },
+          this.authHeaders()
+        ).pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => { completed++; resolve(); },
+            error: () => { hasError = true; completed++; resolve(); }
+          });
         });
-    });
+      await new Promise(r => setTimeout(r, 400));
+    }
+
+    if (!hasError) {
+      this.showToast(`Батериите на ${completed} сензора са подменени до 100%`, 'success');
+    } else {
+      this.showToast('Някои сензори не бяха презаредени', 'error');
+    }
+    this.isResettingSensors = false;
+    this.loadContainers();
+    this.loadStats();
   }
 
   changeUserRole(user: User, newRole: string): void {

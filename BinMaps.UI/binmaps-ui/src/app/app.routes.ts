@@ -9,6 +9,7 @@ import { RequestContainerComponent } from './request-container/request-container
 import { AnalyticsDashboardComponent } from './bin-details/analytics-dashboard.component';
 import { ProfileComponent } from './profile.component/profile.component';
 import { AboutComponent } from './about/about';
+import { TechnologyComponent } from './technology/technology';
 import { ErrorPageComponent } from './error-Page/error-page.component';
 import { TermsComponent } from './terms/terms';
 import { NotificationsComponent } from './notifications/notifications';
@@ -22,7 +23,8 @@ export const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'banned', component: BannedComponent },
   { path: 'terms', component: TermsComponent },
-  { path: 'about',component: AboutComponent },
+  { path: 'about', component: AboutComponent },
+  { path: 'technology', component: TechnologyComponent },
   { path: 'map', component: MapComponent, canActivate: [authGuard] },
   { path: 'analytics', component: AnalyticsDashboardComponent,  canActivate: [authGuard] },
   { path: 'profile',  component: ProfileComponent, canActivate: [authGuard] },

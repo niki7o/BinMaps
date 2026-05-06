@@ -263,14 +263,28 @@ public sealed class ContainerDynamicsService : BackgroundService
 
         var oldStatus = container.Status;
         var newStatus = FillageSimulator.DetermineStatus(container);
+
         if (newStatus != container.Status)
         {
-            container.Status = newStatus;
-            changed = true;
+            // Never auto-revert Fire → Active through the simulator.
+            // A fire status set by a citizen report or by the simulator must
+            // be cleared explicitly by an admin — not silently overwritten the
+            // next time the background cycle runs and temperature happens to be
+            // below the threshold.  The simulator CAN still auto-SET fire
+            // (Active → Fire) when conditions are met.
+            if (container.Status == TrashContainerStatus.Fire && newStatus == TrashContainerStatus.Active)
+            {
+                // keep Fire — do nothing
+            }
+            else
+            {
+                container.Status = newStatus;
+                changed = true;
+            }
         }
 
-        // Fire-alert lifecycle: notify once on entry, clear when fire ends.
-        if (newStatus == TrashContainerStatus.Fire)
+        // Fire-alert lifecycle: notify once on entry.
+        if (newStatus == TrashContainerStatus.Fire || container.Status == TrashContainerStatus.Fire)
         {
             if (!_fireNotified.Contains(container.Id))
             {
@@ -285,10 +299,6 @@ public sealed class ContainerDynamicsService : BackgroundService
                     Message = $"🔥 Пожар в контейнер #{container.Id} ({container.AreaId}) — температура {container.Temperature:F0}°C, запълване {container.FillPercentage:F0}%"
                 });
             }
-        }
-        else if (oldStatus == TrashContainerStatus.Fire || _fireNotified.Contains(container.Id))
-        {
-            _fireNotified.Remove(container.Id);
         }
 
         return changed;
